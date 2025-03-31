@@ -12,16 +12,17 @@ interface AuthenticatedRequest extends Request {
 
 export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const token = req.header('Authorization')?.split(' ')[1];
-  if (!token){
+  if (!token) {
     res.status(401).json({ message: 'Acceso denegado' });
     return;
-  } 
+  }
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as JwtPayload;
     req.user = decoded;
     next();
-  } catch (error) {
+  } catch (err) {
+    console.error('Error al verificar el token:', err);
     res.status(400).json({ message: 'Token no válido' });
   }
 };
