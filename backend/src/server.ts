@@ -1,7 +1,8 @@
-import express from "express";
+import express, { Request, Response, NextFunction } from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+import userRoutes from "./routes/userRoutes";
 
 dotenv.config();
 
@@ -11,14 +12,29 @@ app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
-// Conectar a MongoDB
-mongoose
-  .connect(process.env.MONGO_URI as string)
-  .then(() => console.log("MongoDB conectado"))
-  .catch((err) => console.log(err));
+const mongoUri = process.env.MONGO_URI;
+if (!mongoUri) {
+  console.error("Error: MONGO_URI no está definido en el archivo .env");
+  process.exit(1);
+}
 
-app.get("/", (req, res) => {
+mongoose
+  .connect(mongoUri)
+  .then(() => console.log("MongoDB conectado"))
+  .catch((err) => {
+    console.error("Error al conectar a MongoDB:", err.message);
+    process.exit(1);
+  });
+
+app.use("/api", userRoutes);
+
+app.get("/", (req: Request, res: Response) => {
   res.send("API corriendo...");
+});
+
+app.use((err: any, req: Request, res: Response, next: NextFunction) => {
+  console.error(`[${req.method}] ${req.originalUrl} - Error: ${err.message}`);
+  res.status(err.status || 500).json({ message: err.message || "Error interno del servidor" });
 });
 
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
