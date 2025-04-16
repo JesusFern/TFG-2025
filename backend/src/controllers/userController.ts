@@ -1,8 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import User from '../models/User';
-import jwt from 'jsonwebtoken';
 import { MongoError } from '../types';
 import { PasswordService } from '../services/passwordService';
+import { TokenService } from '../services/tokenService';
 
 export const createUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -39,7 +39,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
+    const token = TokenService.generateToken({ id: user._id, role: user.role });
     res.status(200).json({ token });
   } catch (error: unknown) {
     res.status(500).json({ message: (error as Error).message });

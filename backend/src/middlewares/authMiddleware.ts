@@ -1,14 +1,6 @@
-import { Request, Response, NextFunction } from 'express';
-import jwt from 'jsonwebtoken';
-
-interface JwtPayload {
-  id: string;
-  role: string;
-}
-
-interface AuthenticatedRequest extends Request {
-  user?: JwtPayload;
-}
+import { Response, NextFunction } from 'express';
+import { TokenService } from '../services/tokenService';
+import { JwtPayload, AuthenticatedRequest } from '../types';
 
 export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const token = req.header('Authorization')?.split(' ')[1];
@@ -17,14 +9,14 @@ export const authenticateToken = (req: AuthenticatedRequest, res: Response, next
     return;
   }
 
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as JwtPayload;
-    req.user = decoded;
-    next();
-  } catch (err) {
-    console.error('Error al verificar el token:', err);
+  const decoded = TokenService.verifyToken(token) as JwtPayload | null;
+  if (!decoded) {
     res.status(400).json({ message: 'Token no válido' });
+    return;
   }
+
+  req.user = decoded;
+  next();
 };
 
 export const authorizeUserOrAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -40,7 +32,6 @@ export const authorizeUserOrAdmin = (req: AuthenticatedRequest, res: Response, n
   }
 
   res.status(403).json({ message: 'No tienes permiso para realizar esta acción' });
-  return;
 };
 
 export const authorizeAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
@@ -51,5 +42,4 @@ export const authorizeAdmin = (req: AuthenticatedRequest, res: Response, next: N
   }
 
   res.status(403).json({ message: 'No tienes permiso para realizar esta acción' });
-  return;
 };
