@@ -1,15 +1,24 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import User from '../models/User';
 import jwt from 'jsonwebtoken';
+import { MongoError } from '../types';
 
-export const createUser = async (req: Request, res: Response): Promise<void> => {
+export const createUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
     const user = new User(req.body);
     await user.save();
-    res.status(201).json(user);
+    res.status(201).json({ message: 'Usuario creado exitosamente', user });
   } catch (error: unknown) {
-    const err = error as Error;
-    res.status(400).json({ message: err.message });
+    const mongoError = error as MongoError;
+    if (mongoError.code === 11000) {
+      const duplicatedField = Object.keys(mongoError.keyValue!)[0];
+      res.status(400).json({
+        message: `El ${duplicatedField} ya está en uso. Por favor, utiliza otro.`,
+        field: duplicatedField,
+      });
+    } else {
+      next(error);
+    }
   }
 };
 
@@ -63,8 +72,16 @@ export const updateUser = async (req: Request, res: Response): Promise<void> => 
     }
     res.status(200).json(user);
   } catch (error: unknown) {
-    const err = error as Error;
-    res.status(400).json({ message: err.message });
+    const mongoError = error as MongoError;
+    if (mongoError.code === 11000) {
+      const duplicatedField = Object.keys(mongoError.keyValue!)[0];
+      res.status(400).json({
+        message: `El ${duplicatedField} ya está en uso. Por favor, utiliza otro.`,
+        field: duplicatedField,
+      });
+    } else {
+      res.status(400).json({ message: (error as Error).message });
+    }
   }
 };
 
