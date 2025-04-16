@@ -1,8 +1,8 @@
 import mongoose from 'mongoose';
-import { isValidUrl, isValidPhoneNumber } from '../utils/validators';
+import { isValidUrl, isValidPhoneNumber } from '../utils/mongoValidators';
 
 const UserSchema = new mongoose.Schema({
-  fullName: { type: String, required: true, unique: true },
+  fullName: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   gender: { type: String, enum: ['Masculino', 'Femenino', 'Otro'], required: true },
