@@ -24,8 +24,16 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
 
 export const loginUser = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
+
   try {
-    const user = await User.findOne({ email });
+    if (typeof email !== 'string' || typeof password !== 'string') {
+      res.status(400).json({ message: 'Datos inválidos' });
+      return;
+    }
+
+    const sanitizedEmail = email.trim().toLowerCase();
+
+    const user = await User.findOne({ email: sanitizedEmail });
     if (!user || user.password !== password) {
       res.status(401).json({ message: 'Credenciales incorrectas' });
       return;
