@@ -13,6 +13,15 @@
 
 ---
 
+## **Módulos Implementados**
+
+- **Autenticación**:
+  - Implementación de autenticación segura con **JSON Web Tokens (JWT)**.
+  - Cifrado de contraseñas utilizando **bcrypt** para garantizar la seguridad de los datos de los usuarios.
+
+---
+
+
 ## ✅ Requisitos Previos
 
 Antes de comenzar, asegúrate de tener instalado en tu máquina:
