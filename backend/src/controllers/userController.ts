@@ -2,6 +2,7 @@ import { Request, Response, NextFunction } from 'express';
 import User from '../models/User';
 import jwt from 'jsonwebtoken';
 import { MongoError } from '../types';
+import { PasswordService } from '../services/passwordService';
 
 export const createUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
   try {
@@ -26,15 +27,14 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
   const { email, password } = req.body;
 
   try {
-    if (typeof email !== 'string' || typeof password !== 'string') {
-      res.status(400).json({ message: 'Datos inválidos' });
+    const user = await User.findOne({ email: email.toString().trim().toLowerCase() });
+    if (!user) {
+      res.status(401).json({ message: 'Credenciales incorrectas' });
       return;
     }
 
-    const sanitizedEmail = email.trim().toLowerCase();
-
-    const user = await User.findOne({ email: sanitizedEmail });
-    if (!user || user.password !== password) {
+    const isPasswordValid = await PasswordService.comparePasswords(password, user.password);
+    if (!isPasswordValid) {
       res.status(401).json({ message: 'Credenciales incorrectas' });
       return;
     }
@@ -42,8 +42,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     const token = jwt.sign({ id: user._id, role: user.role }, process.env.JWT_SECRET || 'secret', { expiresIn: '1h' });
     res.status(200).json({ token });
   } catch (error: unknown) {
-    const err = error as Error;
-    res.status(500).json({ message: err.message });
+    res.status(500).json({ message: (error as Error).message });
   }
 };
 
