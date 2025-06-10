@@ -11,7 +11,7 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: null,
     validate: {
-      validator: isValidUrl,
+      validator: (value: string | null) => value === null || isValidUrl(value),
       message: 'URL no válida'
     }
   },
