@@ -1,10 +1,10 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import User from '../models/User';
 import { MongoError } from '../types';
 import { PasswordService } from '../services/passwordService';
 import { TokenService } from '../services/tokenService';
 
-export const createUser = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+export const createUser = async (req: Request, res: Response,): Promise<void> => {
   try {
     const user = new User(req.body);
     await user.save();
@@ -18,7 +18,7 @@ export const createUser = async (req: Request, res: Response, next: NextFunction
         field: duplicatedField,
       });
     } else {
-      next(error);
+      res.status(500).json({ message: (error as Error).message || 'Error interno del servidor' });
     }
   }
 };
