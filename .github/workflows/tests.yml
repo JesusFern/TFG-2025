@@ -42,3 +42,4 @@ jobs:
           JWT_SECRET: test_secret
           NODE_ENV: test
         run: npm test
+        working-directory: ./backend
