@@ -58,8 +58,7 @@ const UserSchema = new mongoose.Schema({
   satisfactionRating: {
     type: Number,
     min: 0,
-    max: 5,
-    default: 0
+    max: 5
   },
   
   // Datos de usuarios normales
