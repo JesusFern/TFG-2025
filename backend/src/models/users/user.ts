@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
-import { isValidUrl, isValidPhoneNumber } from '../utils/mongoValidators';
-import { PasswordService } from '../services/passwordService';
+import { isValidUrl, isValidPhoneNumber } from '../../utils/mongoValidators';
+import { PasswordService } from '../../services/passwordService';
 
 interface UserDocument extends mongoose.Document {
   fullName: string;
@@ -21,7 +21,6 @@ interface UserDocument extends mongoose.Document {
 }
 
 const UserSchema = new mongoose.Schema({
-  // Campos comunes para todos los usuarios
   fullName: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
@@ -63,7 +62,7 @@ const UserSchema = new mongoose.Schema({
     default: 0
   },
   
-  // Relaciones - para usuarios normales
+  // Datos de usuarios normales
   datosSaludYNutricion: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'DatosSaludYNutricion'
@@ -140,5 +139,5 @@ UserSchema.pre('save', function (next) {
   next();
 });
 
-const User = mongoose.model('User', UserSchema);
+const User = mongoose.model<UserDocument>('User', UserSchema);
 export default User;

@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import User from '../models/User';
+import User from '../models/users/user';
 import { MongoError } from '../types';
 import { PasswordService } from '../services/passwordService';
 import { TokenService } from '../services/tokenService';
