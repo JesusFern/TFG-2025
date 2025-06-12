@@ -1,8 +1,8 @@
 import { Router } from 'express';
-import { registerUser, loginUser, getUsers, getUserById, updateUser, deleteUser } from '../controllers/userController';
-import { authenticateToken, authorizeUserOrAdmin } from '../middlewares/authMiddleware';
-import { validateRequest } from '../middlewares/validationMiddleware';
-import { loginValidator, createUserValidator, updateUserValidator } from '../validators/userValidators';
+import { registerUser, loginUser, getUsers, getUserById, updateUser, deleteUser } from '../../controllers/users/userController';
+import { authenticateToken, authorizeUserOrAdmin } from '../../middlewares/authMiddleware';
+import { validateRequest } from '../../middlewares/validationMiddleware';
+import { loginValidator, createUserValidator, updateUserValidator } from '../../validators/userValidators';
 
 const router = Router();
 

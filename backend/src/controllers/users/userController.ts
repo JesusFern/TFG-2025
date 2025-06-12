@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import User from '../models/users/user';
-import { MongoError } from '../types';
-import { PasswordService } from '../services/passwordService';
-import { TokenService } from '../services/tokenService';
+import User from '../../models/users/user';
+import { MongoError } from '../../types';
+import { PasswordService } from '../../services/passwordService';
+import { TokenService } from '../../services/tokenService';
 
 export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
