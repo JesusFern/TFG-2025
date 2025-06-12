@@ -29,7 +29,7 @@ mongoose
     process.exit(1);
   });
 
-app.use("/api", userRoutes);
+app.use("/api/users", userRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("API corriendo...");
