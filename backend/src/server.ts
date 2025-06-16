@@ -2,7 +2,7 @@ import express, { Request, Response } from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
-import userRoutes from "./routes/userRoutes";
+import userRoutes from "./routes/users/userRoutes";
 
 dotenv.config();
 
@@ -29,7 +29,7 @@ mongoose
     process.exit(1);
   });
 
-app.use("/api", userRoutes);
+app.use("/api/users", userRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("API corriendo...");

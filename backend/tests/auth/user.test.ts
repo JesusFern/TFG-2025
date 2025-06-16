@@ -5,15 +5,15 @@ import mongoose from 'mongoose';
 describe('User Endpoints', () => {
   it('debería crear un usuario', async () => {
     const res = await request(app)
-      .post('/api/users')
+      .post('/api/users/register')
       .send({
-        fullName: 'Test User',
-        email: 'testuser@example.com',
-        password: 'Test1234',
-        gender: 'Masculino',
-        birthDate: '1990-01-01',
-        phoneNumber: '+34123456789',
-        role: 'user'
+        fullName: "Test User",
+        email: "testuser2@example.com",
+        password: "Test1234",
+        phoneNumber: "123456789",
+        gender: "Masculino",
+        birthDate: "1990-01-01",
+        profilePicture: "https://example.com/profile.jpg"
       });
       console.log(res.body); 
     expect(res.statusCode).toEqual(201);

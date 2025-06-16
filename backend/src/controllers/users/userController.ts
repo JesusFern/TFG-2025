@@ -1,14 +1,40 @@
 import { Request, Response } from 'express';
-import User from '../models/User';
-import { MongoError } from '../types';
-import { PasswordService } from '../services/passwordService';
-import { TokenService } from '../services/tokenService';
+import User from '../../models/users/user';
+import { MongoError } from '../../types';
+import { PasswordService } from '../../services/passwordService';
+import { TokenService } from '../../services/tokenService';
 
-export const createUser = async (req: Request, res: Response,): Promise<void> => {
+export const registerUser = async (req: Request, res: Response): Promise<void> => {
   try {
-    const user = new User(req.body);
+    const { fullName, email, password, phoneNumber, gender, birthDate, profilePicture } = req.body;
+    
+    // Crea el usuario con rol fijo 'user'
+    const user = new User({
+      fullName,
+      email,
+      password,
+      phoneNumber,
+      gender,
+      birthDate,
+      profilePicture,
+      role: 'user'
+    });
+    
     await user.save();
-    res.status(201).json({ message: 'Usuario creado exitosamente', user });
+    
+    const token = TokenService.generateToken({ id: user._id, role: user.role });
+    
+    res.status(201).json({ 
+      message: 'Usuario registrado exitosamente', 
+      user: {
+        id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        gender: user.gender,
+        role: user.role
+      },
+      token
+    });
   } catch (error: unknown) {
     const mongoError = error as MongoError;
     if (mongoError.code === 11000) {
