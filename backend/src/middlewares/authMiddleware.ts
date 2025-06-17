@@ -1,5 +1,5 @@
 import { Response, NextFunction } from 'express';
-import { TokenService } from '../services/tokenService';
+import { TokenService } from '../utils/tokenService';
 import { JwtPayload, AuthenticatedRequest } from '../types';
 
 export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
