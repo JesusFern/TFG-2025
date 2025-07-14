@@ -59,6 +59,23 @@ Antes de comenzar, asegúrate de tener instalado en tu máquina:
    cd /frontend
    npm run dev
 
+## 🛠️ Scripts útiles
+
+### 🌱 Seeders: Poblar la base de datos
+
+Para preparar la base de datos para pruebas o desarrollo, puedes lanzar los seeders con el siguiente comando:
+
+```bash
+cd backend
+npx ts-node src/seeders/seeders.ts
+```
+
+Esto eliminará los usuarios existentes y creará los usuarios definidos en el archivo de seeders.
+
+> **Nota:** Asegúrate de tener configurada la variable `MONGO_URI` en tu archivo `.env` antes de ejecutar el comando.
+
+---
+
 ## 👨‍💻 Autores
 
 Desarrollado por:
