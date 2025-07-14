@@ -1,7 +1,6 @@
 import { Request, Response } from 'express';
 import User from '../../models/users/user';
 import { MongoError } from '../../types';
-import { TokenService } from '../../utils/tokenService';
 
 export const registerWorker = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -32,8 +31,6 @@ export const registerWorker = async (req: Request, res: Response): Promise<void>
 
     await worker.save();
 
-    const token = TokenService.generateToken({ id: worker._id, role: worker.role });
-
     res.status(201).json({
       message: 'Trabajador registrado exitosamente',
       worker: {
@@ -47,8 +44,7 @@ export const registerWorker = async (req: Request, res: Response): Promise<void>
         biography: worker.biography,
         availability: worker.availability,
         role: worker.role
-      },
-      token
+      }
     });
   } catch (error: unknown) {
     const mongoError = error as MongoError;
