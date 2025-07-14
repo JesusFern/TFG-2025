@@ -1,6 +1,6 @@
 import mongoose from 'mongoose';
 import { isValidUrl, isValidPhoneNumber } from '../../utils/mongoValidators';
-import { PasswordService } from '../../services/passwordService';
+import { PasswordService } from '../../utils/passwordService';
 
 interface UserDocument extends mongoose.Document {
   fullName: string;
