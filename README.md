@@ -59,6 +59,15 @@ Antes de comenzar, asegúrate de tener instalado en tu máquina:
    cd /frontend
    npm run dev
 
+## 🧪 Tests
+
+Los tests de la aplicación están ubicados en la carpeta `backend/tests/`.  
+Para ejecutar todos los tests, simplemente usa el siguiente comando desde la carpeta `backend`:
+
+```bash
+npm test
+```
+
 ## 🛠️ Scripts útiles
 
 ### 🌱 Seeders: Poblar la base de datos
@@ -75,6 +84,7 @@ Esto eliminará los usuarios existentes y creará los usuarios definidos en el a
 > **Nota:** Asegúrate de tener configurada la variable `MONGO_URI` en tu archivo `.env` antes de ejecutar el comando.
 
 ---
+
 
 ## 👨‍💻 Autores
 
