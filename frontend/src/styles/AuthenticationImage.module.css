@@ -1,36 +1,76 @@
 .wrapper {
-  min-height: 900px;
-  background-size: cover;
-  background-image: url(https://www.adeituv.es/wp-content/uploads/1.MA_STER-DE-FORMACIO_N-PERMANENTE-EN-NUTRICIO_N-Y-DIETE_TICA-EN-EL-DEPORTE-2.jpeg);
-}
-
-.form {
-  border-right: 1px solid light-dark(var(--mantine-color-gray-3), var(--mantine-color-dark-7));
-  min-height: 900px;
-  max-width: 450px;
-  padding: 30px;
-  padding-top: 80px;
-  border-radius: 0;
-
-  @media (max-width: $mantine-breakpoint-sm) {
-    max-width: 100%;
-  }
-}
-
-.title {
-  color: light-dark(var(--mantine-color-black), var(--mantine-color-white));
-  font-family: Outfit, var(--mantine-font-family);
-  font-weight: 500;
-  text-align: center;
-  margin-top: var(--mantine-spacing-md);
-  margin-bottom: 50px;
-}
-
-.image {
-  flex: 1;
-  background-image: url(https://www.adeituv.es/wp-content/uploads/1.MA_STER-DE-FORMACIO_N-PERMANENTE-EN-NUTRICIO_N-Y-DIETE_TICA-EN-EL-DEPORTE-2.jpeg);
+  min-height: 100vh;
+  width: 100%;
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: stretch; /* Cambia a stretch para que el hijo ocupe todo el alto */
+  justify-content: flex-start; /* Alinea el contenido a la izquierda */
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
+  background-image: url(https://www.adeituv.es/wp-content/uploads/1.MA_STER-DE-FORMACIO_N-PERMANENTE-EN-NUTRICIO_N-Y-DIETE_TICA-EN-EL-DEPORTE-2.jpeg);
+  margin: 0;
+  padding: 0;
+  z-index: 0;
+}
+
+.form {
+  background: #111;
+  border-radius: 0 12px 12px 0;
+  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.12);
+  max-width: 400px;
+  width: 100%;
   height: 100vh;
+  padding: 32px 24px;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  border: none;
+  position: relative;
+  z-index: 1;
+  justify-content: flex-start; /* Alinea arriba */
+  padding-top: 100px; /* Espacio desde arriba */
+}
+
+.title {
+  color: #fff;
+  font-family: Outfit, var(--mantine-font-family);
+  font-weight: 800; /* Negrita */
+  text-align: center;
+  margin-top: 0;
+  margin-bottom: 32px;
+}
+
+.form label,
+.form input,
+.form .mantine-Text-root,
+.form .mantine-Anchor-root {
+  color: #f1f1f1 !important;
+  background: transparent;
+}
+
+.form input {
+  background: #222 !important;
+  border: 1px solid #444 !important;
+  color: #f1f1f1 !important;
+}
+
+.form input::placeholder {
+  color: #bbb !important;
+}
+
+.form .mantine-Button-root {
+  background: #fff;
+  color: #111;
+  font-weight: 600;
+}
+
+@media (max-width: 600px) {
+  .form {
+    max-width: 100vw;
+    border-radius: 0;
+    padding: 24px 8px;
+  }
 }
