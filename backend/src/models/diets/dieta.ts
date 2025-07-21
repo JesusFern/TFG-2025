@@ -9,6 +9,7 @@ const DietaSchema = new mongoose.Schema({
   tipo: [{ type: String, required: true }],
   duracion: { type: Number },
   dias: [DiaDietaSchema],
+  fechaInicio: { type: Date, required: true },
   creador: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   asignadaA: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }]
 });
