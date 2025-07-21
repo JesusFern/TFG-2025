@@ -27,8 +27,8 @@ export function AuthenticationImage() {
 
         <Text ta="center" mt="md">
           Don&apos;t have an account?{' '}
-          <Anchor href="#" fw={500} onClick={(event) => event.preventDefault()}>
-            Register
+          <Anchor href="/register" fw={500} onClick={(event) => event.preventDefault()}>
+            Register  
           </Anchor>
         </Text>
       </Paper>

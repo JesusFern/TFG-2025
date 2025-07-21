@@ -38,13 +38,14 @@ export const AuthButtons: React.FC = () => {
   const navigate = useNavigate();
 
   const handleLoginClick = () => navigate('/login');
-
+  const handleRegisterClick = () => navigate('/register');
+  
   return (
     <AuthButtonsContainer>
       <Button variant="secondary" size="small" onClick={handleLoginClick}>
         Iniciar Sesión
       </Button>
-      <Button size="small">
+      <Button size="small" onClick={handleRegisterClick}>
         Registrarse
       </Button>
     </AuthButtonsContainer>

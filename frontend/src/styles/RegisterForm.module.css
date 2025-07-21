@@ -1,0 +1,86 @@
+/* RegisterForm.module.css */
+.wrapper {
+  min-height: 100vh;
+  width: 100vw;
+  position: fixed;
+  left: 0;
+  top: 0;
+  display: flex;
+  align-items: center;      /* Centra verticalmente */
+  justify-content: center;  /* Centra horizontalmente */
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-image: url(https://www.adeituv.es/wp-content/uploads/1.MA_STER-DE-FORMACIO_N-PERMANENTE-EN-NUTRICIO_N-Y-DIETE_TICA-EN-EL-DEPORTE-2.jpeg);
+  margin: 0;
+  padding: 0;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.form {
+  background: #111;
+  border-radius: 16px;
+  box-shadow: 0 4px 32px rgba(0,0,0,0.18);
+  max-width: 700px;      /* Más ancho */
+  min-width: 350px;
+  min-height: 350px;     /* Menos alto */
+  width: 100%;
+  padding: 40px 32px;
+  margin: 0;
+  display: flex;
+  flex-direction: row;   /* Horizontal */
+  gap: 32px;             /* Espacio entre columnas */
+  position: relative;
+  z-index: 1;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+@media (max-width: 900px) {
+  .form {
+    flex-direction: column;
+    max-width: 95vw;
+    min-height: unset;
+    gap: 0;
+    padding: 24px 8px;
+  }
+}
+
+.form :global(.mantine-TextInput-root),
+.form :global(.mantine-PasswordInput-root),
+.form :global(.mantine-Select-root),
+.form :global(.mantine-MultiSelect-root),
+.form :global(.mantine-NumberInput-root),
+.form :global(.mantine-Textarea-root) {
+  margin-bottom: 0;
+}
+
+.form :global(input) {
+  background: #222;
+  border: 1px solid #444;
+  color: #f1f1f1;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.form :global(.mantine-Button-root) {
+  margin-top: 16px;
+  font-size: 16px;
+  padding: 10px 0;
+}
+
+.label {
+  color: #fff;
+  font-weight: 600;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.input {
+  background: #222;
+  border: 1px solid #444;
+  color: #f1f1f1;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
