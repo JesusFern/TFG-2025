@@ -8,6 +8,7 @@ const DietaSchema = new mongoose.Schema({
   descripcion: { type: String },
   tipo: [{ type: String, required: true }],
   duracion: { type: Number },
+  comidasDiarias: { type: Number, required: true },
   dias: [DiaDietaSchema],
   fechaInicio: { type: Date, required: true },
   creador: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },

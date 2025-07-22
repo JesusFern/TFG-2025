@@ -9,7 +9,7 @@ export const crearDieta = async (req: AuthenticatedRequest, res: Response) => {
       res.status(401).json({ message: 'No autenticado' });
       return;
     }    
-    const { nombre, descripcion, tipo, duracion, asignadaA, fechaInicio } = req.body;
+    const { nombre, descripcion, tipo, duracion, comidasDiarias, asignadaA, fechaInicio } = req.body;
 
     const dieta = await crearDietaService({
       creadorId,
@@ -17,6 +17,7 @@ export const crearDieta = async (req: AuthenticatedRequest, res: Response) => {
       descripcion,
       tipo,
       duracion,
+      comidasDiarias,
       asignadaA,
       fechaInicio
     });

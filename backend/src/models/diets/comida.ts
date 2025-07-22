@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 import PlatoSchema from './plato';
 
 const ComidaSchema = new mongoose.Schema({
-  horaEstimada: { type: String, required: true },
+  horaEstimada: { type: String},
   platos: [PlatoSchema]
 });
 

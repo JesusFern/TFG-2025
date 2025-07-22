@@ -7,6 +7,7 @@ export async function crearDietaService({
   descripcion,
   tipo,
   duracion,
+  comidasDiarias,
   asignadaA,
   fechaInicio
 }: {
@@ -15,10 +16,10 @@ export async function crearDietaService({
   descripcion?: string;
   tipo: string[];
   duracion: number;
+  comidasDiarias: number;
   asignadaA: string;
   fechaInicio: string;
 }) {
-  // Validar usuario asignado
   const usuarioAsignado = await User.findById(asignadaA);
   if (!usuarioAsignado || usuarioAsignado.role !== 'user') {
     throw new Error('El usuario asignado debe tener rol user');
@@ -27,6 +28,15 @@ export async function crearDietaService({
   if (!duracion || !Number.isInteger(duracion) || duracion < 1) {
     throw new Error('La duración debe ser un número entero mayor que 0');
   }
+
+if (
+  !comidasDiarias ||
+  !Number.isInteger(comidasDiarias) ||
+  comidasDiarias <= 1 ||
+  comidasDiarias >= 10
+) {
+  throw new Error('El número de comidas diarias debe ser un número entero mayor que 1 y menor que 10');
+}
 
   if (!fechaInicio) {
     throw new Error('La fecha de inicio es obligatoria');
@@ -48,14 +58,22 @@ export async function crearDietaService({
     genero: '',
     requerimientosHidratacion: '',
     cumplimiento: false,
-    comidas: []
-  }));
+    comidas: Array.from({ length: comidasDiarias }, () => ({
+        horaEstimada: null,
+        platos: Array.from({ length: 3 }, (_, i) => ({
+            orden: i,
+            nombre: null,
+            receta: null
+            }))
+        }))
+    }));
 
   const dieta = new Dieta({
     nombre,
     descripcion,
     tipo,
     duracion,
+    comidasDiarias,
     dias,
     fechaInicio: fechaInicioDate,
     creador: creadorId,
