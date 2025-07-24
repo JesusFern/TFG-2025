@@ -13,3 +13,7 @@ export interface JwtPayload {
 export interface AuthenticatedRequest extends Request {
   user?: JwtPayload;
 }
+
+export interface NotFoundError extends Error {
+  status?: number;
+}

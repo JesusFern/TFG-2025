@@ -1,6 +1,9 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../types';
 import { crearDietaService } from '../../service/diets/dietService';
+import { actualizarPlatosService } from '../../service/diets/plateService';
+
+
 
 export const crearDieta = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -25,5 +28,18 @@ export const crearDieta = async (req: AuthenticatedRequest, res: Response) => {
     res.status(201).json({ message: 'Dieta creada correctamente', dieta });
   } catch (error) {
     res.status(400).json({ message: 'Error al crear la dieta', error: (error as Error).message });
+  }
+};
+
+export const actualizarPlatos = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { platos } = req.body;
+    const actualizados = await actualizarPlatosService(platos);
+    res.status(200).json({ message: 'Platos actualizados', platos: actualizados });
+  } catch (error) {
+    res.status(400).json({
+      message: 'Error al actualizar los platos',
+      error: error instanceof Error ? error.message : error
+    });
   }
 };
