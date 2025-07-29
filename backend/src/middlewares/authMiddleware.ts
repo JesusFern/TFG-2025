@@ -43,3 +43,16 @@ export const authorizeAdmin = (req: AuthenticatedRequest, res: Response, next: N
 
   res.status(403).json({ message: 'No tienes permiso para realizar esta acción' });
 };
+
+export const authorizeWorker = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  const { id, role } = req.user as JwtPayload;
+  if (!id) {
+    res.status(401).json({ message: 'No autenticado' });
+    return;
+  }
+  if (role !== 'worker') {
+    res.status(403).json({ message: 'Solo los trabajadores pueden crear dietas' });
+    return;
+  }
+  next();
+};

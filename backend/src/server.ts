@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import userRoutes from "./routes/users/userRoutes";
 import workerRoutes from './routes/users/workerRoutes';
+import dietRoutes from './routes/diets/dietRoutes';
 
 dotenv.config();
 
@@ -32,6 +33,7 @@ mongoose
 
 app.use("/api/users", userRoutes);
 app.use('/api/workers', workerRoutes);
+app.use('/api/diets', dietRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("API corriendo...");
