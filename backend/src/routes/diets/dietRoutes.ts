@@ -1,10 +1,10 @@
 import { Router } from 'express';
 import { crearDieta, actualizarPlatos } from '../../controllers/diets/dietController';
-import { authenticateToken, authorizeWorker } from '../../middlewares/authMiddleware';
+import { authenticateToken, authorizeNutricionista } from '../../middlewares/authMiddleware';
 
 const router = Router();
 
-router.post('/', authenticateToken, authorizeWorker, crearDieta);
-router.put('/platos', authenticateToken, authorizeWorker, actualizarPlatos);
+router.post('/', authenticateToken, authorizeNutricionista, crearDieta);
+router.put('/platos', authenticateToken, authorizeNutricionista, actualizarPlatos);
 
 export default router;
