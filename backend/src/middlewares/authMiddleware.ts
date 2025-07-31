@@ -1,6 +1,7 @@
 import { Response, NextFunction } from 'express';
 import { TokenService } from '../utils/tokenService';
 import { JwtPayload, AuthenticatedRequest } from '../types';
+import User from '../models/users/user';
 
 export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const token = req.header('Authorization')?.split(' ')[1];
@@ -52,6 +53,28 @@ export const authorizeWorker = async (req: AuthenticatedRequest, res: Response, 
   }
   if (role !== 'worker') {
     res.status(403).json({ message: 'Solo los trabajadores pueden crear dietas' });
+    return;
+  }
+  next();
+};
+
+export const authorizeNutricionista = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
+  const { id, role } = req.user as JwtPayload;
+  if (!id) {
+    res.status(401).json({ message: 'No autenticado' });
+    return;
+  }
+  if (role !== 'worker') {
+    res.status(403).json({ message: 'Solo los trabajadores pueden crear dietas' });
+    return;
+  }
+  const user = await User.findById(id);
+  if (
+    !user ||
+    (user.workerType !== 'Nutricionista' &&
+     user.workerType !== 'Nutricionista y Entrenador personal')
+  ) {
+    res.status(403).json({ message: 'Solo los nutricionistas pueden realizar esta acción' });
     return;
   }
   next();
