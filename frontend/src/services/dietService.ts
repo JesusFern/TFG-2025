@@ -4,7 +4,6 @@ import { CrearDietaDTO, ApiDietaResponse } from '../types';
 const API_BASE_URL = import.meta.env.VITE_BACKEND_HOST;
 const API_ENDPOINT = '/api/diets';
 
-// Actualizar la función para usar los tipos específicos
 export const crearDieta = async (dietaData: CrearDietaDTO): Promise<ApiDietaResponse> => {
   const token = localStorage.getItem('token');
   

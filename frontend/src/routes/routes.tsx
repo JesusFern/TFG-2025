@@ -9,7 +9,7 @@ const AppRoutes: React.FC = () => {
       <Routes>
         <Route path="/" element={<App />} />
         <Route path="/login" element={<LoginPage />} />
-        <Route path="/crear-dieta" element={<CrearDietaPage />} />
+        <Route path="/crear-dieta/:clienteId" element={<CrearDietaPage />} />
 
       </Routes>
   );
