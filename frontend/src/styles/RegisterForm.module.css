@@ -22,11 +22,11 @@
   background: #111;
   border-radius: 16px;
   box-shadow: 0 4px 32px rgba(0,0,0,0.18);
-  max-width: 700px;      /* Más ancho */
+  max-width: 960px;      /* Más ancho */
   min-width: 350px;
-  min-height: 350px;     /* Menos alto */
+  min-height: 640px;     /* Menos alto */
   width: 100%;
-  padding: 40px 32px;
+  padding: 96px 32px 112px;
   margin: 0;
   display: flex;
   flex-direction: row;   /* Horizontal */
@@ -37,13 +37,103 @@
   justify-content: center;
 }
 
+/* Ajustes visuales del Stepper dentro del formulario */
+.form :global(.mantine-Stepper-root) {
+  margin-bottom: 8px;
+}
+
+.form :global(.mantine-Stepper-steps) {
+  gap: 8px;
+  flex-wrap: wrap;
+  justify-content: flex-start;
+}
+
+/* Por defecto (desktop): 4 pasos por fila */
+.form :global(.mantine-Stepper-step) {
+  flex: 0 0 25%;
+  max-width: 25%;
+  box-sizing: border-box;
+}
+
+/* Evitar conectores demasiado largos entre pasos */
+.form :global(.mantine-Stepper-separator) {
+  flex: 0 0 auto;
+  width: 24px;
+  min-width: 24px;
+}
+
+/* >= 600px y < 900px: 3 por fila */
+@media (max-width: 900px) and (min-width: 600px) {
+  .form :global(.mantine-Stepper-step) {
+    flex: 0 0 33.3333%;
+    max-width: 33.3333%;
+  }
+}
+
+/* >= 420px y < 600px: 2 por fila */
+@media (max-width: 600px) and (min-width: 420px) {
+  .form :global(.mantine-Stepper-step) {
+    flex: 0 0 50%;
+    max-width: 50%;
+  }
+}
+
+/* < 420px: 1 por fila */
+@media (max-width: 420px) {
+  .form :global(.mantine-Stepper-step) {
+    flex: 0 0 100%;
+    max-width: 100%;
+  }
+}
+
+.form :global(.mantine-Stepper-stepLabel) {
+  color: #e8e8e8;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+/* En móviles/tablet ocultamos los labels del Stepper para ganar espacio */
+@media (max-width: 900px) {
+  .form :global(.mantine-Stepper-stepLabel) {
+    display: none;
+  }
+}
+
+/* Alineación y consistencia de inputs */
+.form :global(.mantine-InputWrapper-root) {
+  width: 100%;
+}
+
+/* Altura uniforme de campos tipo input/Select/NumberInput */
+.form :global(input),
+.form :global(.mantine-Input-input) {
+  height: 44px;
+}
+
+/* Textareas con altura mínima razonable y mismo estilo */
+.form :global(textarea.mantine-Textarea-input) {
+  min-height: 96px;
+}
+
+/* Etiquetas de los campos coherentes con el diseño oscuro */
+.form :global(.mantine-InputWrapper-label) {
+  color: #ffffff;
+  font-weight: 600;
+  margin-bottom: 6px;
+}
+
+/* Reservamos algo de espacio para errores para que no descuadre al aparecer */
+.form :global(.mantine-InputWrapper-error) {
+  min-height: 18px;
+}
+
 @media (max-width: 900px) {
   .form {
     flex-direction: column;
     max-width: 95vw;
     min-height: unset;
     gap: 0;
-    padding: 24px 8px;
+    padding: 96px 8px 112px;
   }
 }
 

@@ -219,14 +219,6 @@ const RegisterForm = () => {
             <Textarea label="Restricciones alimentarias" value={form.restricciones} onChange={e => handleChange('restricciones', e.target.value)} />
             <Textarea label="Intolerancias o alergias alimentarias" value={form.alergias} onChange={e => handleChange('alergias', e.target.value)} mt="md" />
           </Stepper.Step>
-          {/* Paso 7 */}
-          <Stepper.Step label="Resumen">
-            <Title order={4} mt="md">Revisa tus datos</Title>
-            {/* Aquí puedes mostrar un resumen de los datos ingresados */}
-            <pre style={{ color: 'white', background: '#222', padding: 10, borderRadius: 8 }}>
-              {JSON.stringify(form, null, 2)}
-            </pre>
-          </Stepper.Step>
         </Stepper>
 
   {/* Botones abajo */}
