@@ -1,0 +1,43 @@
+/* 
+  Estilos globales para la aplicación Nutroos
+  Incluir aquí reset CSS, variables, etc.
+*/
+
+:root {
+  --primary-color: #2ecc71;
+  --primary-dark: #25a25a;
+  --secondary-color: #333333;
+  --text-color: #555555;
+  --light-bg: #f9f9f9;
+  --gradient-light: linear-gradient(135deg, #f9f9f9 0%, #e9f7ef 100%);
+  --gradient-primary: linear-gradient(135deg, #2ecc71 0%, #27ae60 100%);
+  --box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Poppins', sans-serif;
+  line-height: 1.6;
+  color: var(--text-color);
+}
+
+a {
+  text-decoration: none;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+/* Para entrada del teclado y toque de pantalla táctil */
+@media (hover: hover) {
+  a:hover {
+    color: var(--primary-color);
+  }
+}

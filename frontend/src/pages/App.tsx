@@ -1,4 +1,3 @@
-import React from 'react';
 import reactLogo from '../assets/react.svg';
 import viteLogo from '/vite.svg';
 import '../styles/App.css';
@@ -9,7 +8,7 @@ function App() {
   const navigate = useNavigate();
 
   const goToLogin = () => {
-    navigate('/login');
+    navigate('/landingPage');
   };
 
   return (
@@ -24,7 +23,7 @@ function App() {
       </div>
       <h1>Vite + React</h1>
       <div className="card">
-        <Button label="Iniciar Sesión" onClick={goToLogin} />
+        <Button label="Pagina principal" onClick={goToLogin} />
       </div>
       <p className="read-the-docs">
         Click on the Vite and React logos to learn more
