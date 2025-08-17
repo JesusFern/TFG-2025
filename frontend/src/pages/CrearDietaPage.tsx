@@ -23,7 +23,7 @@ const CrearDietaPage: React.FC = () => {
   const state = location.state as { clienteNombre?: string } | undefined;
   
   const clienteInfo = {
-    id: clienteId || "687526841859b1606e92f3f9",
+    id: clienteId || "",
     nombre: state?.clienteNombre || "Juan Pérez"
   };
   

@@ -5,8 +5,7 @@ const API_BASE_URL = import.meta.env.VITE_BACKEND_HOST;
 const API_ENDPOINT = '/api/diets';
 
 export const crearDieta = async (dietaData: CrearDietaDTO): Promise<ApiDietaResponse> => {
-  //const token = localStorage.getItem('token');
-  const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6IjY4NzUyN2Q2ZDNmNDk1NTEzNzJlOTQ5YSIsInJvbGUiOiJ3b3JrZXIiLCJpYXQiOjE3NTU0NDQ2NzQsImV4cCI6MTc1NTQ0ODI3NH0.2ytKkCC4tjFsqNu9oocD1RdKMiy3cLySRkFChos7F3Q';
+  const token = localStorage.getItem('token');
   if (!token) {
     throw new Error('No autorizado - Inicie sesión para continuar');
   }
