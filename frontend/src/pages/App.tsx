@@ -1,8 +1,17 @@
+import { useNavigate } from 'react-router-dom';
+import { 
+  Container, 
+  Title, 
+  Text, 
+  Group, 
+  Button, 
+  Image, 
+  Center,
+  Stack
+} from '@mantine/core';
 import reactLogo from '../assets/react.svg';
 import viteLogo from '/vite.svg';
 import '../styles/App.css';
-import Button from '../components/atoms/Button';
-import { useNavigate } from 'react-router-dom';
 
 function App() {
   const navigate = useNavigate();
@@ -11,24 +20,41 @@ function App() {
     navigate('/landingPage');
   };
 
+  const goToCreateDiet = () => {
+    navigate('/crear-dieta');
+  };
+
   return (
-    <>
-      <div>
-        <a href="https://vite.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <Button label="Pagina principal" onClick={goToLogin} />
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
+    <Container size="md" py="xl">
+      <Center mb="md">
+        <Group gap="xl">
+          <Image src={viteLogo} w={80} alt="Vite logo" />
+          <Image src={reactLogo} w={80} alt="React logo" className="logo react" />
+        </Group>
+      </Center>
+      
+      <Title order={1} ta="center" mb="xl">Vite + React + Mantine</Title>
+      
+      <Text ta="center" c="dimmed" mb="xl">
+        Este proyecto está configurado con Vite, React y Mantine para una experiencia de desarrollo moderna.
+      </Text>
+      
+      <Center>
+        <Stack gap="md">
+          <Button onClick={goToLogin} size="md">
+            Iniciar Sesión
+          </Button>
+          
+          <Button onClick={goToCreateDiet} variant="outline" size="md">
+            Crear Nueva Dieta
+          </Button>
+        </Stack>
+      </Center>
+      
+      <Text ta="center" c="dimmed" size="sm" mt="xl">
+        Haz clic en los logos de Vite y React para aprender más
+      </Text>
+    </Container>
   );
 }
 

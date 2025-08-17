@@ -4,6 +4,7 @@ import App from "../pages/App";
 import LoginPage from "../pages/LoginPage";
 import LandingPage from "../pages/LandingPage";
 import RegisterPage from "../pages/RegisterPage";
+import CrearDietaPage from "../pages/CrearDietaPage";
 
 const AppRoutes: React.FC = () => {
   return (
@@ -12,6 +13,8 @@ const AppRoutes: React.FC = () => {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/register" element={<RegisterPage />} />
         <Route path="/landingPage" element={<LandingPage />} />
+        <Route path="/crear-dieta/:clienteId" element={<CrearDietaPage />} />
+
       </Routes>
   );
 };
