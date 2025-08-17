@@ -17,7 +17,9 @@ import {
   rem,
   useMantineTheme,
   ActionIcon,
-  Alert
+  Alert,
+  Paper,
+  MantineProvider
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { 
@@ -49,15 +51,32 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
   clienteNombre = "Juan Pérez" 
 }) => {
   const theme = useMantineTheme();
+  const isDark = true; // Forzar modo oscuro para esta página
+  
   const styles = {
     boxContainer: {
-      backgroundColor: theme.colors.gray[0],
+      backgroundColor: isDark ? theme.colors.dark[6] : theme.colors.gray[0],
       borderRadius: theme.radius.md,
     },
     clientCard: {
-      backgroundColor: theme.colors.gray[0],
+      backgroundColor: isDark ? theme.colors.dark[5] : theme.colors.gray[0],
+    },
+    mainCard: {
+      backgroundColor: isDark ? theme.colors.dark[7] : "white",
+      color: isDark ? "white" : theme.black,
+    },
+    textColor: {
+      color: isDark ? "white" : theme.black,
+    },
+    title: {
+      color: theme.colors.blue[isDark ? 4 : 6],
+    },
+    textInput: {
+      backgroundColor: isDark ? theme.colors.dark[5] : "white",
+      color: isDark ? "white" : theme.black,
     }
   };
+  
   const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
   
   const tiposDieta = [
@@ -71,6 +90,8 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
     'Otras'
   ];
 
+  // Resto del código se mantiene igual
+  
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState<CrearDietaDTO>({
     nombre: '',
@@ -78,11 +99,13 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
     tipo: [],
     duracion: 28,
     comidasDiarias: 3,
-    fechaInicio: new Date(Date.now() + 86400000).toISOString().split('T')[0], // Mañana
+    fechaInicio: new Date(Date.now() + 86400000).toISOString().split('T')[0],
     asignadaA: clienteId || ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [stepError, setStepError] = useState<string | null>(null);
+  
+  // Resto de las funciones se mantienen igual
 
   const isValidMongoId = (id?: string) => id && /^[0-9a-fA-F]{24}$/.test(id);
 
@@ -135,9 +158,9 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
       if (!formData.duracion || formData.duracion < 1) {
         return { isValid: false, error: 'La duración debe ser un número entero mayor que 0' };
       }
-      
-      if (!formData.comidasDiarias || formData.comidasDiarias <= 1 || formData.comidasDiarias >= 10) {
-        return { isValid: false, error: 'El número de comidas debe ser entre 2 y 9' };
+
+      if (!formData.comidasDiarias || formData.comidasDiarias <= 1 || formData.comidasDiarias >= 7) {
+        return { isValid: false, error: 'El número de comidas debe ser entre 2 y 6' };
       }
       
       const today = new Date();
@@ -153,11 +176,13 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
   const isCurrentStepValid = useCallback(() => {
     return validateCurrentStep().isValid;
   }, [validateCurrentStep]);
+  
+  // Resto de funciones se mantienen igual
 
   const handleNextClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("Manejando clic en Siguiente, previniendo envío del formulario");
+    console.log("Manejando clic en Siguiente");
     
     const validation = validateCurrentStep();
     if (validation.isValid) {
@@ -171,7 +196,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
   const handlePrevClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("Manejando clic en Anterior, previniendo envío del formulario");
+    console.log("Manejando clic en Anterior");
     
     setStepError(null);
     setActiveStep((current) => Math.max(current - 1, 0));
@@ -180,7 +205,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
   const handleCancelClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    console.log("Manejando clic en Cancelar, previniendo envío del formulario");
+    console.log("Manejando clic en Cancelar");
     
     window.history.back();
   };
@@ -219,7 +244,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log("Enviando formulario completo (handleSubmit)");
+    console.log("Enviando formulario completo");
     
     const errorMessage = validateBeforeSubmit();
     if (errorMessage) {
@@ -231,20 +256,14 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
     setIsSubmitting(true);
     
     try {
-      const fechaArr = formData.fechaInicio.split('-'); // [yyyy, mm, dd]
+      const fechaArr = formData.fechaInicio.split('-');
       const fechaFormateada = `${fechaArr[2]}-${fechaArr[1]}-${fechaArr[0]}`;
-      
-      console.log("Enviando datos al backend:", {
-        ...formData,
-        fechaInicio: fechaFormateada
-      });
       
       const response = await crearDieta({
         ...formData,
         fechaInicio: fechaFormateada
       });
       
-      console.log("Respuesta exitosa del backend:", response);
       onSuccess(response.dieta);
       
       setFormData({
@@ -267,84 +286,103 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
   
   const fechaInicioDate = formData.fechaInicio ? new Date(formData.fechaInicio) : new Date(Date.now() + 86400000);
 
+  // Renderizados mejorados para modo oscuro
   const renderStepContent = () => {
     switch (activeStep) {
       case 0:
         return (
           <>
-            <Title order={4} mb="md" c={theme.colors.blue[6]}>Información básica de la dieta</Title>
+            <Title order={4} mb="md" style={styles.title}>Información básica de la dieta</Title>
             
             <TextInput
-              label="Nombre de la dieta"
+              label={<Text style={styles.textColor}>Nombre de la dieta</Text>}
               placeholder="Ej: Dieta mediterránea equilibrada"
               required
               value={formData.nombre}
               onChange={(e) => handleInputChange('nombre', e.target.value)}
               mb="md"
-              leftSection={<IconSalad size={16} />}
+              leftSection={<IconSalad size={16} color={isDark ? "white" : undefined} />}
               size="md"
+              styles={{ 
+                input: styles.textInput,
+                label: styles.textColor
+              }}
             />
             
             <Textarea
-              label="Descripción"
+              label={<Text style={styles.textColor}>Descripción</Text>}
               placeholder="Describe brevemente esta dieta y sus objetivos principales"
               minRows={3}
               value={formData.descripcion || ''}
               onChange={(e) => handleInputChange('descripcion', e.target.value)}
               mb="md"
               size="md"
+              styles={{ 
+                input: styles.textInput,
+                label: styles.textColor
+              }}
             />
           </>
         );
       case 1:
         return (
           <>
-            <Title order={4} mb="md" c={theme.colors.blue[6]}>Tipo de dieta</Title>
+            <Title order={4} mb="md" style={styles.title}>Tipo de dieta</Title>
             
-            <Box mb="xl" p="md" style={styles.boxContainer}>
+            <Paper p="md" radius="md" style={styles.boxContainer}>
               <CheckboxGroup
                 value={formData.tipo}
                 onChange={handleTipoChange}
                 required
                 mb="md"
-                label="Selecciona al menos un tipo de dieta"
+                label={<Text style={styles.textColor} fw={500}>Selecciona al menos un tipo de dieta</Text>}
               >
                 <SimpleGrid cols={{base: 1, xs: 2}} spacing="lg">
                   {tiposDieta.map((tipo) => (
                     <Checkbox
                       key={tipo}
                       value={tipo}
-                      label={tipo}
+                      label={<Text style={styles.textColor}>{tipo}</Text>}
                       size="md"
+                      color="blue"
+                      styles={{
+                        body: { alignItems: 'center' },
+                        inner: { backgroundColor: isDark ? theme.colors.dark[4] : undefined },
+                        input: { backgroundColor: isDark ? theme.colors.dark[4] : undefined }
+                      }}
                     />
                   ))}
                 </SimpleGrid>
               </CheckboxGroup>
-            </Box>
+            </Paper>
           </>
         );
       case 2:
         return (
           <>
-            <Title order={4} mb="md" c={theme.colors.blue[6]}>Planificación de la dieta</Title>
+            <Title order={4} mb="md" style={styles.title}>Planificación de la dieta</Title>
             
             <SimpleGrid cols={{base: 1, sm: 2}} spacing="md" mb="md">
               <NumberInput
-                label="Duración (días)"
-                description="Duración total del plan (entre 1 y 365 días)"
+                label={<Text style={styles.textColor}>Duración (días)</Text>}
+                description={<Text size="xs" style={styles.textColor}>Duración total del plan (entre 1 y 365 días)</Text>}
                 min={1}
                 max={365}
                 step={7}
                 required
                 value={formData.duracion}
                 onChange={(val) => handleInputChange('duracion', val || 28)}
-                leftSection={<IconCalendarStats size={16} />}
+                leftSection={<IconCalendarStats size={16} color={isDark ? "white" : undefined} />}
                 size="md"
+                styles={{ 
+                  input: styles.textInput,
+                  label: styles.textColor
+                }}
               />
               
               <Select
-                label="Comidas diarias"
-                description="Número de comidas al día (entre 2 y 9)"
+                label={<Text style={styles.textColor}>Comidas diarias</Text>}
+                description={<Text size="xs" style={styles.textColor}>Número de comidas al día (entre 2 y 6)</Text>}
                 data={[
                   { value: '2', label: '2 comidas' },
                   { value: '3', label: '3 comidas' },
@@ -356,23 +394,38 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
                 onChange={(val) => handleInputChange('comidasDiarias', parseInt(val || '3'))}
                 required
                 size="md"
+                styles={{ 
+                  input: styles.textInput,
+                  label: styles.textColor,
+                  dropdown: { backgroundColor: isDark ? theme.colors.dark[6] : undefined },
+                  option: { color: isDark ? "white" : undefined }
+                }}
               />
               
               <DatePickerInput
-                label="Fecha de inicio"
+                label={<Text style={styles.textColor}>Fecha de inicio</Text>}
                 placeholder="Selecciona una fecha"
-                description="Debe ser posterior a hoy"
-                leftSection={<IconCalendar size={16} />}
+                description={<Text size="xs" style={styles.textColor}>Debe ser posterior a hoy</Text>}
+                leftSection={<IconCalendar size={16} color={isDark ? "white" : undefined} />}
                 value={fechaInicioDate}
                 onChange={(date) => date && handleInputChange('fechaInicio', date)}
                 required
                 clearable={false}
                 minDate={new Date(Date.now() + 86400000)}
                 size="md"
+                styles={{ 
+                  input: styles.textInput,
+                  label: styles.textColor,
+                  day: { 
+                    color: isDark ? "white" : undefined,
+                    backgroundColor: isDark ? theme.colors.dark[6] : undefined
+                  },
+                  calendarHeader: { color: isDark ? "white" : undefined }
+                }}
               />
               
               <Box>
-                <Text size="sm" fw={500} mb={5}>Cliente asignado</Text>
+                <Text size="sm" fw={500} mb={5} style={styles.textColor}>Cliente asignado</Text>
                 <Card
                   withBorder
                   p="sm"
@@ -383,7 +436,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
                     <ActionIcon variant="light" color="blue" radius="xl" size="md">
                       <IconUser size="1.2rem" />
                     </ActionIcon>
-                    <Text fw={500}>{clienteNombre}</Text>
+                    <Text fw={500} style={styles.textColor}>{clienteNombre}</Text>
                   </Group>
                 </Card>
                 <input type="hidden" value={clienteId || ''} />
@@ -401,18 +454,20 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
       <Group justify="space-between" mt="xl">
         {activeStep > 0 ? (
           <Button 
-            variant="default" 
+            variant="outline"
             onClick={handlePrevClick}
             leftSection={<IconChevronLeft size={rem(18)} />}
             type="button"
+            color={isDark ? "gray.4" : "dark"}
           >
             Anterior
           </Button>
         ) : (
           <Button 
-            variant="default" 
+            variant="outline"
             onClick={handleCancelClick}
             type="button"
+            color={isDark ? "gray.4" : "dark"}
           >
             Cancelar
           </Button>
@@ -423,7 +478,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
             type="submit"
             loading={isSubmitting} 
             leftSection={isSubmitting ? undefined : <IconCheck size={rem(18)} />}
-            color="green"
+            color="teal"
           >
             {isSubmitting ? 'Creando...' : 'Crear Dieta'}
           </Button>
@@ -433,6 +488,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
             rightSection={<IconChevronRight size={rem(18)} />}
             disabled={!isCurrentStepValid()}
             type="button"
+            color="blue"
           >
             Siguiente
           </Button>
@@ -442,59 +498,72 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
   };
 
   return (
-    <Card shadow="sm" p="lg" radius="md" withBorder>
-      <div>
-        {stepError && (
-          <Alert 
-            icon={<IconAlertCircle size={16} />} 
-            title="Error de validación" 
-            color="red" 
-            mb="md"
-            withCloseButton
-            onClose={() => setStepError(null)}
+    <MantineProvider 
+      forceColorScheme="dark"
+      theme={{}}
+    >
+      <Card shadow="sm" p="lg" radius="md" withBorder style={styles.mainCard}>
+        <div>
+          {stepError && (
+            <Alert 
+              icon={<IconAlertCircle size={16} />} 
+              title="Error de validación" 
+              color="red" 
+              mb="md"
+              withCloseButton
+              onClose={() => setStepError(null)}
+              variant="filled"
+            >
+              {stepError}
+            </Alert>
+          )}
+          
+          <Stepper
+            active={activeStep}
+            onStepClick={setActiveStep}
+            orientation={isMobile ? "vertical" : "horizontal"}
+            allowNextStepsSelect={false}
+            iconSize={32}
+            mb="xl"
+            color="blue"
+            styles={{
+              stepLabel: { color: isDark ? theme.colors.gray[2] : undefined },
+              stepDescription: { color: isDark ? theme.colors.gray[4] : undefined },
+              separator: { backgroundColor: isDark ? theme.colors.dark[4] : undefined },
+              step: { borderColor: isDark ? theme.colors.dark[4] : undefined }
+            }}
           >
-            {stepError}
-          </Alert>
-        )}
-        
-        <Stepper
-          active={activeStep}
-          onStepClick={setActiveStep}
-          orientation={isMobile ? "vertical" : "horizontal"}
-          allowNextStepsSelect={false}
-          iconSize={32}
-          mb="xl"
-        >
-          <Stepper.Step
-            icon={<IconSalad size="1.5rem" />}
-            label="Información básica"
-            description="Nombre y descripción"
-          />
-          <Stepper.Step
-            icon={<IconClock size="1.5rem" />}
-            label="Tipo de dieta"
-            description="Características"
-          />
-          <Stepper.Step
-            icon={<IconCalendarStats size="1.5rem" />}
-            label="Planificación"
-            description="Duración y comidas"
-          />
-        </Stepper>
-        
-        {activeStep < 2 ? (
-          <>
-            {renderStepContent()}
-            {renderNavButtons()}
-          </>
-        ) : (
-          <form onSubmit={handleSubmit}>
-            {renderStepContent()}
-            {renderNavButtons()}
-          </form>
-        )}
-      </div>
-    </Card>
+            <Stepper.Step
+              icon={<IconSalad size="1.5rem" />}
+              label="Información básica"
+              description="Nombre y descripción"
+            />
+            <Stepper.Step
+              icon={<IconClock size="1.5rem" />}
+              label="Tipo de dieta"
+              description="Características"
+            />
+            <Stepper.Step
+              icon={<IconCalendarStats size="1.5rem" />}
+              label="Planificación"
+              description="Duración y comidas"
+            />
+          </Stepper>
+          
+          {activeStep < 2 ? (
+            <>
+              {renderStepContent()}
+              {renderNavButtons()}
+            </>
+          ) : (
+            <form onSubmit={handleSubmit}>
+              {renderStepContent()}
+              {renderNavButtons()}
+            </form>
+          )}
+        </div>
+      </Card>
+    </MantineProvider>
   );
 };
 
