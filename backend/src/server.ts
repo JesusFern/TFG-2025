@@ -1,4 +1,4 @@
-import express, { Request, Response } from "express";
+import express, { Request, Response, NextFunction } from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
@@ -39,9 +39,11 @@ app.get("/", (req: Request, res: Response) => {
   res.send("API corriendo...");
 });
 
-app.use((err: Error, req: Request, res: Response) => {
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   console.error(`[${req.method}] ${req.originalUrl} - Error: ${err.message}`);
   res.status(500).json({ message: err.message || "Error interno del servidor" });
+  // Evita warning del linter por parámetro no usado manteniendo la firma de middleware de error
+  void _next;
 });
 
 if (process.env.NODE_ENV !== "test") {
