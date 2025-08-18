@@ -1,7 +1,9 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Stepper, Button, Group, Paper, Title, TextInput, PasswordInput, Select, MultiSelect, NumberInput, Textarea
 } from '@mantine/core';
+import { Alert } from '@mantine/core';
 import classes from '../../styles/RegisterForm.module.css';
 import DatePickerInput from "../atoms/DatePickerInput";
 
@@ -36,10 +38,14 @@ const generoOptions = [
 
 const RegisterForm = () => {
   const [active, setActive] = useState(0);
+  const navigate = useNavigate();
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState<{ 
     [key: string]: string | number | string[] | null | Date;
     nombre: string;
     email: string;
+    telefono: string;
     fechaNacimiento: null | Date;
     password: string;
     genero: string;
@@ -60,6 +66,7 @@ const RegisterForm = () => {
   }>({
     nombre: '',
     email: '',
+    telefono: '',
     fechaNacimiento: null,
     password: '',
     genero: '',
@@ -83,15 +90,24 @@ const RegisterForm = () => {
   const handleChange = (field: string, value: string | number | string[] | null) => setForm({ ...form, [field]: value });
 
   const requiredFields = [
-    ['nombre', 'email', 'password', 'genero'],
+    // Paso 0: Personales
+    ['nombre', 'email', 'telefono', 'password', 'genero', 'fechaNacimiento'],
+    // Paso 1: Datos físicos
     ['altura', 'peso', 'objetivoPeso'],
-    // ...etc para cada paso
+    // Paso 2: Actividad
+    ['nivelActividad', 'frecuenciaEjercicio'],
+    // Paso 3: Ejercicio
+    ['tipoEjercicio', 'objetivo'],
+    // Paso 4: Nutrición
+    ['comidasDia'],
+    // Paso 5: Restricciones (sin obligatorios)
+    []
   ];
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
 
   const validateStep = () => {
-    const fields = requiredFields[active];
+    const fields = requiredFields[active] ?? [];
     const newErrors: { [key: string]: string } = {};
     fields.forEach(field => {
       if (!form[field]) {
@@ -104,6 +120,70 @@ const RegisterForm = () => {
 
   const handleNext = () => {
     if (validateStep()) setActive((current) => current + 1);
+  };
+
+  const csvToArray = (v?: string) => (v ?? '').split(',').map(s => s.trim()).filter(Boolean);
+  const mapGender = (g?: string) => g ? g.charAt(0).toUpperCase() + g.slice(1).toLowerCase() : g;
+
+  const handleSubmit = async () => {
+    if (!validateStep()) return;
+
+    setSubmitError(null);
+    setIsSubmitting(true);
+    const birthDate = form.fechaNacimiento
+      ? new Date(form.fechaNacimiento as unknown as string | number | Date).toISOString()
+      : undefined;
+
+    const payload = {
+      fullName: String(form.nombre),
+      email: String(form.email).trim().toLowerCase(),
+      password: String(form.password),
+      phoneNumber: String(form.telefono),
+      gender: mapGender(String(form.genero)),
+      birthDate,
+      health: {
+        altura: Number(form.altura),
+        pesoActual: Number(form.peso),
+        objetivoPeso: Number(form.objetivoPeso),
+        condicionesMedicas: csvToArray(String(form.condiciones)),
+        restriccionesDieteticas: csvToArray(String(form.restricciones)),
+        alergiasIntolerancias: csvToArray(String(form.alergias)),
+        preferenciasAlimentarias: csvToArray(String(form.preferencias))
+      },
+      activity: {
+        nivelActividad: String(form.nivelActividad),
+        frecuenciaEjercicio: Number(form.frecuenciaEjercicio),
+        tipoEjercicio: Array.isArray(form.tipoEjercicio) ? form.tipoEjercicio : [],
+        objetivo: String(form.objetivo),
+        preferenciasEjercicios: csvToArray(String(form.otrosEjercicios))
+      }
+    };
+
+    try {
+      const res = await fetch('/api/users/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        const backendMsg = Array.isArray(data?.errors)
+          ? data.errors.map((e: { msg?: string }) => e?.msg).filter(Boolean).join('\n')
+          : (data?.message || 'Error al registrar');
+        setSubmitError(backendMsg);
+        return;
+      }
+      if (data?.token) {
+        localStorage.setItem('token', data.token);
+      }
+      navigate('/login');
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : 'Error al registrar';
+      setSubmitError(msg);
+      console.error(e);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   // Renderizado de cada paso
@@ -127,6 +207,13 @@ const RegisterForm = () => {
         {/* Espacio para el título */}
         <div style={{ height: 60 }} />
 
+        {/* Error global del envío */}
+        {submitError && (
+          <Alert color="red" variant="light" style={{ marginBottom: 12 }}>
+            {submitError}
+          </Alert>
+        )}
+
         <Stepper active={active}>
             <Stepper.Step label="Personales">
             <div style={{ display: 'flex', gap: 24, width: '100%' }}>
@@ -147,6 +234,15 @@ const RegisterForm = () => {
                     required
                     size="md"
                     error={errors.email}
+                />
+                <TextInput
+                    label="Número de teléfono"
+                    placeholder="+34123456789"
+                    value={form.telefono}
+                    onChange={e => handleChange('telefono', e.target.value)}
+                    required
+                    size="md"
+                    error={errors.telefono}
                 />
                 </div>
                 {/* Columna derecha */}
@@ -221,23 +317,23 @@ const RegisterForm = () => {
           </Stepper.Step>
         </Stepper>
 
-  {/* Botones abajo */}
-  <Group justify="space-between" mt="xl" style={{ width: '100%', position: 'absolute', bottom: 32, left: 0, padding: '0 32px' }}>
-    <Button
-      variant="default"
-      onClick={() => setActive((current) => Math.max(current - 1, 0))}
-      disabled={active === 0}
-    >
-      Atrás
-    </Button>
-    <Button onClick={handleNext}>
-      Siguiente
-    </Button>
-  </Group>
-</>
-      </Paper>
-    </div>
-  );
-};
+    {/* Botones abajo */}
+    <Group justify="space-between" mt="xl" style={{ width: '100%', position: 'absolute', bottom: 32, left: 0, padding: '0 32px' }}>
+      <Button
+        variant="default"
+        onClick={() => setActive((current) => Math.max(current - 1, 0))}
+        disabled={active === 0}
+      >
+        Atrás
+      </Button>
+      <Button onClick={active < 5 ? handleNext : handleSubmit} disabled={isSubmitting}>
+        {isSubmitting ? 'Enviando...' : active < 5 ? 'Siguiente' : 'Crear cuenta'}
+      </Button>
+    </Group>
+  </>
+        </Paper>
+      </div>
+    );
+  };
 
 export default RegisterForm;
