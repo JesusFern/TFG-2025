@@ -1,60 +1,88 @@
 import { useNavigate } from 'react-router-dom';
 import { 
-  Container, 
   Title, 
   Text, 
   Group, 
   Button, 
   Image, 
-  Center,
-  Stack
+  Stack,
+  Paper,
+  Box,
+  useMantineColorScheme
 } from '@mantine/core';
-import reactLogo from '../assets/react.svg';
-import viteLogo from '/vite.svg';
-import '../styles/App.css';
+import logo from '../assets/images/Logo-Nutroos.svg';
 
 function App() {
   const navigate = useNavigate();
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === 'dark';
 
   const goToLogin = () => {
+    navigate('/login');
+  };
+
+  const goToLandingPage = () => {
     navigate('/landingPage');
   };
 
-  const goToCreateDiet = () => {
-    navigate('/crear-dieta');
-  };
-
   return (
-    <Container size="md" py="xl">
-      <Center mb="md">
-        <Group gap="xl">
-          <Image src={viteLogo} w={80} alt="Vite logo" />
-          <Image src={reactLogo} w={80} alt="React logo" className="logo react" />
-        </Group>
-      </Center>
+    <Stack align="center" justify="center" py="xl" gap="xl">
+      <Box pos="relative" style={{ width: 150, height: 150 }}>
+        <Image 
+          src={logo} 
+          alt="Nutroos logo" 
+          fit="contain"
+          style={{
+            filter: isDark ? 'brightness(1.5)' : 'none',
+            width: '100%',
+            height: '100%'
+          }}
+        />
+      </Box>
       
-      <Title order={1} ta="center" mb="xl">Vite + React + Mantine</Title>
+      <Title order={1} ta="center" c={isDark ? "gray.0" : "gray.8"}>
+        Bienvenido a Nutroos
+      </Title>
       
-      <Text ta="center" c="dimmed" mb="xl">
-        Este proyecto está configurado con Vite, React y Mantine para una experiencia de desarrollo moderna.
+      <Text ta="center" c="dimmed" size="lg" style={{ maxWidth: 600 }}>
+        Tu plataforma de gestión nutricional profesional.
+        Planifica, monitorea y gestiona dietas de manera eficiente.
       </Text>
       
-      <Center>
-        <Stack gap="md">
-          <Button onClick={goToLogin} size="md">
-            Iniciar Sesión
-          </Button>
-          
-          <Button onClick={goToCreateDiet} variant="outline" size="md">
-            Crear Nueva Dieta
-          </Button>
+      <Group mt="xl">
+        <Button size="lg" onClick={goToLogin} color="nutroos-green">
+          Iniciar Sesión
+        </Button>
+        <Button 
+          size="lg" 
+          variant={isDark ? "outline" : "light"} 
+          onClick={goToLandingPage} 
+          color="nutroos-green"
+        >
+          Conocer más
+        </Button>
+      </Group>
+      
+      <Paper 
+        p="xl" 
+        mt="xl" 
+        radius="md" 
+        withBorder
+        style={{ 
+          backgroundColor: 'var(--app-paper-bg)',
+          borderColor: 'var(--app-border-color)'
+        }}
+      >
+        <Title order={3} mb="md" c={isDark ? "gray.0" : "gray.8"}>Características principales</Title>
+        
+        <Stack>
+          <Text c="var(--app-text)">✓ Creación de dietas personalizadas</Text>
+          <Text c="var(--app-text)">✓ Seguimiento de progreso de clientes</Text>
+          <Text c="var(--app-text)">✓ Gestión eficiente de pacientes</Text>
+          <Text c="var(--app-text)">✓ Informes detallados y estadísticas</Text>
         </Stack>
-      </Center>
-      
-      <Text ta="center" c="dimmed" size="sm" mt="xl">
-        Haz clic en los logos de Vite y React para aprender más
-      </Text>
-    </Container>
+      </Paper>
+    </Stack>
   );
 }
 
