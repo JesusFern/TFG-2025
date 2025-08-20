@@ -1,36 +1,46 @@
 :root {
-  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-}
-
-a {
-  font-weight: 500;
-  color: #646cff;
-  text-decoration: inherit;
-}
-a:hover {
-  color: #535bf2;
+  /* Variables por defecto (modo claro) */
+  --app-background: #f9fcfa;
+  --app-paper-bg: #ffffff;
+  --app-border-color: #dbe5de;
+  --app-accent: #5fba7d;
+  --app-accent-light: #b5e2c7;
+  --app-header-bg: #ffffff;
+  --app-footer-bg: #f0f5f2;
+  --app-text: #5c6f61;
+  --app-text-secondary: #748a7b;
+  --app-card-bg: #ffffff;
+  --app-sidebar-bg: #f9fcfa;
+  --app-hover-bg: #e6efe8;
 }
 
 body {
   margin: 0;
   padding: 0;
+  min-height: 100vh;
+  background-color: var(--app-background);
+  color: var(--app-text);
 }
 
-html, body, #root {
-  width: 100vw;
-  height: 100vh;
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-  /* overflow: hidden; */
+/* Clases de utilidad para usar los colores personalizados */
+.bg-paper {
+  background-color: var(--app-paper-bg);
 }
+
+.bg-accent {
+  background-color: var(--app-accent);
+}
+
+.bg-accent-light {
+  background-color: var(--app-accent-light);
+}
+
+.text-accent {
+  color: var(--app-accent);
+}
+
+.border-custom {
+  border-color: var(--app-border-color);
+}
+
+/* Otros estilos globales */
