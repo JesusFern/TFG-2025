@@ -1,24 +1,66 @@
-// src/components/atoms/Button.tsx
+import React from 'react';
 import styled from 'styled-components';
 
-interface ButtonProps {
-  variant?: 'primary' | 'secondary';
-  size?: 'small' | 'medium' | 'large';
+export interface ButtonProps {
+  primary?: boolean;
+  children?: React.ReactNode;
+  onClick?: () => void;
+  type?: 'button' | 'submit' | 'reset';
+  disabled?: boolean;
+  className?: string;
 }
 
-export const Button = styled.button<ButtonProps>`
-  padding: ${props => props.size === 'large' ? '1rem 3rem' : props.size === 'small' ? '0.3rem 1rem' : '0.5rem 1.5rem'};
-  border-radius: 50px;
+const StyledButton = styled.button<ButtonProps>`
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  font-size: 1rem;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s;
-  background: ${props => props.variant === 'secondary' ? 'transparent' : '#2ecc71'};
-  border: 2px solid #2ecc71;
-  color: ${props => props.variant === 'secondary' ? '#2ecc71' : 'white'};
+  transition: all 0.2s ease;
+  border: 2px solid var(--app-accent);
+  
+  /* Estilo primario (relleno verde) o secundario (outline) */
+  background-color: ${props => props.primary 
+    ? 'var(--app-accent)' 
+    : 'transparent'};
+  color: ${props => props.primary 
+    ? 'white' 
+    : 'var(--app-accent)'};
   
   &:hover {
-    background: ${props => props.variant === 'secondary' ? '#2ecc71' : '#25a25a'};
-    color: white;
-    border-color: ${props => props.variant === 'secondary' ? '#2ecc71' : '#25a25a'};
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    background-color: ${props => props.primary 
+      ? 'var(--app-accent)' 
+      : 'rgba(76, 180, 111, 0.1)'};
+  }
+  
+  &:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+  
+  &:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
   }
 `;
+
+export const Button: React.FC<ButtonProps> = ({
+  children,
+  primary = false,
+  type = 'button',
+  ...props
+}) => {
+  return (
+    <StyledButton
+      primary={primary}
+      type={type}
+      {...props}
+    >
+      {children}
+    </StyledButton>
+  );
+};

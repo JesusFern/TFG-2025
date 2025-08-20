@@ -1,55 +1,78 @@
-// src/components/molecules/FAQItem.tsx
 import React, { useState } from 'react';
 import styled from 'styled-components';
 
-const FAQItemContainer = styled.div`
+// Declara explícitamente la interfaz con el campo isDark
+export interface FAQItemProps {
+  question: string;
+  answer: string;
+  isDark?: boolean;
+}
+
+const FAQItemContainer = styled.div<{ isDark?: boolean }>`
   margin-bottom: 1.5rem;
-  border-bottom: 1px solid #eee;
-  padding-bottom: 1.5rem;
+  border: 1px solid var(--app-border-color);
+  border-radius: 10px;
+  overflow: hidden;
+  background-color: ${props => props.isDark ? 'var(--app-paper-bg)' : 'white'};
+  box-shadow: ${props => props.isDark 
+    ? '0 4px 8px rgba(0, 0, 0, 0.2)' 
+    : '0 4px 8px rgba(0, 0, 0, 0.05)'};
 `;
 
-const Question = styled.div`
-  font-size: 1.2rem;
+const Question = styled.div<{ isDark?: boolean, isOpen: boolean }>`
+  padding: 1.25rem;
   font-weight: 600;
-  color: #333;
-  margin-bottom: 0.5rem;
   cursor: pointer;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  border-bottom: ${props => props.isOpen 
+    ? `1px solid var(--app-border-color)` 
+    : 'none'};
+  color: ${props => props.isDark ? 'var(--mantine-color-gray-0)' : 'var(--app-text)'};
+  background-color: ${props => props.isOpen 
+    ? props.isDark ? 'rgba(76, 180, 111, 0.15)' : 'rgba(76, 180, 111, 0.05)'
+    : 'transparent'};
   
-  span {
-    transition: transform 0.3s;
+  &:hover {
+    background-color: ${props => props.isDark 
+      ? 'rgba(76, 180, 111, 0.1)' 
+      : 'rgba(76, 180, 111, 0.03)'};
+  }
+  
+  &::after {
+    content: '${props => props.isOpen ? "−" : "+"}';
+    font-size: 1.5rem;
+    color: var(--app-accent);
   }
 `;
 
-interface AnswerProps {
-  isOpen: boolean;
-}
-
-const Answer = styled.div<AnswerProps>`
-  color: #666;
-  line-height: 1.6;
-  max-height: ${props => (props.isOpen ? '500px' : '0')};
+const Answer = styled.div<{ isDark?: boolean, isOpen: boolean }>`
+  padding: ${props => props.isOpen ? '1.25rem' : '0 1.25rem'};
+  height: ${props => props.isOpen ? 'auto' : '0'};
   overflow: hidden;
-  transition: max-height 0.5s ease;
+  opacity: ${props => props.isOpen ? '1' : '0'};
+  transition: all 0.3s ease-in-out;
+  color: ${props => props.isDark ? 'var(--mantine-color-gray-3)' : 'var(--app-text-secondary)'};
+  line-height: 1.6;
 `;
 
-interface FAQItemProps {
-  question: string;
-  answer: string;
-}
-
-export const FAQItem: React.FC<FAQItemProps> = ({ question, answer }) => {
+// Define el componente con la interfaz de props explícita
+export const FAQItem: React.FC<FAQItemProps> = ({ question, answer, isDark }) => {
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <FAQItemContainer>
-      <Question onClick={() => setIsOpen(!isOpen)}>
+    <FAQItemContainer isDark={isDark}>
+      <Question 
+        onClick={() => setIsOpen(!isOpen)} 
+        isOpen={isOpen} 
+        isDark={isDark}
+      >
         {question}
-        <span style={{ transform: isOpen ? 'rotate(45deg)' : 'none' }}>+</span>
       </Question>
-      <Answer isOpen={isOpen}>{answer}</Answer>
+      <Answer isOpen={isOpen} isDark={isDark}>
+        {answer}
+      </Answer>
     </FAQItemContainer>
   );
 };

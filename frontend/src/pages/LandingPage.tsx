@@ -1,21 +1,19 @@
-// src/pages/LandingPage.tsx
 import React from 'react';
-import { LandingLayout } from '../components/templates/LandingLayout';
-import { Navbar } from '../components/organisms/Navbar';
+import { Container } from '@mantine/core';
 import { Hero } from '../components/organisms/Hero';
 import { Features } from '../components/organisms/Features';
 import { FAQ } from '../components/organisms/FAQ';
-import { Footer } from '../components/organisms/Footer';
+import Layout from '../components/layout/Layout';
 
 const LandingPage: React.FC = () => {
   return (
-    <LandingLayout>
-      <Navbar />
-      <Hero />
-      <Features />
-      <FAQ />
-      <Footer />
-    </LandingLayout>
+    <Layout>
+      <Container size="xl" px="xs">
+        <Hero />
+        <Features />
+        <FAQ />
+      </Container>
+    </Layout>
   );
 };
 
