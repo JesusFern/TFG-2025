@@ -1,11 +1,17 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import {
-  Stepper, Button, Group, Paper, Title, TextInput, PasswordInput, Select, MultiSelect, NumberInput, Textarea
-} from '@mantine/core';
-import { Alert } from '@mantine/core';
+import { Stepper, Paper } from '@mantine/core';
 import classes from '../../styles/RegisterForm.module.css';
-import DatePickerInput from "../atoms/DatePickerInput";
+import FormSectionTitle from '../atoms/FormSectionTitle';
+import GlobalErrorOverlay from '../atoms/GlobalErrorOverlay';
+import StepNavigation from '../molecules/StepNavigation';
+import PersonalInfoStep from '../molecules/PersonalInfoStep';
+import PhysicalDataStep from '../molecules/PhysicalDataStep';
+import ActivityStep from '../molecules/ActivityStep';
+import ExerciseStep from '../molecules/ExerciseStep';
+import NutritionStep from '../molecules/NutritionStep';
+import RestrictionsStep from '../molecules/RestrictionsStep';
+import { RegisterFormErrors, RegisterFormState } from '../../types';
 
 const actividadOptions = [
   { value: 'sedentario', label: 'Sedentario' },
@@ -41,29 +47,7 @@ const RegisterForm = () => {
   const navigate = useNavigate();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [form, setForm] = useState<{ 
-    [key: string]: string | number | string[] | null | Date;
-    nombre: string;
-    email: string;
-    telefono: string;
-    fechaNacimiento: null | Date;
-    password: string;
-    genero: string;
-    altura: string;
-    peso: string;
-    objetivoPeso: string;
-    condiciones: string;
-    nivelActividad: string;
-    frecuenciaEjercicio: string;
-    tipoEjercicio: string[];
-    otrosEjercicios: string;
-    disponibilidad: string;
-    objetivo: string;
-    preferencias: string;
-    comidasDia: string;
-    restricciones: string;
-    alergias: string;
-  }>({
+  const [form, setForm] = useState<RegisterFormState>({
     nombre: '',
     email: '',
     telefono: '',
@@ -104,7 +88,7 @@ const RegisterForm = () => {
     []
   ];
 
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
+  const [errors, setErrors] = useState<RegisterFormErrors>({});
 
   const validateStep = () => {
     const fields = requiredFields[active] ?? [];
@@ -186,154 +170,101 @@ const RegisterForm = () => {
     }
   };
 
-  // Renderizado de cada paso
   return (
     <div className={classes.wrapper}>
+      <GlobalErrorOverlay message={submitError} withCloseButton onClose={() => setSubmitError(null)} />
       <Paper className={classes.form}>
-        <>
-        {/* Título centrado arriba */}
-        <div style={{
-            position: 'absolute',
-            top: 32,
-            left: 0,
-            width: '100%',
-            display: 'flex',
-            justifyContent: 'center',
-            zIndex: 2
-        }}>
-            <Title order={2} className={classes.title}>Crea tu cuenta</Title>
+        <div style={{ position: 'absolute', top: 32, left: 0, width: '100%', display: 'flex', justifyContent: 'center', zIndex: 2 }}>
+          <FormSectionTitle className={classes.title}>Crea tu cuenta</FormSectionTitle>
         </div>
-
-        {/* Espacio para el título */}
         <div style={{ height: 60 }} />
 
-        {/* Error global del envío */}
-        {submitError && (
-          <Alert color="red" variant="light" style={{ marginBottom: 12 }}>
-            {submitError}
-          </Alert>
-        )}
-
         <Stepper active={active}>
-            <Stepper.Step label="Personales">
-            <div style={{ display: 'flex', gap: 24, width: '100%' }}>
-                {/* Columna izquierda */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <TextInput
-                    label="Nombre y apellidos"
-                    value={form.nombre}
-                    onChange={e => handleChange('nombre', e.target.value)}
-                    required
-                    size="md"
-                    error={errors.nombre}
-                />
-                <TextInput
-                    label="Correo electrónico"
-                    value={form.email}
-                    onChange={e => handleChange('email', e.target.value)}
-                    required
-                    size="md"
-                    error={errors.email}
-                />
-                <TextInput
-                    label="Número de teléfono"
-                    placeholder="+34123456789"
-                    value={form.telefono}
-                    onChange={e => handleChange('telefono', e.target.value)}
-                    required
-                    size="md"
-                    error={errors.telefono}
-                />
-                </div>
-                {/* Columna derecha */}
-                <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 12 }}>
-                <DatePickerInput
-                    label="Fecha de nacimiento"
-                    value={form.fechaNacimiento ? new Date(form.fechaNacimiento) : null}
-                    onChange={(date) => handleChange('fechaNacimiento', date ? date.toISOString() : null)}
-                    error={errors.fechaNacimiento}
-                    required
-                    />
-                <PasswordInput
-                    label="Contraseña"
-                    value={form.password}
-                    onChange={e => handleChange('password', e.target.value)}
-                    required
-                    size="md"
-                    error={errors.password}
-                />
-                <Select
-                    label="Género"
-                    data={generoOptions}
-                    value={form.genero}
-                    onChange={value => handleChange('genero', value)}
-                    required
-                    size="md"
-                    error={errors.genero}
-                />
-                </div>
-            </div>
-            </Stepper.Step>
-            {/* Paso 2 */}
+          <Stepper.Step label="Personales">
+            <PersonalInfoStep
+              values={{
+                nombre: String(form.nombre),
+                email: String(form.email),
+                telefono: String(form.telefono),
+                fechaNacimiento: form.fechaNacimiento ? new Date(form.fechaNacimiento as Date) : null,
+                password: String(form.password),
+                genero: String(form.genero),
+              }}
+              errors={errors}
+              onChange={handleChange}
+              generoOptions={generoOptions}
+            />
+          </Stepper.Step>
+
           <Stepper.Step label="Datos físicos">
-            <div style={{ display: 'flex', gap: 8 }}>
-              <TextInput
-                label="Altura (cm)"
-                value={form.altura}
-                onChange={e => handleChange('altura', e.target.value)}
-                style={{ flex: 1 }}
-              />
-              <TextInput
-                label="Peso actual (kg)"
-                value={form.peso}
-                onChange={e => handleChange('peso', e.target.value)}
-                style={{ flex: 1 }}
-              />
-            </div>
-            <NumberInput label="Objetivo de peso (kg)" value={form.objetivoPeso} onChange={value => handleChange('objetivoPeso', value)} required mt="md" />
-            <Textarea label="Condiciones médicas" value={form.condiciones} onChange={e => handleChange('condiciones', e.target.value)} mt="md" />
+            <PhysicalDataStep
+              values={{
+                altura: form.altura,
+                peso: form.peso,
+                objetivoPeso: form.objetivoPeso,
+                condiciones: String(form.condiciones),
+              }}
+              onChange={handleChange}
+            />
           </Stepper.Step>
-          {/* Paso 3 */}
+
           <Stepper.Step label="Actividad">
-            <Select label="Nivel de actividad física" data={actividadOptions} value={form.nivelActividad} onChange={value => handleChange('nivelActividad', value)} required />
-            <NumberInput label="Frecuencia de ejercicio semanal" value={form.frecuenciaEjercicio} onChange={value => handleChange('frecuenciaEjercicio', value)} required mt="md" />
+            <ActivityStep
+              values={{
+                nivelActividad: String(form.nivelActividad),
+                frecuenciaEjercicio: form.frecuenciaEjercicio,
+              }}
+              onChange={handleChange}
+              actividadOptions={actividadOptions}
+            />
           </Stepper.Step>
-          {/* Paso 4 */}
+
           <Stepper.Step label="Ejercicio">
-            <MultiSelect label="Tipo de ejercicio habitual" data={ejercicioOptions} value={form.tipoEjercicio} onChange={value => handleChange('tipoEjercicio', value)} required />
-            <TextInput label="Otros ejercicios" value={form.otrosEjercicios} onChange={e => handleChange('otrosEjercicios', e.target.value)} mt="md" />
-            <TextInput label="Disponibilidad para entrenar" value={form.disponibilidad} onChange={e => handleChange('disponibilidad', e.target.value)} mt="md" />
-            <Select label="Objetivo principal" data={objetivoOptions} value={form.objetivo} onChange={value => handleChange('objetivo', value)} required mt="md" />
+            <ExerciseStep
+              values={{
+                tipoEjercicio: Array.isArray(form.tipoEjercicio) ? form.tipoEjercicio : [],
+                otrosEjercicios: String(form.otrosEjercicios),
+                disponibilidad: String(form.disponibilidad),
+                objetivo: String(form.objetivo),
+              }}
+              onChange={handleChange}
+              ejercicioOptions={ejercicioOptions}
+              objetivoOptions={objetivoOptions}
+            />
           </Stepper.Step>
-          {/* Paso 5 */}
+
           <Stepper.Step label="Nutrición">
-            <Textarea label="Preferencias alimentarias" value={form.preferencias} onChange={e => handleChange('preferencias', e.target.value)} />
-            <NumberInput label="Número de comidas al día" value={form.comidasDia} onChange={value => handleChange('comidasDia', value)} required mt="md" />
+            <NutritionStep
+              values={{
+                preferencias: String(form.preferencias),
+                comidasDia: form.comidasDia,
+              }}
+              onChange={handleChange}
+            />
           </Stepper.Step>
-          {/* Paso 6 */}
+
           <Stepper.Step label="Restricciones">
-            <Textarea label="Restricciones alimentarias" value={form.restricciones} onChange={e => handleChange('restricciones', e.target.value)} />
-            <Textarea label="Intolerancias o alergias alimentarias" value={form.alergias} onChange={e => handleChange('alergias', e.target.value)} mt="md" />
+            <RestrictionsStep
+              values={{
+                restricciones: String(form.restricciones),
+                alergias: String(form.alergias),
+              }}
+              onChange={handleChange}
+            />
           </Stepper.Step>
         </Stepper>
 
-    {/* Botones abajo */}
-    <Group justify="space-between" mt="xl" style={{ width: '100%', position: 'absolute', bottom: 32, left: 0, padding: '0 32px' }}>
-      <Button
-        variant="default"
-        onClick={() => setActive((current) => Math.max(current - 1, 0))}
-        disabled={active === 0}
-      >
-        Atrás
-      </Button>
-      <Button onClick={active < 5 ? handleNext : handleSubmit} disabled={isSubmitting}>
-        {isSubmitting ? 'Enviando...' : active < 5 ? 'Siguiente' : 'Crear cuenta'}
-      </Button>
-    </Group>
-  </>
-        </Paper>
-      </div>
-    );
-  };
+        <StepNavigation
+          isFirstStep={active === 0}
+          isLastStep={active >= 5}
+          isSubmitting={isSubmitting}
+          onBack={() => setActive((current) => Math.max(current - 1, 0))}
+          onNext={handleNext}
+          onSubmit={handleSubmit}
+        />
+      </Paper>
+    </div>
+  );
+};
 
 export default RegisterForm;
