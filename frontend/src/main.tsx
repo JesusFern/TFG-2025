@@ -3,9 +3,9 @@ import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
 import { MantineProvider } from '@mantine/core';
 import '@mantine/core/styles.css';
+import '@mantine/dates/styles.css';
 import "./styles/index.css";
 import AppRoutes from "./routes/routes";
-import "react-datepicker/dist/react-datepicker.css";
 import { theme } from './styles/mantine/MantineOverride';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(

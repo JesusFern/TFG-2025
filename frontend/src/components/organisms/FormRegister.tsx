@@ -10,36 +10,41 @@ import PhysicalDataStep from '../molecules/PhysicalDataStep';
 import ActivityStep from '../molecules/ActivityStep';
 import ExerciseStep from '../molecules/ExerciseStep';
 import NutritionStep from '../molecules/NutritionStep';
-import RestrictionsStep from '../molecules/RestrictionsStep';
 import { RegisterFormErrors, RegisterFormState } from '../../types';
+import { apiRequest, apiConfig } from '../../services/api';
 
 const actividadOptions = [
-  { value: 'sedentario', label: 'Sedentario' },
-  { value: 'ligero', label: 'Ligero' },
-  { value: 'moderado', label: 'Moderado' },
-  { value: 'intenso', label: 'Intenso' },
+  { value: 'Sedentario', label: 'Sedentario' },
+  { value: 'Ocasional', label: 'Ocasional' },
+  { value: 'Regular', label: 'Regular' },
+  { value: 'Frecuente', label: 'Frecuente' },
+  { value: 'Diario', label: 'Diario' },
 ];
 
 const ejercicioOptions = [
-  { value: 'futbol', label: 'Fútbol' },
-  { value: 'natacion', label: 'Natación' },
-  { value: 'gimnasio', label: 'Gimnasio' },
-  { value: 'running', label: 'Running' },
-  { value: 'ciclismo', label: 'Ciclismo' },
-  { value: 'otros', label: 'Otros' },
+  { value: 'Cardio', label: 'Cardio' },
+  { value: 'Musculación', label: 'Musculación' },
+  { value: 'Deportes de equipo', label: 'Deportes de equipo' },
+  { value: 'Yoga/Pilates', label: 'Yoga/Pilates' },
+  { value: 'Natación', label: 'Natación' },
+  { value: 'Ciclismo', label: 'Ciclismo' },
+  { value: 'Running', label: 'Running' },
+  { value: 'Otros', label: 'Otros' },
 ];
 
 const objetivoOptions = [
-  { value: 'hipertrofia', label: 'Hipertrofia' },
-  { value: 'perdida_peso', label: 'Pérdida de peso' },
-  { value: 'rendimiento', label: 'Rendimiento deportivo' },
-  { value: 'salud', label: 'Mejorar salud' },
+  { value: 'Pérdida de peso', label: 'Pérdida de peso' },
+  { value: 'Ganancia muscular', label: 'Ganancia muscular' },
+  { value: 'Resistencia', label: 'Resistencia' },
+  { value: 'Flexibilidad', label: 'Flexibilidad' },
+  { value: 'Salud general', label: 'Salud general' },
+  { value: 'Rehabilitación', label: 'Rehabilitación' },
 ];
 
 const generoOptions = [
-  { value: 'masculino', label: 'Masculino' },
-  { value: 'femenino', label: 'Femenino' },
-  { value: 'otro', label: 'Otro' },
+  { value: 'Masculino', label: 'Masculino' },
+  { value: 'Femenino', label: 'Femenino' },
+  { value: 'Otro', label: 'Otro' },
 ];
 
 const RegisterForm = () => {
@@ -70,44 +75,187 @@ const RegisterForm = () => {
     alergias: '',
   });
 
-  // Función para actualizar el estado del formulario
   const handleChange = (field: string, value: string | number | string[] | null) => setForm({ ...form, [field]: value });
 
   const requiredFields = [
-    // Paso 0: Personales
     ['nombre', 'email', 'telefono', 'password', 'genero', 'fechaNacimiento'],
-    // Paso 1: Datos físicos
     ['altura', 'peso', 'objetivoPeso'],
-    // Paso 2: Actividad
     ['nivelActividad', 'frecuenciaEjercicio'],
-    // Paso 3: Ejercicio
     ['tipoEjercicio', 'objetivo'],
-    // Paso 4: Nutrición
     ['comidasDia'],
-    // Paso 5: Restricciones (sin obligatorios)
     []
   ];
 
   const [errors, setErrors] = useState<RegisterFormErrors>({});
 
-  const validateStep = () => {
+  const validateStep = async () => {
     const fields = requiredFields[active] ?? [];
     const newErrors: { [key: string]: string } = {};
+    
     fields.forEach(field => {
       if (!form[field]) {
         newErrors[field] = 'Este campo es obligatorio';
       }
     });
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
+    
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return false;
+    }
+
+    setErrors({});
+
+    try {
+      const stepPayload = buildStepPayload(active);
+      const res = await apiRequest(apiConfig.endpoints.users.validateStep(active), {
+        method: 'POST',
+        body: JSON.stringify(stepPayload)
+      });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        
+        if (data.errors && Array.isArray(data.errors)) {
+          const validationErrors: { [key: string]: string } = {};
+          
+          data.errors.forEach((error: { type: string; value: string; msg: string; path: string; location: string }) => {
+            const fieldMapping: { [key: string]: string } = {
+              'fullName': 'nombre',
+              'email': 'email',
+              'password': 'password',
+              'phoneNumber': 'telefono',
+              'gender': 'genero',
+              'birthDate': 'fechaNacimiento',
+              'health.altura': 'altura',
+              'health.pesoActual': 'peso',
+              'health.objetivoPeso': 'objetivoPeso',
+              'health.condicionesMedicas': 'condiciones',
+              'health.restriccionesDieteticas': 'restricciones',
+              'health.alergiasIntolerancias': 'alergias',
+              'health.preferenciasAlimentarias': 'preferencias',
+              'activity.nivelActividad': 'nivelActividad',
+              'activity.frecuenciaEjercicio': 'frecuenciaEjercicio',
+              'activity.tipoEjercicio': 'tipoEjercicio',
+              'activity.objetivo': 'objetivo',
+              'activity.preferenciasEjercicios': 'otrosEjercicios'
+            };
+            
+            const frontendField = fieldMapping[error.path];
+            if (frontendField) {
+              validationErrors[frontendField] = error.msg;
+            } else {
+              validationErrors[error.path] = error.msg;
+            }
+          });
+          
+          setErrors(validationErrors);
+          return false;
+        }
+      }
+    } catch (error) {
+      console.error('Error validando paso:', error);
+    }
+    
+    return true;
   };
 
-  const handleNext = () => {
-    if (validateStep()) setActive((current) => current + 1);
+  const buildStepPayload = (step: number) => {
+    const basePayload = {
+      fullName: String(form.nombre),
+      email: String(form.email).trim().toLowerCase(),
+      password: String(form.password),
+      phoneNumber: String(form.telefono),
+      gender: String(form.genero),
+      birthDate: form.fechaNacimiento ? new Date(form.fechaNacimiento as unknown as string | number | Date).toISOString() : undefined,
+    };
+
+    switch (step) {
+      case 0:
+        return basePayload;
+      case 1:
+        return {
+          ...basePayload,
+          health: {
+            altura: Number(form.altura),
+            pesoActual: Number(form.peso),
+            objetivoPeso: Number(form.objetivoPeso),
+            condicionesMedicas: csvToArray(String(form.condiciones)),
+            restriccionesDieteticas: [],
+            alergiasIntolerancias: [],
+            preferenciasAlimentarias: []
+          }
+        };
+      case 2:
+        return {
+          ...basePayload,
+          health: {
+            altura: Number(form.altura),
+            pesoActual: Number(form.peso),
+            objetivoPeso: Number(form.objetivoPeso),
+            condicionesMedicas: csvToArray(String(form.condiciones)),
+            restriccionesDieteticas: [],
+            alergiasIntolerancias: [],
+            preferenciasAlimentarias: []
+          },
+          activity: {
+            nivelActividad: String(form.nivelActividad),
+            frecuenciaEjercicio: Number(form.frecuenciaEjercicio),
+            tipoEjercicio: [],
+            objetivo: '',
+            preferenciasEjercicios: []
+          }
+        };
+      case 3:
+        return {
+          ...basePayload,
+          health: {
+            altura: Number(form.altura),
+            pesoActual: Number(form.peso),
+            objetivoPeso: Number(form.objetivoPeso),
+            condicionesMedicas: csvToArray(String(form.condiciones)),
+            restriccionesDieteticas: [],
+            alergiasIntolerancias: [],
+            preferenciasAlimentarias: []
+          },
+          activity: {
+            nivelActividad: String(form.nivelActividad),
+            frecuenciaEjercicio: Number(form.frecuenciaEjercicio),
+            tipoEjercicio: Array.isArray(form.tipoEjercicio) ? form.tipoEjercicio : [],
+            objetivo: String(form.objetivo),
+            preferenciasEjercicios: csvToArray(String(form.otrosEjercicios))
+          }
+        };
+      case 4:
+        return {
+          ...basePayload,
+          health: {
+            altura: Number(form.altura),
+            pesoActual: Number(form.peso),
+            objetivoPeso: Number(form.objetivoPeso),
+            condicionesMedicas: csvToArray(String(form.condiciones)),
+            restriccionesDieteticas: csvToArray(String(form.restricciones)),
+            alergiasIntolerancias: csvToArray(String(form.alergias)),
+            preferenciasAlimentarias: csvToArray(String(form.preferencias))
+          },
+          activity: {
+            nivelActividad: String(form.nivelActividad),
+            frecuenciaEjercicio: Number(form.frecuenciaEjercicio),
+            tipoEjercicio: Array.isArray(form.tipoEjercicio) ? form.tipoEjercicio : [],
+            objetivo: String(form.objetivo),
+            preferenciasEjercicios: csvToArray(String(form.otrosEjercicios))
+          }
+        };
+      default:
+        return basePayload;
+    }
+  };
+
+  const handleNext = async () => {
+    const isValid = await validateStep();
+    if (isValid) setActive((current) => current + 1);
   };
 
   const csvToArray = (v?: string) => (v ?? '').split(',').map(s => s.trim()).filter(Boolean);
-  const mapGender = (g?: string) => g ? g.charAt(0).toUpperCase() + g.slice(1).toLowerCase() : g;
 
   const handleSubmit = async () => {
     if (!validateStep()) return;
@@ -123,7 +271,7 @@ const RegisterForm = () => {
       email: String(form.email).trim().toLowerCase(),
       password: String(form.password),
       phoneNumber: String(form.telefono),
-      gender: mapGender(String(form.genero)),
+      gender: String(form.genero),
       birthDate,
       health: {
         altura: Number(form.altura),
@@ -144,19 +292,53 @@ const RegisterForm = () => {
     };
 
     try {
-      const res = await fetch('/api/users/register', {
+      const res = await apiRequest(apiConfig.endpoints.users.register, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
+      
       const data = await res.json();
+      
       if (!res.ok) {
-        const backendMsg = Array.isArray(data?.errors)
-          ? data.errors.map((e: { msg?: string }) => e?.msg).filter(Boolean).join('\n')
-          : (data?.message || 'Error al registrar');
-        setSubmitError(backendMsg);
+        if (data.errors && Array.isArray(data.errors)) {
+          const validationErrors: { [key: string]: string } = {};
+          
+          data.errors.forEach((error: { type: string; value: string; msg: string; path: string; location: string }) => {
+            const fieldMapping: { [key: string]: string } = {
+              'fullName': 'nombre',
+              'email': 'email',
+              'password': 'password',
+              'phoneNumber': 'telefono',
+              'gender': 'genero',
+              'birthDate': 'fechaNacimiento',
+              'health.altura': 'altura',
+              'health.pesoActual': 'peso',
+              'health.objetivoPeso': 'objetivoPeso',
+              'health.condicionesMedicas': 'condiciones',
+              'health.restriccionesDieteticas': 'restricciones',
+              'health.alergiasIntolerancias': 'alergias',
+              'health.preferenciasAlimentarias': 'preferencias',
+              'activity.nivelActividad': 'nivelActividad',
+              'activity.frecuenciaEjercicio': 'frecuenciaEjercicio',
+              'activity.tipoEjercicio': 'tipoEjercicio',
+              'activity.objetivo': 'objetivo',
+              'activity.preferenciasEjercicios': 'otrosEjercicios'
+            };
+            
+            const frontendField = fieldMapping[error.path];
+            if (frontendField) {
+              validationErrors[frontendField] = error.msg;
+            }
+          });
+          
+          setErrors(validationErrors);
+          return;
+        }
+        
+        setSubmitError(data?.message || 'Error al registrar');
         return;
       }
+      
       if (data?.token) {
         localStorage.setItem('token', data.token);
       }
@@ -204,6 +386,7 @@ const RegisterForm = () => {
                 objetivoPeso: form.objetivoPeso,
                 condiciones: String(form.condiciones),
               }}
+              errors={errors}
               onChange={handleChange}
             />
           </Stepper.Step>
@@ -238,25 +421,18 @@ const RegisterForm = () => {
               values={{
                 preferencias: String(form.preferencias),
                 comidasDia: form.comidasDia,
-              }}
-              onChange={handleChange}
-            />
-          </Stepper.Step>
-
-          <Stepper.Step label="Restricciones">
-            <RestrictionsStep
-              values={{
                 restricciones: String(form.restricciones),
                 alergias: String(form.alergias),
               }}
               onChange={handleChange}
+              errors={errors}
             />
           </Stepper.Step>
         </Stepper>
 
         <StepNavigation
           isFirstStep={active === 0}
-          isLastStep={active >= 5}
+          isLastStep={active >= 4}
           isSubmitting={isSubmitting}
           onBack={() => setActive((current) => Math.max(current - 1, 0))}
           onNext={handleNext}

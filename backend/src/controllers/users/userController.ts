@@ -66,60 +66,14 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     }
 
     if (activity) {
-      // Mapear valores del frontend a enums del backend
-      const mapNivelActividad = (valor: unknown): string => {
-        const v = String(valor ?? '').toLowerCase();
-        if (v === 'sedentario') return 'Sedentario';
-        if (v === 'ligero') return 'Ocasional';
-        if (v === 'moderado') return 'Regular';
-        if (v === 'intenso') return 'Frecuente';
-        return 'Sedentario';
-      };
-
-      const mapFrecuenciaSemanal = (valor: unknown): string | undefined => {
-        const n = Number(valor);
-        if (Number.isNaN(n)) return undefined;
-        if (n <= 0) return 'Sedentario';
-        if (n <= 2) return 'Ocasional';
-        if (n <= 4) return 'Regular';
-        if (n <= 6) return 'Frecuente';
-        return 'Diario';
-      };
-
-      const mapTipoEjercicio = (arr: unknown): string[] => {
-        const dict: Record<string, string> = {
-          futbol: 'Deportes de equipo',
-          natacion: 'Natación',
-          gimnasio: 'Musculación',
-          running: 'Running',
-          ciclismo: 'Ciclismo',
-          otros: 'Otros'
-        };
-        return toStringArray(arr).map((k) => dict[k.toLowerCase()] ?? k);
-      };
-
-      const mapObjetivo = (valor: unknown): string[] => {
-        const dict: Record<string, string> = {
-          hipertrofia: 'Ganancia muscular',
-          perdida_peso: 'Pérdida de peso',
-          rendimiento: 'Resistencia',
-          salud: 'Salud general'
-        };
-        const v = String(valor ?? '').toLowerCase();
-        return dict[v] ? [dict[v]] : [];
-      };
-
-      const frecuenciaPorNivel = mapNivelActividad(activity.nivelActividad);
-      const frecuenciaPorNumero = mapFrecuenciaSemanal(activity.frecuenciaEjercicio);
-
       const datosActividad = await DatosActividadFisica.create({
         userId: user._id,
-        frecuenciaEjercicio: frecuenciaPorNumero ?? frecuenciaPorNivel,
-        tipoEjercicioPractica: mapTipoEjercicio(activity.tipoEjercicio),
-        objetivosPrincipales: mapObjetivo(activity.objetivo),
+        frecuenciaEjercicio: String(activity.nivelActividad),
+        tipoEjercicioPractica: toStringArray(activity.tipoEjercicio),
+        objetivosPrincipales: [String(activity.objetivo)],
         preferenciasEjercicios: toStringArray(activity.preferenciasEjercicios ?? activity.otrosEjercicios),
-        limitacionesFisicas: toStringArray(activity.limitacionesFisicas),
-        numeroContactoEmergencia: String(activity.numeroContactoEmergencia ?? '') || undefined
+        limitacionesFisicas: [],
+        numeroContactoEmergencia: undefined
       });
       datosActividadId = datosActividad._id as Types.ObjectId;
     }

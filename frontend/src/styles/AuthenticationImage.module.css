@@ -44,22 +44,26 @@
   margin-bottom: 32px;
 }
 
-.form label,
-.form input,
-.form .mantine-Text-root,
-.form .mantine-Anchor-root {
-  color: #f1f1f1 !important;
+.form :global(.mantine-Text-root),
+.form :global(.mantine-Anchor-root),
+.form label {
+  color: #f1f1f1;
   background: transparent;
 }
 
-.form input {
-  background: #222 !important;
-  border: 1px solid #444 !important;
-  color: #f1f1f1 !important;
+.form :global(.mantine-Input-wrapper) {
+  --input-height: 44px;
 }
 
-.form input::placeholder {
-  color: #bbb !important;
+.form :global(.mantine-Input-input) {
+  background: #222;
+  border: 1px solid #444;
+  color: #f1f1f1;
+  border-radius: 8px;
+}
+
+.form :global(.mantine-Input-input::placeholder) {
+  color: #bbb;
 }
 
 .form .mantine-Button-root {
