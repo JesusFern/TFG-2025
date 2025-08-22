@@ -78,7 +78,7 @@ export const registerUser = async (req: ValidationRequest, res: Response): Promi
         return;
       }
 
-      // Crear objeto sanitizado para evitar construcción directa de consultas desde datos del usuario
+      // Crear objeto sanitizado con campos explícitos para evitar riesgos de seguridad
       const datosSaludSanitizados = {
         userId: user._id,
         altura: Number(health.altura),
@@ -92,12 +92,25 @@ export const registerUser = async (req: ValidationRequest, res: Response): Promi
         horariosComidas: Array.isArray(health.horariosComidas) ? health.horariosComidas : []
       };
 
-      const datosSalud = await DatosSaludYNutricion.create(datosSaludSanitizados);
+      // Crear instancia del modelo y asignar valores de forma explícita
+      const datosSalud = new DatosSaludYNutricion();
+      datosSalud.userId = user._id as Types.ObjectId;
+      datosSalud.altura = datosSaludSanitizados.altura;
+      datosSalud.pesoActual = datosSaludSanitizados.pesoActual;
+      datosSalud.objetivoPeso = datosSaludSanitizados.objetivoPeso;
+      datosSalud.condicionesMedicas = datosSaludSanitizados.condicionesMedicas;
+      datosSalud.restriccionesDieteticas = datosSaludSanitizados.restriccionesDieteticas;
+      datosSalud.alergiasIntolerancias = datosSaludSanitizados.alergiasIntolerancias;
+      datosSalud.medicacionActual = datosSaludSanitizados.medicacionActual;
+      datosSalud.preferenciasAlimentarias = datosSaludSanitizados.preferenciasAlimentarias;
+      datosSalud.horariosComidas = datosSaludSanitizados.horariosComidas;
+      
+      await datosSalud.save();
       datosSaludId = datosSalud._id as Types.ObjectId;
     }
 
     if (activity) {
-      // Crear objeto sanitizado para evitar construcción directa de consultas desde datos del usuario
+      // Crear objeto sanitizado con campos explícitos para evitar riesgos de seguridad
       const datosActividadSanitizados = {
         userId: user._id,
         frecuenciaEjercicio: String(activity.nivelActividad),
@@ -108,7 +121,17 @@ export const registerUser = async (req: ValidationRequest, res: Response): Promi
         numeroContactoEmergencia: undefined
       };
 
-      const datosActividad = await DatosActividadFisica.create(datosActividadSanitizados);
+      // Crear instancia del modelo y asignar valores de forma explícita
+      const datosActividad = new DatosActividadFisica();
+      datosActividad.userId = user._id as Types.ObjectId;
+      datosActividad.frecuenciaEjercicio = datosActividadSanitizados.frecuenciaEjercicio;
+      datosActividad.tipoEjercicioPractica = datosActividadSanitizados.tipoEjercicioPractica;
+      datosActividad.objetivosPrincipales = datosActividadSanitizados.objetivosPrincipales;
+      datosActividad.preferenciasEjercicios = datosActividadSanitizados.preferenciasEjercicios;
+      datosActividad.limitacionesFisicas = datosActividadSanitizados.limitacionesFisicas;
+      datosActividad.numeroContactoEmergencia = datosActividadSanitizados.numeroContactoEmergencia || '';
+      
+      await datosActividad.save();
       datosActividadId = datosActividad._id as Types.ObjectId;
     }
 
