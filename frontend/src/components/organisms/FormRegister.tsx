@@ -107,6 +107,26 @@ const RegisterForm = () => {
     'activity.disponibilidad': 'disponibilidad'
   };
 
+  // Función auxiliar para procesar errores de validación
+  const processValidationErrors = (data: { errors?: Array<{ type: string; value: string; msg: string; path: string; location: string }> }) => {
+    if (data.errors && Array.isArray(data.errors)) {
+      const validationErrors: { [key: string]: string } = {};
+      
+      data.errors.forEach((error: { type: string; value: string; msg: string; path: string; location: string }) => {
+        const frontendField = fieldMapping[error.path];
+        if (frontendField) {
+          validationErrors[frontendField] = error.msg;
+        } else {
+          validationErrors[error.path] = error.msg;
+        }
+      });
+      
+      setErrors(validationErrors);
+      return false;
+    }
+    return true;
+  };
+
   const validateStep = async () => {
     setErrors({});
 
@@ -119,22 +139,7 @@ const RegisterForm = () => {
       
       if (!res.ok) {
         const data = await res.json();
-        
-        if (data.errors && Array.isArray(data.errors)) {
-          const validationErrors: { [key: string]: string } = {};
-          
-          data.errors.forEach((error: { type: string; value: string; msg: string; path: string; location: string }) => {
-            const frontendField = fieldMapping[error.path];
-            if (frontendField) {
-              validationErrors[frontendField] = error.msg;
-            } else {
-              validationErrors[error.path] = error.msg;
-            }
-          });
-          
-          setErrors(validationErrors);
-          return false;
-        }
+        return processValidationErrors(data);
       }
     } catch (error) {
       console.error('Error validando paso:', error);
@@ -156,22 +161,7 @@ const RegisterForm = () => {
       
       if (!res.ok) {
         const data = await res.json();
-        
-        if (data.errors && Array.isArray(data.errors)) {
-          const validationErrors: { [key: string]: string } = {};
-          
-          data.errors.forEach((error: { type: string; value: string; msg: string; path: string; location: string }) => {
-            const frontendField = fieldMapping[error.path];
-            if (frontendField) {
-              validationErrors[frontendField] = error.msg;
-            } else {
-              validationErrors[error.path] = error.msg;
-            }
-          });
-          
-          setErrors(validationErrors);
-          return false;
-        }
+        return processValidationErrors(data);
       }
     } catch (error) {
       console.error('Error validando paso final:', error);
@@ -180,15 +170,63 @@ const RegisterForm = () => {
     return true;
   };
 
-  const buildStepPayload = (step: number) => {
-    const basePayload = {
-      fullName: String(form.nombre),
-      email: String(form.email).trim().toLowerCase(),
-      password: String(form.password),
-      phoneNumber: String(form.telefono),
-      gender: String(form.genero),
-      birthDate: form.fechaNacimiento ? new Date(form.fechaNacimiento as unknown as string | number | Date).toISOString() : undefined,
+  const csvToArray = (v?: string) => (v ?? '').split(',').map(s => s.trim()).filter(Boolean);
+
+  // Función auxiliar para construir el payload base
+  const buildBasePayload = () => ({
+    fullName: String(form.nombre),
+    email: String(form.email).trim().toLowerCase(),
+    password: String(form.password),
+    phoneNumber: String(form.telefono),
+    gender: String(form.genero),
+    birthDate: form.fechaNacimiento ? new Date(form.fechaNacimiento as unknown as string | number | Date).toISOString() : undefined,
+  });
+
+  // Función auxiliar para construir el payload de salud
+  const buildHealthPayload = (includeAllFields = false) => {
+    const healthPayload: Record<string, unknown> = {
+      altura: Number(form.altura),
+      pesoActual: Number(form.peso),
+      objetivoPeso: Number(form.objetivoPeso),
+      condicionesMedicas: csvToArray(String(form.condiciones)),
     };
+
+    if (includeAllFields) {
+      healthPayload.restriccionesDieteticas = csvToArray(String(form.restricciones));
+      healthPayload.alergiasIntolerancias = csvToArray(String(form.alergias));
+      healthPayload.preferenciasAlimentarias = csvToArray(String(form.preferencias));
+      healthPayload.comidasDia = form.comidasDia ? Number(form.comidasDia) : undefined;
+      healthPayload.horariosComidas = form.horariosComidas || [];
+    } else {
+      healthPayload.restriccionesDieteticas = [];
+      healthPayload.alergiasIntolerancias = [];
+      healthPayload.preferenciasAlimentarias = [];
+      healthPayload.comidasDia = form.comidasDia ? Number(form.comidasDia) : undefined;
+      healthPayload.horariosComidas = form.horariosComidas || [];
+    }
+
+    return healthPayload;
+  };
+
+  // Función auxiliar para construir el payload de actividad
+  const buildActivityPayload = (includeExerciseFields = false) => {
+    const activityPayload: Record<string, unknown> = {
+      nivelActividad: String(form.nivelActividad),
+      frecuenciaEjercicio: Number(form.frecuenciaEjercicio),
+    };
+
+    if (includeExerciseFields) {
+      activityPayload.tipoEjercicio = Array.isArray(form.tipoEjercicio) && form.tipoEjercicio.length > 0 ? form.tipoEjercicio : null;
+      activityPayload.objetivo = String(form.objetivo);
+      activityPayload.otrosEjercicios = String(form.otrosEjercicios);
+      activityPayload.disponibilidad = String(form.disponibilidad);
+    }
+
+    return activityPayload;
+  };
+
+  const buildStepPayload = (step: number) => {
+    const basePayload = buildBasePayload();
 
     switch (step) {
       case 0:
@@ -196,79 +234,25 @@ const RegisterForm = () => {
       case 1:
         return {
           ...basePayload,
-          health: {
-            altura: Number(form.altura),
-            pesoActual: Number(form.peso),
-            objetivoPeso: Number(form.objetivoPeso),
-            condicionesMedicas: csvToArray(String(form.condiciones)),
-            restriccionesDieteticas: [],
-            alergiasIntolerancias: [],
-            preferenciasAlimentarias: [],
-            comidasDia: form.comidasDia ? Number(form.comidasDia) : undefined,
-            horariosComidas: form.horariosComidas || []
-          }
+          health: buildHealthPayload(false)
         };
       case 2:
         return {
           ...basePayload,
-          health: {
-            altura: Number(form.altura),
-            pesoActual: Number(form.peso),
-            objetivoPeso: Number(form.objetivoPeso),
-            condicionesMedicas: csvToArray(String(form.condiciones)),
-            restriccionesDieteticas: [],
-            alergiasIntolerancias: [],
-            preferenciasAlimentarias: [],
-            comidasDia: form.comidasDia ? Number(form.comidasDia) : undefined,
-            horariosComidas: form.horariosComidas || []
-          },
-          activity: {
-            nivelActividad: String(form.nivelActividad),
-            frecuenciaEjercicio: Number(form.frecuenciaEjercicio)
-          }
+          health: buildHealthPayload(false),
+          activity: buildActivityPayload(false)
         };
       case 3:
         return {
           ...basePayload,
-          health: {
-            altura: Number(form.altura),
-            pesoActual: Number(form.peso),
-            objetivoPeso: Number(form.objetivoPeso),
-            condicionesMedicas: csvToArray(String(form.condiciones)),
-            restriccionesDieteticas: [],
-            alergiasIntolerancias: []
-          },
-          activity: {
-            nivelActividad: String(form.nivelActividad),
-            frecuenciaEjercicio: Number(form.frecuenciaEjercicio),
-            tipoEjercicio: Array.isArray(form.tipoEjercicio) && form.tipoEjercicio.length > 0 ? form.tipoEjercicio : null,
-            objetivo: String(form.objetivo),
-            otrosEjercicios: String(form.otrosEjercicios),
-            disponibilidad: String(form.disponibilidad)
-          }
+          health: buildHealthPayload(false),
+          activity: buildActivityPayload(true)
         };
       case 4:
         return {
           ...basePayload,
-          health: {
-            altura: Number(form.altura),
-            pesoActual: Number(form.peso),
-            objetivoPeso: Number(form.objetivoPeso),
-            condicionesMedicas: csvToArray(String(form.condiciones)),
-            restriccionesDieteticas: csvToArray(String(form.restricciones)),
-            alergiasIntolerancias: csvToArray(String(form.alergias)),
-            preferenciasAlimentarias: csvToArray(String(form.preferencias)),
-            comidasDia: form.comidasDia ? Number(form.comidasDia) : undefined,
-            horariosComidas: form.horariosComidas || []
-          },
-          activity: {
-            nivelActividad: String(form.nivelActividad),
-            frecuenciaEjercicio: Number(form.frecuenciaEjercicio),
-            tipoEjercicio: Array.isArray(form.tipoEjercicio) && form.tipoEjercicio.length > 0 ? form.tipoEjercicio : null,
-            objetivo: String(form.objetivo),
-            otrosEjercicios: String(form.otrosEjercicios),
-            disponibilidad: String(form.disponibilidad)
-          }
+          health: buildHealthPayload(true),
+          activity: buildActivityPayload(true)
         };
       default:
         return basePayload;
@@ -280,8 +264,6 @@ const RegisterForm = () => {
     if (isValid) setActive((current) => current + 1);
   };
 
-  const csvToArray = (v?: string) => (v ?? '').split(',').map(s => s.trim()).filter(Boolean);
-
   const handleSubmit = async () => {
     // Validar específicamente el paso final antes de enviar
     const finalStepValid = await validateFinalStep();
@@ -290,39 +272,15 @@ const RegisterForm = () => {
     setSubmitError(null);
     setSubmitSuccess(null);
     setIsSubmitting(true);
-    const birthDate = form.fechaNacimiento
-      ? new Date(form.fechaNacimiento as unknown as string | number | Date).toISOString()
-      : undefined;
-
-    const payload = {
-      fullName: String(form.nombre),
-      email: String(form.email).trim().toLowerCase(),
-      password: String(form.password),
-      phoneNumber: String(form.telefono),
-      gender: String(form.genero),
-      birthDate,
-      health: {
-        altura: Number(form.altura),
-        pesoActual: Number(form.peso),
-        objetivoPeso: Number(form.objetivoPeso),
-        condicionesMedicas: csvToArray(String(form.condiciones)),
-        restriccionesDieteticas: csvToArray(String(form.restricciones)),
-        alergiasIntolerancias: csvToArray(String(form.alergias)),
-        preferenciasAlimentarias: csvToArray(String(form.preferencias)),
-        comidasDia: form.comidasDia ? Number(form.comidasDia) : undefined,
-        horariosComidas: form.horariosComidas || []
-      },
-      activity: {
-        nivelActividad: String(form.nivelActividad),
-        frecuenciaEjercicio: Number(form.frecuenciaEjercicio),
-        tipoEjercicio: Array.isArray(form.tipoEjercicio) ? form.tipoEjercicio : [],
-        objetivo: String(form.objetivo),
-        otrosEjercicios: String(form.otrosEjercicios),
-        disponibilidad: String(form.disponibilidad)
-      }
-    };
-
+    
     try {
+      // Usar las funciones auxiliares para construir el payload final
+      const payload = {
+        ...buildBasePayload(),
+        health: buildHealthPayload(true),
+        activity: buildActivityPayload(true)
+      };
+
       const res = await apiRequest(apiConfig.endpoints.users.register, {
         method: 'POST',
         body: JSON.stringify(payload)
