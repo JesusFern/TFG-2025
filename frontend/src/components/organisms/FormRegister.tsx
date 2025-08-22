@@ -86,7 +86,7 @@ const RegisterForm = () => {
   const fieldMapping: { [key: string]: string } = {
     'fullName': 'nombre',
     'email': 'email',
-    'password': 'password',
+    'password': 'password', // Nombre del campo, no valor de contraseña
     'phoneNumber': 'telefono',
     'gender': 'genero',
     'birthDate': 'fechaNacimiento',

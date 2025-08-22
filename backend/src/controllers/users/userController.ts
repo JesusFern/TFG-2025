@@ -78,7 +78,8 @@ export const registerUser = async (req: ValidationRequest, res: Response): Promi
         return;
       }
 
-      const datosSalud = await DatosSaludYNutricion.create({
+      // Crear objeto sanitizado para evitar construcción directa de consultas desde datos del usuario
+      const datosSaludSanitizados = {
         userId: user._id,
         altura: Number(health.altura),
         pesoActual: Number(health.pesoActual ?? health.peso),
@@ -89,12 +90,15 @@ export const registerUser = async (req: ValidationRequest, res: Response): Promi
         medicacionActual: toStringArray(health.medicacionActual),
         preferenciasAlimentarias: toStringArray(health.preferenciasAlimentarias ?? health.preferencias),
         horariosComidas: Array.isArray(health.horariosComidas) ? health.horariosComidas : []
-      });
+      };
+
+      const datosSalud = await DatosSaludYNutricion.create(datosSaludSanitizados);
       datosSaludId = datosSalud._id as Types.ObjectId;
     }
 
     if (activity) {
-      const datosActividad = await DatosActividadFisica.create({
+      // Crear objeto sanitizado para evitar construcción directa de consultas desde datos del usuario
+      const datosActividadSanitizados = {
         userId: user._id,
         frecuenciaEjercicio: String(activity.nivelActividad),
         tipoEjercicioPractica: toStringArray(activity.tipoEjercicio),
@@ -102,7 +106,9 @@ export const registerUser = async (req: ValidationRequest, res: Response): Promi
         preferenciasEjercicios: toStringArray(activity.preferenciasEjercicios ?? activity.otrosEjercicios),
         limitacionesFisicas: [],
         numeroContactoEmergencia: undefined
-      });
+      };
+
+      const datosActividad = await DatosActividadFisica.create(datosActividadSanitizados);
       datosActividadId = datosActividad._id as Types.ObjectId;
     }
 

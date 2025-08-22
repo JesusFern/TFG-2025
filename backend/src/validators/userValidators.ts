@@ -7,6 +7,12 @@ const passwordPolicy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
 // Validación de número de teléfono como expresión regular
 const isValidPhoneNumber = /^\+?[1-9]\d{1,14}$/;
 
+// Constantes para opciones válidas
+const VALID_GENDERS = ['Masculino', 'Femenino', 'Otro'] as const;
+const VALID_ACTIVITY_LEVELS = ['Sedentario', 'Ocasional', 'Regular', 'Frecuente', 'Diario'] as const;
+const VALID_EXERCISE_TYPES = ['Cardio', 'Musculación', 'Deportes de equipo', 'Yoga/Pilates', 'Natación', 'Ciclismo', 'Running', 'Otros'] as const;
+const VALID_OBJECTIVES = ['Pérdida de peso', 'Ganancia muscular', 'Resistencia', 'Flexibilidad', 'Salud general', 'Rehabilitación'] as const;
+
 export const loginValidator = [
   body('email').isEmail().withMessage('Email inválido'),
   body('password').isString().notEmpty().withMessage('La contraseña es obligatoria')
@@ -18,7 +24,7 @@ export const createUserValidator = [
   body('password')
     .matches(passwordPolicy)
     .withMessage('La contraseña debe tener al menos 8 caracteres, incluir una mayúscula, una minúscula y un número'),
-  body('gender').isIn(['Masculino', 'Femenino', 'Otro']).withMessage('Género inválido'),
+  body('gender').isIn(VALID_GENDERS).withMessage('Género inválido'),
   body('birthDate').isISO8601().withMessage('Fecha de nacimiento inválida'),
   body('phoneNumber')
     .notEmpty()
@@ -28,26 +34,31 @@ export const createUserValidator = [
   body('profilePicture').optional().isURL().withMessage('La URL de la imagen no es válida')
 ];
 
-export const registerValidator = [
-  // Campos personales básicos
+// Función auxiliar para validar email duplicado de forma segura
+const validateEmailNotExists = async (email: string): Promise<boolean> => {
+  try {
+    // Usar parámetros seguros en lugar de construir la consulta directamente
+    const existingUser = await User.findOne({ email: email.toLowerCase() });
+    if (existingUser) {
+      throw new Error('El email ya está registrado');
+    }
+    return true;
+  } catch (error) {
+    if (error instanceof Error && error.message === 'El email ya está registrado') {
+      throw error;
+    }
+    // Si hay un error de base de datos, permitir que continúe
+    return true;
+  }
+};
+
+// Función auxiliar para validar campos básicos del usuario
+const createBasicUserValidators = () => [
   body('fullName').notEmpty().withMessage('El nombre completo es obligatorio'),
   body('email')
     .isEmail().withMessage('Email inválido')
-    .custom(async (value) => {
-      try {
-        const existingUser = await User.findOne({ email: value.toLowerCase() });
-        if (existingUser) {
-          throw new Error('El email ya está registrado');
-        }
-        return true;
-      } catch (error) {
-        if (error instanceof Error && error.message === 'El email ya está registrado') {
-          throw error;
-        }
-        // Si hay un error de base de datos, permitir que continúe
-        return true;
-      }
-    }).withMessage('El email ya está registrado'),
+    .custom(validateEmailNotExists)
+    .withMessage('El email ya está registrado'),
   body('password')
     .matches(passwordPolicy)
     .withMessage('La contraseña debe tener al menos 8 caracteres, incluir una mayúscula, una minúscula y un número'),
@@ -56,8 +67,13 @@ export const registerValidator = [
     .withMessage('El número de teléfono es obligatorio')
     .custom((value) => isValidPhoneNumber.test(value))
     .withMessage('El número de teléfono no es válido'),
-  body('gender').isIn(['Masculino', 'Femenino', 'Otro']).withMessage('Género inválido'),
+  body('gender').isIn(VALID_GENDERS).withMessage('Género inválido'),
   body('birthDate').isISO8601().withMessage('Fecha de nacimiento inválida'),
+];
+
+export const registerValidator = [
+  // Campos personales básicos
+  ...createBasicUserValidators(),
   
   // Datos de salud
   body('health.altura')
@@ -91,7 +107,7 @@ export const registerValidator = [
   
   // Datos de actividad física
   body('activity.nivelActividad')
-    .isIn(['Sedentario', 'Ocasional', 'Regular', 'Frecuente', 'Diario'])
+    .isIn(VALID_ACTIVITY_LEVELS)
     .withMessage('Nivel de actividad inválido'),
   body('activity.frecuenciaEjercicio')
     .isInt({ min: 0, max: 7 })
@@ -101,12 +117,11 @@ export const registerValidator = [
     .notEmpty()
     .withMessage('Debe seleccionar al menos un tipo de ejercicio')
     .custom((value) => {
-      const validTypes = ['Cardio', 'Musculación', 'Deportes de equipo', 'Yoga/Pilates', 'Natación', 'Ciclismo', 'Running', 'Otros'];
-      return value.every((type: string) => validTypes.includes(type));
+      return value.every((type: string) => VALID_EXERCISE_TYPES.includes(type as typeof VALID_EXERCISE_TYPES[number]));
     })
     .withMessage('Tipo de ejercicio inválido'),
   body('activity.objetivo')
-    .isIn(['Pérdida de peso', 'Ganancia muscular', 'Resistencia', 'Flexibilidad', 'Salud general', 'Rehabilitación'])
+    .isIn(VALID_OBJECTIVES)
     .withMessage('Objetivo inválido'),
   body('activity.preferenciasEjercicios')
     .optional()
@@ -116,34 +131,7 @@ export const registerValidator = [
 
 // Validadores por pasos
 export const step0Validator = [
-  body('fullName').notEmpty().withMessage('El nombre completo es obligatorio'),
-  body('email')
-    .isEmail().withMessage('Email inválido')
-    .custom(async (value) => {
-      try {
-        const existingUser = await User.findOne({ email: value.toLowerCase() });
-        if (existingUser) {
-          throw new Error('El email ya está registrado');
-        }
-        return true;
-      } catch (error) {
-        if (error instanceof Error && error.message === 'El email ya está registrado') {
-          throw error;
-        }
-        // Si hay un error de base de datos, permitir que continúe
-        return true;
-      }
-    }).withMessage('El email ya está registrado'),
-  body('password')
-    .matches(passwordPolicy)
-    .withMessage('La contraseña debe tener al menos 8 caracteres, incluir una mayúscula, una minúscula y un número'),
-  body('phoneNumber')
-    .notEmpty()
-    .withMessage('El número de teléfono es obligatorio')
-    .custom((value) => isValidPhoneNumber.test(value))
-    .withMessage('El número de teléfono no es válido'),
-  body('gender').isIn(['Masculino', 'Femenino', 'Otro']).withMessage('Género inválido'),
-  body('birthDate').isISO8601().withMessage('Fecha de nacimiento inválida')
+  ...createBasicUserValidators(),
 ];
 
 export const step1Validator = [
@@ -166,7 +154,7 @@ export const step1Validator = [
 export const step2Validator = [
   ...step1Validator,
   body('activity.nivelActividad')
-    .isIn(['Sedentario', 'Ocasional', 'Regular', 'Frecuente', 'Diario'])
+    .isIn(VALID_ACTIVITY_LEVELS)
     .withMessage('Nivel de actividad inválido'),
   body('activity.frecuenciaEjercicio')
     .notEmpty()
@@ -193,7 +181,7 @@ export const step3Validator = [
     .notEmpty()
     .withMessage('La disponibilidad es obligatoria'),
   body('activity.objetivo')
-    .isIn(['Pérdida de peso', 'Ganancia muscular', 'Resistencia', 'Flexibilidad', 'Salud general', 'Rehabilitación'])
+    .isIn(VALID_OBJECTIVES)
     .withMessage('Objetivo inválido')
 ];
 
@@ -258,7 +246,7 @@ export const updateUserValidator = [
     .optional()
     .matches(passwordPolicy)
     .withMessage('La contraseña debe tener al menos 8 caracteres, incluir una mayúscula, una minúscula y un número'),
-  body('gender').optional().isIn(['Masculino', 'Femenino', 'Otro']).withMessage('Género inválido'),
+  body('gender').optional().isIn(VALID_GENDERS).withMessage('Género inválido'),
   body('birthDate').optional().isISO8601().withMessage('Fecha de nacimiento inválida'),
   body('phoneNumber')
     .optional()
