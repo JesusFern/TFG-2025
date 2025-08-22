@@ -1,0 +1,13 @@
+.root {
+	position: fixed;
+	top: 24px;
+	left: 50%;
+	transform: translateX(-50%);
+	max-width: 480px;
+	width: calc(100% - 32px);
+	z-index: 9999;
+}
+
+.message {
+	text-align: left;
+}

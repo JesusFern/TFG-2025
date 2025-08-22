@@ -89,6 +89,15 @@ const DatosSaludYNutricionSchema = new mongoose.Schema({
   }]
 }, { timestamps: true });
 
+// Validación para asegurar que horariosComidas tenga al menos un elemento
+DatosSaludYNutricionSchema.pre('validate', function(next) {
+  if (!this.horariosComidas || this.horariosComidas.length === 0) {
+    this.invalidate('horariosComidas', 'Debe especificar al menos un horario de comida');
+  }
+  
+  next();
+});
+
 // Validación para asegurar que solo usuarios con rol 'user' tienen datos de salud y nutrición
 DatosSaludYNutricionSchema.pre('save', async function(next) {
   try {

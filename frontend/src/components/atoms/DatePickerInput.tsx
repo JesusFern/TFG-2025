@@ -1,7 +1,5 @@
 import React from "react";
-import ReactDatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";
-import styles from "../../styles/DatePickerInput.module.css";
+import { DatePickerInput as MantineDatePickerInput } from "@mantine/dates";
 
 interface DatePickerInputProps {
   label?: string;
@@ -10,6 +8,8 @@ interface DatePickerInputProps {
   error?: string;
   required?: boolean;
   name?: string;
+  leftSection?: React.ReactNode;
+  leftSectionPointerEvents?: "none" | "auto";
 }
 
 const DatePickerInput: React.FC<DatePickerInputProps> = ({
@@ -19,27 +19,23 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
   error,
   required,
   name,
+  leftSection,
+  leftSectionPointerEvents,
 }) => (
-  <div className={styles.container}>
-    {label && (
-      <label className={styles.label}>
-        {label} {required && <span style={{ color: "red" }}>*</span>}
-      </label>
-    )}
-    <ReactDatePicker
-      selected={value}
-      onChange={onChange}
-      dateFormat="dd/MM/yyyy"
-      className={styles.input}
-      placeholderText="Selecciona una fecha"
-      name={name}
-      required={required}
-      showMonthDropdown
-      showYearDropdown
-      dropdownMode="select"
-    />
-    {error && <div className={styles.error}>{error}</div>}
-  </div>
+  <MantineDatePickerInput
+    label={label}
+    value={value}
+    onChange={(val) => onChange(val ? new Date(val) : null)}
+    error={error}
+    required={required}
+    name={name}
+    placeholder="Selecciona una fecha"
+    popoverProps={{ withinPortal: true }}
+    dropdownType="modal"
+    valueFormat="DD/MM/YYYY"
+    leftSection={leftSection}
+    leftSectionPointerEvents={leftSectionPointerEvents}
+  />
 );
 
 export default DatePickerInput;
