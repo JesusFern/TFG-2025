@@ -7,8 +7,27 @@ import { MongoError } from '../../types';
 import { PasswordService } from '../../utils/passwordService';
 import { TokenService } from '../../utils/tokenService';
 
-export const registerUser = async (req: Request, res: Response): Promise<void> => {
+interface ValidationRequest extends Request {
+  validationErrors?: Array<{
+    type: string;
+    value: string;
+    msg: string;
+    path: string;
+    location: string;
+  }>;
+}
+
+export const registerUser = async (req: ValidationRequest, res: Response): Promise<void> => {
   try {
+    // Verificar si hay errores de validación
+    if (req.validationErrors && req.validationErrors.length > 0) {
+      res.status(400).json({ 
+        message: 'Errores de validación',
+        errors: req.validationErrors 
+      });
+      return;
+    }
+
     const { fullName, email, password, phoneNumber, gender, birthDate, profilePicture } = req.body;
 
     // Campos opcionales que pueden venir del frontend como parte del registro
@@ -98,7 +117,7 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     res.status(201).json({
       message: 'Usuario registrado exitosamente',
       user: {
-        id: user._id,
+        _id: user._id,
         fullName: user.fullName,
         email: user.email,
         gender: user.gender,
@@ -139,7 +158,16 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
     }
 
     const token = TokenService.generateToken({ id: user._id, role: user.role });
-    res.status(200).json({ token });
+    res.status(200).json({ 
+      token,
+      user: {
+        _id: user._id,
+        fullName: user.fullName,
+        email: user.email,
+        gender: user.gender,
+        role: user.role
+      }
+    });
   } catch (error: unknown) {
     res.status(500).json({ message: (error as Error).message });
   }

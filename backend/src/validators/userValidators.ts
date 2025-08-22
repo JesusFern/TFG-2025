@@ -31,7 +31,23 @@ export const createUserValidator = [
 export const registerValidator = [
   // Campos personales básicos
   body('fullName').notEmpty().withMessage('El nombre completo es obligatorio'),
-  body('email').isEmail().withMessage('Email inválido'),
+  body('email')
+    .isEmail().withMessage('Email inválido')
+    .custom(async (value) => {
+      try {
+        const existingUser = await User.findOne({ email: value.toLowerCase() });
+        if (existingUser) {
+          throw new Error('El email ya está registrado');
+        }
+        return true;
+      } catch (error) {
+        if (error instanceof Error && error.message === 'El email ya está registrado') {
+          throw error;
+        }
+        // Si hay un error de base de datos, permitir que continúe
+        return true;
+      }
+    }).withMessage('El email ya está registrado'),
   body('password')
     .matches(passwordPolicy)
     .withMessage('La contraseña debe tener al menos 8 caracteres, incluir una mayúscula, una minúscula y un número'),
@@ -206,7 +222,23 @@ export const step4Validator = [
     .withMessage('Tipo de comida inválido'),
   body('health.horariosComidas.*.hora')
     .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
-    .withMessage('Formato de hora inválido. Use HH:MM'),
+    .withMessage('Formato de hora inválido. Use HH:MM (00:00 a 23:59)')
+    .custom((value) => {
+      const [hours, minutes] = value.split(':');
+      const hour = parseInt(hours);
+      const minute = parseInt(minutes);
+      
+      if (hour < 0 || hour > 23) {
+        throw new Error('La hora debe estar entre 00 y 23');
+      }
+      
+      if (minute < 0 || minute > 59) {
+        throw new Error('Los minutos deben estar entre 00 y 59');
+      }
+      
+      return true;
+    })
+    .withMessage('Hora inválida'),
   body('health.horariosComidas')
     .custom((value, { req }) => {
       const comidasDia = req.body.health?.comidasDia;
