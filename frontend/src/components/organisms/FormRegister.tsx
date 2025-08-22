@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stepper, Paper, ScrollArea } from '@mantine/core';
+import { Stepper, Paper, ScrollArea, LoadingOverlay, Box } from '@mantine/core';
 import classes from '../../styles/RegisterForm.module.css';
 import FormSectionTitle from '../atoms/FormSectionTitle';
 import GlobalErrorOverlay from '../atoms/GlobalErrorOverlay';
+import GlobalSuccessOverlay from '../atoms/GlobalSuccessOverlay';
 import StepNavigation from '../molecules/StepNavigation';
 import PersonalInfoStep from '../molecules/PersonalInfoStep';
 import PhysicalDataStep from '../molecules/PhysicalDataStep';
@@ -51,6 +52,7 @@ const RegisterForm = () => {
   const [active, setActive] = useState(0);
   const navigate = useNavigate();
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [form, setForm] = useState<RegisterFormState>({
     nombre: '',
@@ -286,6 +288,7 @@ const RegisterForm = () => {
     if (!finalStepValid) return;
 
     setSubmitError(null);
+    setSubmitSuccess(null);
     setIsSubmitting(true);
     const birthDate = form.fechaNacimiento
       ? new Date(form.fechaNacimiento as unknown as string | number | Date).toISOString()
@@ -355,108 +358,122 @@ const RegisterForm = () => {
       if (data?.token) {
         localStorage.setItem('token', data.token);
       }
-      navigate('/login');
+      
+      setSubmitSuccess('¡Cuenta creada exitosamente! Redirigiendo al login...');
+      
+      // Mantener el loader visible durante el mensaje de éxito y la redirección
+      setTimeout(() => {
+        setIsSubmitting(false); // Ocultar el loader
+        navigate('/login');
+      }, 2000);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Error al registrar';
       setSubmitError(msg);
       console.error(e);
-    } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false); // Solo ocultar el loader en caso de error
     }
   };
 
   return (
     <div className={classes.wrapper}>
       <GlobalErrorOverlay message={submitError} withCloseButton onClose={() => setSubmitError(null)} />
-      <Paper className={classes.form}>
-        <div style={{ position: 'absolute', top: 32, left: 0, width: '100%', display: 'flex', justifyContent: 'center', zIndex: 2 }}>
-          <FormSectionTitle className={classes.title}>Crea tu cuenta</FormSectionTitle>
-        </div>
-        <div style={{ height: 60 }} />
-
-        <ScrollArea h={400} type="auto" offsetScrollbars>
-          <Stepper active={active}>
-            <Stepper.Step label="Personales">
-              <PersonalInfoStep
-                values={{
-                  nombre: String(form.nombre),
-                  email: String(form.email),
-                  telefono: String(form.telefono),
-                  fechaNacimiento: form.fechaNacimiento ? new Date(form.fechaNacimiento as Date) : null,
-                  password: String(form.password),
-                  genero: String(form.genero),
-                }}
-                errors={errors}
-                onChange={handleChange}
-                generoOptions={generoOptions}
-              />
-            </Stepper.Step>
-
-            <Stepper.Step label="Datos físicos">
-              <PhysicalDataStep
-                values={{
-                  altura: form.altura,
-                  peso: form.peso,
-                  objetivoPeso: form.objetivoPeso,
-                  condiciones: String(form.condiciones),
-                }}
-                errors={errors}
-                onChange={handleChange}
-              />
-            </Stepper.Step>
-
-            <Stepper.Step label="Actividad">
-              <ActivityStep
-                values={{
-                  nivelActividad: String(form.nivelActividad),
-                  frecuenciaEjercicio: form.frecuenciaEjercicio,
-                }}
-                errors={errors}
-                onChange={handleChange}
-                actividadOptions={actividadOptions}
-              />
-            </Stepper.Step>
-
-            <Stepper.Step label="Ejercicio">
-              <ExerciseStep
-                values={{
-                  tipoEjercicio: Array.isArray(form.tipoEjercicio) ? form.tipoEjercicio : [],
-                  otrosEjercicios: String(form.otrosEjercicios),
-                  disponibilidad: String(form.disponibilidad),
-                  objetivo: String(form.objetivo),
-                }}
-                errors={errors}
-                onChange={handleChange}
-                ejercicioOptions={ejercicioOptions}
-                objetivoOptions={objetivoOptions}
-              />
-            </Stepper.Step>
-
-            <Stepper.Step label="Nutrición">
-              <NutritionStep
-                values={{
-                  preferencias: String(form.preferencias),
-                  comidasDia: form.comidasDia,
-                  restricciones: String(form.restricciones),
-                  alergias: String(form.alergias),
-                  horariosComidas: form.horariosComidas || [],
-                }}
-                onChange={handleChange}
-                errors={errors}
-              />
-            </Stepper.Step>
-          </Stepper>
-        </ScrollArea>
-
-        <StepNavigation
-          isFirstStep={active === 0}
-          isLastStep={active >= 4}
-          isSubmitting={isSubmitting}
-          onBack={() => setActive((current) => Math.max(current - 1, 0))}
-          onNext={handleNext}
-          onSubmit={handleSubmit}
+      <GlobalSuccessOverlay message={submitSuccess} withCloseButton onClose={() => setSubmitSuccess(null)} />
+      <Box pos="relative">
+        <LoadingOverlay 
+          visible={isSubmitting} 
+          zIndex={1000} 
+          overlayProps={{ radius: "sm", blur: 2 }} 
         />
-      </Paper>
+        <Paper className={classes.form}>
+          <div style={{ position: 'absolute', top: 32, left: 0, width: '100%', display: 'flex', justifyContent: 'center', zIndex: 2 }}>
+            <FormSectionTitle className={classes.title}>Crea tu cuenta</FormSectionTitle>
+          </div>
+          <div style={{ height: 60 }} />
+
+          <ScrollArea h={400} type="auto" offsetScrollbars>
+            <Stepper active={active}>
+              <Stepper.Step label="Personales">
+                <PersonalInfoStep
+                  values={{
+                    nombre: String(form.nombre),
+                    email: String(form.email),
+                    telefono: String(form.telefono),
+                    fechaNacimiento: form.fechaNacimiento ? new Date(form.fechaNacimiento as Date) : null,
+                    password: String(form.password),
+                    genero: String(form.genero),
+                  }}
+                  errors={errors}
+                  onChange={handleChange}
+                  generoOptions={generoOptions}
+                />
+              </Stepper.Step>
+
+              <Stepper.Step label="Datos físicos">
+                <PhysicalDataStep
+                  values={{
+                    altura: form.altura,
+                    peso: form.peso,
+                    objetivoPeso: form.objetivoPeso,
+                    condiciones: String(form.condiciones),
+                  }}
+                  errors={errors}
+                  onChange={handleChange}
+                />
+              </Stepper.Step>
+
+              <Stepper.Step label="Actividad">
+                <ActivityStep
+                  values={{
+                    nivelActividad: String(form.nivelActividad),
+                    frecuenciaEjercicio: form.frecuenciaEjercicio,
+                  }}
+                  errors={errors}
+                  onChange={handleChange}
+                  actividadOptions={actividadOptions}
+                />
+              </Stepper.Step>
+
+              <Stepper.Step label="Ejercicio">
+                <ExerciseStep
+                  values={{
+                    tipoEjercicio: Array.isArray(form.tipoEjercicio) ? form.tipoEjercicio : [],
+                    otrosEjercicios: String(form.otrosEjercicios),
+                    disponibilidad: String(form.disponibilidad),
+                    objetivo: String(form.objetivo),
+                  }}
+                  errors={errors}
+                  onChange={handleChange}
+                  ejercicioOptions={ejercicioOptions}
+                  objetivoOptions={objetivoOptions}
+                />
+              </Stepper.Step>
+
+              <Stepper.Step label="Nutrición">
+                <NutritionStep
+                  values={{
+                    preferencias: String(form.preferencias),
+                    comidasDia: form.comidasDia,
+                    restricciones: String(form.restricciones),
+                    alergias: String(form.alergias),
+                    horariosComidas: form.horariosComidas || [],
+                  }}
+                  onChange={handleChange}
+                  errors={errors}
+                />
+              </Stepper.Step>
+            </Stepper>
+          </ScrollArea>
+
+          <StepNavigation
+            isFirstStep={active === 0}
+            isLastStep={active >= 4}
+            isSubmitting={isSubmitting}
+            onBack={() => setActive((current) => Math.max(current - 1, 0))}
+            onNext={handleNext}
+            onSubmit={handleSubmit}
+          />
+        </Paper>
+      </Box>
     </div>
   );
 };

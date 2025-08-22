@@ -9,6 +9,8 @@ import {
   Text,
   TextInput,
   Title,
+  LoadingOverlay,
+  Box,
 } from '@mantine/core';
 import classes from '../../styles/AuthenticationImage.module.css';
 import GlobalErrorOverlay from '../atoms/GlobalErrorOverlay';
@@ -53,23 +55,23 @@ export function AuthenticationImage() {
       }
       
       // Login exitoso
-      setSubmitSuccess('¡Inicio de sesión exitoso! Redirigiendo...');
+      setSubmitSuccess('¡Inicio de sesión exitoso! Redirigiendo en unos segundos...');
       
       const storage = remember ? localStorage : sessionStorage;
       if (data?.token) {
         storage.setItem('token', data.token);
       }
       
-      // Redirigir después de mostrar el mensaje de éxito
+      // Mantener el loader visible durante el mensaje de éxito y la redirección
       setTimeout(() => {
+        setIsSubmitting(false); // Ocultar el loader
         navigate('/');
       }, 1500);
       
     } catch (e) {
       setSubmitError('No se pudo conectar con el servidor. Verifica tu conexión a internet.');
       console.error('Error en login:', e);
-    } finally {
-      setIsSubmitting(false);
+      setIsSubmitting(false); // Solo ocultar el loader en caso de error
     }
   };
 
@@ -92,7 +94,13 @@ export function AuthenticationImage() {
   
   return (
     <div className={classes.wrapper}>
-      <Paper className={classes.form}>
+      <Box pos="relative">
+        <LoadingOverlay 
+          visible={isSubmitting} 
+          zIndex={1000} 
+          overlayProps={{ radius: "sm", blur: 2 }} 
+        />
+        <Paper className={classes.form}>
         <Title order={2} className={classes.title}>
           ¡Bienvenido de nuevo a Nutroos!
         </Title>
@@ -166,6 +174,7 @@ export function AuthenticationImage() {
           </Anchor>
         </Text>
       </Paper>
+    </Box>
     </div>
   );
 }
