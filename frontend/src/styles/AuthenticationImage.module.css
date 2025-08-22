@@ -5,8 +5,8 @@
   left: 0;
   top: 0;
   display: flex;
-  align-items: stretch; /* Cambia a stretch para que el hijo ocupe todo el alto */
-  justify-content: flex-start; /* Alinea el contenido a la izquierda */
+  align-items: stretch;
+  justify-content: flex-start;
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
@@ -18,9 +18,6 @@
 }
 
 .form {
-  background: #111;
-  border-radius: 0 12px 12px 0;
-  box-shadow: 4px 0 32px rgba(0, 0, 0, 0.12);
   max-width: 400px;
   width: 100%;
   height: 100vh;
@@ -28,48 +25,9 @@
   margin: 0;
   display: flex;
   flex-direction: column;
-  border: none;
   position: relative;
   z-index: 1;
-  justify-content: flex-start; /* Alinea arriba */
-  padding-top: 100px; /* Espacio desde arriba */
-}
-
-.title {
-  color: #fff;
-  font-family: Outfit, var(--mantine-font-family);
-  font-weight: 800; /* Negrita */
-  text-align: center;
-  margin-top: 0;
-  margin-bottom: 32px;
-}
-
-.form :global(.mantine-Text-root),
-.form :global(.mantine-Anchor-root),
-.form label {
-  color: #f1f1f1;
-  background: transparent;
-}
-
-.form :global(.mantine-Input-wrapper) {
-  --input-height: 44px;
-}
-
-.form :global(.mantine-Input-input) {
-  background: #222;
-  border: 1px solid #444;
-  color: #f1f1f1;
-  border-radius: 8px;
-}
-
-.form :global(.mantine-Input-input::placeholder) {
-  color: #bbb;
-}
-
-.form .mantine-Button-root {
-  background: #fff;
-  color: #111;
-  font-weight: 600;
+  padding-top: 100px;
 }
 
 @media (max-width: 600px) {
