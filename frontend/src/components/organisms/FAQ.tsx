@@ -1,16 +1,45 @@
-// src/components/organisms/FAQ.tsx
 import React from 'react';
 import styled from 'styled-components';
 import { FAQItem } from '../molecules/FAQItem';
 import { Heading2 } from '../atoms/Typography';
 import { Container, Section } from '../atoms/Container';
+import { useMantineColorScheme } from '@mantine/core';
+
+const FAQSection = styled(Section)<{ isDark: boolean }>`
+  background-color: ${props => props.isDark ? '#222436' : '#f0f5f2'};
+  padding: 5rem 0;
+`;
 
 const FAQContainer = styled.div`
   max-width: 800px;
   margin: 0 auto;
 `;
 
+const SectionTitle = styled(Heading2)<{ isDark: boolean }>`
+  text-align: center;
+  margin-bottom: 3rem;
+  
+  span {
+    color: var(--app-accent);
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background-color: var(--app-accent);
+      border-radius: 2px;
+    }
+  }
+`;
+
 export const FAQ: React.FC = () => {
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === 'dark';
+
   const faqs = [
     {
       question: "¿Qué es Nutroos?",
@@ -35,19 +64,20 @@ export const FAQ: React.FC = () => {
   ];
 
   return (
-    <Section id="faq">
+    <FAQSection id="faq" isDark={isDark}>
       <Container>
-        <Heading2>Preguntas <span>Frecuentes</span></Heading2>
+        <SectionTitle isDark={isDark}>Preguntas <span>Frecuentes</span></SectionTitle>
         <FAQContainer>
           {faqs.map((faq, index) => (
             <FAQItem
               key={index}
               question={faq.question}
               answer={faq.answer}
+              isDark={isDark}
             />
           ))}
         </FAQContainer>
       </Container>
-    </Section>
+    </FAQSection>
   );
 };

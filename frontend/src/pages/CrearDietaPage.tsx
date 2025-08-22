@@ -9,7 +9,9 @@ import {
   Avatar,
   Badge,
   Breadcrumbs,
-  Anchor
+  Anchor,
+  Paper,
+  Box
 } from '@mantine/core';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import FormularioCrearDieta from '../components/forms/FormularioCrearDieta';
@@ -53,7 +55,7 @@ const CrearDietaPage: React.FC = () => {
     { title: clienteInfo.nombre, href: `/clientes/${clienteInfo.id}` },
     { title: 'Crear dieta', href: '#' },
   ].map((item, index) => (
-    <Anchor component={Link} to={item.href} key={index} size="sm">
+    <Anchor component={Link} to={item.href} key={index} size="sm" c="nutroos-green">
       {item.icon && (
         <Group gap={4}>
           {item.icon}
@@ -66,28 +68,48 @@ const CrearDietaPage: React.FC = () => {
 
   return (
     <Container size="md" py="xl">
-      <Breadcrumbs mb="lg" separator={<IconChevronRight size={14} />}>
-        {items}
-      </Breadcrumbs>
+      <Paper 
+        p="md" 
+        mb="lg" 
+        style={{ 
+          backgroundColor: 'var(--app-paper-bg)', 
+          borderBottom: '1px solid var(--app-border-color)' 
+        }}
+      >
+        <Breadcrumbs separator={<IconChevronRight size={14} />}>
+          {items}
+        </Breadcrumbs>
+      </Paper>
 
-      <Group mb="xl" align="flex-start">
-        <Avatar 
-          size="lg" 
-          color="blue" 
-          radius="xl"
-        >
-          <IconUser size="1.5rem" />
-        </Avatar>
-        
-        <div style={{ flex: 1 }}>
-          <Title order={2} mb={5}>Crear Nueva Dieta</Title>
-          <Group gap="xs">
-            <Text c="dimmed">Para:</Text>
-            <Text fw={600}>{clienteInfo.nombre}</Text>
-            <Badge color="blue">Cliente</Badge>
-          </Group>
-        </div>
-      </Group>
+      <Paper 
+        p="lg" 
+        mb="xl" 
+        withBorder 
+        radius="md"
+        style={{ 
+          backgroundColor: 'var(--app-paper-bg)', 
+          borderColor: 'var(--app-border-color)' 
+        }}
+      >
+        <Group mb="md" align="flex-start">
+          <Avatar 
+            size="lg" 
+            color="nutroos-green" 
+            radius="xl"
+          >
+            <IconUser size="1.5rem" />
+          </Avatar>
+          
+          <Box style={{ flex: 1 }}>
+            <Title order={2} mb={5} c="nutroos-green.6">Crear Nueva Dieta</Title>
+            <Group gap="xs">
+              <Text c="dimmed">Para:</Text>
+              <Text fw={600}>{clienteInfo.nombre}</Text>
+              <Badge color="nutroos-green">Cliente</Badge>
+            </Group>
+          </Box>
+        </Group>
+      </Paper>
       
       {mensaje && (
         <motion.div
@@ -98,7 +120,7 @@ const CrearDietaPage: React.FC = () => {
           <Alert 
             icon={mensaje.tipo === 'success' ? <IconCheck size={16} /> : <IconAlertCircle size={16} />}
             title={mensaje.tipo === 'success' ? "¡Éxito!" : "Error"}
-            color={mensaje.tipo === 'success' ? "green" : "red"}
+            color={mensaje.tipo === 'success' ? "nutroos-green" : "red"}
             variant="filled"
             mb="md"
             withCloseButton

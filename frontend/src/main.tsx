@@ -1,26 +1,27 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { BrowserRouter } from "react-router-dom";
-import { MantineProvider } from '@mantine/core';
+import { MantineProvider, ColorSchemeScript } from '@mantine/core';
 import '@mantine/core/styles.css';
 import '@mantine/dates/styles.css';
 import "./styles/index.css";
 import AppRoutes from "./routes/routes";
-import { theme } from './styles/mantine/MantineOverride';
+import "react-datepicker/dist/react-datepicker.css";
+import theme from './styles/mantine/MantineTheme';
+import { ColorSchemeProvider } from './styles/components/ColorSchemeProvider';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
-  <MantineProvider
-    theme={{
-      /* otros ajustes */
-    }}
-    defaultColorScheme="dark"
-  >
-    <BrowserRouter>
-      <MantineProvider theme={theme}>
-        <AppRoutes />
-      </MantineProvider>
-    </BrowserRouter>
-  </MantineProvider>
+    <ColorSchemeScript defaultColorScheme="dark" />
+    <MantineProvider
+      theme={theme}
+      defaultColorScheme="dark"
+    >
+      <ColorSchemeProvider>
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </ColorSchemeProvider>
+    </MantineProvider>
   </React.StrictMode>
 );

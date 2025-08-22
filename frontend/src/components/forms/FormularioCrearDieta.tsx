@@ -15,11 +15,10 @@ import {
   Stepper,
   Title,
   rem,
-  useMantineTheme,
   ActionIcon,
   Alert,
   Paper,
-  MantineProvider
+  useMantineColorScheme
 } from '@mantine/core';
 import { DatePickerInput } from '@mantine/dates';
 import { 
@@ -50,47 +49,9 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
   clienteId = "687526841859b1606e92f3f9",
   clienteNombre = "Juan Pérez" 
 }) => {
-  const theme = useMantineTheme();
-  const isDark = true; // Forzar modo oscuro para esta página
-  
-  const styles = {
-    boxContainer: {
-      backgroundColor: isDark ? theme.colors.dark[6] : theme.colors.gray[0],
-      borderRadius: theme.radius.md,
-    },
-    clientCard: {
-      backgroundColor: isDark ? theme.colors.dark[5] : theme.colors.gray[0],
-    },
-    mainCard: {
-      backgroundColor: isDark ? theme.colors.dark[7] : "white",
-      color: isDark ? "white" : theme.black,
-    },
-    textColor: {
-      color: isDark ? "white" : theme.black,
-    },
-    title: {
-      color: theme.colors.blue[isDark ? 4 : 6],
-    },
-    textInput: {
-      backgroundColor: isDark ? theme.colors.dark[5] : "white",
-      color: isDark ? "white" : theme.black,
-    }
-  };
-  
-  const isMobile = useMediaQuery(`(max-width: ${theme.breakpoints.sm})`);
-  
-  const tiposDieta = [
-    'Mediterránea',
-    'Vegetariana',
-    'Vegana',
-    'Keto',
-    'Sin gluten',
-    'Baja en carbohidratos',
-    'Alta en proteínas',
-    'Otras'
-  ];
-
-  // Resto del código se mantiene igual
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === 'dark';
+  const isMobile = useMediaQuery('(max-width: 48em)');
   
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState<CrearDietaDTO>({
@@ -105,7 +66,16 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [stepError, setStepError] = useState<string | null>(null);
   
-  // Resto de las funciones se mantienen igual
+  const tiposDieta = [
+    'Mediterránea',
+    'Vegetariana',
+    'Vegana',
+    'Keto',
+    'Sin gluten',
+    'Baja en carbohidratos',
+    'Alta en proteínas',
+    'Otras'
+  ];
 
   const isValidMongoId = (id?: string) => id && /^[0-9a-fA-F]{24}$/.test(id);
 
@@ -176,8 +146,6 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
   const isCurrentStepValid = useCallback(() => {
     return validateCurrentStep().isValid;
   }, [validateCurrentStep]);
-  
-  // Resto de funciones se mantienen igual
 
   const handleNextClick = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -286,70 +254,56 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
   
   const fechaInicioDate = formData.fechaInicio ? new Date(formData.fechaInicio) : new Date(Date.now() + 86400000);
 
-  // Renderizados mejorados para modo oscuro
   const renderStepContent = () => {
     switch (activeStep) {
       case 0:
         return (
           <>
-            <Title order={4} mb="md" style={styles.title}>Información básica de la dieta</Title>
+            <Title order={4} mb="md" c="nutroos-green.6">Información básica de la dieta</Title>
             
             <TextInput
-              label={<Text style={styles.textColor}>Nombre de la dieta</Text>}
+              label="Nombre de la dieta"
               placeholder="Ej: Dieta mediterránea equilibrada"
               required
               value={formData.nombre}
               onChange={(e) => handleInputChange('nombre', e.target.value)}
               mb="md"
-              leftSection={<IconSalad size={16} color={isDark ? "white" : undefined} />}
+              leftSection={<IconSalad size={16} />}
               size="md"
-              styles={{ 
-                input: styles.textInput,
-                label: styles.textColor
-              }}
             />
             
             <Textarea
-              label={<Text style={styles.textColor}>Descripción</Text>}
+              label="Descripción"
               placeholder="Describe brevemente esta dieta y sus objetivos principales"
               minRows={3}
               value={formData.descripcion || ''}
               onChange={(e) => handleInputChange('descripcion', e.target.value)}
               mb="md"
               size="md"
-              styles={{ 
-                input: styles.textInput,
-                label: styles.textColor
-              }}
             />
           </>
         );
       case 1:
         return (
           <>
-            <Title order={4} mb="md" style={styles.title}>Tipo de dieta</Title>
+            <Title order={4} mb="md" c="nutroos-green.6">Tipo de dieta</Title>
             
-            <Paper p="md" radius="md" style={styles.boxContainer}>
+            <Paper p="md" radius="md" withBorder style={{ backgroundColor: 'var(--app-paper-bg)' }}>
               <CheckboxGroup
                 value={formData.tipo}
                 onChange={handleTipoChange}
                 required
                 mb="md"
-                label={<Text style={styles.textColor} fw={500}>Selecciona al menos un tipo de dieta</Text>}
+                label="Selecciona al menos un tipo de dieta"
               >
                 <SimpleGrid cols={{base: 1, xs: 2}} spacing="lg">
                   {tiposDieta.map((tipo) => (
                     <Checkbox
                       key={tipo}
                       value={tipo}
-                      label={<Text style={styles.textColor}>{tipo}</Text>}
+                      label={tipo}
                       size="md"
-                      color="blue"
-                      styles={{
-                        body: { alignItems: 'center' },
-                        inner: { backgroundColor: isDark ? theme.colors.dark[4] : undefined },
-                        input: { backgroundColor: isDark ? theme.colors.dark[4] : undefined }
-                      }}
+                      color="nutroos-green"
                     />
                   ))}
                 </SimpleGrid>
@@ -360,29 +314,25 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
       case 2:
         return (
           <>
-            <Title order={4} mb="md" style={styles.title}>Planificación de la dieta</Title>
+            <Title order={4} mb="md" c="nutroos-green.6">Planificación de la dieta</Title>
             
             <SimpleGrid cols={{base: 1, sm: 2}} spacing="md" mb="md">
               <NumberInput
-                label={<Text style={styles.textColor}>Duración (días)</Text>}
-                description={<Text size="xs" style={styles.textColor}>Duración total del plan (entre 1 y 365 días)</Text>}
+                label="Duración (días)"
+                description="Duración total del plan (entre 1 y 365 días)"
                 min={1}
                 max={365}
                 step={7}
                 required
                 value={formData.duracion}
                 onChange={(val) => handleInputChange('duracion', val || 28)}
-                leftSection={<IconCalendarStats size={16} color={isDark ? "white" : undefined} />}
+                leftSection={<IconCalendarStats size={16} />}
                 size="md"
-                styles={{ 
-                  input: styles.textInput,
-                  label: styles.textColor
-                }}
               />
               
               <Select
-                label={<Text style={styles.textColor}>Comidas diarias</Text>}
-                description={<Text size="xs" style={styles.textColor}>Número de comidas al día (entre 2 y 6)</Text>}
+                label="Comidas diarias"
+                description="Número de comidas al día (entre 2 y 6)"
                 data={[
                   { value: '2', label: '2 comidas' },
                   { value: '3', label: '3 comidas' },
@@ -394,49 +344,34 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
                 onChange={(val) => handleInputChange('comidasDiarias', parseInt(val || '3'))}
                 required
                 size="md"
-                styles={{ 
-                  input: styles.textInput,
-                  label: styles.textColor,
-                  dropdown: { backgroundColor: isDark ? theme.colors.dark[6] : undefined },
-                  option: { color: isDark ? "white" : undefined }
-                }}
               />
               
               <DatePickerInput
-                label={<Text style={styles.textColor}>Fecha de inicio</Text>}
+                label="Fecha de inicio"
                 placeholder="Selecciona una fecha"
-                description={<Text size="xs" style={styles.textColor}>Debe ser posterior a hoy</Text>}
-                leftSection={<IconCalendar size={16} color={isDark ? "white" : undefined} />}
+                description="Debe ser posterior a hoy"
+                leftSection={<IconCalendar size={16} />}
                 value={fechaInicioDate}
                 onChange={(date) => date && handleInputChange('fechaInicio', date)}
                 required
                 clearable={false}
                 minDate={new Date(Date.now() + 86400000)}
                 size="md"
-                styles={{ 
-                  input: styles.textInput,
-                  label: styles.textColor,
-                  day: { 
-                    color: isDark ? "white" : undefined,
-                    backgroundColor: isDark ? theme.colors.dark[6] : undefined
-                  },
-                  calendarHeader: { color: isDark ? "white" : undefined }
-                }}
               />
               
               <Box>
-                <Text size="sm" fw={500} mb={5} style={styles.textColor}>Cliente asignado</Text>
+                <Text size="sm" fw={500} mb={5}>Cliente asignado</Text>
                 <Card
                   withBorder
                   p="sm"
                   radius="md"
-                  style={styles.clientCard}
+                  style={{ backgroundColor: 'var(--app-paper-bg)', borderColor: 'var(--app-border-color)' }}
                 >
                   <Group gap="xs">
-                    <ActionIcon variant="light" color="blue" radius="xl" size="md">
+                    <ActionIcon variant="light" color="nutroos-green" radius="xl" size="md">
                       <IconUser size="1.2rem" />
                     </ActionIcon>
-                    <Text fw={500} style={styles.textColor}>{clienteNombre}</Text>
+                    <Text fw={500}>{clienteNombre}</Text>
                   </Group>
                 </Card>
                 <input type="hidden" value={clienteId || ''} />
@@ -478,7 +413,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
             type="submit"
             loading={isSubmitting} 
             leftSection={isSubmitting ? undefined : <IconCheck size={rem(18)} />}
-            color="teal"
+            color="nutroos-green"
           >
             {isSubmitting ? 'Creando...' : 'Crear Dieta'}
           </Button>
@@ -488,7 +423,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
             rightSection={<IconChevronRight size={rem(18)} />}
             disabled={!isCurrentStepValid()}
             type="button"
-            color="blue"
+            color="nutroos-green"
           >
             Siguiente
           </Button>
@@ -498,72 +433,70 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
   };
 
   return (
-    <MantineProvider 
-      forceColorScheme="dark"
-      theme={{}}
+    <Card 
+      shadow="sm" 
+      p="lg" 
+      radius="md" 
+      withBorder 
+      style={{ 
+        backgroundColor: 'var(--app-paper-bg)',
+        borderColor: 'var(--app-border-color)'
+      }}
     >
-      <Card shadow="sm" p="lg" radius="md" withBorder style={styles.mainCard}>
-        <div>
-          {stepError && (
-            <Alert 
-              icon={<IconAlertCircle size={16} />} 
-              title="Error de validación" 
-              color="red" 
-              mb="md"
-              withCloseButton
-              onClose={() => setStepError(null)}
-              variant="filled"
-            >
-              {stepError}
-            </Alert>
-          )}
-          
-          <Stepper
-            active={activeStep}
-            onStepClick={setActiveStep}
-            orientation={isMobile ? "vertical" : "horizontal"}
-            allowNextStepsSelect={false}
-            iconSize={32}
-            mb="xl"
-            color="blue"
-            styles={{
-              stepLabel: { color: isDark ? theme.colors.gray[2] : undefined },
-              stepDescription: { color: isDark ? theme.colors.gray[4] : undefined },
-              separator: { backgroundColor: isDark ? theme.colors.dark[4] : undefined },
-              step: { borderColor: isDark ? theme.colors.dark[4] : undefined }
-            }}
+      <div>
+        {stepError && (
+          <Alert 
+            icon={<IconAlertCircle size={16} />} 
+            title="Error de validación" 
+            color="red" 
+            mb="md"
+            withCloseButton
+            onClose={() => setStepError(null)}
+            variant="filled"
           >
-            <Stepper.Step
-              icon={<IconSalad size="1.5rem" />}
-              label="Información básica"
-              description="Nombre y descripción"
-            />
-            <Stepper.Step
-              icon={<IconClock size="1.5rem" />}
-              label="Tipo de dieta"
-              description="Características"
-            />
-            <Stepper.Step
-              icon={<IconCalendarStats size="1.5rem" />}
-              label="Planificación"
-              description="Duración y comidas"
-            />
-          </Stepper>
-          
-          {activeStep < 2 ? (
-            <>
-              {renderStepContent()}
-              {renderNavButtons()}
-            </>
-          ) : (
-            <form onSubmit={handleSubmit}>
-              {renderStepContent()}
-              {renderNavButtons()}
-            </form>
-          )}
-        </div>
-      </Card>
-    </MantineProvider>
+            {stepError}
+          </Alert>
+        )}
+        
+        <Stepper
+          active={activeStep}
+          onStepClick={setActiveStep}
+          orientation={isMobile ? "vertical" : "horizontal"}
+          allowNextStepsSelect={false}
+          iconSize={32}
+          mb="xl"
+          color="nutroos-green"
+        >
+          <Stepper.Step
+            icon={<IconSalad size="1.5rem" />}
+            label="Información básica"
+            description="Nombre y descripción"
+          />
+          <Stepper.Step
+            icon={<IconClock size="1.5rem" />}
+            label="Tipo de dieta"
+            description="Características"
+          />
+          <Stepper.Step
+            icon={<IconCalendarStats size="1.5rem" />}
+            label="Planificación"
+            description="Duración y comidas"
+          />
+        </Stepper>
+        
+        {activeStep < 2 ? (
+          <>
+            {renderStepContent()}
+            {renderNavButtons()}
+          </>
+        ) : (
+          <form onSubmit={handleSubmit}>
+            {renderStepContent()}
+            {renderNavButtons()}
+          </form>
+        )}
+      </div>
+    </Card>
   );
 };
 

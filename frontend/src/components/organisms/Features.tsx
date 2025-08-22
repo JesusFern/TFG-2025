@@ -1,17 +1,50 @@
-// src/components/organisms/Features.tsx
 import React from 'react';
 import styled from 'styled-components';
 import { FeatureCard } from '../molecules/FeatureCard';
 import { Heading2 } from '../atoms/Typography';
 import { Container, Section } from '../atoms/Container';
+import { useMantineColorScheme } from '@mantine/core';
+
+const FeaturesSection = styled(Section)<{ isDark: boolean }>`
+  background-color: ${props => props.isDark ? '#1d1e30' : '#f9fcfa'};
+  padding: 5rem 0;
+`;
 
 const FeaturesGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: 2rem;
+  
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const SectionTitle = styled(Heading2)<{ isDark: boolean }>`
+  text-align: center;
+  margin-bottom: 3rem;
+  
+  span {
+    color: var(--app-accent);
+    position: relative;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      bottom: -5px;
+      left: 0;
+      width: 100%;
+      height: 3px;
+      background-color: var(--app-accent);
+      border-radius: 2px;
+    }
+  }
 `;
 
 export const Features: React.FC = () => {
+  const { colorScheme } = useMantineColorScheme();
+  const isDark = colorScheme === 'dark';
+
   const features = [
     {
       icon: '🥗',
@@ -46,9 +79,9 @@ export const Features: React.FC = () => {
   ];
 
   return (
-    <Section id="features">
+    <FeaturesSection id="features" isDark={isDark}>
       <Container>
-        <Heading2>Nuestras <span>Características</span></Heading2>
+        <SectionTitle isDark={isDark}>Nuestras <span>Características</span></SectionTitle>
         <FeaturesGrid>
           {features.map((feature, index) => (
             <FeatureCard
@@ -56,10 +89,11 @@ export const Features: React.FC = () => {
               icon={feature.icon}
               title={feature.title}
               description={feature.description}
+              isDark={isDark}
             />
           ))}
         </FeaturesGrid>
       </Container>
-    </Section>
+    </FeaturesSection>
   );
 };
