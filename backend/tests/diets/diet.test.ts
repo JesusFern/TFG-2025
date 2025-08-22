@@ -117,7 +117,13 @@ jest.mock('../../src/service/diets/plateService', () => ({
 jest.mock('../../src/validators/userValidators', () => ({
   loginValidator: [],
   createUserValidator: [],
-  updateUserValidator: []
+  updateUserValidator: [],
+  registerValidator: [],
+  step0Validator: [],
+  step1Validator: [],
+  step2Validator: [],
+  step3Validator: [],
+  step4Validator: []
 }));
 
 import app from '../../src/server';
