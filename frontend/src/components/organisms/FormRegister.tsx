@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stepper, Paper } from '@mantine/core';
+import { Stepper, Paper, ScrollArea } from '@mantine/core';
 import classes from '../../styles/RegisterForm.module.css';
 import FormSectionTitle from '../atoms/FormSectionTitle';
 import GlobalErrorOverlay from '../atoms/GlobalErrorOverlay';
@@ -73,36 +73,39 @@ const RegisterForm = () => {
     comidasDia: '',
     restricciones: '',
     alergias: '',
+    horariosComidas: [],
   });
 
-  const handleChange = (field: string, value: string | number | string[] | null) => setForm({ ...form, [field]: value });
-
-  const requiredFields = [
-    ['nombre', 'email', 'telefono', 'password', 'genero', 'fechaNacimiento'],
-    ['altura', 'peso', 'objetivoPeso'],
-    ['nivelActividad', 'frecuenciaEjercicio'],
-    ['tipoEjercicio', 'objetivo'],
-    ['comidasDia'],
-    []
-  ];
+  const handleChange = (field: string, value: string | number | string[] | Array<{ comida: string; hora: string }> | null) => setForm({ ...form, [field]: value });
 
   const [errors, setErrors] = useState<RegisterFormErrors>({});
 
-  const validateStep = async () => {
-    const fields = requiredFields[active] ?? [];
-    const newErrors: { [key: string]: string } = {};
-    
-    fields.forEach(field => {
-      if (!form[field]) {
-        newErrors[field] = 'Este campo es obligatorio';
-      }
-    });
-    
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return false;
-    }
+  // Mapeo de campos del backend a campos del frontend
+  const fieldMapping: { [key: string]: string } = {
+    'fullName': 'nombre',
+    'email': 'email',
+    'password': 'password',
+    'phoneNumber': 'telefono',
+    'gender': 'genero',
+    'birthDate': 'fechaNacimiento',
+    'health.altura': 'altura',
+    'health.pesoActual': 'peso',
+    'health.objetivoPeso': 'objetivoPeso',
+    'health.condicionesMedicas': 'condiciones',
+    'health.restriccionesDieteticas': 'restricciones',
+    'health.alergiasIntolerancias': 'alergias',
+    'health.preferenciasAlimentarias': 'preferencias',
+    'health.comidasDia': 'comidasDia',
+    'health.horariosComidas': 'horariosComidas',
+    'activity.nivelActividad': 'nivelActividad',
+    'activity.frecuenciaEjercicio': 'frecuenciaEjercicio',
+    'activity.tipoEjercicio': 'tipoEjercicio',
+    'activity.objetivo': 'objetivo',
+    'activity.otrosEjercicios': 'otrosEjercicios',
+    'activity.disponibilidad': 'disponibilidad'
+  };
 
+  const validateStep = async () => {
     setErrors({});
 
     try {
@@ -119,27 +122,6 @@ const RegisterForm = () => {
           const validationErrors: { [key: string]: string } = {};
           
           data.errors.forEach((error: { type: string; value: string; msg: string; path: string; location: string }) => {
-            const fieldMapping: { [key: string]: string } = {
-              'fullName': 'nombre',
-              'email': 'email',
-              'password': 'password',
-              'phoneNumber': 'telefono',
-              'gender': 'genero',
-              'birthDate': 'fechaNacimiento',
-              'health.altura': 'altura',
-              'health.pesoActual': 'peso',
-              'health.objetivoPeso': 'objetivoPeso',
-              'health.condicionesMedicas': 'condiciones',
-              'health.restriccionesDieteticas': 'restricciones',
-              'health.alergiasIntolerancias': 'alergias',
-              'health.preferenciasAlimentarias': 'preferencias',
-              'activity.nivelActividad': 'nivelActividad',
-              'activity.frecuenciaEjercicio': 'frecuenciaEjercicio',
-              'activity.tipoEjercicio': 'tipoEjercicio',
-              'activity.objetivo': 'objetivo',
-              'activity.preferenciasEjercicios': 'otrosEjercicios'
-            };
-            
             const frontendField = fieldMapping[error.path];
             if (frontendField) {
               validationErrors[frontendField] = error.msg;
@@ -154,6 +136,43 @@ const RegisterForm = () => {
       }
     } catch (error) {
       console.error('Error validando paso:', error);
+    }
+    
+    return true;
+  };
+
+  const validateFinalStep = async () => {
+    setErrors({});
+
+    try {
+      // Validar específicamente el paso final (step 4)
+      const finalStepPayload = buildStepPayload(4);
+      const res = await apiRequest(apiConfig.endpoints.users.validateStep(4), {
+        method: 'POST',
+        body: JSON.stringify(finalStepPayload)
+      });
+      
+      if (!res.ok) {
+        const data = await res.json();
+        
+        if (data.errors && Array.isArray(data.errors)) {
+          const validationErrors: { [key: string]: string } = {};
+          
+          data.errors.forEach((error: { type: string; value: string; msg: string; path: string; location: string }) => {
+            const frontendField = fieldMapping[error.path];
+            if (frontendField) {
+              validationErrors[frontendField] = error.msg;
+            } else {
+              validationErrors[error.path] = error.msg;
+            }
+          });
+          
+          setErrors(validationErrors);
+          return false;
+        }
+      }
+    } catch (error) {
+      console.error('Error validando paso final:', error);
     }
     
     return true;
@@ -182,7 +201,9 @@ const RegisterForm = () => {
             condicionesMedicas: csvToArray(String(form.condiciones)),
             restriccionesDieteticas: [],
             alergiasIntolerancias: [],
-            preferenciasAlimentarias: []
+            preferenciasAlimentarias: [],
+            comidasDia: form.comidasDia ? Number(form.comidasDia) : undefined,
+            horariosComidas: form.horariosComidas || []
           }
         };
       case 2:
@@ -195,14 +216,13 @@ const RegisterForm = () => {
             condicionesMedicas: csvToArray(String(form.condiciones)),
             restriccionesDieteticas: [],
             alergiasIntolerancias: [],
-            preferenciasAlimentarias: []
+            preferenciasAlimentarias: [],
+            comidasDia: form.comidasDia ? Number(form.comidasDia) : undefined,
+            horariosComidas: form.horariosComidas || []
           },
           activity: {
             nivelActividad: String(form.nivelActividad),
-            frecuenciaEjercicio: Number(form.frecuenciaEjercicio),
-            tipoEjercicio: [],
-            objetivo: '',
-            preferenciasEjercicios: []
+            frecuenciaEjercicio: Number(form.frecuenciaEjercicio)
           }
         };
       case 3:
@@ -214,15 +234,15 @@ const RegisterForm = () => {
             objetivoPeso: Number(form.objetivoPeso),
             condicionesMedicas: csvToArray(String(form.condiciones)),
             restriccionesDieteticas: [],
-            alergiasIntolerancias: [],
-            preferenciasAlimentarias: []
+            alergiasIntolerancias: []
           },
           activity: {
             nivelActividad: String(form.nivelActividad),
             frecuenciaEjercicio: Number(form.frecuenciaEjercicio),
-            tipoEjercicio: Array.isArray(form.tipoEjercicio) ? form.tipoEjercicio : [],
+            tipoEjercicio: Array.isArray(form.tipoEjercicio) && form.tipoEjercicio.length > 0 ? form.tipoEjercicio : null,
             objetivo: String(form.objetivo),
-            preferenciasEjercicios: csvToArray(String(form.otrosEjercicios))
+            otrosEjercicios: String(form.otrosEjercicios),
+            disponibilidad: String(form.disponibilidad)
           }
         };
       case 4:
@@ -235,14 +255,17 @@ const RegisterForm = () => {
             condicionesMedicas: csvToArray(String(form.condiciones)),
             restriccionesDieteticas: csvToArray(String(form.restricciones)),
             alergiasIntolerancias: csvToArray(String(form.alergias)),
-            preferenciasAlimentarias: csvToArray(String(form.preferencias))
+            preferenciasAlimentarias: csvToArray(String(form.preferencias)),
+            comidasDia: form.comidasDia ? Number(form.comidasDia) : undefined,
+            horariosComidas: form.horariosComidas || []
           },
           activity: {
             nivelActividad: String(form.nivelActividad),
             frecuenciaEjercicio: Number(form.frecuenciaEjercicio),
-            tipoEjercicio: Array.isArray(form.tipoEjercicio) ? form.tipoEjercicio : [],
+            tipoEjercicio: Array.isArray(form.tipoEjercicio) && form.tipoEjercicio.length > 0 ? form.tipoEjercicio : null,
             objetivo: String(form.objetivo),
-            preferenciasEjercicios: csvToArray(String(form.otrosEjercicios))
+            otrosEjercicios: String(form.otrosEjercicios),
+            disponibilidad: String(form.disponibilidad)
           }
         };
       default:
@@ -258,7 +281,9 @@ const RegisterForm = () => {
   const csvToArray = (v?: string) => (v ?? '').split(',').map(s => s.trim()).filter(Boolean);
 
   const handleSubmit = async () => {
-    if (!validateStep()) return;
+    // Validar específicamente el paso final antes de enviar
+    const finalStepValid = await validateFinalStep();
+    if (!finalStepValid) return;
 
     setSubmitError(null);
     setIsSubmitting(true);
@@ -280,14 +305,17 @@ const RegisterForm = () => {
         condicionesMedicas: csvToArray(String(form.condiciones)),
         restriccionesDieteticas: csvToArray(String(form.restricciones)),
         alergiasIntolerancias: csvToArray(String(form.alergias)),
-        preferenciasAlimentarias: csvToArray(String(form.preferencias))
+        preferenciasAlimentarias: csvToArray(String(form.preferencias)),
+        comidasDia: form.comidasDia ? Number(form.comidasDia) : undefined,
+        horariosComidas: form.horariosComidas || []
       },
       activity: {
         nivelActividad: String(form.nivelActividad),
         frecuenciaEjercicio: Number(form.frecuenciaEjercicio),
         tipoEjercicio: Array.isArray(form.tipoEjercicio) ? form.tipoEjercicio : [],
         objetivo: String(form.objetivo),
-        preferenciasEjercicios: csvToArray(String(form.otrosEjercicios))
+        otrosEjercicios: String(form.otrosEjercicios),
+        disponibilidad: String(form.disponibilidad)
       }
     };
 
@@ -304,27 +332,6 @@ const RegisterForm = () => {
           const validationErrors: { [key: string]: string } = {};
           
           data.errors.forEach((error: { type: string; value: string; msg: string; path: string; location: string }) => {
-            const fieldMapping: { [key: string]: string } = {
-              'fullName': 'nombre',
-              'email': 'email',
-              'password': 'password',
-              'phoneNumber': 'telefono',
-              'gender': 'genero',
-              'birthDate': 'fechaNacimiento',
-              'health.altura': 'altura',
-              'health.pesoActual': 'peso',
-              'health.objetivoPeso': 'objetivoPeso',
-              'health.condicionesMedicas': 'condiciones',
-              'health.restriccionesDieteticas': 'restricciones',
-              'health.alergiasIntolerancias': 'alergias',
-              'health.preferenciasAlimentarias': 'preferencias',
-              'activity.nivelActividad': 'nivelActividad',
-              'activity.frecuenciaEjercicio': 'frecuenciaEjercicio',
-              'activity.tipoEjercicio': 'tipoEjercicio',
-              'activity.objetivo': 'objetivo',
-              'activity.preferenciasEjercicios': 'otrosEjercicios'
-            };
-            
             const frontendField = fieldMapping[error.path];
             if (frontendField) {
               validationErrors[frontendField] = error.msg;
@@ -335,7 +342,13 @@ const RegisterForm = () => {
           return;
         }
         
-        setSubmitError(data?.message || 'Error al registrar');
+        // Si no hay errores específicos pero hay un mensaje de error, mostrarlo como error general
+        if (data?.message) {
+          setSubmitError(data.message);
+          return;
+        }
+        
+        setSubmitError('Error al registrar');
         return;
       }
       
@@ -361,74 +374,79 @@ const RegisterForm = () => {
         </div>
         <div style={{ height: 60 }} />
 
-        <Stepper active={active}>
-          <Stepper.Step label="Personales">
-            <PersonalInfoStep
-              values={{
-                nombre: String(form.nombre),
-                email: String(form.email),
-                telefono: String(form.telefono),
-                fechaNacimiento: form.fechaNacimiento ? new Date(form.fechaNacimiento as Date) : null,
-                password: String(form.password),
-                genero: String(form.genero),
-              }}
-              errors={errors}
-              onChange={handleChange}
-              generoOptions={generoOptions}
-            />
-          </Stepper.Step>
+        <ScrollArea h={400} type="auto" offsetScrollbars>
+          <Stepper active={active}>
+            <Stepper.Step label="Personales">
+              <PersonalInfoStep
+                values={{
+                  nombre: String(form.nombre),
+                  email: String(form.email),
+                  telefono: String(form.telefono),
+                  fechaNacimiento: form.fechaNacimiento ? new Date(form.fechaNacimiento as Date) : null,
+                  password: String(form.password),
+                  genero: String(form.genero),
+                }}
+                errors={errors}
+                onChange={handleChange}
+                generoOptions={generoOptions}
+              />
+            </Stepper.Step>
 
-          <Stepper.Step label="Datos físicos">
-            <PhysicalDataStep
-              values={{
-                altura: form.altura,
-                peso: form.peso,
-                objetivoPeso: form.objetivoPeso,
-                condiciones: String(form.condiciones),
-              }}
-              errors={errors}
-              onChange={handleChange}
-            />
-          </Stepper.Step>
+            <Stepper.Step label="Datos físicos">
+              <PhysicalDataStep
+                values={{
+                  altura: form.altura,
+                  peso: form.peso,
+                  objetivoPeso: form.objetivoPeso,
+                  condiciones: String(form.condiciones),
+                }}
+                errors={errors}
+                onChange={handleChange}
+              />
+            </Stepper.Step>
 
-          <Stepper.Step label="Actividad">
-            <ActivityStep
-              values={{
-                nivelActividad: String(form.nivelActividad),
-                frecuenciaEjercicio: form.frecuenciaEjercicio,
-              }}
-              onChange={handleChange}
-              actividadOptions={actividadOptions}
-            />
-          </Stepper.Step>
+            <Stepper.Step label="Actividad">
+              <ActivityStep
+                values={{
+                  nivelActividad: String(form.nivelActividad),
+                  frecuenciaEjercicio: form.frecuenciaEjercicio,
+                }}
+                errors={errors}
+                onChange={handleChange}
+                actividadOptions={actividadOptions}
+              />
+            </Stepper.Step>
 
-          <Stepper.Step label="Ejercicio">
-            <ExerciseStep
-              values={{
-                tipoEjercicio: Array.isArray(form.tipoEjercicio) ? form.tipoEjercicio : [],
-                otrosEjercicios: String(form.otrosEjercicios),
-                disponibilidad: String(form.disponibilidad),
-                objetivo: String(form.objetivo),
-              }}
-              onChange={handleChange}
-              ejercicioOptions={ejercicioOptions}
-              objetivoOptions={objetivoOptions}
-            />
-          </Stepper.Step>
+            <Stepper.Step label="Ejercicio">
+              <ExerciseStep
+                values={{
+                  tipoEjercicio: Array.isArray(form.tipoEjercicio) ? form.tipoEjercicio : [],
+                  otrosEjercicios: String(form.otrosEjercicios),
+                  disponibilidad: String(form.disponibilidad),
+                  objetivo: String(form.objetivo),
+                }}
+                errors={errors}
+                onChange={handleChange}
+                ejercicioOptions={ejercicioOptions}
+                objetivoOptions={objetivoOptions}
+              />
+            </Stepper.Step>
 
-          <Stepper.Step label="Nutrición">
-            <NutritionStep
-              values={{
-                preferencias: String(form.preferencias),
-                comidasDia: form.comidasDia,
-                restricciones: String(form.restricciones),
-                alergias: String(form.alergias),
-              }}
-              onChange={handleChange}
-              errors={errors}
-            />
-          </Stepper.Step>
-        </Stepper>
+            <Stepper.Step label="Nutrición">
+              <NutritionStep
+                values={{
+                  preferencias: String(form.preferencias),
+                  comidasDia: form.comidasDia,
+                  restricciones: String(form.restricciones),
+                  alergias: String(form.alergias),
+                  horariosComidas: form.horariosComidas || [],
+                }}
+                onChange={handleChange}
+                errors={errors}
+              />
+            </Stepper.Step>
+          </Stepper>
+        </ScrollArea>
 
         <StepNavigation
           isFirstStep={active === 0}

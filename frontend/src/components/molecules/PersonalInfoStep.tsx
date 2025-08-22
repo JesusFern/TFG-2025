@@ -38,7 +38,7 @@ const PersonalInfoStep: React.FC<Props> = ({ values, errors, onChange, generoOpt
       left={
         <>
           <TextInput label="Nombre y apellidos" placeholder="Nombre y apellidos" value={values.nombre} onChange={(e) => onChange('nombre', e.target.value)} required error={errors.nombre} />
-          <TextInput label="Correo electrónico" leftSectionPointerEvents="none" leftSection={iconEmail} placeholder="Email" value={values.email} onChange={(e) => onChange('email', e.target.value)} required error={errors.email} />
+          <TextInput label="Correo electrónico" leftSectionPointerEvents="none" leftSection={iconEmail} placeholder="usuario@correo.com" value={values.email} onChange={(e) => onChange('email', e.target.value)} required error={errors.email} />
           <TextInput label="Número de teléfono" leftSectionPointerEvents="none" leftSection={iconPhone} placeholder="+34123456789" value={values.telefono} onChange={(e) => onChange('telefono', e.target.value)} required error={errors.telefono} />
         </>
       }

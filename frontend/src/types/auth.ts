@@ -19,7 +19,8 @@ export type RegisterFormState = {
   comidasDia: number | string;
   restricciones: string;
   alergias: string;
-  [key: string]: string | number | string[] | Date | null;
+  horariosComidas: Array<{ comida: string; hora: string }>;
+  [key: string]: string | number | string[] | Date | null | Array<{ comida: string; hora: string }>;
 };
 
 export type RegisterFormErrors = { [key: string]: string };

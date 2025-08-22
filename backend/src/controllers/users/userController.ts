@@ -50,6 +50,15 @@ export const registerUser = async (req: Request, res: Response): Promise<void> =
     };
 
     if (health) {
+      // Validar que horariosComidas no esté vacío
+      if (!health.horariosComidas || !Array.isArray(health.horariosComidas) || health.horariosComidas.length === 0) {
+        res.status(400).json({
+          message: 'Debe especificar al menos un horario de comida',
+          field: 'horariosComidas'
+        });
+        return;
+      }
+
       const datosSalud = await DatosSaludYNutricion.create({
         userId: user._id,
         altura: Number(health.altura),

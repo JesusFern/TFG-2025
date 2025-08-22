@@ -1,4 +1,5 @@
 import { body, param } from 'express-validator';
+import User from '../models/users/user';
 
 // Política de contraseñas: al menos 8 caracteres, una mayúscula, una minúscula, un número
 const passwordPolicy = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)[A-Za-z\d@$!%*?&]{8,}$/;
@@ -68,6 +69,9 @@ export const registerValidator = [
     .optional()
     .isArray()
     .withMessage('Las preferencias alimentarias deben ser un array'),
+  body('health.comidasDia')
+    .notEmpty()
+    .withMessage('El número de comidas al día es obligatorio'),
   
   // Datos de actividad física
   body('activity.nivelActividad')
@@ -97,7 +101,23 @@ export const registerValidator = [
 // Validadores por pasos
 export const step0Validator = [
   body('fullName').notEmpty().withMessage('El nombre completo es obligatorio'),
-  body('email').isEmail().withMessage('Email inválido'),
+  body('email')
+    .isEmail().withMessage('Email inválido')
+    .custom(async (value) => {
+      try {
+        const existingUser = await User.findOne({ email: value.toLowerCase() });
+        if (existingUser) {
+          throw new Error('El email ya está registrado');
+        }
+        return true;
+      } catch (error) {
+        if (error instanceof Error && error.message === 'El email ya está registrado') {
+          throw error;
+        }
+        // Si hay un error de base de datos, permitir que continúe
+        return true;
+      }
+    }).withMessage('El email ya está registrado'),
   body('password')
     .matches(passwordPolicy)
     .withMessage('La contraseña debe tener al menos 8 caracteres, incluir una mayúscula, una minúscula y un número'),
@@ -120,7 +140,11 @@ export const step1Validator = [
     .withMessage('El peso actual debe estar entre 30 y 300 kg'),
   body('health.objetivoPeso')
     .isFloat({ min: 30, max: 300 })
-    .withMessage('El peso objetivo debe estar entre 30 y 300 kg')
+    .withMessage('El peso objetivo debe estar entre 30 y 300 kg'),
+  body('health.condicionesMedicas')
+    .optional()
+    .isArray()
+    .withMessage('Las condiciones médicas deben ser un array')
 ];
 
 export const step2Validator = [
@@ -129,6 +153,7 @@ export const step2Validator = [
     .isIn(['Sedentario', 'Ocasional', 'Regular', 'Frecuente', 'Diario'])
     .withMessage('Nivel de actividad inválido'),
   body('activity.frecuenciaEjercicio')
+    .notEmpty()
     .isInt({ min: 0, max: 7 })
     .withMessage('La frecuencia de ejercicio debe estar entre 0 y 7 días')
 ];
@@ -144,6 +169,13 @@ export const step3Validator = [
       return value.every((type: string) => validTypes.includes(type));
     })
     .withMessage('Tipo de ejercicio inválido'),
+  body('activity.otrosEjercicios')
+    .optional()
+    .isString()
+    .withMessage('Los otros ejercicios deben ser un string'),
+  body('activity.disponibilidad')
+    .notEmpty()
+    .withMessage('La disponibilidad es obligatoria'),
   body('activity.objetivo')
     .isIn(['Pérdida de peso', 'Ganancia muscular', 'Resistencia', 'Flexibilidad', 'Salud general', 'Rehabilitación'])
     .withMessage('Objetivo inválido')
@@ -151,10 +183,6 @@ export const step3Validator = [
 
 export const step4Validator = [
   ...step3Validator,
-  body('health.condicionesMedicas')
-    .optional()
-    .isArray()
-    .withMessage('Las condiciones médicas deben ser un array'),
   body('health.restriccionesDieteticas')
     .optional()
     .isArray()
@@ -166,11 +194,28 @@ export const step4Validator = [
   body('health.preferenciasAlimentarias')
     .optional()
     .isArray()
-    .withMessage('Las preferencias alimentarias deben ser un array'),
-  body('activity.preferenciasEjercicios')
-    .optional()
-    .isArray()
-    .withMessage('Las preferencias de ejercicio deben ser un array')
+    .withMessage('Las preferencias alimentarias deben ser obligatorias'),
+  body('health.comidasDia')
+    .notEmpty()
+    .withMessage('El número de comidas al día es obligatorio'),
+  body('health.horariosComidas')
+    .isArray({ min: 1 })
+    .withMessage('Debe especificar al menos un horario de comida'),
+  body('health.horariosComidas.*.comida')
+    .isIn(['Desayuno', 'Media mañana', 'Almuerzo', 'Merienda', 'Cena', 'Snack'])
+    .withMessage('Tipo de comida inválido'),
+  body('health.horariosComidas.*.hora')
+    .matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/)
+    .withMessage('Formato de hora inválido. Use HH:MM'),
+  body('health.horariosComidas')
+    .custom((value, { req }) => {
+      const comidasDia = req.body.health?.comidasDia;
+      if (comidasDia && value.length !== comidasDia) {
+        throw new Error(`Debe especificar exactamente ${comidasDia} horario(s) de comida`);
+      }
+      return true;
+    })
+    .withMessage('El número de horarios debe coincidir con el número de comidas al día')
 ];
 
 export const updateUserValidator = [
