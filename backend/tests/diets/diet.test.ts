@@ -31,6 +31,9 @@ jest.mock('../../src/middlewares/authMiddleware', () => {
       req.user = { id: workerId, role: 'worker' };
       next();
     },
+    authorizeWorker: (_req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
+      next();
+    },
     authorizeNutricionista: (_req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
       next();
     },
