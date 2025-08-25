@@ -45,10 +45,10 @@ export async function crearPlanEntrenamientoService({
   }
 
   // Validar que no existe un plan con el mismo nombre del mismo entrenador
-  const planExistente = await PlanEntrenamiento.findOne({ 
-    nombre, 
+  const planExistente = await PlanEntrenamiento.findOne({
+    nombre,
     entrenador: entrenadorId,
-    activo: true 
+    activo: true
   });
   if (planExistente) {
     throw new Error('Ya existe un plan de entrenamiento con ese nombre');
@@ -156,8 +156,8 @@ export async function actualizarPlanEntrenamientoService(
 
   // Si se está cambiando el nombre, verificar que no exista otro con el mismo nombre
   if (datosActualizacion.nombre && datosActualizacion.nombre !== plan.nombre) {
-    const planExistente = await PlanEntrenamiento.findOne({ 
-      nombre: datosActualizacion.nombre, 
+    const planExistente = await PlanEntrenamiento.findOne({
+      nombre: datosActualizacion.nombre,
       entrenador: entrenadorId,
       activo: true,
       _id: { $ne: planId }

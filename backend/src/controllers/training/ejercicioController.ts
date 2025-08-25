@@ -101,7 +101,7 @@ export const obtenerEjercicios = async (req: AuthenticatedRequest, res: Response
 
 export const obtenerEjercicioPorId = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = matchedData(req, { locations: ['params'] }) as { id: string };
 
     const ejercicio = await obtenerEjercicioPorIdService(id);
 

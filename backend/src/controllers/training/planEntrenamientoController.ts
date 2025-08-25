@@ -104,7 +104,7 @@ export const obtenerPlanesEntrenamiento = async (req: AuthenticatedRequest, res:
 
 export const obtenerPlanEntrenamientoPorId = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { id } = req.params;
+    const { id } = matchedData(req, { locations: ['params'] }) as { id: string };
 
     const plan = await obtenerPlanEntrenamientoPorIdService(id);
 
