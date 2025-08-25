@@ -128,12 +128,11 @@ export async function actualizarEjercicioService(
 
   // Si se está cambiando el nombre, verificar que no exista otro con el mismo nombre
   if (datosActualizacion.nombre && datosActualizacion.nombre !== ejercicio.nombre) {
-    const ejercicioExistente = await Ejercicio.findOne({ 
-      nombre: datosActualizacion.nombre, 
-      creador: creadorId,
-      activo: true,
-      _id: { $ne: ejercicioId }
-    });
+    const ejercicioExistente = await Ejercicio.findOne()
+      .where('nombre').equals(datosActualizacion.nombre)
+      .where('creador').equals(creadorId)
+      .where('activo').equals(true)
+      .where('_id').ne(ejercicioId);
     if (ejercicioExistente) {
       throw new Error('Ya existe un ejercicio con ese nombre');
     }

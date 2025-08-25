@@ -129,7 +129,7 @@ export const actualizarPlanEntrenamiento = async (req: AuthenticatedRequest, res
       return;
     }
 
-    const { id } = req.params;
+    const { id } = matchedData(req, { locations: ['params'] }) as { id: string };
     // Extraer únicamente campos actualizables validados
     const update = matchedData(req, { locations: ['body'], includeOptionals: true }) as PlanUpdateAllowed;
 
@@ -162,7 +162,7 @@ export const eliminarPlanEntrenamiento = async (req: AuthenticatedRequest, res: 
       return;
     }
 
-    const { id } = req.params;
+    const { id } = matchedData(req, { locations: ['params'] }) as { id: string };
 
     logger.debug('Procesando eliminación de plan de entrenamiento', {
       entrenadorId,
@@ -192,8 +192,8 @@ export const asignarCliente = async (req: AuthenticatedRequest, res: Response) =
       return;
     }
 
-    const { id } = req.params;
-    const { clienteId } = req.body;
+    const { id } = matchedData(req, { locations: ['params'] }) as { id: string };
+    const { clienteId } = matchedData(req, { locations: ['body'] }) as { clienteId: string };
 
     logger.debug('Procesando asignación de cliente', {
       entrenadorId,
@@ -224,7 +224,7 @@ export const removerCliente = async (req: AuthenticatedRequest, res: Response) =
       return;
     }
 
-    const { id, clienteId } = req.params;
+    const { id, clienteId } = matchedData(req, { locations: ['params'] }) as { id: string; clienteId: string };
 
     logger.debug('Procesando remoción de cliente', {
       entrenadorId,

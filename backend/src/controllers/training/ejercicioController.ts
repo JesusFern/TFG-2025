@@ -126,7 +126,7 @@ export const actualizarEjercicio = async (req: AuthenticatedRequest, res: Respon
       return;
     }
 
-    const { id } = req.params;
+    const { id } = matchedData(req, { locations: ['params'] }) as { id: string };
     const datosActualizacion = matchedData(req, { locations: ['body'], includeOptionals: true }) as Partial<{
       nombre: string;
       descripcion: string;
