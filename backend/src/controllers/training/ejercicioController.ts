@@ -8,6 +8,7 @@ import {
   eliminarEjercicioService
 } from '../../service/training/ejercicioService';
 import logger from '../../utils/logger';
+import { matchedData } from 'express-validator';
 
 export const crearEjercicio = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -17,18 +18,29 @@ export const crearEjercicio = async (req: AuthenticatedRequest, res: Response) =
       return;
     }
 
-    const { 
-      nombre, 
-      descripcion, 
-      grupoMuscular, 
-      equipamiento, 
-      series, 
-      repeticiones, 
-      tiempoDescanso, 
-      nivelDificultad, 
-      nivelIntensidad, 
-      videoDemostrativo 
-    } = req.body;
+    const {
+      nombre,
+      descripcion,
+      grupoMuscular,
+      equipamiento,
+      series,
+      repeticiones,
+      tiempoDescanso,
+      nivelDificultad,
+      nivelIntensidad,
+      videoDemostrativo
+    } = matchedData(req, { locations: ['body'], includeOptionals: true }) as {
+      nombre: string;
+      descripcion: string;
+      grupoMuscular: string;
+      equipamiento: string;
+      series: number;
+      repeticiones: number;
+      tiempoDescanso: number;
+      nivelDificultad: string;
+      nivelIntensidad: string;
+      videoDemostrativo?: string;
+    };
 
     logger.debug('Procesando datos para crear ejercicio', {
       creadorId,
@@ -64,14 +76,13 @@ export const crearEjercicio = async (req: AuthenticatedRequest, res: Response) =
 
 export const obtenerEjercicios = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { grupoMuscular, nivelDificultad, equipamiento, creador, publico } = req.query;
-
-    const filtros: { grupoMuscular?: string; nivelDificultad?: string; equipamiento?: string; creador?: string; publico?: boolean } = {};
-    if (grupoMuscular) filtros.grupoMuscular = grupoMuscular as string;
-    if (nivelDificultad) filtros.nivelDificultad = nivelDificultad as string;
-    if (equipamiento) filtros.equipamiento = equipamiento as string;
-    if (creador) filtros.creador = creador as string;
-    if (publico !== undefined) filtros.publico = publico === 'true';
+    const filtros = matchedData(req, { locations: ['query'], includeOptionals: true }) as {
+      grupoMuscular?: string;
+      nivelDificultad?: string;
+      equipamiento?: string;
+      creador?: string;
+      publico?: boolean;
+    };
 
     const ejercicios = await obtenerEjerciciosService(filtros);
 
@@ -116,12 +127,23 @@ export const actualizarEjercicio = async (req: AuthenticatedRequest, res: Respon
     }
 
     const { id } = req.params;
-    const datosActualizacion = req.body;
+    const datosActualizacion = matchedData(req, { locations: ['body'], includeOptionals: true }) as Partial<{
+      nombre: string;
+      descripcion: string;
+      grupoMuscular: string;
+      equipamiento: string;
+      series: number;
+      repeticiones: number;
+      tiempoDescanso: number;
+      nivelDificultad: string;
+      nivelIntensidad: string;
+      videoDemostrativo: string;
+    }>;
 
     logger.debug('Procesando actualización de ejercicio', {
       creadorId,
       ejercicioId: id,
-      datosActualizacion
+      campos: Object.keys(datosActualizacion)
     });
 
     const ejercicio = await actualizarEjercicioService(id, creadorId, datosActualizacion);

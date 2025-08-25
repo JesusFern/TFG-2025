@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import { matchedData } from 'express-validator';
 import { AuthenticatedRequest } from '../../types';
 import { 
   crearPlanEntrenamientoService, 
@@ -11,6 +12,19 @@ import {
 } from '../../service/training/planEntrenamientoService';
 import logger from '../../utils/logger';
 
+type PlanCreateAllowed = {
+  entrenadorId: string;
+  nombre: string;
+  descripcion?: string;
+  objetivo: string;
+  duracionDias: number;
+  sesionesPorSemana: number;
+  clientes: string[];
+  publico: boolean;
+};
+
+type PlanUpdateAllowed = Partial<Omit<PlanCreateAllowed, 'entrenadorId'>>;
+
 export const crearPlanEntrenamiento = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const entrenadorId = req.user?.id;
@@ -19,34 +33,37 @@ export const crearPlanEntrenamiento = async (req: AuthenticatedRequest, res: Res
       return;
     }
 
-    const { 
-      nombre, 
-      descripcion, 
-      objetivo, 
-      duracionDias, 
-      sesionesPorSemana, 
-      clientes, 
-      publico 
-    } = req.body;
+    // Extraer únicamente campos validados/sanitizados por express-validator
+    const data = matchedData(req, { locations: ['body'], includeOptionals: true }) as {
+      nombre: string;
+      descripcion?: string;
+      objetivo: string;
+      duracionDias: number;
+      sesionesPorSemana: number;
+      clientes: string[];
+      publico: boolean;
+    };
 
     logger.debug('Procesando datos para crear plan de entrenamiento', {
       entrenadorId,
-      nombre,
-      objetivo,
-      duracionDias,
-      sesionesPorSemana
+      nombre: data.nombre,
+      objetivo: data.objetivo,
+      duracionDias: data.duracionDias,
+      sesionesPorSemana: data.sesionesPorSemana
     });
 
-    const plan = await crearPlanEntrenamientoService({
+    const payload: PlanCreateAllowed = {
       entrenadorId,
-      nombre,
-      descripcion,
-      objetivo,
-      duracionDias,
-      sesionesPorSemana,
-      clientes,
-      publico
-    });
+      nombre: data.nombre,
+      descripcion: data.descripcion,
+      objetivo: data.objetivo,
+      duracionDias: data.duracionDias,
+      sesionesPorSemana: data.sesionesPorSemana,
+      clientes: Array.isArray(data.clientes) ? data.clientes : [],
+      publico: data.publico
+    };
+
+    const plan = await crearPlanEntrenamientoService(payload);
 
     logger.info('Plan de entrenamiento creado correctamente', { planId: plan._id });
     res.status(201).json({ message: 'Plan de entrenamiento creado correctamente', plan });
@@ -61,14 +78,14 @@ export const crearPlanEntrenamiento = async (req: AuthenticatedRequest, res: Res
 
 export const obtenerPlanesEntrenamiento = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { entrenador, cliente, objetivo, publico, activo } = req.query;
-
-    const filtros: { entrenador?: string; cliente?: string; objetivo?: string; publico?: boolean; activo?: boolean } = {};
-    if (entrenador) filtros.entrenador = entrenador as string;
-    if (cliente) filtros.cliente = cliente as string;
-    if (objetivo) filtros.objetivo = objetivo as string;
-    if (publico !== undefined) filtros.publico = publico === 'true';
-    if (activo !== undefined) filtros.activo = activo === 'true';
+    // Extraer solo filtros validados
+    const filtros = matchedData(req, { locations: ['query'], includeOptionals: true }) as {
+      entrenador?: string;
+      cliente?: string;
+      objetivo?: string;
+      publico?: boolean;
+      activo?: boolean;
+    };
 
     const planes = await obtenerPlanesEntrenamientoService(filtros);
 
@@ -113,15 +130,16 @@ export const actualizarPlanEntrenamiento = async (req: AuthenticatedRequest, res
     }
 
     const { id } = req.params;
-    const datosActualizacion = req.body;
+    // Extraer únicamente campos actualizables validados
+    const update = matchedData(req, { locations: ['body'], includeOptionals: true }) as PlanUpdateAllowed;
 
     logger.debug('Procesando actualización de plan de entrenamiento', {
       entrenadorId,
       planId: id,
-      datosActualizacion
+      campos: Object.keys(update)
     });
 
-    const plan = await actualizarPlanEntrenamientoService(id, entrenadorId, datosActualizacion);
+    const plan = await actualizarPlanEntrenamientoService(id, entrenadorId, update);
 
     logger.info('Plan de entrenamiento actualizado correctamente', { planId: id });
     res.status(200).json({ message: 'Plan de entrenamiento actualizado correctamente', plan });

@@ -10,6 +10,7 @@ import {
   agregarNotasSesionService
 } from '../../service/training/sesionService';
 import logger from '../../utils/logger';
+import { matchedData } from 'express-validator';
 
 export const crearSesion = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -27,7 +28,28 @@ export const crearSesion = async (req: AuthenticatedRequest, res: Response) => {
       tipoEntrenamiento, 
       duracion, 
       ejercicios 
-    } = req.body;
+    } = matchedData(req, { locations: ['body'], includeOptionals: true }) as {
+      clienteId: string;
+      planId?: string;
+      fecha: string;
+      hora?: string;
+      tipoEntrenamiento: string;
+      duracion: number;
+      ejercicios: Array<{
+        ejercicio: string;
+        orden: number;
+        series: number;
+        repeticiones: number;
+        peso?: number;
+        tiempoDescanso: number;
+        ejerciciosAlternativos?: string[];
+        opcionesProgresion?: {
+          aumentarPeso: boolean;
+          masRepeticiones: boolean;
+          mayorIntensidad: boolean;
+        };
+      }>;
+    };
 
     logger.debug('Procesando datos para crear sesión', {
       entrenadorId,
@@ -61,15 +83,14 @@ export const crearSesion = async (req: AuthenticatedRequest, res: Response) => {
 
 export const obtenerSesiones = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { entrenador, cliente, plan, fecha, tipoEntrenamiento, completada } = req.query;
-
-    const filtros: { entrenador?: string; cliente?: string; plan?: string; fecha?: string; tipoEntrenamiento?: string; completada?: boolean } = {};
-    if (entrenador) filtros.entrenador = entrenador as string;
-    if (cliente) filtros.cliente = cliente as string;
-    if (plan) filtros.plan = plan as string;
-    if (fecha) filtros.fecha = fecha as string;
-    if (tipoEntrenamiento) filtros.tipoEntrenamiento = tipoEntrenamiento as string;
-    if (completada !== undefined) filtros.completada = completada === 'true';
+    const filtros = matchedData(req, { locations: ['query'], includeOptionals: true }) as {
+      entrenador?: string;
+      cliente?: string;
+      plan?: string;
+      fecha?: string;
+      tipoEntrenamiento?: string;
+      completada?: boolean;
+    };
 
     const sesiones = await obtenerSesionesService(filtros);
 
@@ -114,12 +135,32 @@ export const actualizarSesion = async (req: AuthenticatedRequest, res: Response)
     }
 
     const { id } = req.params;
-    const datosActualizacion = req.body;
+    const datosActualizacion = matchedData(req, { locations: ['body'], includeOptionals: true }) as Partial<{
+      fecha: string;
+      hora: string;
+      tipoEntrenamiento: string;
+      duracion: number;
+      ejercicios: Array<{
+        ejercicio: string;
+        orden: number;
+        series: number;
+        repeticiones: number;
+        peso?: number;
+        tiempoDescanso: number;
+        ejerciciosAlternativos?: string[];
+        opcionesProgresion?: {
+          aumentarPeso: boolean;
+          masRepeticiones: boolean;
+          mayorIntensidad: boolean;
+        };
+      }>;
+      notas: string;
+    }>;
 
     logger.debug('Procesando actualización de sesión', {
       entrenadorId,
       sesionId: id,
-      datosActualizacion
+      campos: Object.keys(datosActualizacion)
     });
 
     const sesion = await actualizarSesionService(id, entrenadorId, datosActualizacion);
@@ -206,7 +247,7 @@ export const agregarNotasSesion = async (req: AuthenticatedRequest, res: Respons
     }
 
     const { id } = req.params;
-    const { notas } = req.body;
+    const { notas } = matchedData(req, { locations: ['body'] }) as { notas: string };
 
     logger.debug('Procesando agregado de notas a sesión', {
       clienteId,
