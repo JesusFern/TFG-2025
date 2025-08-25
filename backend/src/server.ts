@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import userRoutes from "./routes/users/userRoutes";
 import workerRoutes from './routes/users/workerRoutes';
 import dietRoutes from './routes/diets/dietRoutes';
+import trainingRoutes from './routes/training';
 
 dotenv.config();
 
@@ -34,6 +35,7 @@ mongoose
 app.use("/api/users", userRoutes);
 app.use('/api/workers', workerRoutes);
 app.use('/api/diets', dietRoutes);
+app.use('/api/training', trainingRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("API corriendo...");
