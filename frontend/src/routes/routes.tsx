@@ -5,6 +5,7 @@ import LoginPage from "../pages/LoginPage";
 import LandingPage from "../pages/LandingPage";
 import RegisterPage from "../pages/RegisterPage";
 import CrearDietaPage from "../pages/CrearDietaPage";
+import ProfilePage from "../pages/ProfilePage";
 import Layout from "../components/layout/Layout";
 
 const AppRoutes: React.FC = () => {
@@ -17,6 +18,11 @@ const AppRoutes: React.FC = () => {
       <Route path="/crear-dieta/:clienteId" element={
         <Layout>
           <CrearDietaPage />
+        </Layout>
+      } />
+      <Route path="/profile" element={
+        <Layout>
+          <ProfilePage />
         </Layout>
       } />
     </Routes>
