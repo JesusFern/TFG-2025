@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '../contexts/AuthContext';
+import React, { useEffect, useState, useCallback } from 'react';
+import { useAuth } from '../hooks/useAuth';
 import { ProfilePage as ProfilePageComponent } from '../components/organisms/ProfilePage';
 import { DatosSaludYNutricion, DatosActividadFisica, ProfileFormData, UserProfile } from '../types/profile';
 import { Container, Text, Stack, Alert, Loader, Center } from '@mantine/core';
@@ -13,13 +13,7 @@ const ProfilePage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [hasLoadedData, setHasLoadedData] = useState(false);
 
-  useEffect(() => {
-    if (user && !hasLoadedData) {
-      fetchUserData();
-    }
-  }, [user, hasLoadedData]);
-
-  const fetchUserData = async () => {
+  const fetchUserData = useCallback(async () => {
     if (!token || !user) return;
 
     try {
@@ -58,7 +52,13 @@ const ProfilePage: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [token, user, updateUser]);
+
+  useEffect(() => {
+    if (user && !hasLoadedData) {
+      fetchUserData();
+    }
+  }, [user, hasLoadedData, fetchUserData]);
 
   const handleUpdateProfile = async (data: ProfileFormData): Promise<void> => {
     if (!token) {

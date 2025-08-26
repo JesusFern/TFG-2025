@@ -52,7 +52,7 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
 
     if (!formData.email.trim()) {
       newErrors.email = 'El email es obligatorio';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+    } else if (!/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(formData.email)) {
       newErrors.email = 'El email no es válido';
     }
 

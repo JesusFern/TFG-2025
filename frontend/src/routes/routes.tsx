@@ -7,7 +7,7 @@ import CrearDietaPage from '../pages/CrearDietaPage';
 import ProfilePage from '../pages/ProfilePage';
 import DashboardPage from '../pages/DashboardPage';
 import Layout from '../components/layout/Layout';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import LoginPage from '../pages/LoginPage';
 
 // Componente para proteger rutas

@@ -5,7 +5,8 @@ export const profileService = {
   // Obtener perfil del usuario
   async getProfile(userId: string): Promise<UserProfile> {
     const response = await apiRequest(`/users/${userId}`);
-    return response.user;
+    const data = await response.json();
+    return data.user;
   },
 
   // Actualizar perfil del usuario
@@ -17,15 +18,17 @@ export const profileService = {
         'Content-Type': 'application/json',
       },
     });
-    return response.user;
+    const responseData = await response.json();
+    return responseData.user;
   },
 
   // Obtener datos de salud y nutrición
   async getDatosSalud(userId: string): Promise<DatosSaludYNutricion | null> {
     try {
       const response = await apiRequest(`/users/${userId}/datos-salud`);
-      return response.datosSalud;
-    } catch (error) {
+      const data = await response.json();
+      return data.datosSalud;
+    } catch {
       // Si no hay datos de salud, retornar null
       return null;
     }
@@ -35,8 +38,9 @@ export const profileService = {
   async getDatosActividad(userId: string): Promise<DatosActividadFisica | null> {
     try {
       const response = await apiRequest(`/users/${userId}/datos-actividad`);
-      return response.datosActividad;
-    } catch (error) {
+      const data = await response.json();
+      return data.datosActividad;
+    } catch {
       // Si no hay datos de actividad, retornar null
       return null;
     }
@@ -53,7 +57,8 @@ export const profileService = {
       // No incluir Content-Type, se establece automáticamente para FormData
     });
     
-    return response;
+    const data = await response.json();
+    return data;
   },
 
   // Cambiar contraseña
@@ -69,7 +74,8 @@ export const profileService = {
       },
     });
     
-    return response;
+    const data = await response.json();
+    return data;
   },
 
   // Eliminar cuenta
@@ -82,6 +88,7 @@ export const profileService = {
       },
     });
     
-    return response;
+    const data = await response.json();
+    return data;
   }
 };

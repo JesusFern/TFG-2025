@@ -13,7 +13,7 @@ import {
   Alert
 } from '@mantine/core';
 import { IconAlertCircle, IconShield } from '@tabler/icons-react';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 import styles from '../../styles/AuthenticationImage.module.css';
 
 export default function AuthenticationImage() {

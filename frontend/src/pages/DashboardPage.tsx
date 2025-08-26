@@ -22,7 +22,7 @@ import {
   IconPlus
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../contexts/AuthContext';
+import { useAuth } from '../hooks/useAuth';
 import { WeeklyProgressChart } from '../components/molecules/WeeklyProgressChart';
 
 interface DashboardCardProps {

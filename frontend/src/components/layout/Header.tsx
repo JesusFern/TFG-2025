@@ -19,7 +19,7 @@ import { useDisclosure } from '@mantine/hooks';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { IconSun, IconMoon, IconUser, IconLogout, IconSettings } from '@tabler/icons-react';
 import logo from '../../assets/images/Logo-Nutroos.svg';
-import { useAuth } from '../../contexts/AuthContext';
+import { useAuth } from '../../hooks/useAuth';
 
 const Header: React.FC = () => {
   const [mobileMenuOpened, { toggle: toggleMobileMenu, close: closeMobileMenu }] = useDisclosure(false);
