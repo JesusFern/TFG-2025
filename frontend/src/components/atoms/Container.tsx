@@ -1,4 +1,3 @@
-// src/components/atoms/Container.tsx
 import styled from 'styled-components';
 
 export const Container = styled.div`

@@ -1,4 +1,3 @@
-// This file contains the Button component that is used in the application.
 import React from 'react';
 import styled from 'styled-components';
 

@@ -81,7 +81,6 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
 
   return (
     <Stack gap="lg">
-      {/* Main Stats */}
       <Group gap="md" grow>
         {stats.map((stat, index) => (
           <Paper

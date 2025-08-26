@@ -53,8 +53,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [isPhotoUploading, setIsPhotoUploading] = useState(false);
   const [alert, setAlert] = useState<{
     type: 'success' | 'error';
+    title?: string;
     message: string;
   } | null>(null);
 
@@ -70,16 +72,26 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
     try {
       setIsLoading(true);
       await onUpdateProfile(formData);
+      
       setIsEditModalOpen(false);
+      console.log('Perfil actualizado exitosamente, mostrando alerta...');
+      
       setAlert({
         type: 'success',
-        message: 'Perfil actualizado correctamente'
+        title: '¡Perfil actualizado!',
+        message: 'Tu perfil se ha actualizado correctamente'
       });
+      
     } catch {
+      console.log('Error al actualizar perfil');
+      setIsEditModalOpen(false);
+      
       setAlert({
         type: 'error',
+        title: 'Error',
         message: 'Error al actualizar el perfil'
       });
+      
     } finally {
       setIsLoading(false);
     }
@@ -87,20 +99,30 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
 
   const handlePhotoSubmit = async (file: File) => {
     try {
-      setIsLoading(true);
+      setIsPhotoUploading(true);
       await onUpdatePhoto(file);
+      
       setIsPhotoModalOpen(false);
+      console.log('Foto subida exitosamente, mostrando alerta...');
+      
       setAlert({
         type: 'success',
-        message: 'Foto de perfil actualizada correctamente'
+        title: '¡Foto actualizada!',
+        message: 'Tu foto de perfil se ha actualizado correctamente.'
       });
-    } catch {
+      
+    } catch (error) {
+      console.log('Error al subir foto:', error);
+      setIsPhotoModalOpen(false);
+      
       setAlert({
         type: 'error',
-        message: 'Error al actualizar la foto de perfil'
+        title: 'Error al subir foto',
+        message: error instanceof Error ? error.message : 'Error desconocido al subir la foto'
       });
+      
     } finally {
-      setIsLoading(false);
+      setIsPhotoUploading(false);
     }
   };
 
@@ -109,7 +131,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   return (
     <Container size="xl" py="xl">
       <Stack gap="xl">
-        {/* Alertas */}
         {alert && (
           <Alert
             color={alert.type === 'success' ? 'nutroos-green' : 'red'}
@@ -117,12 +138,12 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
             withCloseButton
             onClose={closeAlert}
             icon={alert.type === 'success' ? <IconShield size={16} /> : undefined}
+            title={alert.title}
           >
             <Text size="sm">{alert.message}</Text>
           </Alert>
         )}
 
-        {/* Cabecera del perfil */}
         <Paper p="xl" radius="lg" withBorder>
           <ProfileHeader
             profile={profile}
@@ -131,7 +152,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
           />
         </Paper>
 
-        {/* Contenido principal con pestañas */}
         <Paper p="xl" radius="lg" withBorder>
           <Tabs defaultValue="overview">
             <Tabs.List>
@@ -580,36 +600,28 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
       </Modal>
 
       {/* Modal de cambio de foto */}
-      <Modal
-        opened={isPhotoModalOpen}
-        onClose={() => setIsPhotoModalOpen(false)}
-        title="Cambiar Foto de Perfil"
-        size="sm"
-        centered
-      >
+      <Modal opened={isPhotoModalOpen} onClose={() => setIsPhotoModalOpen(false)} title="Cambiar Foto de Perfil" size="sm" centered>
         <Stack gap="lg">
-          <Text size="sm" c="dimmed">
-            Selecciona una nueva foto para tu perfil. Formatos soportados: JPG, PNG, GIF.
-          </Text>
-          
-          <input
-            type="file"
-            accept="image/*"
-            onChange={(e) => {
-              const file = e.target.files?.[0];
-              if (file) {
-                handlePhotoSubmit(file);
-              }
-            }}
-            style={{ width: '100%' }}
-          />
-          
+          <Alert icon={<IconAlertCircle size={16} />} title="Información" color="blue" variant="light">
+            <Text size="sm">
+              • Formatos: JPG, PNG, GIF<br/>
+              • Tamaño máximo: 10MB<br/>
+              • Se recomienda usar imágenes cuadradas
+            </Text>
+          </Alert>
+          <input type="file" accept="image/*" disabled={isPhotoUploading} onChange={(e) => {
+            const file = e.target.files?.[0];
+            if (file) {
+              handlePhotoSubmit(file);
+            }
+          }} style={{ width: '100%' }} />
+          {isPhotoUploading && (
+            <Alert icon={<IconAlertCircle size={16} />} title="Procesando imagen" color="blue" variant="light">
+              <Text size="sm">Comprimiendo y subiendo la imagen... Por favor espera.</Text>
+            </Alert>
+          )}
           <Group justify="flex-end">
-            <Button
-              variant="light"
-              color="gray"
-              onClick={() => setIsPhotoModalOpen(false)}
-            >
+            <Button variant="light" color="gray" onClick={() => setIsPhotoModalOpen(false)} disabled={isPhotoUploading}>
               Cancelar
             </Button>
           </Group>

@@ -2,7 +2,6 @@ import {
   Container, 
   Group, 
   Burger, 
-  Image, 
   Text, 
   Button, 
   Drawer, 
@@ -12,18 +11,22 @@ import {
   Tooltip,
   Box,
   Paper,
-  rem
+  rem,
+  Avatar,
+  Menu
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { IconSun, IconMoon } from '@tabler/icons-react';
+import { IconSun, IconMoon, IconUser, IconLogout, IconSettings } from '@tabler/icons-react';
 import logo from '../../assets/images/Logo-Nutroos.svg';
+import { useAuth } from '../../contexts/AuthContext';
 
 const Header: React.FC = () => {
   const [mobileMenuOpened, { toggle: toggleMobileMenu, close: closeMobileMenu }] = useDisclosure(false);
   const { colorScheme, setColorScheme } = useMantineColorScheme();
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, logout, isAuthenticated } = useAuth();
   const isDark = colorScheme === 'dark';
   
   const toggleColorScheme = () => {
@@ -38,9 +41,24 @@ const Header: React.FC = () => {
     navigate('/login');
   };
 
+  const handleLogout = () => {
+    logout();
+    navigate('/');
+  };
+
+  const handleProfileClick = () => {
+    navigate('/profile');
+    closeMobileMenu();
+  };
+
+  const handleDashboardClick = () => {
+    navigate('/dashboard');
+    closeMobileMenu();
+  };
+
   const navItems = [
     { label: 'Inicio', path: '/' },
-    { label: 'Acerca de', path: '/acerca' },
+    { label: 'Acerca de', path: '/landingPage' },
   ];
   
   return (
@@ -61,10 +79,9 @@ const Header: React.FC = () => {
           <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
             <Group gap="xs">
               <Box pos="relative" style={{ width: 40, height: 40 }}>
-                <Image 
+                <img 
                   src={logo} 
                   alt="Nutroos" 
-                  fit="contain"
                   style={{
                     filter: isDark ? 'brightness(1.5)' : 'none',
                     width: '100%',
@@ -78,7 +95,6 @@ const Header: React.FC = () => {
             </Group>
           </Link>
           
-          {/* Desktop Navigation */}
           <Group gap="lg" visibleFrom="sm">
             {navItems.map((item) => (
               <Link
@@ -106,7 +122,68 @@ const Header: React.FC = () => {
               </ActionIcon>
             </Tooltip>
             
-            <Button onClick={handleLogin} color="nutroos-green">Iniciar sesión</Button>
+            {isAuthenticated && user ? (
+              <Menu shadow="md" width={200}>
+                <Menu.Target>
+                  <Avatar
+                    src={user.profilePicture}
+                    alt={user.fullName}
+                    size="md"
+                    radius="xl"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {user.fullName.charAt(0).toUpperCase()}
+                  </Avatar>
+                </Menu.Target>
+
+                <Menu.Dropdown>
+                  <Menu.Label>
+                    <Text size="sm" fw={500}>
+                      {user.fullName}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {user.role === 'admin' ? 'Administrador' : 
+                       user.role === 'worker' ? user.workerType || 'Trabajador' : 'Usuario'}
+                    </Text>
+                  </Menu.Label>
+
+                  <Menu.Divider />
+
+                  <Menu.Item
+                    leftSection={<IconUser size={14} />}
+                    onClick={handleDashboardClick}
+                  >
+                    Dashboard
+                  </Menu.Item>
+
+                  <Menu.Item
+                    leftSection={<IconSettings size={14} />}
+                    onClick={handleProfileClick}
+                  >
+                    Mi Perfil
+                  </Menu.Item>
+
+                  <Menu.Divider />
+
+                  <Menu.Item
+                    leftSection={<IconLogout size={14} />}
+                    onClick={handleLogout}
+                    color="red"
+                  >
+                    Cerrar Sesión
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            ) : (
+              <Group gap="sm">
+                <Button variant="subtle" onClick={handleLogin}>
+                  Iniciar Sesión
+                </Button>
+                <Button color="nutroos-green" onClick={() => navigate('/register')}>
+                  Registrarse
+                </Button>
+              </Group>
+            )}
           </Group>
           
           <Burger opened={mobileMenuOpened} onClick={toggleMobileMenu} hiddenFrom="sm" />
@@ -120,7 +197,7 @@ const Header: React.FC = () => {
         padding="md"
         title={
           <Group>
-            <Image 
+            <img 
               src={logo} 
               alt="Nutroos" 
               width={30} 
@@ -161,15 +238,48 @@ const Header: React.FC = () => {
             </Group>
           </Box>
           
-          <Button 
-            onClick={() => {
-              handleLogin();
-              closeMobileMenu();
-            }}
-            color="nutroos-green"
-          >
-            Iniciar sesión
-          </Button>
+          {isAuthenticated && user ? (
+            <>
+              <Text size="sm" fw={500} c="dimmed">
+                {user.fullName}
+              </Text>
+              <Button
+                variant="light"
+                leftSection={<IconUser size={16} />}
+                onClick={handleDashboardClick}
+                fullWidth
+                color="nutroos-green"
+              >
+                Dashboard
+              </Button>
+              <Button
+                variant="light"
+                leftSection={<IconSettings size={16} />}
+                onClick={handleProfileClick}
+                fullWidth
+              >
+                Mi Perfil
+              </Button>
+              <Button
+                variant="light"
+                leftSection={<IconLogout size={16} />}
+                onClick={handleLogout}
+                color="red"
+                fullWidth
+              >
+                Cerrar Sesión
+              </Button>
+            </>
+          ) : (
+            <Group gap="sm">
+              <Button variant="light" onClick={handleLogin} fullWidth>
+                Iniciar Sesión
+              </Button>
+              <Button color="nutroos-green" onClick={() => navigate('/register')} fullWidth>
+                Registrarse
+              </Button>
+            </Group>
+          )}
         </Stack>
       </Drawer>
     </Paper>

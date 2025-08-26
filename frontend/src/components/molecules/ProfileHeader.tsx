@@ -44,7 +44,6 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
   return (
     <Group gap="xl" align="flex-start">
-      {/* Avatar Section */}
       <Stack align="center" gap="sm">
         <div style={{ position: 'relative' }}>
           <Avatar
@@ -74,7 +73,6 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         </div>
       </Stack>
 
-      {/* Profile Info Section */}
       <Stack gap="xs" style={{ flex: 1 }}>
         <Group justify="space-between" align="flex-start">
           <Stack gap="xs">

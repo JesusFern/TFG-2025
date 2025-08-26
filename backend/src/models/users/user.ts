@@ -39,8 +39,23 @@ const UserSchema = new mongoose.Schema({
     type: String,
     default: null,
     validate: {
-      validator: (value: string | null) => value === null || isValidUrl(value),
-      message: 'URL no válida'
+      validator: function(value: string | null) {
+        if (value === null) return true;
+        
+        // Aceptar URLs válidas
+        if (value.startsWith('http://') || value.startsWith('https://')) {
+          return isValidUrl(value);
+        }
+        
+        if (value.startsWith('data:image/')) {
+          // Validar que el base64 no sea demasiado grande (máximo ~15MB)
+          const base64Size = Buffer.byteLength(value, 'utf8');
+          return base64Size <= 15 * 1024 * 1024;
+        }
+        
+        return false;
+      },
+      message: 'La imagen debe ser una URL válida o una imagen base64'
     }
   },
   

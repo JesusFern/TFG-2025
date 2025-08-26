@@ -5,8 +5,8 @@ const EjercicioSesionSchema = new mongoose.Schema({
   orden: { type: Number, required: true, min: 1 },
   series: { type: Number, required: true, min: 1 },
   repeticiones: { type: Number, required: true, min: 1 },
-  peso: { type: Number, min: 0 }, // en kg
-  tiempoDescanso: { type: Number, required: true, min: 0 }, // en segundos
+  peso: { type: Number, min: 0 },
+  tiempoDescanso: { type: Number, required: true, min: 0 },
   ejerciciosAlternativos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Ejercicio' }],
   opcionesProgresion: {
     aumentarPeso: { type: Boolean, default: false },
@@ -17,13 +17,13 @@ const EjercicioSesionSchema = new mongoose.Schema({
 
 const SesionSchema = new mongoose.Schema({
   fecha: { type: Date, required: true },
-  hora: { type: String }, // Formato HH:MM
+  hora: { type: String },
   tipoEntrenamiento: { 
     type: String, 
     required: true,
     enum: ['Fuerza', 'Resistencia', 'Cardio', 'HIIT', 'Movilidad', 'Flexibilidad', 'Potencia', 'Estabilidad']
   },
-  duracion: { type: Number, required: true, min: 1 }, // en minutos
+  duracion: { type: Number, required: true, min: 1 },
   ejercicios: [EjercicioSesionSchema],
   completada: { type: Boolean, default: false },
   notas: { type: String },
@@ -33,7 +33,6 @@ const SesionSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Índices para búsquedas eficientes
 SesionSchema.index({ fecha: 1 });
 SesionSchema.index({ entrenador: 1 });
 SesionSchema.index({ cliente: 1 });

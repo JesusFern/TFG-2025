@@ -155,7 +155,6 @@ export async function eliminarEjercicioService(ejercicioId: string, creadorId: s
     throw new Error('No tienes permisos para eliminar este ejercicio');
   }
 
-  // Soft delete - marcar como inactivo
   ejercicio.activo = false;
   await ejercicio.save();
 

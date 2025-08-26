@@ -93,7 +93,6 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
 
   const handleInputChange = (field: keyof ProfileFormData, value: string | Date | null) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Limpiar error del campo cuando el usuario empiece a escribir
     if (errors[field]) {
       setErrors(prev => ({ ...prev, [field]: '' }));
     }

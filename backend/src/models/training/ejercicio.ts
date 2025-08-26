@@ -15,7 +15,7 @@ const EjercicioSchema = new mongoose.Schema({
   },
   series: { type: Number, required: true, min: 1 },
   repeticiones: { type: Number, required: true, min: 1 },
-  tiempoDescanso: { type: Number, required: true, min: 0 }, // en segundos
+  tiempoDescanso: { type: Number, required: true, min: 0 },
   nivelDificultad: { 
     type: String, 
     required: true,
@@ -26,7 +26,7 @@ const EjercicioSchema = new mongoose.Schema({
     required: true,
     enum: ['Baja', 'Media', 'Alta']
   },
-  videoDemostrativo: { type: String }, // URL del video/GIF
+  videoDemostrativo: { type: String },
   creador: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   activo: { type: Boolean, default: true }
 }, {
