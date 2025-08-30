@@ -27,14 +27,14 @@ const DatosSaludYNutricionSchema = new mongoose.Schema({
   altura: {
     type: Number,
     required: true,
-    min: 50, // en centímetros
+    min: 50,
     max: 250
   },
   
   pesoActual: {
     type: Number,
     required: true,
-    min: 20 // en kilos
+    min: 20
   },
   
   objetivoPeso: {

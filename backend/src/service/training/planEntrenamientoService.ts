@@ -199,7 +199,7 @@ export async function eliminarPlanEntrenamientoService(planId: string, entrenado
     throw new Error('No tienes permisos para eliminar este plan');
   }
 
-  // Soft delete - marcar como inactivo
+
   plan.activo = false;
   await plan.save();
 

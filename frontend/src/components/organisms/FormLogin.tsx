@@ -1,182 +1,155 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import {
-  Anchor,
-  Button,
-  Checkbox,
-  Paper,
-  PasswordInput,
-  Text,
   TextInput,
+  PasswordInput,
+  Paper,
   Title,
-  LoadingOverlay,
-  Box,
+  Container,
+  Button,
+  Text,
+  Anchor,
+  Stack,
+  Alert
 } from '@mantine/core';
-import classes from '../../styles/AuthenticationImage.module.css';
-import GlobalErrorOverlay from '../atoms/GlobalErrorOverlay';
-import GlobalSuccessOverlay from '../atoms/GlobalSuccessOverlay';
-import { apiRequest } from '../../services/api';
-import { IconAt, IconLock } from '@tabler/icons-react';
+import { IconAlertCircle, IconShield } from '@tabler/icons-react';
+import { useAuth } from '../../hooks/useAuth';
+import styles from '../../styles/AuthenticationImage.module.css';
 
-export function AuthenticationImage() {
-  const navigate = useNavigate();
+export default function AuthenticationImage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [remember, setRemember] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [submitError, setSubmitError] = useState<string | null>(null);
-  const [submitSuccess, setSubmitSuccess] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  
+  const navigate = useNavigate();
+  const { login } = useAuth();
 
   const handleLogin = async () => {
-    setSubmitError(null);
-    setSubmitSuccess(null);
-    
-    if (!email || !password) {
-      setSubmitError('Email y contraseña son obligatorios');
+    if (!email.trim() || !password.trim()) {
+      setError('Por favor, completa todos los campos');
       return;
     }
-    
-    setIsSubmitting(true);
+
+    setIsLoading(true);
+    setError(null);
+
     try {
-      const response = await apiRequest('/api/users/login', {
+      const response = await fetch('/api/users/login', {
         method: 'POST',
-        body: JSON.stringify({ 
-          email: email.trim().toLowerCase(), 
-          password 
-        })
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
       });
-      
+
       const data = await response.json();
-      
-      if (!response.ok) {
-        const msg = data?.message || 'Credenciales incorrectas';
-        setSubmitError(msg);
-        return;
+
+      if (response.ok) {
+        setSuccess('¡Inicio de sesión exitoso!');
+        
+        // Guardar en el contexto de autenticación
+        login(data.token, data.user);
+        
+        // Redirigir al dashboard después de un breve delay
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1000);
+      } else {
+        setError(data.message || 'Error al iniciar sesión');
       }
-      
-      // Login exitoso
-      setSubmitSuccess('¡Inicio de sesión exitoso! Redirigiendo en unos segundos...');
-      
-      const storage = remember ? localStorage : sessionStorage;
-      if (data?.token) {
-        storage.setItem('token', data.token);
-      }
-      
-      // Mantener el loader visible durante el mensaje de éxito y la redirección
-      setTimeout(() => {
-        setIsSubmitting(false); // Ocultar el loader
-        navigate('/');
-      }, 1500);
-      
-    } catch (e) {
-      setSubmitError('No se pudo conectar con el servidor. Verifica tu conexión a internet.');
-      console.error('Error en login:', e);
-      setIsSubmitting(false); // Solo ocultar el loader en caso de error
+    } catch {
+      setError('Error de conexión. Por favor, intenta de nuevo.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const handleCloseError = () => {
-    setSubmitError(null);
+    setError(null);
   };
 
   const handleCloseSuccess = () => {
-    setSubmitSuccess(null);
+    setSuccess(null);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter' && !isSubmitting) {
+    if (e.key === 'Enter') {
       handleLogin();
     }
   };
 
-  const iconEmail = <IconAt size={16} />;
-  const iconLock = <IconLock size={16} />;
-  
   return (
-    <div className={classes.wrapper}>
-      <Box pos="relative">
-        <LoadingOverlay 
-          visible={isSubmitting} 
-          zIndex={1000} 
-          overlayProps={{ radius: "sm", blur: 2 }} 
-        />
-        <Paper className={classes.form}>
-        <Title order={2} className={classes.title}>
-          ¡Bienvenido de nuevo a Nutroos!
-        </Title>
+    <Container size={420} my={40}>
+      <Title ta="center" className={styles.title}>
+        ¡Bienvenido de vuelta!
+      </Title>
+      <Text c="dimmed" size="sm" ta="center" mt={5}>
+        ¿No tienes una cuenta?{' '}
+        <Anchor size="sm" onClick={() => navigate('/register')} style={{ cursor: 'pointer' }}>
+          Regístrate aquí
+        </Anchor>
+      </Text>
 
-        <GlobalErrorOverlay 
-          message={submitError}
-          onClose={handleCloseError}
-          title="Error en el inicio de sesión"
-        />
+      <Paper withBorder shadow="md" p={30} mt={30} radius="md">
+        <Stack>
+          {error && (
+            <Alert
+              icon={<IconAlertCircle size={16} />}
+              title="Error"
+              color="red"
+              variant="light"
+              withCloseButton
+              onClose={handleCloseError}
+            >
+              {error}
+            </Alert>
+          )}
 
-        <GlobalSuccessOverlay 
-          message={submitSuccess}
-          onClose={handleCloseSuccess}
-          title="¡Bienvenido!"
-        />
+          {success && (
+            <Alert
+              icon={<IconShield size={16} />}
+              title="Éxito"
+              color="green"
+              variant="light"
+              withCloseButton
+              onClose={handleCloseSuccess}
+            >
+              {success}
+            </Alert>
+          )}
 
-        <TextInput
-          leftSectionPointerEvents="none"
-          leftSection={iconEmail}
-          label="Correo electrónico"
-          placeholder="usuario@correo.com"
-          size="md"
-          radius="md"
-          value={email}
-          onChange={(e) => setEmail(e.currentTarget.value)}
-          onKeyDown={handleKeyDown}
-          disabled={isSubmitting}
-          required
-        />
-        
-        <PasswordInput
-          label="Contraseña"
-          leftSectionPointerEvents="none"
-          leftSection={iconLock}
-          placeholder="Tu contraseña"
-          mt="md"
-          size="md"
-          radius="md"
-          value={password}
-          onChange={(e) => setPassword(e.currentTarget.value)}
-          onKeyDown={handleKeyDown}
-          disabled={isSubmitting}
-          required
-        />
-        
-        <Checkbox
-          label="Mantener sesión iniciada"
-          mt="xl"
-          size="md"
-          checked={remember}
-          onChange={(e) => setRemember(e.currentTarget.checked)}
-          disabled={isSubmitting}
-        />
-        
-        <Button 
-          fullWidth 
-          mt="xl" 
-          size="md" 
-          radius="md" 
-          onClick={handleLogin} 
-          disabled={isSubmitting}
-          loading={isSubmitting}
-        >
-          {isSubmitting ? 'Entrando...' : 'Iniciar sesión'}
-        </Button>
+          <TextInput
+            label="Email"
+            placeholder="tu@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            onKeyDown={handleKeyDown}
+          />
 
-        <Text ta="center" mt="md">
-          ¿No tienes cuenta?{' '}
-          <Anchor fw={500} onClick={() => navigate('/register')}>
-            Regístrate
-          </Anchor>
-        </Text>
+          <PasswordInput
+            label="Contraseña"
+            placeholder="Tu contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            onKeyDown={handleKeyDown}
+          />
+
+          <Button
+            fullWidth
+            mt="xl"
+            onClick={handleLogin}
+            loading={isLoading}
+            color="nutroos-green"
+            leftSection={!isLoading && <IconShield size={16} />}
+          >
+            {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+          </Button>
+        </Stack>
       </Paper>
-    </Box>
-    </div>
+    </Container>
   );
 }
-
-export default AuthenticationImage;

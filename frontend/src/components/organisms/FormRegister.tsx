@@ -86,7 +86,7 @@ const RegisterForm = () => {
   const fieldMapping: { [key: string]: string } = {
     'fullName': 'nombre',
     'email': 'email',
-    'password': 'password', // Nombre del campo, no valor de contraseña
+    'password': 'password',
     'phoneNumber': 'telefono',
     'gender': 'genero',
     'birthDate': 'fechaNacimiento',
@@ -303,7 +303,6 @@ const RegisterForm = () => {
           return;
         }
         
-        // Si no hay errores específicos pero hay un mensaje de error, mostrarlo como error general
         if (data?.message) {
           setSubmitError(data.message);
           return;
@@ -321,14 +320,14 @@ const RegisterForm = () => {
       
       // Mantener el loader visible durante el mensaje de éxito y la redirección
       setTimeout(() => {
-        setIsSubmitting(false); // Ocultar el loader
+        setIsSubmitting(false);
         navigate('/login');
       }, 2000);
     } catch (e) {
       const msg = e instanceof Error ? e.message : 'Error al registrar';
       setSubmitError(msg);
       console.error(e);
-      setIsSubmitting(false); // Solo ocultar el loader en caso de error
+      setIsSubmitting(false);
     }
   };
 

@@ -19,7 +19,6 @@ const StyledButton = styled.button<ButtonProps>`
   transition: all 0.2s ease;
   border: 2px solid var(--app-accent);
   
-  /* Estilo primario (relleno verde) o secundario (outline) */
   background-color: ${props => props.primary 
     ? 'var(--app-accent)' 
     : 'transparent'};
