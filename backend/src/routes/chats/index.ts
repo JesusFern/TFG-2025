@@ -5,16 +5,13 @@ import notificacionRoutes from './notificacionRoutes';
 
 const router = Router();
 
-// Prefijo para todas las rutas de mensajería
-const prefix = '/api/messaging';
-
 // Rutas de mensajes
-router.use(`${prefix}/mensajes`, mensajeRoutes);
+router.use('/mensajes', mensajeRoutes);
 
 // Rutas de conversaciones
-router.use(`${prefix}/conversaciones`, conversacionRoutes);
+router.use('/conversaciones', conversacionRoutes);
 
 // Rutas de notificaciones
-router.use(`${prefix}/notificaciones`, notificacionRoutes);
+router.use('/notificaciones', notificacionRoutes);
 
 export default router;
