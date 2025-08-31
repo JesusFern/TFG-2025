@@ -33,8 +33,8 @@ import {
   IconAlertCircle
 } from '@tabler/icons-react';
 import { useMediaQuery } from '@mantine/hooks';
-import { crearDieta } from '../../services/dietService';
-import { CrearDietaDTO, DietaResponse } from '../../types';
+import { crearDieta } from '../../../services/dietService';
+import { CrearDietaDTO, DietaResponse } from '../../../types';
 
 interface FormularioCrearDietaProps {
   onSuccess: (dietaData: DietaResponse) => void;
@@ -59,9 +59,11 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
     descripcion: '',
     tipo: [],
     duracion: 28,
-    comidasDiarias: 3,
+    comidasDiarias: 5,
     fechaInicio: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-    asignadaA: clienteId || ''
+    asignadaA: clienteId || '',
+    horasComidas: ['08:00', '11:00', '14:00', '17:00', '20:00'],
+    nombreComidas: ['Desayuno', 'Media mañana', 'Almuerzo', 'Merienda', 'Cena']
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [stepError, setStepError] = useState<string | null>(null);
@@ -76,6 +78,56 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
     'Alta en proteínas',
     'Otras'
   ];
+
+  const generarHorariosComidas = (numComidas: number): string[] => {
+    switch (numComidas) {
+      case 2:
+        return ['08:30', '20:00'];
+      case 3:
+        return ['08:00', '13:30', '20:00'];
+      case 4:
+        return ['08:00', '12:00', '16:00', '20:00'];
+      case 5:
+        return ['08:00', '11:00', '14:00', '17:00', '20:00'];
+      case 6:
+        return ['07:30', '10:30', '13:30', '16:30', '19:00', '21:30'];
+      default:
+        return Array(numComidas).fill('').map((_, index) => {
+          const hour = Math.floor(7 + (14 * index) / (numComidas - 1));
+          const minute = (index % 2 === 0) ? '00' : '30';
+          return `${hour.toString().padStart(2, '0')}:${minute}`;
+        });
+    }
+  };
+
+  const generarNombresComidas = (numComidas: number): string[] => {
+    switch (numComidas) {
+      case 2:
+        return ['Desayuno', 'Cena'];
+      case 3:
+        return ['Desayuno', 'Almuerzo', 'Cena'];
+      case 4:
+        return ['Desayuno', 'Media mañana', 'Almuerzo', 'Cena'];
+      case 5:
+        return ['Desayuno', 'Media mañana', 'Almuerzo', 'Merienda', 'Cena'];
+      case 6:
+        return ['Desayuno temprano', 'Desayuno', 'Almuerzo', 'Merienda', 'Cena temprana', 'Cena'];
+      default: {
+        const comidas = ['Desayuno', 'Media mañana', 'Almuerzo', 'Merienda', 'Cena'];
+        const result = [];
+        
+        for (let i = 0; i < numComidas; i++) {
+          if (i < comidas.length) {
+            result.push(comidas[i]);
+          } else {
+            result.push(`Comida ${i + 1}`);
+          }
+        }
+        
+        return result;
+      }
+    }
+  };
 
   const isValidMongoId = (id?: string) => id && /^[0-9a-fA-F]{24}$/.test(id);
 
@@ -97,6 +149,13 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
       setFormData(prev => ({
         ...prev,
         [field]: value.toISOString().split('T')[0]
+      }));
+    } else if (field === 'comidasDiarias' && typeof value === 'number') {
+      setFormData(prev => ({
+        ...prev,
+        [field]: value,
+        horasComidas: generarHorariosComidas(value),
+        nombreComidas: generarNombresComidas(value)
       }));
     } else {
       setFormData(prev => ({
@@ -139,6 +198,27 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
       if (startDate <= today) {
         return { isValid: false, error: 'La fecha de inicio debe ser posterior al día actual' };
       }
+    } else if (activeStep === 3) {
+      if (!formData.horasComidas || !Array.isArray(formData.horasComidas) || formData.horasComidas.length !== formData.comidasDiarias) {
+        return { isValid: false, error: `Debe definir ${formData.comidasDiarias} horarios de comida` };
+      }
+      
+      if (!formData.nombreComidas || !Array.isArray(formData.nombreComidas) || formData.nombreComidas.length !== formData.comidasDiarias) {
+        return { isValid: false, error: `Debe definir ${formData.comidasDiarias} nombres de comida` };
+      }
+      
+      const horaRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+      for (let i = 0; i < formData.horasComidas.length; i++) {
+        if (!horaRegex.test(formData.horasComidas[i])) {
+          return { isValid: false, error: `La hora de la comida ${i+1} debe tener un formato válido (HH:MM)` };
+        }
+      }
+      
+      for (let i = 0; i < formData.nombreComidas.length; i++) {
+        if (!formData.nombreComidas[i] || !formData.nombreComidas[i].trim()) {
+          return { isValid: false, error: `El nombre de la comida ${i+1} no puede estar vacío` };
+        }
+      }
     }
     return { isValid: true, error: null };
   }, [activeStep, formData]);
@@ -155,7 +235,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
     const validation = validateCurrentStep();
     if (validation.isValid) {
       setStepError(null);
-      setActiveStep((current) => Math.min(current + 1, 2));
+      setActiveStep((current) => Math.min(current + 1, 3));
     } else {
       setStepError(validation.error);
     }
@@ -206,6 +286,27 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
       return 'La fecha de inicio debe ser posterior al día actual';
     }
     
+    if (!formData.horasComidas || !Array.isArray(formData.horasComidas) || formData.horasComidas.length !== formData.comidasDiarias) {
+      return `Debe definir ${formData.comidasDiarias} horarios de comida`;
+    }
+    
+    if (!formData.nombreComidas || !Array.isArray(formData.nombreComidas) || formData.nombreComidas.length !== formData.comidasDiarias) {
+      return `Debe definir ${formData.comidasDiarias} nombres de comida`;
+    }
+    
+    const horaRegex = /^([01]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    for (let i = 0; i < formData.horasComidas.length; i++) {
+      if (!horaRegex.test(formData.horasComidas[i])) {
+        return `La hora de la comida ${i+1} debe tener un formato válido (HH:MM)`;
+      }
+    }
+    
+    for (let i = 0; i < formData.nombreComidas.length; i++) {
+      if (!formData.nombreComidas[i] || !formData.nombreComidas[i].trim()) {
+        return `El nombre de la comida ${i+1} no puede estar vacío`;
+      }
+    }
+    
     return null;
   };
 
@@ -239,9 +340,11 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
         descripcion: '',
         tipo: [],
         duracion: 28,
-        comidasDiarias: 3,
+        comidasDiarias: 5,
         fechaInicio: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-        asignadaA: clienteId || ''
+        asignadaA: clienteId || '',
+        horasComidas: ['08:00', '11:00', '14:00', '17:00', '20:00'],
+        nombreComidas: ['Desayuno', 'Media mañana', 'Almuerzo', 'Merienda', 'Cena']
       });
       setActiveStep(0);
     } catch (error) {
@@ -341,7 +444,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
                   { value: '6', label: '6 comidas' }
                 ]}
                 value={formData.comidasDiarias.toString()}
-                onChange={(val) => handleInputChange('comidasDiarias', parseInt(val || '3'))}
+                onChange={(val) => handleInputChange('comidasDiarias', parseInt(val || '5'))}
                 required
                 size="md"
               />
@@ -379,6 +482,52 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
             </SimpleGrid>
           </>
         );
+      case 3:
+        return (
+          <>
+            <Title order={4} mb="md" c="nutroos-green.6">Horarios de comidas</Title>
+            <Text size="sm" mb="md" c="dimmed">
+              Define los horarios y nombres de las comidas diarias. Estos se aplicarán a todos los días de la dieta.
+            </Text>
+            
+            <Paper p="md" radius="md" withBorder style={{ backgroundColor: 'var(--app-paper-bg)', borderColor: 'var(--app-border-color)' }} mb="md">
+              <Text fw={500} mb="md">Configuración de las {formData.comidasDiarias} comidas diarias</Text>
+              
+              {formData.horasComidas?.map((hora, index) => (
+                <Group key={index} mb="md" grow>
+                  <TextInput
+                    label={`Nombre de la comida ${index + 1}`}
+                    value={formData.nombreComidas?.[index] || ''}
+                    onChange={(e) => {
+                      const newNombres = [...(formData.nombreComidas || [])];
+                      newNombres[index] = e.target.value;
+                      setFormData(prev => ({
+                        ...prev,
+                        nombreComidas: newNombres
+                      }));
+                    }}
+                    placeholder="Ej: Desayuno"
+                    required
+                  />
+                  <TextInput
+                    label={`Hora estimada`}
+                    value={hora}
+                    onChange={(e) => {
+                      const newHoras = [...(formData.horasComidas || [])];
+                      newHoras[index] = e.target.value;
+                      setFormData(prev => ({
+                        ...prev,
+                        horasComidas: newHoras
+                      }));
+                    }}
+                    placeholder="Ej: 08:00"
+                    required
+                  />
+                </Group>
+              ))}
+            </Paper>
+          </>
+        );
       default:
         return null;
     }
@@ -408,7 +557,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
           </Button>
         )}
         
-        {activeStep === 2 ? (
+        {activeStep === 3 ? (
           <Button 
             type="submit"
             loading={isSubmitting} 
@@ -480,11 +629,16 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
           <Stepper.Step
             icon={<IconCalendarStats size="1.5rem" />}
             label="Planificación"
-            description="Duración y comidas"
+            description="Duración y fecha"
+          />
+          <Stepper.Step
+            icon={<IconClock size="1.5rem" />}
+            label="Horarios"
+            description="Comidas diarias"
           />
         </Stepper>
         
-        {activeStep < 2 ? (
+        {activeStep < 3 ? (
           <>
             {renderStepContent()}
             {renderNavButtons()}

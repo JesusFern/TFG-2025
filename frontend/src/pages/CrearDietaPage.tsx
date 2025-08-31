@@ -11,10 +11,11 @@ import {
   Breadcrumbs,
   Anchor,
   Paper,
-  Box
+  Box,
+  Button
 } from '@mantine/core';
-import { useParams, useLocation, Link } from 'react-router-dom';
-import FormularioCrearDieta from '../components/forms/FormularioCrearDieta';
+import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
+import FormularioCrearDieta from '../components/forms/diets/FormularioCrearDieta';
 import { DietaResponse } from '../types';
 import { IconAlertCircle, IconCheck, IconUser, IconChevronRight, IconHome } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
@@ -22,6 +23,7 @@ import { motion } from 'framer-motion';
 const CrearDietaPage: React.FC = () => {
   const { clienteId } = useParams<{ clienteId?: string }>();
   const location = useLocation();
+  const navigate = useNavigate();
   const state = location.state as { clienteNombre?: string } | undefined;
   
   const clienteInfo = {
@@ -30,14 +32,15 @@ const CrearDietaPage: React.FC = () => {
   };
   
   const [mensaje, setMensaje] = useState<{ tipo: 'success' | 'error', texto: string } | null>(null);
+  const [dietaCreada, setDietaCreada] = useState<DietaResponse | null>(null);
 
   const handleDietaCreada = (dietaData: DietaResponse) => {
+    setDietaCreada(dietaData);
     setMensaje({
       tipo: 'success',
       texto: `Dieta "${dietaData.nombre}" creada con éxito para ${clienteInfo.nombre}.`
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
-    setTimeout(() => setMensaje(null), 5000);
   };
 
   const handleError = (error: Error) => {
@@ -47,6 +50,12 @@ const CrearDietaPage: React.FC = () => {
     });
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(() => setMensaje(null), 5000);
+  };
+  
+  const handleContinuar = () => {
+    if (dietaCreada?._id) {
+      navigate(`/editar-dieta/${dietaCreada._id}`);
+    }
   };
 
   const items = [
@@ -127,17 +136,31 @@ const CrearDietaPage: React.FC = () => {
             onClose={() => setMensaje(null)}
           >
             {mensaje.texto}
+            
+            {mensaje.tipo === 'success' && dietaCreada && (
+              <Group justify="right" mt="md">
+                <Button 
+                  onClick={handleContinuar}
+                  color="white"
+                  variant="outline"
+                >
+                  Continuar con planificación de comidas
+                </Button>
+              </Group>
+            )}
           </Alert>
           <Space h="md" />
         </motion.div>
       )}
         
-      <FormularioCrearDieta 
-        onSuccess={handleDietaCreada}
-        onError={handleError}
-        clienteId={clienteInfo.id}
-        clienteNombre={clienteInfo.nombre}
-      />
+      {!dietaCreada && (
+        <FormularioCrearDieta 
+          onSuccess={handleDietaCreada}
+          onError={handleError}
+          clienteId={clienteInfo.id}
+          clienteNombre={clienteInfo.nombre}
+        />
+      )}
     </Container>
   );
 };
