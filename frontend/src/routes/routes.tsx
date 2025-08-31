@@ -7,6 +7,7 @@ import LandingPage from "../pages/LandingPage";
 import RegisterPage from "../pages/RegisterPage";
 import CrearDietaPage from "../pages/CrearDietaPage";
 import EditarDietaPage from "../pages/EditarDietaPage";
+import VerDietaPage from "../pages/VerDietaPage";
 import Layout from "../components/layout/Layout";
 import { isAuthenticated } from "../services/authService";
 
@@ -40,6 +41,11 @@ const AppRoutes: React.FC = () => {
       <Route path="/editar-dieta/:dietaId" element={
         <ProtectedRoute>
           <Layout><EditarDietaPage /></Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/ver-dieta/:dietaId" element={
+        <ProtectedRoute>
+          <Layout><VerDietaPage /></Layout>
         </ProtectedRoute>
       } />
       
