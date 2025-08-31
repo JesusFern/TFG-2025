@@ -6,6 +6,7 @@ import Receta from '../../models/diets/receta';
 type PlatoUpdate = {
   _id: string;
   nombre?: string;
+  orden?: number;
   receta?: string;
 };
 
@@ -32,6 +33,7 @@ export async function actualizarPlatosService(platos: PlatoUpdate[]) {
         const subPlato = comida.platos.id(plato._id);
         if (subPlato) {
           if (typeof plato.nombre !== 'undefined') subPlato.nombre = plato.nombre;
+          if (typeof plato.orden !== 'undefined') subPlato.orden = plato.orden;
           if (typeof plato.receta !== 'undefined') {
             const recetaExiste = await Receta.findById(plato.receta);
             if (!recetaExiste) {
