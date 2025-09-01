@@ -21,6 +21,8 @@ import { login } from '../services/authService';
 import axios from 'axios';
 import { motion } from 'framer-motion';
 import nutroosLogoPng from '../assets/images/LogoNutroos.png';
+import { useAuth } from '../hooks/useAuth';
+import { UserProfile } from '../types/profile';
 
 interface WorkerLoginFormValues {
   email: string;
@@ -31,6 +33,7 @@ const WorkerLoginPage: React.FC = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { login: authLogin } = useAuth();
 
   const form = useForm<WorkerLoginFormValues>({
     initialValues: {
@@ -70,10 +73,21 @@ const WorkerLoginPage: React.FC = () => {
               return;
             }
             
-            // Guardar token y datos de usuario en localStorage
-            localStorage.setItem('userData', JSON.stringify(userResponse.data));
-            
-            navigate('/worker/dashboard');
+              // Adaptamos los datos al formato UserProfile
+              const userProfile: UserProfile = {
+                _id: String(userResponse.data.id || userResponse.data._id || ''),
+                fullName: String(userResponse.data.fullName || ''),
+                email: String(userResponse.data.email || ''),
+                phoneNumber: String(userResponse.data.phoneNumber || ''),
+                role: (userResponse.data.role || 'worker') as 'admin' | 'worker' | 'user',
+                workerType: userResponse.data.workerType ? String(userResponse.data.workerType) : undefined,
+                profilePicture: userResponse.data.profilePicture ? String(userResponse.data.profilePicture) : undefined,
+                createdAt: String(userResponse.data.createdAt || new Date().toISOString()),
+                updatedAt: String(userResponse.data.updatedAt || new Date().toISOString())
+              };
+              
+              // Guardar datos usando el contexto de autenticación
+              authLogin(response.token, userProfile);            navigate('/worker/dashboard');
           } else {
             setError('No se pudieron obtener los datos del usuario');
           }
@@ -87,8 +101,21 @@ const WorkerLoginPage: React.FC = () => {
           return;
         }
         
-        localStorage.setItem('authToken', response.token);
-        localStorage.setItem('userData', JSON.stringify(response.user));
+        // Adaptamos los datos al formato UserProfile
+        const userProfile: UserProfile = {
+          _id: String(response.user.id || response.user._id || ''),
+          fullName: String(response.user.fullName || ''),
+          email: String(response.user.email || ''),
+          phoneNumber: String(response.user.phoneNumber || ''),
+          role: (response.user.role || 'worker') as 'admin' | 'worker' | 'user',
+          workerType: response.user.workerType ? String(response.user.workerType) : undefined,
+          profilePicture: response.user.profilePicture ? String(response.user.profilePicture) : undefined,
+          createdAt: String(response.user.createdAt || new Date().toISOString()),
+          updatedAt: String(response.user.updatedAt || new Date().toISOString())
+        };
+        
+        // Guardar datos usando el contexto de autenticación
+        authLogin(response.token, userProfile);
         
         navigate('/worker/dashboard');
       }

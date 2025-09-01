@@ -14,8 +14,8 @@ import { useAuth } from '../hooks/useAuth';
 import LoginPage from '../pages/LoginPage';
 
 // Componente para proteger rutas
-const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated, isLoading } = useAuth();
+const ProtectedRoute: React.FC<{ children: React.ReactNode, workerRoute?: boolean }> = ({ children, workerRoute = false }) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
   
   // Mostrar loading mientras se verifica la autenticación
   if (isLoading) {
@@ -33,8 +33,21 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   }
   
   if (!isAuthenticated) {
+    // Si es una ruta de trabajador, redirigir a la página de login de trabajador
+    if (workerRoute) {
+      return <Navigate to="/worker/login" replace />;
+    }
+    // Para otras rutas, redirigir al login normal
     return <Navigate to="/login" replace />;
   }
+  
+  // Si es una ruta de trabajador pero el usuario no es worker/admin
+  if (workerRoute && user && user.role !== 'worker' && user.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  // Eliminamos esta restricción para permitir que los trabajadores accedan a todas las rutas
+  // Los trabajadores/admin deben poder acceder a crear dietas, ver dietas, etc.
   
   return <>{children}</>;
 };
@@ -64,6 +77,22 @@ const AppRoutes: React.FC = () => {
         </ProtectedRoute>
       } />
       
+      <Route path="/worker/dashboard" element={
+        <ProtectedRoute workerRoute={true}>
+          <Layout>
+            <DashboardPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/clients" element={
+        <ProtectedRoute workerRoute={true}>
+          <Layout>
+            <DashboardPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
       <Route path="/profile" element={
         <ProtectedRoute>
           <Layout>
@@ -73,7 +102,7 @@ const AppRoutes: React.FC = () => {
       } />
       
       <Route path="/crear-dieta/:clienteId" element={
-        <ProtectedRoute>
+        <ProtectedRoute workerRoute={true}>
           <Layout>
             <CrearDietaPage />
           </Layout>
@@ -81,7 +110,7 @@ const AppRoutes: React.FC = () => {
       } />
       
       <Route path="/editar-dieta/:dietaId" element={
-        <ProtectedRoute>
+        <ProtectedRoute workerRoute={true}>
           <Layout>
             <EditarDietaPage />
           </Layout>
@@ -89,7 +118,7 @@ const AppRoutes: React.FC = () => {
       } />
       
       <Route path="/ver-dieta/:dietaId" element={
-        <ProtectedRoute>
+        <ProtectedRoute workerRoute={true}>
           <Layout>
             <VerDietaPage />
           </Layout>
