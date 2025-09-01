@@ -102,6 +102,16 @@ export interface DiaDieta {
   comidas: Comida[];
 }
 
+export interface DayInfo {
+  weekDayIndex: number;
+  dietDayIndex: number;
+  weekDayName: string;
+  fecha: Date;
+  fechaFormateada: string;
+  nombreCompleto: string;
+  data: DiaDieta;
+}
+
 export interface Dieta {
   _id?: string;
   nombre: string;

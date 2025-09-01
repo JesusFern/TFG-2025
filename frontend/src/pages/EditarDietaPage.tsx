@@ -8,8 +8,6 @@ import {
   Group, 
   Text, 
   Alert, 
-  Breadcrumbs,
-  Anchor,
   useMantineColorScheme,
   Box,
   Loader,
@@ -19,10 +17,8 @@ import {
   Badge,
   Select
 } from '@mantine/core';
-import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
-  IconHome, 
-  IconChevronRight, 
   IconAlertCircle, 
   IconCalendarEvent,
   IconCheck
@@ -32,10 +28,11 @@ import { format, parse, parseISO, getDay, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import DietaDayEditor from '../helpers/diets/DietaDayEditor';
 import { obtenerDieta, publicarDieta } from '../services/dietService';
-import { Dieta, DiaDieta } from '../types';
+import { Dieta, DiaDieta, DayInfo } from '../types';
 
 const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
+// Utilidades para fechas
 const convertirDiaSemana = (diaSemana: number): number => {
   return diaSemana === 0 ? 6 : diaSemana - 1;
 };
@@ -60,6 +57,38 @@ const parseFecha = (fecha: string | Date): Date => {
     console.error('Error parseando fecha:', error);
     return new Date();
   }
+};
+
+// Función para formatear fecha
+const formatearFecha = (fecha: string | Date, formatoString: string = "d 'de' MMMM 'de' yyyy"): string => {
+  try {
+    const fechaDate = parseFecha(fecha);
+    return format(fechaDate, formatoString, { locale: es });
+  } catch (error) {
+    console.error("Error al formatear fecha:", error);
+    return typeof fecha === 'string' ? fecha : fecha.toString();
+  }
+};
+
+// Crear función para generar datos de día
+const crearDatoDia = (
+  index: number, 
+  dietDayIndex: number, 
+  fechaBase: Date, 
+  dias: DiaDieta[]
+): DayInfo => {
+  const fechaDia = addDays(fechaBase, dietDayIndex);
+  const fechaFormateada = formatearFecha(fechaDia, "d 'de' MMMM");
+  
+  return {
+    weekDayIndex: index,
+    dietDayIndex: dietDayIndex,
+    weekDayName: DIAS_SEMANA[index],
+    fecha: fechaDia,
+    fechaFormateada: fechaFormateada,
+    nombreCompleto: `${DIAS_SEMANA[index]} ${fechaFormateada}`,
+    data: dias[dietDayIndex]
+  };
 };
 
 const EditarDietaPage: React.FC = () => {
@@ -104,27 +133,14 @@ const EditarDietaPage: React.FC = () => {
     if (!dieta || !fechaInicio) return { days: [], totalWeeks: 0 };
     
     const totalWeeks = Math.ceil((dieta.dias.length + startDayOfWeek) / 7);
-    
     const weekStartIndex = (currentWeek - 1) * 7 - startDayOfWeek;
-    
     const days = [];
     
     for (let i = 0; i < 7; i++) {
       const dietDayIndex = weekStartIndex + i;
       
       if (dietDayIndex >= 0 && dietDayIndex < dieta.dias.length) {
-        const fechaDia = addDays(fechaInicio, dietDayIndex);
-        const fechaFormateada = format(fechaDia, "d 'de' MMMM", { locale: es });
-        
-        days.push({
-          weekDayIndex: i,
-          dietDayIndex: dietDayIndex,
-          weekDayName: DIAS_SEMANA[i],
-          fecha: fechaDia,
-          fechaFormateada: fechaFormateada,
-          nombreCompleto: `${DIAS_SEMANA[i]} ${fechaFormateada}`,
-          data: dieta.dias[dietDayIndex]
-        });
+        days.push(crearDatoDia(i, dietDayIndex, fechaInicio, dieta.dias));
       }
     }
     
@@ -167,8 +183,7 @@ const EditarDietaPage: React.FC = () => {
           const fechaInicioDate = parseFecha(data.fechaInicio);
           setFechaInicio(fechaInicioDate);
           
-          const diaSemana = getDay(fechaInicioDate);
-          const diaSemanaAjustado = convertirDiaSemana(diaSemana);
+          const diaSemanaAjustado = convertirDiaSemana(getDay(fechaInicioDate));
           
           console.log(`Fecha de inicio: ${format(fechaInicioDate, 'dd/MM/yyyy')} - Día de la semana: ${DIAS_SEMANA[diaSemanaAjustado]}`);
           setStartDayOfWeek(diaSemanaAjustado);
@@ -258,32 +273,9 @@ const EditarDietaPage: React.FC = () => {
     return daysRange.days.find(day => day.dietDayIndex === currentDayIndex) || null;
   }, [activeTab, daysRange.days]);
 
-  const breadcrumbItems = [
-    { title: 'Inicio', href: '/', icon: <IconHome size={14} /> },
-    { title: 'Dietas', href: '/dietas' },
-    { title: dieta?.nombre || 'Dieta', href: `/dietas/${dietaId}` },
-    { title: 'Editar comidas', href: '#' },
-  ].map((item, index) => (
-    <Anchor component={Link} to={item.href} key={index} size="sm" c="nutroos-green">
-      {item.icon && (
-        <Group gap={4}>
-          {item.icon}
-          <span>{item.title}</span>
-        </Group>
-      )}
-      {!item.icon && item.title}
-    </Anchor>
-  ));
-
   const fechaInicioFormateada = useMemo(() => {
     if (!dieta?.fechaInicio) return "";
-    
-    try {
-      const fecha = parseFecha(dieta.fechaInicio);
-      return format(fecha, "d 'de' MMMM 'de' yyyy", { locale: es });
-    } catch {
-      return String(dieta.fechaInicio);
-    }
+    return formatearFecha(dieta.fechaInicio, "d 'de' MMMM 'de' yyyy");
   }, [dieta?.fechaInicio]);
 
   if (loading) {
@@ -320,19 +312,6 @@ const EditarDietaPage: React.FC = () => {
 
   return (
     <Container size="xl" py="xl">
-      <Paper 
-        p="md" 
-        mb="lg" 
-        style={{ 
-          backgroundColor: 'var(--app-paper-bg)', 
-          borderBottom: '1px solid var(--app-border-color)' 
-        }}
-      >
-        <Breadcrumbs separator={<IconChevronRight size={14} />}>
-          {breadcrumbItems}
-        </Breadcrumbs>
-      </Paper>
-      
       <Paper 
         p="lg" 
         mb="md" 

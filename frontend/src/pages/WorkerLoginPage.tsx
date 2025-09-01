@@ -39,8 +39,8 @@ const WorkerLoginPage: React.FC = () => {
     },
     validate: {
       email: (value: string) => {
-        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-        return emailRegex.test(value) ? null : 'Correo electrónico inválido';
+        const safeEmailRegex = /^[a-zA-Z0-9._%+-]{1,64}@[a-zA-Z0-9.-]{1,253}\.[a-zA-Z]{2,}$/;
+        return safeEmailRegex.test(value) ? null : 'Correo electrónico inválido';
       },
       password: (value: string) => (value.length < 6 ? 'La contraseña debe tener al menos 6 caracteres' : null),
     },

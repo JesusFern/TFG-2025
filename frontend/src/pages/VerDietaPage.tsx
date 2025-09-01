@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   Container, 
   Title, 
@@ -6,8 +6,6 @@ import {
   Group, 
   Text, 
   Alert, 
-  Breadcrumbs,
-  Anchor,
   useMantineColorScheme,
   Box,
   Loader,
@@ -17,9 +15,8 @@ import {
   Select,
   Button
 } from '@mantine/core';
-import { useParams, useNavigate, Link, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
-  IconHome, 
   IconChevronRight, 
   IconAlertCircle, 
   IconCalendarEvent,
@@ -30,10 +27,12 @@ import { motion } from 'framer-motion';
 import { format, parse, parseISO, getDay, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { obtenerDieta } from '../services/dietService';
-import { Dieta, DiaDieta } from '../types';
+import { Dieta, DiaDieta, DayInfo } from '../types';
 
+// Constantes
 const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
+// Estilos comunes
 const styles = {
   paperBg: { backgroundColor: 'var(--app-paper-bg)' },
   paperBorder: { borderColor: 'var(--app-border-color)' },
@@ -106,6 +105,7 @@ const styles = {
   }
 };
 
+// Utilidades para fechas
 const convertirDiaSemana = (diaSemana: number): number => {
   return diaSemana === 0 ? 6 : diaSemana - 1;
 };
@@ -123,6 +123,44 @@ const parseFecha = (fecha: string | Date): Date => {
   }
 };
 
+// Función para obtener el día de la semana ajustado
+const obtenerDiaSemanaAjustado = (fecha: string | Date): number => {
+  const fechaDate = parseFecha(fecha);
+  return convertirDiaSemana(getDay(fechaDate));
+};
+
+// Función para formatear fecha
+const formatearFecha = (fecha: string | Date, formatoString: string = "d 'de' MMMM 'de' yyyy"): string => {
+  try {
+    const fechaDate = parseFecha(fecha);
+    return format(fechaDate, formatoString, { locale: es });
+  } catch (error) {
+    console.error("Error al formatear fecha:", error);
+    return typeof fecha === 'string' ? fecha : fecha.toString();
+  }
+};
+
+// Crear función para generar datos de día
+const crearDatoDia = (
+  index: number, 
+  dietDayIndex: number, 
+  fechaBase: Date, 
+  dias: DiaDieta[]
+): DayInfo => {
+  const fechaDia = addDays(fechaBase, dietDayIndex);
+  const fechaFormateada = formatearFecha(fechaDia, "d 'de' MMMM");
+  
+  return {
+    weekDayIndex: index,
+    dietDayIndex: dietDayIndex,
+    weekDayName: DIAS_SEMANA[index],
+    fecha: fechaDia,
+    fechaFormateada: fechaFormateada,
+    nombreCompleto: `${DIAS_SEMANA[index]} ${fechaFormateada}`,
+    data: dias[dietDayIndex]
+  };
+};
+
 const VerDietaPage: React.FC = () => {
   const { dietaId } = useParams<{ dietaId: string }>();
   const navigate = useNavigate();
@@ -138,41 +176,34 @@ const VerDietaPage: React.FC = () => {
   const [startDayOfWeek, setStartDayOfWeek] = useState<number>(0); // 0 = Lunes, 6 = Domingo
   const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
 
-  interface DayInfo {
-    weekDayIndex: number;
-    dietDayIndex: number;
-    weekDayName: string;
-    fecha: Date;
-    fechaFormateada: string;
-    nombreCompleto: string;
-    data: DiaDieta;
-  }
+  // Procesar parámetros de URL (día seleccionado)
+  const procesarParametrosURL = useCallback((data: Dieta) => {
+    const dayParam = new URLSearchParams(location.search).get('day');
+    if (dayParam) {
+      const dayIndex = parseInt(dayParam) - 1;
+      if (dayIndex >= 0 && dayIndex < data.dias.length) {
+        const diaSemanaAjustado = data.fechaInicio ? 
+          obtenerDiaSemanaAjustado(data.fechaInicio) : 0;
+          
+        const targetWeek = Math.ceil((dayIndex + 1 + diaSemanaAjustado) / 7);
+        setCurrentWeek(targetWeek);
+      }
+    }
+  }, [location.search]);
 
+  // Calcular el rango de días para la semana actual
   const daysRange = useMemo(() => {
     if (!dieta || !fechaInicio) return { days: [] as DayInfo[], totalWeeks: 0 };
     
     const totalWeeks = Math.ceil((dieta.dias.length + startDayOfWeek) / 7);
-    
     const weekStartIndex = (currentWeek - 1) * 7 - startDayOfWeek;
-    
     const days: DayInfo[] = [];
     
     for (let i = 0; i < 7; i++) {
       const dietDayIndex = weekStartIndex + i;
       
       if (dietDayIndex >= 0 && dietDayIndex < dieta.dias.length) {
-        const fechaDia = addDays(fechaInicio, dietDayIndex);
-        const fechaFormateada = format(fechaDia, "d 'de' MMMM", { locale: es });
-        
-        days.push({
-          weekDayIndex: i,
-          dietDayIndex: dietDayIndex,
-          weekDayName: DIAS_SEMANA[i],
-          fecha: fechaDia,
-          fechaFormateada: fechaFormateada,
-          nombreCompleto: `${DIAS_SEMANA[i]} ${fechaFormateada}`,
-          data: dieta.dias[dietDayIndex]
-        });
+        days.push(crearDatoDia(i, dietDayIndex, fechaInicio, dieta.dias));
       }
     }
     
@@ -197,8 +228,7 @@ const VerDietaPage: React.FC = () => {
           const fechaInicioDate = parseFecha(data.fechaInicio);
           setFechaInicio(fechaInicioDate);
           
-          const diaSemana = getDay(fechaInicioDate); // 0 = domingo, 1 = lunes, ...
-          const diaSemanaAjustado = convertirDiaSemana(diaSemana);
+          const diaSemanaAjustado = obtenerDiaSemanaAjustado(data.fechaInicio);
           
           console.log(`Fecha de inicio: ${format(fechaInicioDate, 'dd/MM/yyyy')} - Día de la semana: ${DIAS_SEMANA[diaSemanaAjustado]}`);
           setStartDayOfWeek(diaSemanaAjustado);
@@ -206,17 +236,8 @@ const VerDietaPage: React.FC = () => {
         
         setDieta(data);
         
-        const dayParam = new URLSearchParams(location.search).get('day');
-        if (dayParam) {
-          const dayIndex = parseInt(dayParam) - 1;
-          if (dayIndex >= 0 && dayIndex < data.dias.length) {
-            const diaSemanaAjustado = data.fechaInicio ? 
-              convertirDiaSemana(getDay(parseFecha(data.fechaInicio))) : 0;
-              
-            const targetWeek = Math.ceil((dayIndex + 1 + diaSemanaAjustado) / 7);
-            setCurrentWeek(targetWeek);
-          }
-        }
+        // Procesar parámetros de URL
+        procesarParametrosURL(data);
       } catch (err) {
         console.error("Error al cargar la dieta:", err);
         setError("Error al cargar la dieta. Por favor intenta de nuevo.");
@@ -226,38 +247,16 @@ const VerDietaPage: React.FC = () => {
     };
     
     cargarDieta();
-  }, [dietaId, location.search, navigate]);
+  }, [dietaId, navigate, procesarParametrosURL]);
 
   const handleWeekChange = (newWeek: number) => {
     setCurrentWeek(newWeek);
   };
 
-  const breadcrumbItems = [
-    { title: 'Inicio', href: '/', icon: <IconHome size={14} /> },
-    { title: 'Dietas', href: '/dietas' },
-    { title: dieta?.nombre || 'Dieta', href: `/dietas/${dietaId}` },
-    { title: 'Ver dieta', href: '#' },
-  ].map((item, index) => (
-    <Anchor component={Link} to={item.href} key={index} size="sm" c="nutroos-green">
-      {item.icon && (
-        <Group gap={4}>
-          {item.icon}
-          <span>{item.title}</span>
-        </Group>
-      )}
-      {!item.icon && item.title}
-    </Anchor>
-  ));
-
+  // Formatear fecha de inicio de dieta
   const fechaInicioFormateada = useMemo(() => {
     if (!dieta?.fechaInicio) return "";
-    
-    try {
-      const fecha = parseFecha(dieta.fechaInicio);
-      return format(fecha, "d 'de' MMMM 'de' yyyy", { locale: es });
-    } catch {
-      return String(dieta.fechaInicio);
-    }
+    return formatearFecha(dieta.fechaInicio, "d 'de' MMMM 'de' yyyy");
   }, [dieta?.fechaInicio]);
 
   if (loading) {
@@ -294,19 +293,6 @@ const VerDietaPage: React.FC = () => {
 
   return (
     <Container size="xl" py="xl" px="md">
-      <Paper 
-        p="md" 
-        mb="lg" 
-        style={{ 
-          ...styles.paperBg, 
-          ...styles.borderBottom
-        }}
-      >
-        <Breadcrumbs separator={<IconChevronRight size={14} />}>
-          {breadcrumbItems}
-        </Breadcrumbs>
-      </Paper>
-      
       <Paper 
         p="lg" 
         mb="md" 
