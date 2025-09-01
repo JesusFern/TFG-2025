@@ -24,72 +24,19 @@ import {
   IconCheck
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
-import { format, parse, parseISO, getDay, addDays } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { format, getDay } from 'date-fns';
 import DietaDayEditor from '../helpers/diets/DietaDayEditor';
 import { obtenerDieta, publicarDieta } from '../services/dietService';
-import { Dieta, DiaDieta, DayInfo } from '../types';
+import { Dieta, DiaDieta } from '../types';
+import { 
+  DIAS_SEMANA, 
+  convertirDiaSemana, 
+  parseFecha, 
+  formatearFecha, 
+  crearDatoDia 
+} from '../helpers/diets/DietaHelper';
 
-const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
-
-// Utilidades para fechas
-const convertirDiaSemana = (diaSemana: number): number => {
-  return diaSemana === 0 ? 6 : diaSemana - 1;
-};
-
-const parseFecha = (fecha: string | Date): Date => {
-  if (typeof fecha !== 'string') return new Date(fecha);
-  
-  try {
-    if (fecha.includes('T') || fecha.includes('Z')) {
-      return parseISO(fecha);
-    }
-    
-    if (fecha.includes('-')) {
-      const parts = fecha.split('-');
-      if (parts.length === 3) {
-        return parse(fecha, 'dd-MM-yyyy', new Date());
-      }
-    }
-    
-    return new Date(fecha);
-  } catch (error) {
-    console.error('Error parseando fecha:', error);
-    return new Date();
-  }
-};
-
-// Función para formatear fecha
-const formatearFecha = (fecha: string | Date, formatoString: string = "d 'de' MMMM 'de' yyyy"): string => {
-  try {
-    const fechaDate = parseFecha(fecha);
-    return format(fechaDate, formatoString, { locale: es });
-  } catch (error) {
-    console.error("Error al formatear fecha:", error);
-    return typeof fecha === 'string' ? fecha : fecha.toString();
-  }
-};
-
-// Crear función para generar datos de día
-const crearDatoDia = (
-  index: number, 
-  dietDayIndex: number, 
-  fechaBase: Date, 
-  dias: DiaDieta[]
-): DayInfo => {
-  const fechaDia = addDays(fechaBase, dietDayIndex);
-  const fechaFormateada = formatearFecha(fechaDia, "d 'de' MMMM");
-  
-  return {
-    weekDayIndex: index,
-    dietDayIndex: dietDayIndex,
-    weekDayName: DIAS_SEMANA[index],
-    fecha: fechaDia,
-    fechaFormateada: fechaFormateada,
-    nombreCompleto: `${DIAS_SEMANA[index]} ${fechaFormateada}`,
-    data: dias[dietDayIndex]
-  };
-};
+// Las utilidades se han movido a DietaHelper.ts
 
 const EditarDietaPage: React.FC = () => {
   const { dietaId } = useParams<{ dietaId: string }>();
