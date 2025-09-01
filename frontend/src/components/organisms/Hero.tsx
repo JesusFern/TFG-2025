@@ -4,7 +4,6 @@ import { Button } from '../atoms/ButtonLayout';
 import { Container } from '../atoms/Container';
 import { useMantineColorScheme } from '@mantine/core';
 
-// Estilos dinámicos basados en el tema
 const HeroContainer = styled.section<{ isDark: boolean }>`
   min-height: 100vh;
   display: flex;
@@ -81,7 +80,6 @@ const Highlight = styled.span<{ isDark: boolean }>`
   text-shadow: ${props => props.isDark ? '0px 0px 8px rgba(76, 180, 111, 0.3)' : 'none'};
 `;
 
-// Contenido responsivo
 const ResponsiveLayout = styled.div`
   display: flex;
   align-items: center;

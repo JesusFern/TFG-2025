@@ -2,7 +2,6 @@ import Dieta from '../../models/diets/dieta';
 import mongoose from 'mongoose';
 import Receta from '../../models/diets/receta';
 
-
 type PlatoUpdate = {
   _id: string;
   nombre?: string;

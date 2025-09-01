@@ -1,4 +1,3 @@
-// src/components/molecules/NavbarElements.tsx
 import React from 'react';
 import styled from 'styled-components';
 import { Button } from '../atoms/ButtonLayout';
@@ -42,10 +41,10 @@ export const AuthButtons: React.FC = () => {
   
   return (
     <AuthButtonsContainer>
-      <Button variant="secondary" size="small" onClick={handleLoginClick}>
+      <Button onClick={handleLoginClick}>
         Iniciar Sesión
       </Button>
-      <Button size="small" onClick={handleRegisterClick}>
+      <Button onClick={handleRegisterClick}>
         Registrarse
       </Button>
     </AuthButtonsContainer>

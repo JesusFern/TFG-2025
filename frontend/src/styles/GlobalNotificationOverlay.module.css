@@ -1,0 +1,13 @@
+.root {
+	position: fixed;
+	top: 24px;
+	left: 24px;
+	z-index: 9999;
+	width: 360px;
+}
+
+.message {
+	text-align: left;
+}
+
+

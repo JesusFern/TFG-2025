@@ -1,39 +1,155 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
-  Anchor,
-  Button,
-  Checkbox,
-  Paper,
-  PasswordInput,
-  Text,
   TextInput,
+  PasswordInput,
+  Paper,
   Title,
+  Container,
+  Button,
+  Text,
+  Anchor,
+  Stack,
+  Alert
 } from '@mantine/core';
-import classes from '../../styles/AuthenticationImage.module.css';
+import { IconAlertCircle, IconShield } from '@tabler/icons-react';
+import { useAuth } from '../../hooks/useAuth';
+import styles from '../../styles/AuthenticationImage.module.css';
 
-export function AuthenticationImage() {
+export default function AuthenticationImage() {
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const handleLogin = async () => {
+    if (!email.trim() || !password.trim()) {
+      setError('Por favor, completa todos los campos');
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await fetch('/api/users/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setSuccess('¡Inicio de sesión exitoso!');
+        
+        // Guardar en el contexto de autenticación
+        login(data.token, data.user);
+        
+        // Redirigir al dashboard después de un breve delay
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 1000);
+      } else {
+        setError(data.message || 'Error al iniciar sesión');
+      }
+    } catch {
+      setError('Error de conexión. Por favor, intenta de nuevo.');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleCloseError = () => {
+    setError(null);
+  };
+
+  const handleCloseSuccess = () => {
+    setSuccess(null);
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleLogin();
+    }
+  };
+
   return (
-    <div className={classes.wrapper}>
-      <Paper className={classes.form}>
-        <Title order={2} className={classes.title}>
-          Welcome back to Nutroos!
-        </Title>
+    <Container size={420} my={40}>
+      <Title ta="center" className={styles.title}>
+        ¡Bienvenido de vuelta!
+      </Title>
+      <Text c="dimmed" size="sm" ta="center" mt={5}>
+        ¿No tienes una cuenta?{' '}
+        <Anchor size="sm" onClick={() => navigate('/register')} style={{ cursor: 'pointer' }}>
+          Regístrate aquí
+        </Anchor>
+      </Text>
 
-        <TextInput label="Email address" placeholder="hello@gmail.com" size="md" radius="md" />
-        <PasswordInput label="Password" placeholder="Your password" mt="md" size="md" radius="md" />
-        <Checkbox label="Keep me logged in" mt="xl" size="md" />
-        <Button fullWidth mt="xl" size="md" radius="md">
-          Login
-        </Button>
+      <Paper withBorder shadow="md" p={30} mt={30} radius="md">
+        <Stack>
+          {error && (
+            <Alert
+              icon={<IconAlertCircle size={16} />}
+              title="Error"
+              color="red"
+              variant="light"
+              withCloseButton
+              onClose={handleCloseError}
+            >
+              {error}
+            </Alert>
+          )}
 
-        <Text ta="center" mt="md">
-          Don&apos;t have an account?{' '}
-          <Anchor href="/register" fw={500} onClick={(event) => event.preventDefault()}>
-            Register  
-          </Anchor>
-        </Text>
+          {success && (
+            <Alert
+              icon={<IconShield size={16} />}
+              title="Éxito"
+              color="green"
+              variant="light"
+              withCloseButton
+              onClose={handleCloseSuccess}
+            >
+              {success}
+            </Alert>
+          )}
+
+          <TextInput
+            label="Email"
+            placeholder="tu@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            onKeyDown={handleKeyDown}
+          />
+
+          <PasswordInput
+            label="Contraseña"
+            placeholder="Tu contraseña"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            onKeyDown={handleKeyDown}
+          />
+
+          <Button
+            fullWidth
+            mt="xl"
+            onClick={handleLogin}
+            loading={isLoading}
+            color="nutroos-green"
+            leftSection={!isLoading && <IconShield size={16} />}
+          >
+            {isLoading ? 'Iniciando sesión...' : 'Iniciar Sesión'}
+          </Button>
+        </Stack>
       </Paper>
-    </div>
+    </Container>
   );
 }
-
-export default AuthenticationImage;

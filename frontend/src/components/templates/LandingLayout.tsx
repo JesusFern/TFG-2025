@@ -1,4 +1,3 @@
-// src/components/templates/LandingLayout.tsx
 import React from 'react';
 import styled from 'styled-components';
 

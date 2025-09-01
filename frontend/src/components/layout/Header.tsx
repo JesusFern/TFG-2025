@@ -1,90 +1,96 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Box, 
   Group, 
   Burger, 
-  Drawer, 
-  NavLink, 
-  Avatar, 
   Text, 
+  Button, 
+  Drawer, 
+  Avatar, 
   ActionIcon, 
   useMantineColorScheme,
-  Image,
-  Button
+  Tooltip,
+  Paper,
+  rem,
+  Menu,
+  Stack,
+  Container
 } from '@mantine/core';
-import { Link, useNavigate } from 'react-router-dom';
+import { useDisclosure } from '@mantine/hooks';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { 
-  IconHome, 
   IconUser, 
   IconLogout, 
   IconSettings,
   IconSun, 
-  IconMoonStars
+  IconMoon 
 } from '@tabler/icons-react';
-import { logout } from '../../services/authService';
-import nutroosLogoPng from '../../assets/images/LogoNutroos.png';
+import logo from '../../assets/images/Logo-Nutroos.svg';
+import { useAuth } from '../../hooks/useAuth';
 
 const Header: React.FC = () => {
-  const [opened, setOpened] = useState(false);
+  const [mobileMenuOpened, { close: closeMobileMenu, toggle: toggleMobileMenu }] = useDisclosure();
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user, logout, isAuthenticated } = useAuth();
   const isDark = colorScheme === 'dark';
   
-  // Obtener datos del usuario desde localStorage
-  const userData = JSON.parse(localStorage.getItem('userData') || '{}');
-  const isUserLoggedIn = Boolean(localStorage.getItem('authToken'));
+  const isLinkActive = (path: string) => {
+    return location.pathname === path;
+  };
+
+  const handleLogin = () => {
+    navigate('/login');
+    closeMobileMenu();
+  };
   
   const handleLogout = () => {
     logout();
-    navigate('/login');
-    setOpened(false);
+    navigate('/');
+    closeMobileMenu();
   };
-  
-  const userRole = userData.role || '';
-  const isWorker = userRole === 'worker' || userRole === 'admin';
+
+  const handleProfileClick = () => {
+    navigate('/profile');
+    closeMobileMenu();
+  };
+
+  const handleDashboardClick = () => {
+    navigate('/dashboard');
+    closeMobileMenu();
+  };
+
+  const navItems = [
+    { label: 'Inicio', path: '/' },
+    { label: 'Acerca de', path: '/landingPage' },
+  ];
   
   return (
-    <Box
+    <Paper
       component="header"
       p="md"
+      radius={0}
       style={{
-        backgroundColor: 'var(--mantine-color-body)',
-        borderBottom: `1px solid var(--mantine-color-default-border)`,
         position: 'sticky',
         top: 0,
         zIndex: 1000,
       }}
+      withBorder
     >
-      <Group justify="space-between">
-        <Group>
-          {isUserLoggedIn && (
-            <Burger
-              opened={opened}
-              onClick={() => setOpened((o) => !o)}
-              size="sm"
-              hiddenFrom="md"
-            />
-          )}
-          
+      <Container size="lg">
+        <Group justify="space-between">
           <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
             <Group gap="xs">
-              <Box 
-                style={{ 
-                  width: 32, 
-                  height: 32, 
-                  borderRadius: '50%',
-                  backgroundColor: '#f5f2e9',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  overflow: 'hidden'
-                }}
-              >
-                <Image 
-                  src={nutroosLogoPng}
-                  alt="Nutroos"
-                  width={28}
-                  height={28}
+              <Box pos="relative" style={{ width: 40, height: 40 }}>
+                <img 
+                  src={logo} 
+                  alt="Nutroos" 
+                  style={{
+                    filter: isDark ? 'brightness(1.5)' : 'none',
+                    width: '100%',
+                    height: '100%'
+                  }}
                 />
               </Box>
               <Text 
@@ -97,7 +103,7 @@ const Header: React.FC = () => {
                 }}
               >
                 Nutroos
-                {isWorker && (
+                {user?.role === 'worker' && (
                   <Text 
                     component="span" 
                     c="nutroos-green.6" 
@@ -110,115 +116,180 @@ const Header: React.FC = () => {
               </Text>
             </Group>
           </Link>
-        </Group>
+          
+          <Group gap="lg" visibleFrom="sm">
+            {navItems.map((item) => (
+              <Link
+                key={item.path}
+                to={item.path}
+                style={{ 
+                  textDecoration: 'none', 
+                  color: isLinkActive(item.path) 
+                    ? 'var(--app-accent)'
+                    : isDark ? 'var(--mantine-color-gray-3)' : 'var(--app-text)',
+                  fontWeight: isLinkActive(item.path) ? 600 : undefined 
+                }}
+              >
+                <Text>{item.label}</Text>
+              </Link>
+            ))}
+            <Tooltip label={isDark ? 'Modo claro' : 'Modo oscuro'}>
+              <ActionIcon 
+                variant="subtle" 
+                onClick={() => toggleColorScheme()}
+                aria-label="Toggle color scheme"
+                color="nutroos-green"
+              >
+                {isDark ? <IconSun size={rem(18)} /> : <IconMoon size={rem(18)} />}
+              </ActionIcon>
+            </Tooltip>
+            
+            {isAuthenticated && user ? (
+              <Menu shadow="md" width={200}>
+                <Menu.Target>
+                  <Avatar
+                    src={user.profilePicture}
+                    alt={user.fullName}
+                    size="md"
+                    radius="xl"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {user.fullName.charAt(0).toUpperCase()}
+                  </Avatar>
+                </Menu.Target>
 
-        <Group>
-          {/* Botón de logout visible */}
-          {isUserLoggedIn && (
+                <Menu.Dropdown>
+                  <Menu.Label>
+                    <Text size="sm" fw={500}>
+                      {user.fullName}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {user.role === 'admin' ? 'Administrador' : 
+                       user.role === 'worker' ? user.workerType || 'Trabajador' : 'Usuario'}
+                    </Text>
+                  </Menu.Label>
+
+                  <Menu.Divider />
+
+                  <Menu.Item
+                    leftSection={<IconUser size={14} />}
+                    onClick={handleDashboardClick}
+                  >
+                    Dashboard
+                  </Menu.Item>
+
+                  <Menu.Item
+                    leftSection={<IconSettings size={14} />}
+                    onClick={handleProfileClick}
+                  >
+                    Mi Perfil
+                  </Menu.Item>
+
+                  <Menu.Divider />
+
+                  <Menu.Item
+                    leftSection={<IconLogout size={14} />}
+                    onClick={handleLogout}
+                    color="red"
+                  >
+                    Cerrar Sesión
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
+            ) : (
+              <Group gap="sm">
+                <Button variant="subtle" onClick={handleLogin}>
+                  Iniciar Sesión
+                </Button>
+                <Button color="nutroos-green" onClick={() => navigate('/register')}>
+                  Registrarse
+                </Button>
+              </Group>
+            )}
+          </Group>
+          
+          <Burger opened={mobileMenuOpened} onClick={toggleMobileMenu} hiddenFrom="sm" />
+        </Group>
+      </Container>
+      
+      <Drawer
+        opened={mobileMenuOpened}
+        onClose={closeMobileMenu}
+        size="xs"
+        padding="md"
+        title={
+          <Group>
+            <img 
+              src={logo} 
+              alt="Nutroos" 
+              width={30} 
+              height={30} 
+              style={{ filter: isDark ? 'brightness(1.5)' : 'none' }}
+            />
+            <Text fw={700}>NUTROOS</Text>
+          </Group>
+        }
+      >
+        <Stack>
+          {navItems.map((item) => (
             <Button
-              variant="outline"
-              color="red"
-              leftSection={<IconLogout size={16} />}
-              onClick={handleLogout}
-              size="xs"
-              visibleFrom="sm"
+              key={item.path}
+              variant={isLinkActive(item.path) ? "light" : "subtle"}
+              component={Link}
+              to={item.path}
+              onClick={closeMobileMenu}
+              fullWidth
+              color={isLinkActive(item.path) ? "nutroos-green" : "gray"}
             >
-              Cerrar sesión
+              {item.label}
             </Button>
-          )}
+          ))}
           
-          <ActionIcon
-            variant="outline"
-            color={isDark ? 'yellow' : 'blue'}
-            onClick={() => toggleColorScheme()}
-            title="Toggle color scheme"
-          >
-            {isDark ? <IconSun size={18} /> : <IconMoonStars size={18} />}
-          </ActionIcon>
-          
-          {isUserLoggedIn && (
-            <Group visibleFrom="md">
-              <Box style={{ textAlign: 'right' }}>
-                <Text size="sm" fw={500} lineClamp={1} style={{ maxWidth: '150px' }}>
-                  {userData.fullName || 'Usuario'}
-                </Text>
-                <Text size="xs" c="dimmed">
-                  {isWorker ? (userData.workerType || 'Profesional') : 'Cliente'}
-                </Text>
-              </Box>
-              <Avatar 
-                src={userData.profilePicture} 
-                alt={userData.fullName} 
-                radius="xl" 
-                color="nutroos-green"
-                onClick={() => navigate('/profile')}
-                style={{ cursor: 'pointer' }}
-              >
-                {userData.fullName ? userData.fullName.charAt(0) : '?'}
-              </Avatar>
-            </Group>
-          )}
-        </Group>
-      </Group>
-
-      {isUserLoggedIn && (
-        <Drawer
-          opened={opened}
-          onClose={() => setOpened(false)}
-          title={
-            <Group>
-              <Avatar 
-                src={userData.profilePicture} 
-                radius="xl" 
+          {isAuthenticated && user ? (
+            <>
+              <Text size="sm" fw={500} c="dimmed">
+                {user.fullName}
+              </Text>
+              <Button
+                variant="light"
+                leftSection={<IconUser size={16} />}
+                onClick={handleDashboardClick}
+                fullWidth
                 color="nutroos-green"
               >
-                {userData.fullName ? userData.fullName.charAt(0) : '?'}
-              </Avatar>
-              <Box>
-                <Text fw={500}>{userData.fullName}</Text>
-                <Text size="xs" c="dimmed">{isWorker ? 'Profesional' : 'Cliente'}</Text>
-              </Box>
+                Dashboard
+              </Button>
+              <Button
+                variant="light"
+                leftSection={<IconSettings size={16} />}
+                onClick={handleProfileClick}
+                fullWidth
+              >
+                Mi Perfil
+              </Button>
+              <Button
+                variant="light"
+                leftSection={<IconLogout size={16} />}
+                onClick={handleLogout}
+                color="red"
+                fullWidth
+              >
+                Cerrar Sesión
+              </Button>
+            </>
+          ) : (
+            <Group gap="sm">
+              <Button variant="light" onClick={handleLogin} fullWidth>
+                Iniciar Sesión
+              </Button>
+              <Button color="nutroos-green" onClick={() => navigate('/register')} fullWidth>
+                Registrarse
+              </Button>
             </Group>
-          }
-          padding="md"
-          size="xs"
-        >
-          <Box mt="md">
-            <NavLink
-              label="Inicio"
-              leftSection={<IconHome size={16} />}
-              component={Link}
-              to="/"
-              active
-              onClick={() => setOpened(false)}
-            />
-            
-            <NavLink
-              label="Mi Perfil"
-              leftSection={<IconUser size={16} />}
-              component={Link}
-              to="/profile"
-              onClick={() => setOpened(false)}
-            />
-            
-            <NavLink
-              label="Configuración"
-              leftSection={<IconSettings size={16} />}
-              component={Link}
-              to="/settings"
-              onClick={() => setOpened(false)}
-            />
-            
-            <NavLink
-              label="Cerrar Sesión"
-              leftSection={<IconLogout size={16} />}
-              onClick={handleLogout}
-              color="red"
-            />
-          </Box>
-        </Drawer>
-      )}
-    </Box>
+          )}
+        </Stack>
+      </Drawer>
+    </Paper>
   );
 };
 

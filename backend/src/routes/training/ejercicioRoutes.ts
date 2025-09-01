@@ -1,0 +1,27 @@
+import { Router } from 'express';
+import { 
+  crearEjercicio, 
+  obtenerEjercicios, 
+  obtenerEjercicioPorId,
+  actualizarEjercicio, 
+  eliminarEjercicio 
+} from '../../controllers/training/ejercicioController';
+import { authenticateToken, authorizeWorker } from '../../middlewares/authMiddleware';
+import { 
+  crearEjercicioValidator, 
+  actualizarEjercicioValidator, 
+  filtrosEjerciciosValidator,
+  idValidator 
+} from '../../validators/trainingValidators';
+import { validateRequest } from '../../middlewares/validationMiddleware';
+
+const router = Router();
+
+// Rutas para ejercicios
+router.post('/', authenticateToken, authorizeWorker, crearEjercicioValidator, validateRequest, crearEjercicio);
+router.get('/', authenticateToken, filtrosEjerciciosValidator, validateRequest, obtenerEjercicios);
+router.get('/:id', authenticateToken, idValidator, validateRequest, obtenerEjercicioPorId);
+router.put('/:id', authenticateToken, authorizeWorker, actualizarEjercicioValidator, validateRequest, actualizarEjercicio);
+router.delete('/:id', authenticateToken, authorizeWorker, idValidator, validateRequest, eliminarEjercicio);
+
+export default router;
