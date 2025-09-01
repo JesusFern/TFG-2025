@@ -32,14 +32,16 @@ const WorkerLoginPage: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Configuración del formulario con validaciones
   const form = useForm<WorkerLoginFormValues>({
     initialValues: {
       email: '',
       password: '',
     },
     validate: {
-      email: (value: string) => (/^\S+@\S+$/.test(value) ? null : 'Correo electrónico inválido'),
+      email: (value: string) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(value) ? null : 'Correo electrónico inválido';
+      },
       password: (value: string) => (value.length < 6 ? 'La contraseña debe tener al menos 6 caracteres' : null),
     },
   });
@@ -49,16 +51,13 @@ const WorkerLoginPage: React.FC = () => {
       setLoading(true);
       setError(null);
       
-      // Usando el mismo endpoint para todos los usuarios
       const response = await login({
         email: values.email,
         password: values.password
       });
       
-      // Si no tenemos datos del usuario en la respuesta, hacemos una petición adicional
       if (!response.user) {
         try {
-          // Obtener datos del usuario decodificando el token JWT o haciendo una petición al backend
           const userResponse = await axios.get('/api/users/me', {
             headers: {
               Authorization: `Bearer ${response.token}`
@@ -66,17 +65,14 @@ const WorkerLoginPage: React.FC = () => {
           });
           
           if (userResponse.data) {
-            // Verificar que el usuario que inicia sesión es un trabajador
             if (userResponse.data.role !== 'worker' && userResponse.data.role !== 'admin') {
               setError('Esta cuenta no tiene permisos de trabajador');
               return;
             }
             
             // Guardar token y datos de usuario en localStorage
-            localStorage.setItem('authToken', response.token);
             localStorage.setItem('userData', JSON.stringify(userResponse.data));
             
-            // Redireccionar al dashboard de trabajador
             navigate('/worker/dashboard');
           } else {
             setError('No se pudieron obtener los datos del usuario');
@@ -86,17 +82,14 @@ const WorkerLoginPage: React.FC = () => {
           console.error('Error fetching user data:', userError);
         }
       } else {
-        // Si tenemos los datos del usuario en la respuesta original
         if (response.user.role !== 'worker' && response.user.role !== 'admin') {
           setError('Esta cuenta no tiene permisos de trabajador');
           return;
         }
         
-        // Guardar token y datos de usuario en localStorage
         localStorage.setItem('authToken', response.token);
         localStorage.setItem('userData', JSON.stringify(response.user));
         
-        // Redireccionar al dashboard de trabajador
         navigate('/worker/dashboard');
       }
     } catch (error: unknown) {
@@ -110,10 +103,8 @@ const WorkerLoginPage: React.FC = () => {
     }
   };
 
-  // Elementos decorativos para embellecer la página
   const renderDecorations = () => (
     <>
-      {/* Decoración superior izquierda */}
       <Box 
         style={{ 
           position: 'absolute', 
@@ -126,7 +117,6 @@ const WorkerLoginPage: React.FC = () => {
         <IconLeaf size={100} stroke={1.5} color="#38b87c" />
       </Box>
       
-      {/* Decoración inferior derecha */}
       <Box 
         style={{ 
           position: 'absolute', 
@@ -139,7 +129,6 @@ const WorkerLoginPage: React.FC = () => {
         <IconWeight size={100} stroke={1.5} color="#38b87c" />
       </Box>
       
-      {/* Círculos decorativos */}
       <Box 
         style={{ 
           position: 'absolute',
@@ -167,7 +156,6 @@ const WorkerLoginPage: React.FC = () => {
     </>
   );
 
-  // Logo con marco circular y efecto de elevación
   const LogoContainer = () => (
     <motion.div
       initial={{ scale: 0.9, opacity: 0 }}

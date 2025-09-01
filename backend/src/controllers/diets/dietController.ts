@@ -3,16 +3,20 @@ import { AuthenticatedRequest } from '../../types';
 import { crearDietaService, obtenerDietaService, actualizarDietaService, actualizarDiaDietaService } from '../../service/diets/dietService';
 import { actualizarPlatosService } from '../../service/diets/plateService';
 import logger from '../../utils/logger';
-import Dieta from '../../models/diets/dieta';
+import { 
+  verificarAutenticacion,
+  verificarDietaExiste,
+  verificarPermisosCreador,
+  verificarDietaEditable,
+  verificarArraysComidas,
+  manejarErrorDieta
+} from '../../validators/dietValidators';
 
 export const crearDieta = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const creadorId = req.user?.id;
-    if (!creadorId) {
-      logger.info('Payload recibido en /api/diets', { payload: req.body });
-      res.status(401).json({ message: 'No autenticado' });
-      return;
-    }    
+    const creadorId = verificarAutenticacion(req, res, 'crear dieta');
+    if (!creadorId) return;
+    
     const { 
       nombre, 
       descripcion, 
@@ -37,17 +41,8 @@ export const crearDieta = async (req: AuthenticatedRequest, res: Response): Prom
       nombreComidas
     });
 
-    if (!horasComidas || !Array.isArray(horasComidas) || horasComidas.length !== comidasDiarias) {
-      res.status(400).json({ 
-        message: `El array horasComidas debe tener exactamente ${comidasDiarias} elementos` 
-      });
-      return;
-    }
-
-    if (!nombreComidas || !Array.isArray(nombreComidas) || nombreComidas.length !== comidasDiarias) {
-      res.status(400).json({ 
-        message: `El array nombreComidas debe tener exactamente ${comidasDiarias} elementos` 
-      });
+    // Validar arrays de comidas
+    if (!verificarArraysComidas(comidasDiarias, horasComidas, nombreComidas, res)) {
       return;
     }
 
@@ -67,56 +62,31 @@ export const crearDieta = async (req: AuthenticatedRequest, res: Response): Prom
     logger.info('Dieta creada correctamente', { dietaId: dieta._id });
     res.status(201).json({ message: 'Dieta creada correctamente', dieta });
   } catch (error) {
-    logger.error('Error al crear la dieta', { 
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined
-    });
-    res.status(400).json({ message: 'Error al crear la dieta', error: (error as Error).message });
+    manejarErrorDieta(error, res, 'crear la dieta');
   }
 };
 
 export const actualizarPlatos = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
-    if (!userId) {
-      logger.info('Intento de actualizar platos sin autenticación', { path: req.path });
-      res.status(401).json({ message: 'No autenticado' });
-      return;
-    }
+    const userId = verificarAutenticacion(req, res, 'actualizar platos');
+    if (!userId) return;
     
     const { platos } = req.body;
     logger.info('Actualizando platos', { platosCount: platos?.length || 0 });
     
-    // Si es una actualización y hay al menos un plato, verificar si la dieta está publicada
+    // Si es una actualización y hay al menos un plato, verificar permisos en la dieta
     if (platos && platos.length > 0 && platos[0].dietaId) {
       const dietaId = platos[0].dietaId;
       
-      // Verificar que la dieta existe y no está publicada
-      const dieta = await Dieta.findById(dietaId);
+      // Verificar que la dieta existe
+      const dieta = await verificarDietaExiste(dietaId, res);
+      if (!dieta) return;
       
-      if (!dieta) {
-        logger.info('Intento de actualizar platos de dieta inexistente', { dietaId });
-        res.status(404).json({ message: 'No se encontró la dieta solicitada' });
-        return;
-      }
+      // Verificar que el usuario tiene permisos
+      if (!verificarPermisosCreador(dieta, userId, res, 'actualizar platos')) return;
       
-      // Verificar que el usuario es el creador de la dieta
-      if (dieta.creador.toString() !== userId) {
-        logger.warn('Intento de actualizar platos sin permisos', { 
-          dietaId, 
-          userId, 
-          creadorId: dieta.creador 
-        });
-        res.status(403).json({ message: 'No tienes permisos para actualizar esta dieta' });
-        return;
-      }
-      
-      // Verificar si la dieta está publicada
-      if (dieta.draftMode === false) {
-        logger.warn('Intento de actualizar platos de dieta publicada', { dietaId, userId });
-        res.status(403).json({ message: 'No se pueden actualizar platos de una dieta que ya ha sido publicada' });
-        return;
-      }
+      // Verificar que la dieta está en modo borrador
+      if (!verificarDietaEditable(dieta, userId, res, 'actualizar platos')) return;
     }
     
     const actualizados = await actualizarPlatosService(platos);
@@ -124,24 +94,14 @@ export const actualizarPlatos = async (req: AuthenticatedRequest, res: Response)
     logger.info('Platos actualizados correctamente', { actualizados: actualizados.length });
     res.status(200).json({ message: 'Platos actualizados', platos: actualizados });
   } catch (error) {
-    logger.error('Error al actualizar platos', {
-      error: error instanceof Error ? error.message : String(error)
-    });
-    res.status(400).json({
-      message: 'Error al actualizar los platos',
-      error: error instanceof Error ? error.message : error
-    });
+    manejarErrorDieta(error, res, 'actualizar los platos');
   }
 };
 
 export const obtenerDieta = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
-    if (!userId) {
-      logger.info('Intento de acceso no autorizado a dieta', { path: req.path });
-      res.status(401).json({ message: 'No autenticado' });
-      return;
-    }
+    const userId = verificarAutenticacion(req, res, 'obtener dieta');
+    if (!userId) return;
     
     const dietaId = req.params.id;
     logger.debug('Solicitud para obtener dieta', { dietaId, userId });
@@ -151,39 +111,13 @@ export const obtenerDieta = async (req: AuthenticatedRequest, res: Response): Pr
     logger.info('Dieta obtenida correctamente', { dietaId });
     res.status(200).json({ dieta });
   } catch (error) {
-    logger.error('Error al obtener la dieta', { 
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      dietaId: req.params.id
-    });
-    
-    if (error instanceof Error) {
-      if (error.message === 'Dieta no encontrada') {
-        res.status(404).json({ message: 'No se encontró la dieta solicitada' });
-        return;
-      } else if (error.message === 'No tienes permisos para ver esta dieta') {
-        res.status(403).json({ message: 'No tienes permisos para ver esta dieta' });
-        return;
-      } else if (error.message === 'ID de dieta inválido') {
-        res.status(400).json({ message: 'El ID de dieta proporcionado no es válido' });
-        return;
-      }
-    }
-    
-    res.status(500).json({ 
-      message: 'Error al obtener la dieta', 
-      error: error instanceof Error ? error.message : 'Error desconocido' 
-    });
+    manejarErrorDieta(error, res, 'obtener la dieta', { dietaId: req.params.id });
   }
 };
 export const actualizarDieta = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
-    if (!userId) {
-      logger.info('Intento de actualizar dieta sin autenticación', { path: req.path });
-      res.status(401).json({ message: 'No autenticado' });
-      return;
-    }
+    const userId = verificarAutenticacion(req, res, 'actualizar dieta');
+    if (!userId) return;
     
     const dietaId = req.params.id;
     const datosActualizacion = req.body;
@@ -199,73 +133,30 @@ export const actualizarDieta = async (req: AuthenticatedRequest, res: Response):
       return;
     }
     
-    // Verificar que la dieta existe y que el usuario tiene permisos
-    const dieta = await Dieta.findById(dietaId);
+    // Verificar que la dieta existe
+    const dieta = await verificarDietaExiste(dietaId, res);
+    if (!dieta) return;
     
-    if (!dieta) {
-      logger.info('Intento de actualizar dieta inexistente', { dietaId });
-      res.status(404).json({ message: 'No se encontró la dieta solicitada' });
-      return;
-    }
+    // Verificar que el usuario tiene permisos
+    if (!verificarPermisosCreador(dieta, userId, res, 'actualizar dieta')) return;
     
-    // Verificar que el usuario es el creador de la dieta
-    if (dieta.creador.toString() !== userId) {
-      logger.warn('Intento de actualizar dieta sin permisos', { 
-        dietaId, 
-        userId, 
-        creadorId: dieta.creador 
-      });
-      res.status(403).json({ message: 'No tienes permisos para actualizar esta dieta' });
-      return;
-    }
-
-    // Verificar si la dieta está publicada
-    if (dieta.draftMode === false) {
-      logger.warn('Intento de actualizar dieta publicada', { dietaId, userId });
-      res.status(403).json({ message: 'No se puede actualizar una dieta que ya ha sido publicada' });
-      return;
-    }
+    // Verificar que la dieta está en modo borrador
+    if (!verificarDietaEditable(dieta, userId, res, 'actualizar dieta')) return;
     
     const dietaActualizada = await actualizarDietaService(dietaId, userId, datosActualizacion);
     
     logger.info('Dieta actualizada correctamente', { dietaId });
     res.status(200).json({ message: 'Dieta actualizada correctamente', dieta: dietaActualizada });
   } catch (error) {
-    logger.error('Error al actualizar la dieta', { 
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      dietaId: req.params.id
-    });
-    
-    if (error instanceof Error) {
-      if (error.message === 'Dieta no encontrada') {
-        res.status(404).json({ message: 'No se encontró la dieta solicitada' });
-        return;
-      } else if (error.message === 'No tienes permisos para actualizar esta dieta') {
-        res.status(403).json({ message: 'No tienes permisos para actualizar esta dieta' });
-        return;
-      } else if (error.message === 'ID de dieta inválido') {
-        res.status(400).json({ message: 'El ID de dieta proporcionado no es válido' });
-        return;
-      }
-    }
-    
-    res.status(500).json({ 
-      message: 'Error al actualizar la dieta', 
-      error: error instanceof Error ? error.message : 'Error desconocido' 
-    });
+    manejarErrorDieta(error, res, 'actualizar la dieta', { dietaId: req.params.id });
   }
 };
 
 
 export const actualizarDiaDieta = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
-    if (!userId) {
-      logger.info('Intento de actualizar día de dieta sin autenticación', { path: req.path });
-      res.status(401).json({ message: 'No autenticado' });
-      return;
-    }
+    const userId = verificarAutenticacion(req, res, 'actualizar día de dieta');
+    if (!userId) return;
     
     const dietaId = req.params.dietaId;
     const diaIndex = parseInt(req.params.diaIndex);
@@ -289,32 +180,15 @@ export const actualizarDiaDieta = async (req: AuthenticatedRequest, res: Respons
       return;
     }
     
-    // Verificar que la dieta existe y no está publicada
-    const dieta = await Dieta.findById(dietaId);
+    // Verificar que la dieta existe
+    const dieta = await verificarDietaExiste(dietaId, res);
+    if (!dieta) return;
     
-    if (!dieta) {
-      logger.info('Intento de actualizar día de dieta inexistente', { dietaId });
-      res.status(404).json({ message: 'No se encontró la dieta solicitada' });
-      return;
-    }
+    // Verificar que el usuario tiene permisos
+    if (!verificarPermisosCreador(dieta, userId, res, 'actualizar día de dieta')) return;
     
-    // Verificar que el usuario es el creador de la dieta
-    if (dieta.creador.toString() !== userId) {
-      logger.warn('Intento de actualizar día de dieta sin permisos', { 
-        dietaId, 
-        userId, 
-        creadorId: dieta.creador 
-      });
-      res.status(403).json({ message: 'No tienes permisos para actualizar esta dieta' });
-      return;
-    }
-    
-    // Verificar si la dieta está publicada
-    if (dieta.draftMode === false) {
-      logger.warn('Intento de actualizar día de dieta publicada', { dietaId, diaIndex, userId });
-      res.status(403).json({ message: 'No se puede actualizar una dieta que ya ha sido publicada' });
-      return;
-    }
+    // Verificar que la dieta está en modo borrador
+    if (!verificarDietaEditable(dieta, userId, res, 'actualizar día')) return;
     
     const diaActualizado = await actualizarDiaDietaService(dietaId, userId, diaIndex, datosDia);
     
@@ -324,44 +198,17 @@ export const actualizarDiaDieta = async (req: AuthenticatedRequest, res: Respons
       dia: diaActualizado 
     });
   } catch (error) {
-    logger.error('Error al actualizar día de dieta', { 
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
+    manejarErrorDieta(error, res, 'actualizar día de dieta', { 
       dietaId: req.params.dietaId,
       diaIndex: req.params.diaIndex
-    });
-    
-    if (error instanceof Error) {
-      if (error.message === 'Dieta no encontrada') {
-        res.status(404).json({ message: 'No se encontró la dieta solicitada' });
-        return;
-      } else if (error.message === 'No tienes permisos para actualizar esta dieta') {
-        res.status(403).json({ message: 'No tienes permisos para actualizar esta dieta' });
-        return;
-      } else if (error.message === 'ID de dieta inválido') {
-        res.status(400).json({ message: 'El ID de dieta proporcionado no es válido' });
-        return;
-      } else if (error.message === 'Índice de día inválido') {
-        res.status(400).json({ message: 'El índice del día proporcionado no es válido' });
-        return;
-      }
-    }
-    
-    res.status(500).json({ 
-      message: 'Error al actualizar día de dieta', 
-      error: error instanceof Error ? error.message : 'Error desconocido' 
     });
   }
 };
 
 export const publicarDieta = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const userId = req.user?.id;
-    if (!userId) {
-      logger.info('Intento de publicar dieta sin autenticación', { path: req.path });
-      res.status(401).json({ message: 'No autenticado' });
-      return;
-    }
+    const userId = verificarAutenticacion(req, res, 'publicar dieta');
+    if (!userId) return;
     
     const dietaId = req.params.id;
     
@@ -370,25 +217,12 @@ export const publicarDieta = async (req: AuthenticatedRequest, res: Response): P
       userId
     });
     
-    // Verificar que la dieta existe y que el usuario tiene permisos
-    const dieta = await Dieta.findById(dietaId);
+    // Verificar que la dieta existe
+    const dieta = await verificarDietaExiste(dietaId, res);
+    if (!dieta) return;
     
-    if (!dieta) {
-      logger.info('Intento de publicar dieta inexistente', { dietaId });
-      res.status(404).json({ message: 'No se encontró la dieta solicitada' });
-      return;
-    }
-    
-    // Verificar que el usuario es el creador de la dieta
-    if (dieta.creador.toString() !== userId) {
-      logger.warn('Intento de publicar dieta sin permisos', { 
-        dietaId, 
-        userId, 
-        creadorId: dieta.creador 
-      });
-      res.status(403).json({ message: 'No tienes permisos para publicar esta dieta' });
-      return;
-    }
+    // Verificar que el usuario tiene permisos
+    if (!verificarPermisosCreador(dieta, userId, res, 'publicar dieta')) return;
     
     dieta.draftMode = false;
     await dieta.save();
@@ -399,22 +233,6 @@ export const publicarDieta = async (req: AuthenticatedRequest, res: Response): P
       dieta 
     });
   } catch (error) {
-    logger.error('Error al publicar dieta', { 
-      error: error instanceof Error ? error.message : String(error),
-      stack: error instanceof Error ? error.stack : undefined,
-      dietaId: req.params.id
-    });
-    
-    if (error instanceof Error) {
-      if (error.message.includes('Cast to ObjectId failed')) {
-        res.status(400).json({ message: 'ID de dieta inválido' });
-        return;
-      }
-    }
-    
-    res.status(500).json({ 
-      message: 'Error al publicar la dieta', 
-      error: error instanceof Error ? error.message : 'Error desconocido' 
-    });
+    manejarErrorDieta(error, res, 'publicar la dieta', { dietaId: req.params.id });
   }
 };

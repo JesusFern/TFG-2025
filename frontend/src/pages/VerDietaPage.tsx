@@ -30,9 +30,81 @@ import { motion } from 'framer-motion';
 import { format, parse, parseISO, getDay, addDays } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { obtenerDieta } from '../services/dietService';
-import { Dieta } from '../types';
+import { Dieta, DiaDieta } from '../types';
 
 const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+
+const styles = {
+  paperBg: { backgroundColor: 'var(--app-paper-bg)' },
+  paperBorder: { borderColor: 'var(--app-border-color)' },
+  borderBottom: { borderBottom: '1px solid var(--app-border-color)' },
+  greenBg: (isDark: boolean) => ({ 
+    backgroundColor: isDark ? 'rgba(35, 139, 80, 0.1)' : 'rgba(35, 139, 80, 0.05)'
+  }),
+  greenBgDarker: (isDark: boolean) => ({ 
+    backgroundColor: isDark ? 'rgba(35, 139, 80, 0.15)' : 'rgba(35, 139, 80, 0.08)'
+  }),
+  cellBorders: {
+    borderBottom: '1px solid var(--app-border-color)',
+    borderLeft: '1px solid var(--app-border-color)',
+    borderRight: '1px solid var(--app-border-color)'
+  },
+  greenBorder: { borderBottom: '3px solid var(--mantine-color-nutroos-green-6)' },
+  mealTitle: (isDark: boolean) => ({
+    backgroundColor: isDark ? 'rgba(35, 139, 80, 0.12)' : 'rgba(35, 139, 80, 0.08)',
+    borderRadius: '4px',
+    display: 'inline-block',
+    width: '100%',
+    borderLeft: '2px solid var(--mantine-color-nutroos-green-6)'
+  }),
+  rowBg: (isDark: boolean, isEven: boolean) => ({
+    backgroundColor: isEven ? 
+      (isDark ? 'rgba(35, 35, 35, 0.4)' : 'rgba(250, 250, 250, 0.8)') : 
+      (isDark ? 'rgba(35, 35, 35, 0.2)' : 'white')
+  }),
+  tableHeader: (isDark: boolean) => ({
+    width: `${100 / 7}%`,
+    padding: '8px 4px',
+    backgroundColor: isDark ? 'rgba(35, 139, 80, 0.15)' : 'rgba(35, 139, 80, 0.08)',
+    borderBottom: '3px solid var(--mantine-color-nutroos-green-6)',
+    borderLeft: '1px solid var(--app-border-color)',
+    borderRight: '1px solid var(--app-border-color)',
+    borderTop: '1px solid var(--app-border-color)',
+    borderRadius: '6px 6px 0 0',
+    textAlign: 'center' as const,
+    verticalAlign: 'middle',
+    boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
+  }),
+  calorieCellStyle: (isDark: boolean) => ({
+    padding: '10px 12px', 
+    textAlign: 'right' as const,
+    fontWeight: 'bold',
+    color: isDark ? 'var(--mantine-color-nutroos-green-4)' : 'var(--mantine-color-nutroos-green-7)',
+    borderLeft: '1px solid var(--app-border-color)',
+    borderRight: '1px solid var(--app-border-color)',
+    borderBottom: '1px solid var(--app-border-color)',
+    borderRadius: '0 0 8px 8px'
+  }),
+  tableStyles: {
+    width: '100%', 
+    borderCollapse: 'separate' as const, 
+    borderSpacing: '4px 2px',
+    tableLayout: 'fixed' as const,
+    maxWidth: '1400px',
+    margin: '0 auto'
+  },
+  calorieFooterRow: (isDark: boolean) => ({
+    backgroundColor: isDark ? 'rgba(35, 139, 80, 0.15)' : 'rgba(35, 139, 80, 0.08)',
+    borderTop: '3px solid var(--mantine-color-nutroos-green-6)'
+  }),
+  emptyCell: {
+    padding: '6px 4px', 
+    borderBottom: '1px solid var(--app-border-color)',
+    borderLeft: '1px solid var(--app-border-color)',
+    borderRight: '1px solid var(--app-border-color)',
+    verticalAlign: 'top'
+  }
+};
 
 const convertirDiaSemana = (diaSemana: number): number => {
   return diaSemana === 0 ? 6 : diaSemana - 1;
@@ -42,17 +114,8 @@ const parseFecha = (fecha: string | Date): Date => {
   if (typeof fecha !== 'string') return new Date(fecha);
   
   try {
-    if (fecha.includes('T') || fecha.includes('Z')) {
-      return parseISO(fecha);
-    }
-    
-    if (fecha.includes('-')) {
-      const parts = fecha.split('-');
-      if (parts.length === 3) {
-        return parse(fecha, 'dd-MM-yyyy', new Date());
-      }
-    }
-    
+    if (fecha.includes('T') || fecha.includes('Z')) return parseISO(fecha);
+    if (fecha.includes('-') && fecha.split('-').length === 3) return parse(fecha, 'dd-MM-yyyy', new Date());
     return new Date(fecha);
   } catch (error) {
     console.error('Error parseando fecha:', error);
@@ -75,14 +138,24 @@ const VerDietaPage: React.FC = () => {
   const [startDayOfWeek, setStartDayOfWeek] = useState<number>(0); // 0 = Lunes, 6 = Domingo
   const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
 
+  interface DayInfo {
+    weekDayIndex: number;
+    dietDayIndex: number;
+    weekDayName: string;
+    fecha: Date;
+    fechaFormateada: string;
+    nombreCompleto: string;
+    data: DiaDieta;
+  }
+
   const daysRange = useMemo(() => {
-    if (!dieta || !fechaInicio) return { days: [], totalWeeks: 0 };
+    if (!dieta || !fechaInicio) return { days: [] as DayInfo[], totalWeeks: 0 };
     
     const totalWeeks = Math.ceil((dieta.dias.length + startDayOfWeek) / 7);
     
     const weekStartIndex = (currentWeek - 1) * 7 - startDayOfWeek;
     
-    const days = [];
+    const days: DayInfo[] = [];
     
     for (let i = 0; i < 7; i++) {
       const dietDayIndex = weekStartIndex + i;
@@ -225,8 +298,8 @@ const VerDietaPage: React.FC = () => {
         p="md" 
         mb="lg" 
         style={{ 
-          backgroundColor: 'var(--app-paper-bg)', 
-          borderBottom: '1px solid var(--app-border-color)' 
+          ...styles.paperBg, 
+          ...styles.borderBottom
         }}
       >
         <Breadcrumbs separator={<IconChevronRight size={14} />}>
@@ -240,8 +313,8 @@ const VerDietaPage: React.FC = () => {
         withBorder 
         radius="md"
         style={{ 
-          backgroundColor: 'var(--app-paper-bg)',
-          borderColor: 'var(--app-border-color)'
+          ...styles.paperBg,
+          ...styles.paperBorder
         }}
       >
         <Group justify="space-between" mb="xs" wrap="wrap">
@@ -303,8 +376,8 @@ const VerDietaPage: React.FC = () => {
         withBorder 
         radius="md"
         style={{ 
-          backgroundColor: 'var(--app-paper-bg)',
-          borderColor: 'var(--app-border-color)'
+          ...styles.paperBg,
+          ...styles.paperBorder
         }}
       >
         {/* Selector de semana - Estilo tabla */}
@@ -312,8 +385,8 @@ const VerDietaPage: React.FC = () => {
           py="md" 
           px="lg" 
           style={{ 
-            borderBottom: '2px solid var(--mantine-color-nutroos-green-6)',
-            backgroundColor: isDark ? 'rgba(35, 139, 80, 0.1)' : 'rgba(35, 139, 80, 0.05)'
+            ...styles.greenBorder,
+            ...styles.greenBg(isDark)
           }}
         >
           <Group justify="space-between" align="center">
@@ -357,32 +430,13 @@ const VerDietaPage: React.FC = () => {
         </Box>
         
         <Box px="xl" py="md" mx="auto" style={{ overflowX: 'auto' }}>
-          <table style={{ 
-            width: '100%', 
-            borderCollapse: 'separate', 
-            borderSpacing: '4px 2px',
-            tableLayout: 'fixed',
-            maxWidth: '1400px',
-            margin: '0 auto'
-          }}>
+          <table style={styles.tableStyles}>
             <thead>
               <tr>
-                {daysRange.days.map((dayInfo) => (
+                {daysRange.days.map((dayInfo: DayInfo) => (
                   <th
                     key={`header-${dayInfo.dietDayIndex}`}
-                    style={{ 
-                      width: `${100 / daysRange.days.length}%`,
-                      padding: '8px 4px',
-                      backgroundColor: isDark ? 'rgba(35, 139, 80, 0.15)' : 'rgba(35, 139, 80, 0.08)',
-                      borderBottom: '3px solid var(--mantine-color-nutroos-green-6)',
-                      borderLeft: '1px solid var(--app-border-color)',
-                      borderRight: '1px solid var(--app-border-color)',
-                      borderTop: '1px solid var(--app-border-color)',
-                      borderRadius: '6px 6px 0 0',
-                      textAlign: 'center',
-                      verticalAlign: 'middle',
-                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.05)'
-                    }}
+                    style={styles.tableHeader(isDark)}
                   >
                     <Text fw={700} c="nutroos-green" size="sm" ta="center">
                       {dayInfo.weekDayName}
@@ -399,24 +453,14 @@ const VerDietaPage: React.FC = () => {
                 Array.from({ length: dieta.comidasDiarias }).map((_, comidaIndex) => (
                   <tr 
                     key={`comida-${comidaIndex}`}
-                    style={{ 
-                      backgroundColor: comidaIndex % 2 === 0 ? 
-                        (isDark ? 'rgba(35, 35, 35, 0.3)' : 'rgba(250, 250, 250, 0.6)') : 
-                        (isDark ? 'transparent' : 'white')
-                    }}
+                    style={styles.rowBg(isDark, comidaIndex % 2 === 0)}
                   >
-                    {daysRange.days.map((dayInfo) => {
+                    {daysRange.days.map((dayInfo: DayInfo) => {
                       const comida = dayInfo.data.comidas[comidaIndex];
                       if (!comida) return (
                         <td 
                           key={`empty-${dayInfo.dietDayIndex}-${comidaIndex}`}
-                          style={{ 
-                            padding: '6px 4px', 
-                            borderBottom: '1px solid var(--app-border-color)',
-                            borderLeft: '1px solid var(--app-border-color)',
-                            borderRight: '1px solid var(--app-border-color)',
-                            verticalAlign: 'top'
-                          }}
+                          style={styles.emptyCell}
                         />
                       );
 
@@ -425,13 +469,9 @@ const VerDietaPage: React.FC = () => {
                           key={`day-${dayInfo.dietDayIndex}-comida-${comidaIndex}`}
                           style={{ 
                             padding: '6px 4px', 
-                            borderBottom: '1px solid var(--app-border-color)',
-                            borderLeft: '1px solid var(--app-border-color)',
-                            borderRight: '1px solid var(--app-border-color)',
+                            ...styles.cellBorders,
                             verticalAlign: 'top',
-                            backgroundColor: comidaIndex % 2 === 0 ? 
-                              (isDark ? 'rgba(35, 35, 35, 0.4)' : 'rgba(250, 250, 250, 0.8)') : 
-                              (isDark ? 'rgba(35, 35, 35, 0.2)' : 'white')
+                            ...styles.rowBg(isDark, comidaIndex % 2 === 0)
                           }}
                         >
                           <Text 
@@ -440,13 +480,7 @@ const VerDietaPage: React.FC = () => {
                             c="nutroos-green" 
                             mb="4px"
                             p="4px 6px"
-                            style={{
-                              backgroundColor: isDark ? 'rgba(35, 139, 80, 0.12)' : 'rgba(35, 139, 80, 0.08)',
-                              borderRadius: '4px',
-                              display: 'inline-block',
-                              width: '100%',
-                              borderLeft: '2px solid var(--mantine-color-nutroos-green-6)'
-                            }}
+                            style={styles.mealTitle(isDark)}
                           >
                             {comida.nombreComida || `Comida ${comidaIndex + 1}`} 
                             {comida.horaEstimada && <Text component="span" size="sm" fw={400}> ({comida.horaEstimada})</Text>}
@@ -492,23 +526,11 @@ const VerDietaPage: React.FC = () => {
                   </tr>
                 ))
               }
-              <tr style={{
-                backgroundColor: isDark ? 'rgba(35, 139, 80, 0.15)' : 'rgba(35, 139, 80, 0.08)',
-                borderTop: '3px solid var(--mantine-color-nutroos-green-6)'
-              }}>
-                {daysRange.days.map((dayInfo) => (
+              <tr style={styles.calorieFooterRow(isDark)}>
+                {daysRange.days.map((dayInfo: DayInfo) => (
                   <td 
                     key={`calories-${dayInfo.dietDayIndex}`}
-                    style={{ 
-                      padding: '10px 12px', 
-                      textAlign: 'right',
-                      fontWeight: 'bold',
-                      color: isDark ? 'var(--mantine-color-nutroos-green-4)' : 'var(--mantine-color-nutroos-green-7)',
-                      borderLeft: '1px solid var(--app-border-color)',
-                      borderRight: '1px solid var(--app-border-color)',
-                      borderBottom: '1px solid var(--app-border-color)',
-                      borderRadius: '0 0 8px 8px'
-                    }}
+                    style={styles.calorieCellStyle(isDark)}
                   >
                     {(dayInfo.data.caloriasTotales && dayInfo.data.caloriasTotales > 0) ? (
                       <Text fw={700} size="xs" ta="right">
