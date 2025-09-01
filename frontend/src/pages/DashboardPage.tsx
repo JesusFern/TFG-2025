@@ -19,7 +19,8 @@ import {
   IconCalendar,
   IconUser,
   IconSettings,
-  IconPlus
+  IconPlus,
+  IconMessage
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -147,6 +148,14 @@ const DashboardPage: React.FC = () => {
       icon: <IconUser size={32} />,
       color: 'grape',
       onClick: () => navigate('/profile')
+    },
+    {
+      title: 'Chat',
+      description: 'Comunícate en tiempo real con tu entrenador o nutricionista',
+      icon: <IconMessage size={32} />,
+      color: 'teal',
+      onClick: () => navigate('/chat'),
+      badge: 'En Vivo'
     }
   ];
 

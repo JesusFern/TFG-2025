@@ -6,6 +6,7 @@ import LandingPage from '../pages/LandingPage';
 import CrearDietaPage from '../pages/CrearDietaPage';
 import ProfilePage from '../pages/ProfilePage';
 import DashboardPage from '../pages/DashboardPage';
+import { ChatPage } from '../pages/ChatPage';
 import Layout from '../components/layout/Layout';
 import { useAuth } from '../hooks/useAuth';
 import LoginPage from '../pages/LoginPage';
@@ -65,6 +66,14 @@ const AppRoutes: React.FC = () => {
         <ProtectedRoute>
           <Layout>
             <CrearDietaPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/chat" element={
+        <ProtectedRoute>
+          <Layout>
+            <ChatPage />
           </Layout>
         </ProtectedRoute>
       } />
