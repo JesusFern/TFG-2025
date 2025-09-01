@@ -186,16 +186,18 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
       return;
     }
 
-    const token = TokenService.generateToken({ id: user._id, role: user.role });
+    const token = TokenService.generateToken({ id: user._id, role: user.role });    
     res.status(200).json({ 
-      token,
+      token, 
       user: {
-        _id: user._id,
+        id: user._id,
         fullName: user.fullName,
         email: user.email,
-        gender: user.gender,
-        role: user.role
-      }
+        role: user.role,
+        workerType: user.workerType || undefined,
+        profilePicture: user.profilePicture || undefined
+      },
+      message: 'Inicio de sesión exitoso'
     });
   } catch (error: unknown) {
     res.status(500).json({ message: (error as Error).message });

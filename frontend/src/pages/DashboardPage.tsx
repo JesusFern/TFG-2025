@@ -223,9 +223,9 @@ const DashboardPage: React.FC = () => {
                   leftSection={<IconPlus size={16} />}
                   color="nutroos-green"
                   variant="filled"
-                  onClick={() => navigate('/crear-dieta')}
+                  onClick={() => navigate('/clients')}
                 >
-                  Crear Nueva Dieta
+                  Seleccionar Cliente para Dieta
                 </Button>
               )}
               <Button
