@@ -66,7 +66,6 @@ export interface DietaActualizacionDTO {
     macronutrientes?: string;
     micronutrientes?: string;
     numeroComidas?: number;
-    genero?: string;
     requerimientosHidratacion?: string;
     cumplimiento?: boolean;
     comidas?: Array<{
@@ -98,7 +97,6 @@ export interface DiaDieta {
   macronutrientes?: string;
   micronutrientes?: string;
   numeroComidas?: number;
-  genero?: string;
   requerimientosHidratacion?: string;
   cumplimiento: boolean;
   comidas: Comida[];

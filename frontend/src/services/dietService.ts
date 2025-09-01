@@ -296,7 +296,6 @@ export const actualizarDiaDieta = async (
       macronutrientes: datosDia.macronutrientes,
       micronutrientes: datosDia.micronutrientes,
       numeroComidas: datosDia.numeroComidas,
-      genero: datosDia.genero,
       requerimientosHidratacion: datosDia.requerimientosHidratacion,
       cumplimiento: datosDia.cumplimiento,
       comidas: datosDia.comidas ? datosDia.comidas.map(comida => ({

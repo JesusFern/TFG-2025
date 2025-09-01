@@ -71,7 +71,6 @@ export async function crearDietaService({
     macronutrientes: '',
     micronutrientes: '',
     numeroComidas: comidasDiarias,
-    genero: '',
     requerimientosHidratacion: '',
     cumplimiento: false,
     comidas: Array.from({ length: comidasDiarias }, (_, comidaIndex) => ({
@@ -157,7 +156,6 @@ export async function actualizarDietaService(
       macronutrientes?: string;
       micronutrientes?: string;
       numeroComidas?: number;
-      genero?: string;
       requerimientosHidratacion?: string;
       cumplimiento?: boolean;
       comidas?: Array<{
@@ -201,9 +199,6 @@ export async function actualizarDietaService(
           if (typeof diaActualizado.numeroComidas === 'number')
             diaExistente.numeroComidas = diaActualizado.numeroComidas;
             
-          if (typeof diaActualizado.genero === 'string')
-            diaExistente.genero = diaActualizado.genero;
-            
           if (typeof diaActualizado.requerimientosHidratacion === 'string')
             diaExistente.requerimientosHidratacion = diaActualizado.requerimientosHidratacion;
             
@@ -246,7 +241,6 @@ export async function actualizarDiaDietaService(
     macronutrientes?: string;
     micronutrientes?: string;
     numeroComidas?: number;
-    genero?: string;
     requerimientosHidratacion?: string;
     cumplimiento?: boolean;
     comidas?: Array<{
@@ -285,9 +279,6 @@ export async function actualizarDiaDietaService(
     
   if (typeof datosDia.numeroComidas === 'number')
     diaExistente.numeroComidas = datosDia.numeroComidas;
-    
-  if (typeof datosDia.genero === 'string')
-    diaExistente.genero = datosDia.genero;
     
   if (typeof datosDia.requerimientosHidratacion === 'string')
     diaExistente.requerimientosHidratacion = datosDia.requerimientosHidratacion;
