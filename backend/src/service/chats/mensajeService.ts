@@ -105,10 +105,10 @@ export async function crearMensajeService(datos: CrearMensajeData): Promise<IMen
         prioridad: datos.prioridad || 'normal',
         accion: {
           tipo: 'abrir_mensaje',
-                  metadata: {
-          mensajeId: (mensajeGuardado._id as unknown as mongoose.Types.ObjectId).toString(),
-          conversacionId: (conversacion._id as unknown as mongoose.Types.ObjectId).toString()
-        }
+          metadata: {
+            mensajeId: (mensajeGuardado._id as unknown as mongoose.Types.ObjectId).toString(),
+            conversacionId: (conversacion._id as unknown as mongoose.Types.ObjectId).toString()
+          }
         },
         metadata: {
           mensaje: (mensajeGuardado._id as unknown as mongoose.Types.ObjectId).toString(),
@@ -247,25 +247,27 @@ export async function marcarComoLeidoService(mensajeId: string, usuarioId: strin
       throw new Error('Mensaje no encontrado');
     }
 
-    // Verificar que el usuario sea el destinatario
-    if (mensaje.destinatario.toString() !== usuarioId) {
+    // Verificar que el usuario sea el destinatario o el remitente
+    if (mensaje.destinatario.toString() !== usuarioId && mensaje.remitente.toString() !== usuarioId) {
       throw new Error('No tienes permisos para marcar este mensaje como leído');
     }
 
-    // Marcar como leído
-    mensaje.estado = 'leido';
-    await mensaje.save();
+    // Solo marcar como leído si el usuario es el destinatario
+    if (mensaje.destinatario.toString() === usuarioId) {
+      mensaje.estado = 'leido';
+      await mensaje.save();
 
-    // Actualizar contador de mensajes no leídos en la conversación
-    const conversacion = await Conversacion.findOne({
-      participantes: { $all: [mensaje.remitente, mensaje.destinatario] }
-    });
+      // Actualizar contador de mensajes no leídos en la conversación
+      const conversacion = await Conversacion.findOne({
+        participantes: { $all: [mensaje.remitente, mensaje.destinatario] }
+      });
 
-    if (conversacion) {
-      const contadorActual = conversacion.mensajesNoLeidos.get(usuarioId) || 0;
-      if (contadorActual > 0) {
-        conversacion.mensajesNoLeidos.set(usuarioId, contadorActual - 1);
-        await conversacion.save();
+      if (conversacion) {
+        const contadorActual = conversacion.mensajesNoLeidos.get(usuarioId) || 0;
+        if (contadorActual > 0) {
+          conversacion.mensajesNoLeidos.set(usuarioId, contadorActual - 1);
+          await conversacion.save();
+        }
       }
     }
   } catch (error) {

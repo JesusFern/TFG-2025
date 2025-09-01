@@ -63,6 +63,73 @@ Modelo para las notificaciones del sistema generadas por mensajes y eventos.
 - `limpiarExpiradas()`: Elimina notificaciones expiradas
 - `crearNotificacionMensaje()`: Crea notificación para nuevo mensaje
 
+## Endpoints de API
+
+### Conversaciones
+
+#### GET `/api/messaging/conversaciones/by-user/:usuarioId`
+Obtiene todas las conversaciones de un usuario específico.
+
+**Parámetros:**
+- `usuarioId` (path): ID del usuario
+- `limit` (query, opcional): Número máximo de conversaciones (default: 20)
+
+**Respuesta:**
+```json
+{
+  "message": "Conversaciones obtenidas exitosamente",
+  "conversaciones": [
+    {
+      "_id": "conversacion_id",
+      "participantes": [
+        {
+          "_id": "usuario_id",
+          "fullName": "Nombre Usuario",
+          "email": "usuario@email.com",
+          "role": "user"
+        }
+      ],
+      "ultimoMensaje": "mensaje_id",
+      "ultimoMensajeContenido": "Contenido del último mensaje",
+      "ultimoMensajeFecha": "2025-09-01T12:00:00.000Z",
+      "mensajesNoLeidos": {
+        "usuario_id": 2
+      },
+      "activa": true,
+      "metadata": {
+        "tipo": "general"
+      }
+    }
+  ]
+}
+```
+
+**Seguridad:**
+- Requiere autenticación (token JWT)
+- El usuario solo puede obtener sus propias conversaciones
+- Si intenta acceder a conversaciones de otro usuario, devuelve 403
+
+#### GET `/api/messaging/conversaciones`
+Obtiene conversaciones con filtros.
+
+**Parámetros de query:**
+- `limit` (opcional): Número máximo de conversaciones
+- `offset` (opcional): Número de conversaciones a saltar
+- `activa` (opcional): Filtrar por estado activo
+- `tipo` (opcional): Filtrar por tipo de conversación
+
+#### GET `/api/messaging/conversaciones/:id`
+Obtiene una conversación específica por ID.
+
+#### POST `/api/messaging/conversaciones`
+Crea una nueva conversación.
+
+#### PUT `/api/messaging/conversaciones/:id`
+Actualiza una conversación existente.
+
+#### PATCH `/api/messaging/conversaciones/:id/archivar`
+Archiva una conversación.
+
 ## Índices de Base de Datos
 
 ### Mensaje
@@ -122,6 +189,39 @@ Los modelos están diseñados para trabajar con componentes React que utilizan M
 - **ConversationList**: Lista de conversaciones del usuario
 - **MessageInput**: Input para escribir y enviar mensajes
 
+### Hook useChat
+
+El hook `useChat` proporciona toda la funcionalidad necesaria para el chat:
+
+```typescript
+const {
+  conversaciones,
+  conversacionActiva,
+  mensajes,
+  isLoading,
+  error,
+  seleccionarConversacion,
+  enviarMensaje,
+  refreshConversaciones,
+  // ... más métodos
+} = useChat();
+```
+
+### Servicio chatService
+
+El servicio `chatService` maneja las llamadas a la API:
+
+```typescript
+// Obtener conversaciones del usuario
+const conversaciones = await chatService.conversaciones.obtenerConversacionesUsuario(userId);
+
+// Crear nueva conversación
+const nuevaConversacion = await chatService.conversaciones.crearConversacion(data);
+
+// Enviar mensaje
+const mensaje = await chatService.mensajes.crearMensaje(data);
+```
+
 ## Consideraciones de Rendimiento
 
 - **Índices optimizados**: Para consultas frecuentes de conversaciones y mensajes
@@ -135,3 +235,20 @@ Los modelos están diseñados para trabajar con componentes React que utilizan M
 - **Autorización**: Los usuarios solo pueden ver mensajes donde participan
 - **Sanitización**: El contenido se valida antes de almacenar
 - **Límites de archivos**: Tamaño máximo y tipos permitidos para adjuntos
+- **Validación de propiedad**: Los usuarios solo pueden acceder a sus propias conversaciones
+
+## Testing
+
+Los endpoints están cubiertos por tests unitarios que verifican:
+
+- Autenticación requerida
+- Autorización de usuarios
+- Validación de datos
+- Manejo de errores
+- Respuestas correctas
+
+Para ejecutar los tests:
+
+```bash
+npm test -- --testPathPattern=tests/chat/conversacion.test.ts
+```

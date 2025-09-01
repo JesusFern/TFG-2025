@@ -1,6 +1,5 @@
 import { Server as SocketIOServer } from 'socket.io';
 import { Server as HTTPServer } from 'http';
-import jwt from 'jsonwebtoken';
 import { JwtPayload } from '../types';
 import { 
   crearMensajeService, 
@@ -46,7 +45,14 @@ export class SocketServer {
           return next(new Error('Token de autenticación requerido'));
         }
 
-        const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret') as JwtPayload;
+        // Usar TokenService en lugar de jwt.verify directamente
+        const { TokenService } = await import('../utils/tokenService');
+        const decoded = TokenService.verifyToken(token) as JwtPayload;
+        
+        if (!decoded) {
+          return next(new Error('Token inválido'));
+        }
+        
         (socket as AuthenticatedSocket).userId = decoded.id;
         (socket as AuthenticatedSocket).userRole = decoded.role;
         
@@ -60,7 +66,6 @@ export class SocketServer {
   private setupEventHandlers() {
     this.io.on('connection', (socket: Socket) => {
       const authenticatedSocket = socket as AuthenticatedSocket;
-      console.log(`Usuario ${authenticatedSocket.userId} conectado`);
 
       // Guardar referencia del socket del usuario
       this.userSockets.set(authenticatedSocket.userId, socket.id);
@@ -72,25 +77,22 @@ export class SocketServer {
       socket.on('join_conversation', async (conversacionId: string) => {
         try {
           socket.join(`conversation:${conversacionId}`);
-          console.log(`Usuario ${authenticatedSocket.userId} se unió a la conversación ${conversacionId}`);
-          
-          // Marcar mensajes como leídos
-          await marcarComoLeidoService(conversacionId, authenticatedSocket.userId);
-          
+
+          // Nota: El marcado de leído debe hacerse por mensaje (ver evento mark_as_read)
+
           // Notificar a otros participantes
           socket.to(`conversation:${conversacionId}`).emit('user_joined_conversation', {
             userId: authenticatedSocket.userId,
             conversacionId
           });
-        } catch (error) {
-          console.error('Error al unirse a la conversación:', error);
+        } catch {
+          // silencioso
         }
       });
 
       // Evento: Usuario sale de una conversación
       socket.on('leave_conversation', (conversacionId: string) => {
         socket.leave(`conversation:${conversacionId}`);
-        console.log(`Usuario ${authenticatedSocket.userId} salió de la conversación ${conversacionId}`);
       });
 
       // Evento: Enviar mensaje
@@ -113,8 +115,44 @@ export class SocketServer {
           tags?: string[];
         };
         respuestaA?: string;
+        // Si el cliente ya creó el mensaje por REST, puede enviar estos IDs para solo emitir
+        mensajeId?: string;
+        conversacionId?: string;
       }) => {
         try {
+          // Modo broadcast de mensaje ya creado (evita doble creación en DB)
+          if (data.mensajeId && data.conversacionId) {
+            const now = new Date();
+            const mensajeLigero = {
+              _id: data.mensajeId,
+              remitente: authenticatedSocket.userId,
+              destinatario: data.destinatario,
+              contenido: data.contenido,
+              tipo: data.tipo || 'texto',
+              estado: 'enviado' as const,
+              prioridad: data.prioridad || 'normal',
+              categoria: data.categoria || 'general',
+              createdAt: now,
+              updatedAt: now
+            };
+
+            this.io.to(`conversation:${data.conversacionId}`).emit('new_message', {
+              mensaje: mensajeLigero,
+              conversacionId: data.conversacionId
+            });
+
+            const destinatarioSocketId = this.userSockets.get(data.destinatario);
+            if (destinatarioSocketId) {
+              this.io.to(destinatarioSocketId).emit('message_notification', {
+                mensaje: mensajeLigero,
+                conversacionId: data.conversacionId,
+                remitente: authenticatedSocket.userId
+              });
+            }
+
+            return;
+          }
+          
           // Crear el mensaje en la base de datos
           const mensaje = await crearMensajeService({
             remitente: authenticatedSocket.userId,
@@ -128,17 +166,31 @@ export class SocketServer {
             respuestaA: data.respuestaA
           });
 
-          // Buscar o crear conversación
-          const conversacion = await obtenerConversacionesUsuarioService(authenticatedSocket.userId, 1);
-          let conversacionActiva = conversacion.find(c => 
-            c.participantes.some(p => p._id === data.destinatario)
+          // Buscar conversación existente entre los usuarios
+          const conversaciones = await obtenerConversacionesUsuarioService(authenticatedSocket.userId, 100);
+          let conversacionActiva = conversaciones.find(c => 
+            c.participantes.some(p => p._id === data.destinatario) &&
+            c.participantes.length === 2 // Solo conversaciones de 2 personas
           );
 
+          // Si no existe conversación, crear una nueva
           if (!conversacionActiva) {
-            conversacionActiva = await crearConversacionService({
-              participantes: [authenticatedSocket.userId, data.destinatario],
-              metadata: { tipo: data.categoria === 'recordatorio' ? 'general' : (data.categoria || 'general') }
-            });
+            try {
+              conversacionActiva = await crearConversacionService({
+                participantes: [authenticatedSocket.userId, data.destinatario],
+                metadata: { tipo: data.categoria === 'recordatorio' ? 'general' : (data.categoria || 'general') }
+              });
+            } catch {
+              // Si falla la creación, intentar buscar la conversación nuevamente
+              const conversacionesRetry = await obtenerConversacionesUsuarioService(authenticatedSocket.userId, 100);
+              conversacionActiva = conversacionesRetry.find(c => 
+                c.participantes.some(p => p._id === data.destinatario) &&
+                c.participantes.length === 2
+              );
+              if (!conversacionActiva) {
+                throw new Error('No se pudo crear ni encontrar la conversación');
+              }
+            }
           }
 
           // Emitir mensaje a todos los participantes de la conversación
@@ -158,28 +210,31 @@ export class SocketServer {
           }
 
           // Crear notificación push
-          await crearNotificacionService({
-            usuario: data.destinatario,
-            tipo: 'mensaje',
-            titulo: 'Nuevo mensaje',
-            contenido: `Tienes un nuevo mensaje: ${data.contenido.substring(0, 50)}${data.contenido.length > 50 ? '...' : ''}`,
-            prioridad: data.prioridad || 'normal',
-            accion: {
-              tipo: 'abrir_mensaje',
+          try {
+            await crearNotificacionService({
+              usuario: data.destinatario,
+              tipo: 'mensaje',
+              titulo: 'Nuevo mensaje',
+              contenido: `Tienes un nuevo mensaje: ${data.contenido.substring(0, 50)}${data.contenido.length > 50 ? '...' : ''}`,
+              prioridad: data.prioridad || 'normal',
+              accion: {
+                tipo: 'abrir_mensaje',
+                metadata: {
+                  mensajeId: mensaje._id,
+                  conversacionId: conversacionActiva._id
+                }
+              },
               metadata: {
-                mensajeId: mensaje._id,
-                conversacionId: conversacionActiva._id
+                mensaje: mensaje._id,
+                conversacion: conversacionActiva._id,
+                remitente: authenticatedSocket.userId
               }
-            },
-            metadata: {
-              mensaje: mensaje._id,
-              conversacion: conversacionActiva._id,
-              remitente: authenticatedSocket.userId
-            }
-          });
+            });
+          } catch {
+            // silencioso
+          }
 
         } catch (error) {
-          console.error('Error al enviar mensaje:', error);
           socket.emit('message_error', {
             error: 'Error al enviar el mensaje',
             details: error instanceof Error ? error.message : 'Error desconocido'
@@ -198,8 +253,33 @@ export class SocketServer {
             leidoPor: authenticatedSocket.userId,
             timestamp: new Date()
           });
-        } catch (error) {
-          console.error('Error al marcar mensaje como leído:', error);
+        } catch {
+          // silencioso
+        }
+      });
+
+      // Evento: Marcar múltiples mensajes como leídos
+      socket.on('mark_many_as_read', async (mensajeIds: string[]) => {
+        try {
+          const leidos: string[] = [];
+          for (const id of mensajeIds) {
+            try {
+              await marcarComoLeidoService(id, authenticatedSocket.userId);
+              leidos.push(id);
+            } catch {
+              // continuar con los demás
+            }
+          }
+          if (leidos.length > 0) {
+            // Notificar a otros participantes en un solo evento
+            socket.broadcast.emit('messages_read', {
+              mensajeIds: leidos,
+              leidoPor: authenticatedSocket.userId,
+              timestamp: new Date()
+            });
+          }
+        } catch {
+          // silencioso
         }
       });
 
@@ -231,8 +311,6 @@ export class SocketServer {
 
       // Evento: Desconexión
       socket.on('disconnect', () => {
-        console.log(`Usuario ${authenticatedSocket.userId} desconectado`);
-        
         // Remover referencia del socket
         this.userSockets.delete(authenticatedSocket.userId);
         

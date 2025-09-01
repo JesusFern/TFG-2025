@@ -172,5 +172,48 @@ describe('Conversacion API Endpoints', () => {
     });
   });
 
+  describe('GET /api/messaging/conversaciones/by-user/:usuarioId', () => {
+    it('debería obtener conversaciones del usuario exitosamente', async () => {
+      mockConversacionService.obtenerConversacionesUsuarioService.mockResolvedValue([mockConversacion]);
+
+      const res = await request(app)
+        .get(`/api/messaging/conversaciones/by-user/${testUserId}`)
+        .set('Authorization', `Bearer ${authToken}`)
+        .query({ limit: 20 });
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toHaveProperty('conversaciones');
+      expect(res.body.conversaciones).toHaveLength(1);
+      expect(mockConversacionService.obtenerConversacionesUsuarioService).toHaveBeenCalledWith(testUserId, 20);
+    });
+
+    it('debería fallar si el usuario intenta obtener conversaciones de otro usuario', async () => {
+      const res = await request(app)
+        .get(`/api/messaging/conversaciones/by-user/${testUserId2}`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.statusCode).toEqual(403);
+      expect(res.body).toHaveProperty('message', 'No puedes obtener conversaciones de otro usuario');
+    });
+
+    it('debería fallar sin token de autorización', async () => {
+      const res = await request(app)
+        .get(`/api/messaging/conversaciones/by-user/${testUserId}`);
+
+      expect(res.statusCode).toEqual(401);
+    });
+
+    it('debería usar límite por defecto si no se especifica', async () => {
+      mockConversacionService.obtenerConversacionesUsuarioService.mockResolvedValue([]);
+
+      const res = await request(app)
+        .get(`/api/messaging/conversaciones/by-user/${testUserId}`)
+        .set('Authorization', `Bearer ${authToken}`);
+
+      expect(res.statusCode).toEqual(200);
+      expect(mockConversacionService.obtenerConversacionesUsuarioService).toHaveBeenCalledWith(testUserId, 20);
+    });
+  });
+
 
 });

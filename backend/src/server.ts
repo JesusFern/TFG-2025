@@ -17,6 +17,15 @@ app.use(cors());
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
+// Middleware global para debuggear TODAS las peticiones
+app.use((req, res, next) => {
+  console.log(`🌐 [${req.method}] ${req.originalUrl}`);
+  console.log('  - Headers:', req.headers);
+  console.log('  - Params:', req.params);
+  console.log('  - Query:', req.query);
+  next();
+});
+
 const PORT = process.env.PORT || 5000;
 
 // Crear servidor HTTP para Socket.IO
@@ -44,6 +53,17 @@ app.use('/api/workers', workerRoutes);
 app.use('/api/diets', dietRoutes);
 app.use('/api/training', trainingRoutes);
 app.use('/api/messaging', messagingRoutes);
+
+// Log de rutas registradas
+console.log('🚀 Rutas registradas:');
+console.log('  - /api/users');
+console.log('  - /api/workers');
+console.log('  - /api/diets');
+console.log('  - /api/training');
+console.log('  - /api/messaging');
+console.log('    - /mensajes');
+console.log('    - /conversaciones');
+console.log('    - /notificaciones');
 
 app.get("/", (req: Request, res: Response) => {
   res.send("API corriendo...");

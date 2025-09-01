@@ -3,21 +3,47 @@ import { TokenService } from '../utils/tokenService';
 import { JwtPayload, AuthenticatedRequest } from '../types';
 import User from '../models/users/user';
 
-export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  const token = req.header('Authorization')?.split(' ')[1];
+export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+  console.log('🔍 Debug authenticateToken - URL:', req.originalUrl);
+  console.log('🔍 Debug authenticateToken - Headers:', req.headers);
+  
+  const authHeader = req.headers.authorization;
+  console.log('🔍 Debug authenticateToken - Authorization header:', authHeader);
+  
+  if (!authHeader) {
+    console.log('❌ No se proporcionó token de autorización');
+    res.status(401).json({ message: 'Token de autorización requerido' });
+    return;
+  }
+
+  const token = authHeader.split(' ')[1];
+  console.log('🔍 Debug authenticateToken - Token extraído:', token ? 'Presente' : 'Ausente');
+  
   if (!token) {
-    res.status(401).json({ message: 'Acceso denegado' });
+    console.log('❌ Token no válido en el header');
+    res.status(401).json({ message: 'Token no válido' });
     return;
   }
 
-  const decoded = TokenService.verifyToken(token) as JwtPayload | null;
-  if (!decoded) {
-    res.status(400).json({ message: 'Token no válido' });
-    return;
-  }
+  try {
+    const decoded = TokenService.verifyToken(token);
+    console.log('🔍 Debug authenticateToken - Token decodificado:', decoded);
+    
+    if (!decoded || typeof decoded !== 'object' || !('id' in decoded)) {
+      console.log('❌ Token decodificado inválido');
+      res.status(401).json({ message: 'Token inválido' });
+      return;
+    }
 
-  req.user = decoded;
-  next();
+    req.user = decoded as JwtPayload;
+    console.log('✅ Usuario autenticado correctamente, llamando a next()');
+    console.log('🔍 Debug authenticateToken - Usuario asignado a req.user:', req.user);
+    next();
+    console.log('✅ authenticateToken: next() ejecutado correctamente');
+  } catch (error) {
+    console.error('❌ Error al verificar token:', error);
+    res.status(401).json({ message: 'Token inválido' });
+  }
 };
 
 export const authorizeUserOrAdmin = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {

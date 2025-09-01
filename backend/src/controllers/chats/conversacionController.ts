@@ -144,6 +144,59 @@ export const archivarConversacion = async (req: AuthenticatedRequest, res: Respo
   }
 };
 
+// Obtener todas las conversaciones de un usuario específico
+export const obtenerConversacionesUsuario = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  console.log('🚀 INICIO: obtenerConversacionesUsuario ejecutándose');
+  console.log('🔍 Parámetros recibidos:', { 
+    usuarioId: req.user?.id, 
+    params: req.params, 
+    query: req.query 
+  });
+  
+  try {
+    console.log('✅ TRY: Iniciando try block');
+    
+    const usuarioId = req.user?.id;
+    console.log('🔍 Usuario ID del token:', usuarioId);
+    
+    if (!usuarioId) {
+      console.log('❌ Usuario no autenticado');
+      res.status(401).json({ message: 'Usuario no autenticado' });
+      return;
+    }
+
+    const { usuarioId: targetUsuarioId } = req.params;
+    const limit = Number(req.query.limit) || 20;
+    
+    console.log('🔍 Debug obtenerConversacionesUsuario:', { 
+      usuarioId, 
+      targetUsuarioId, 
+      limit,
+      headers: req.headers,
+      params: req.params,
+      query: req.query
+    });
+    
+    // Verificar que el usuario solo pueda obtener sus propias conversaciones
+    if (usuarioId !== targetUsuarioId) {
+      console.log('❌ Usuario no autorizado:', { usuarioId, targetUsuarioId });
+      res.status(403).json({ message: 'No puedes obtener conversaciones de otro usuario' });
+      return;
+    }
+    
+    console.log('✅ Usuario autorizado, llamando al servicio...');
+    const conversaciones = await obtenerConversacionesUsuarioService(usuarioId, limit);
+    console.log('📊 Conversaciones obtenidas:', conversaciones.length, conversaciones);
+    
+    console.log('✅ Enviando respuesta exitosa');
+    res.json({ message: 'Conversaciones obtenidas exitosamente', conversaciones });
+    console.log('🚀 FIN: obtenerConversacionesUsuario completado exitosamente');
+  } catch (error) {
+    console.error('❌ Error al obtener conversaciones del usuario:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
 // Obtener conversación entre dos usuarios específicos
 export const obtenerConversacionUsuario = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {

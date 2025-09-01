@@ -231,10 +231,40 @@ export async function obtenerConversacionesUsuarioService(
       participantes: usuarioId,
       activa: true
     })
+    .populate('participantes', 'fullName email role profilePicture')
     .sort({ updatedAt: -1 })
     .limit(limit);
 
-    return conversaciones.map(c => c.toObject() as unknown as IConversacion);
+    return conversaciones.map(c => {
+      const conversacion = c.toObject() as unknown as IConversacion;
+      
+      // Asegurar que los participantes tengan el formato correcto
+      if (conversacion.participantes) {
+        conversacion.participantes = conversacion.participantes.map((p: unknown) => {
+          const participant = p as { _id?: string; fullName?: string; email?: string; role?: string; profilePicture?: string | null } | string;
+          
+          if (typeof participant === 'string') {
+            return {
+              _id: participant,
+              fullName: 'Usuario',
+              email: '',
+              role: 'user',
+              profilePicture: null
+            };
+          }
+          
+          return {
+            _id: participant._id || '',
+            fullName: participant.fullName || 'Usuario',
+            email: participant.email || '',
+            role: participant.role || 'user',
+            profilePicture: participant.profilePicture || null
+          };
+        });
+      }
+      
+      return conversacion;
+    });
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Error al obtener conversaciones del usuario: ${error.message}`);

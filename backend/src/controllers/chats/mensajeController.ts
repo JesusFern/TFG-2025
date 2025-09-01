@@ -12,6 +12,12 @@ export const crearMensaje = async (req: AuthenticatedRequest, res: Response): Pr
       return;
     }
 
+    // Validar que no se envíe un mensaje a sí mismo
+    if (usuarioId === req.body.destinatario) {
+      res.status(400).json({ message: 'No puedes enviar un mensaje a ti mismo' });
+      return;
+    }
+
     const datosMensaje: CrearMensajeData = {
       remitente: usuarioId,
       destinatario: req.body.destinatario,
@@ -77,6 +83,13 @@ export const obtenerMensajes = async (req: AuthenticatedRequest, res: Response):
         { remitente: usuarioId },
         { destinatario: usuarioId }
       ];
+    } else if (filtros.conversacionId) {
+      // Si se especifica conversacionId, obtener todos los mensajes de esa conversación
+      // donde el usuario es participante (remitente o destinatario)
+      (filtros as Record<string, unknown>).$or = [
+        { remitente: usuarioId },
+        { destinatario: usuarioId }
+      ];
     } else {
       filtros.destinatario = usuarioId; // Solo mensajes recibidos por defecto
     }
@@ -129,11 +142,28 @@ export const marcarComoLeido = async (req: AuthenticatedRequest, res: Response):
     }
 
     const { id } = req.params;
-    const mensaje = await marcarComoLeidoService(id, usuarioId);
-    res.json({ message: 'Mensaje marcado como leído', mensaje });
+    
+    // Verificar que el mensaje existe antes de marcarlo como leído
+    const mensajeExistente = await obtenerMensajePorIdService(id);
+    if (!mensajeExistente) {
+      res.status(404).json({ message: 'Mensaje no encontrado' });
+      return;
+    }
+
+    // Marcar como leído
+    await marcarComoLeidoService(id, usuarioId);
+    
+    res.json({ 
+      message: 'Mensaje marcado como leído exitosamente',
+      mensajeId: id
+    });
   } catch (error) {
     console.error('Error al marcar mensaje como leído:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
+    if (error instanceof Error) {
+      res.status(400).json({ message: error.message });
+    } else {
+      res.status(500).json({ message: 'Error interno del servidor' });
+    }
   }
 };
 
