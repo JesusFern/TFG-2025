@@ -4,6 +4,7 @@ import { AuthenticatedRequest } from '../../types';
 import { crearDietaService, obtenerDietaService, actualizarDietaService, actualizarDiaDietaService } from '../../service/diets/dietService';
 import { actualizarPlatosService } from '../../service/diets/plateService';
 import logger from '../../utils/logger';
+import { isValidObjectId } from '../../utils/mongoValidators';
 import { 
   verificarAutenticacion,
   verificarDietaExiste,
@@ -244,6 +245,12 @@ export const obtenerDietasPorWorkerYCliente = async (req: AuthenticatedRequest, 
     const { workerId, clientId } = req.params;
     if (!workerId || !clientId) {
       res.status(400).json({ message: 'Faltan parámetros workerId o clientId' });
+      return;
+    }
+
+    // Validar que los IDs son ObjectId válidos de MongoDB
+    if (!isValidObjectId(workerId) || !isValidObjectId(clientId)) {
+      res.status(400).json({ message: 'Los IDs de worker o cliente no son válidos' });
       return;
     }
 
