@@ -254,3 +254,9 @@ export const updateUserValidator = [
     .withMessage('El número de teléfono no es válido'),
   body('profilePicture').optional().isURL().withMessage('La URL de la imagen no es válida')
 ];
+
+export const assignWorkerValidator = [
+  body('workerId')
+    .notEmpty().withMessage('El ID del trabajador es obligatorio')
+    .isMongoId().withMessage('El ID del trabajador no es válido')
+];
