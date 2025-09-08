@@ -11,8 +11,6 @@ import {
 } from '@mantine/core';
 import {
   IconPin,
-  IconTrash,
-  IconArchive,
   IconVolumeOff
 } from '@tabler/icons-react';
 import { Conversacion } from '../../types/chat';
@@ -22,8 +20,6 @@ interface ConversationItemProps {
   conversacion: Conversacion;
   isActive: boolean;
   onSelect: (conversacionId: string) => void;
-  onArchive?: (conversacionId: string) => void;
-  onDelete?: (conversacionId: string) => void;
   onPin?: (conversacionId: string) => void;
   onMute?: (conversacionId: string) => void;
 }
@@ -32,8 +28,6 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
   conversacion,
   isActive,
   onSelect,
-  onArchive,
-  onDelete,
   onPin,
   onMute
 }) => {
@@ -75,8 +69,6 @@ export const ConversationItem: React.FC<ConversationItemProps> = ({
       default: return 'General';
     }
   };
-
-  const canManageConversation = true; // Se debe obtener del contexto
 
   // Si no hay otro participante, no mostrar la conversación
   if (!otroParticipante) {

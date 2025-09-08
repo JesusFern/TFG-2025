@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useReducer, ReactNode } from 'react';
+import React, { createContext, useReducer, ReactNode } from 'react';
 import { useSocket } from '../hooks/useSocket';
 
 interface Mensaje {
@@ -162,13 +162,7 @@ interface ChatContextType {
 
 const ChatContext = createContext<ChatContextType | undefined>(undefined);
 
-export const useChat = () => {
-  const context = useContext(ChatContext);
-  if (context === undefined) {
-    throw new Error('useChat debe ser usado dentro de un ChatProvider');
-  }
-  return context;
-};
+export default ChatContext;
 
 interface ChatProviderProps {
   children: ReactNode;

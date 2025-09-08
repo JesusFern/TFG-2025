@@ -52,7 +52,6 @@ app.get("/", (req: Request, res: Response) => {
 app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   console.error(`[${req.method}] ${req.originalUrl} - Error: ${err.message}`);
   res.status(500).json({ message: err.message || "Error interno del servidor" });
-  // Evita warning del linter por parámetro no usado manteniendo la firma de middleware de error
   void _next;
 });
 

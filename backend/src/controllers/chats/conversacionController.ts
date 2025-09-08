@@ -2,6 +2,7 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../../types';
 import { crearConversacionService, obtenerConversacionesService, obtenerConversacionPorIdService, actualizarConversacionService, archivarConversacionService, obtenerConversacionesUsuarioService } from '../../service/chats/conversacionService';
 import { CrearConversacionData } from '../../models/chats';
+import mongoose from 'mongoose';
 
 // Crear una nueva conversación
 export const crearConversacion = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -12,7 +13,9 @@ export const crearConversacion = async (req: AuthenticatedRequest, res: Response
       return;
     }
 
-    const participantes = req.body.participantes;
+    let participantes: string[] = req.body.participantes;
+    participantes = participantes.filter((id) => mongoose.Types.ObjectId.isValid(id));
+    
     if (!participantes.includes(usuarioId)) {
       participantes.push(usuarioId);
     }

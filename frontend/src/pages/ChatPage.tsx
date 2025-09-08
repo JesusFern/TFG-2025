@@ -80,8 +80,8 @@ export const ChatPage: React.FC = () => {
         onSelectConversacion={seleccionarConversacion}
         onNuevaConversacion={() => setShowNuevaConversacion(true)}
         onRefreshConversaciones={handleRefreshConversaciones}
-        onArchiveConversacion={archivarConversacion}
-        onDeleteConversacion={eliminarConversacion}
+        // onArchiveConversacion={archivarConversacion}
+        // onDeleteConversacion={eliminarConversacion}
       />
 
       {/* Área principal del chat */}

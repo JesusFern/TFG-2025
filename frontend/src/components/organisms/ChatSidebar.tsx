@@ -30,8 +30,8 @@ interface ChatSidebarProps {
   onSelectConversacion: (conversacionId: string) => void;
   onNuevaConversacion?: () => void;
   onRefreshConversaciones?: () => void;
-  onArchiveConversacion?: (conversacionId: string) => void;
-  onDeleteConversacion?: (conversacionId: string) => void;
+  // onArchiveConversacion?: (conversacionId: string) => void;
+  // onDeleteConversacion?: (conversacionId: string) => void;
   onPinConversacion?: (conversacionId: string) => void;
   onMuteConversacion?: (conversacionId: string) => void;
 }
@@ -42,8 +42,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onSelectConversacion,
   onNuevaConversacion,
   onRefreshConversaciones,
-  onArchiveConversacion,
-  onDeleteConversacion,
+  // onArchiveConversacion,
+  // onDeleteConversacion,
   onPinConversacion,
   onMuteConversacion
 }) => {
@@ -232,8 +232,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                 conversacion={conversacion}
                 isActive={conversacionActiva === conversacion._id}
                 onSelect={onSelectConversacion}
-                onArchive={onArchiveConversacion}
-                onDelete={onDeleteConversacion}
+                // onArchive={onArchiveConversacion}
+                // onDelete={onDeleteConversacion}
                 onPin={onPinConversacion}
                 onMute={onMuteConversacion}
               />
@@ -249,8 +249,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                   conversacion={conversacion}
                   isActive={conversacionActiva === conversacion._id}
                   onSelect={onSelectConversacion}
-                  onArchive={onArchiveConversacion}
-                  onDelete={onDeleteConversacion}
+                  // onArchive={onArchiveConversacion}
+                  // onDelete={onDeleteConversacion}
                   onPin={onPinConversacion}
                   onMute={onMuteConversacion}
                 />
@@ -268,8 +268,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                   conversacion={conversacion}
                   isActive={conversacionActiva === conversacion._id}
                   onSelect={onSelectConversacion}
-                  onArchive={onArchiveConversacion}
-                  onDelete={onDeleteConversacion}
+                  // onArchive={onArchiveConversacion}
+                  // onDelete={onDeleteConversacion}
                   onPin={onPinConversacion}
                   onMute={onMuteConversacion}
                 />
@@ -287,8 +287,8 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
                   conversacion={conversacion}
                   isActive={conversacionActiva === conversacion._id}
                   onSelect={onSelectConversacion}
-                  onArchive={onArchiveConversacion}
-                  onDelete={onDeleteConversacion}
+                  // onArchive={onArchiveConversacion}
+                  // onDelete={onDeleteConversacion}
                   onPin={onPinConversacion}
                   onMute={onMuteConversacion}
                 />
