@@ -9,19 +9,20 @@ import {
   getMyProfile,
   updateMyProfile,
   changeMyPassword,
-  uploadProfilePhoto
+  uploadProfilePhoto,
+  assignWorker
 } from '../../controllers/users/userController';
 import { authenticateToken, authorizeUserOrAdmin } from '../../middlewares/authMiddleware';
 import { validateRequest } from '../../middlewares/validationMiddleware';
 import { 
   loginValidator, 
-  updateUserValidator, 
   registerValidator,
   step0Validator,
   step1Validator,
   step2Validator,
   step3Validator,
-  step4Validator
+  step4Validator,
+  assignWorkerValidator
 } from '../../validators/userValidators';
 
 const router = Router();
@@ -51,10 +52,13 @@ router.put('/me', authenticateToken, updateMyProfile);
 router.patch('/me/password', authenticateToken, changeMyPassword);
 router.patch('/me/photo', authenticateToken, uploadProfilePhoto);
 
+
+router.post('/assign-worker', authenticateToken, assignWorkerValidator, validateRequest, assignWorker);
+
 // Rutas protegidas para administradores
 router.get('/', authenticateToken, getUsers);
 router.get('/:id', authenticateToken, validateRequest, getUserById);
-router.put('/:id', authenticateToken, authorizeUserOrAdmin, updateUserValidator, validateRequest, updateUser);
+router.put('/:id', authenticateToken, authorizeUserOrAdmin, validateRequest, updateUser);
 router.delete('/:id', authenticateToken, authorizeUserOrAdmin, validateRequest, deleteUser);
 
 export default router;

@@ -1,15 +1,18 @@
+import Dieta from '../../models/diets/dieta';
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../types';
 import { crearDietaService, obtenerDietaService, actualizarDietaService, actualizarDiaDietaService } from '../../service/diets/dietService';
 import { actualizarPlatosService } from '../../service/diets/plateService';
 import logger from '../../utils/logger';
+import mongoose from 'mongoose';
 import { 
   verificarAutenticacion,
   verificarDietaExiste,
   verificarPermisosCreador,
   verificarDietaEditable,
   verificarArraysComidas,
-  manejarErrorDieta
+  manejarErrorDieta,
+  esIdValido
 } from '../../validators/dietValidators';
 
 export const crearDieta = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -217,11 +220,9 @@ export const publicarDieta = async (req: AuthenticatedRequest, res: Response): P
       userId
     });
     
-    // Verificar que la dieta existe
     const dieta = await verificarDietaExiste(dietaId, res);
     if (!dieta) return;
     
-    // Verificar que el usuario tiene permisos
     if (!verificarPermisosCreador(dieta, userId, res, 'publicar dieta')) return;
     
     dieta.draftMode = false;
@@ -234,5 +235,40 @@ export const publicarDieta = async (req: AuthenticatedRequest, res: Response): P
     });
   } catch (error) {
     manejarErrorDieta(error, res, 'publicar la dieta', { dietaId: req.params.id });
+  }
+};
+
+export const obtenerDietasPorWorkerYCliente = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = verificarAutenticacion(req, res, 'obtener dietas de cliente');
+    if (!userId) return;
+
+    const { workerId, clientId } = req.params;
+    if (!workerId || !clientId) {
+      res.status(400).json({ message: 'Faltan parámetros workerId o clientId' });
+      return;
+    }
+
+    if (!esIdValido(workerId) || !esIdValido(clientId)) {
+      res.status(400).json({ message: 'Los IDs de worker o cliente no son válidos' });
+      return;
+    }
+
+    if (userId !== workerId && req.user?.role !== 'admin') {
+      res.status(403).json({ message: 'No tienes permisos para ver estas dietas' });
+      return;
+    }
+
+    const workerObjectId = new mongoose.Types.ObjectId(workerId);
+    const clientObjectId = new mongoose.Types.ObjectId(clientId);
+
+    const dietas = await Dieta.find({
+      creador: workerObjectId,
+      asignadaA: clientObjectId
+    }).sort({ createdAt: -1 });
+
+    res.status(200).json({ dietas });
+  } catch (error) {
+    manejarErrorDieta(error, res, 'obtener las dietas del cliente');
   }
 };

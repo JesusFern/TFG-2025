@@ -9,6 +9,7 @@ import '@mantine/core/styles.css';
 import '@mantine/dates/styles.css';
 import './styles/index.css';
 import theme from './styles/mantine/MantineTheme';
+import './utils/axiosInterceptor';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>

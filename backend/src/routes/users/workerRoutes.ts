@@ -1,9 +1,10 @@
 import { Router } from 'express';
-import { registerWorker } from '../../controllers/users/workerController';
-import { authenticateToken, authorizeAdmin } from '../../middlewares/authMiddleware';
+import { authenticateToken, authorizeAdmin, authorizeNutricionista } from '../../middlewares/authMiddleware';
+import { registerWorker, getAssignedClients } from '../../controllers/users/workerController';
 
 const router = Router();
 
 router.post('/register', authenticateToken, authorizeAdmin, registerWorker);
+router.get('/clients', authenticateToken, authorizeNutricionista, getAssignedClients);
 
 export default router;

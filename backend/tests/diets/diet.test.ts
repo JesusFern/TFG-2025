@@ -214,6 +214,81 @@ jest.mock('../../src/service/diets/plateService', () => ({
   })
 }));
 
+// Mock controllers
+jest.mock('../../src/controllers/users/userController', () => ({
+  registerUser: jest.fn().mockImplementation((req, res) => {
+    const { email } = req.body;
+    if (email === 'existing@example.com') {
+      res.status(400).json({ message: 'El email ya está registrado' });
+    } else {
+      res.status(201).json({ 
+        message: 'Usuario registrado correctamente',
+        user: {
+          _id: '123456789012345678901234',
+          fullName: 'Test User',
+          email: email || 'test@example.com',
+          role: 'user'
+        }
+      });
+    }
+  }),
+  getMyProfile: jest.fn(),
+  updateMyProfile: jest.fn(),
+  loginUser: jest.fn().mockImplementation((req, res) => {
+    res.status(200).json({ 
+      token: 'fake-token',
+      user: {
+        _id: '123456789012345678901234',
+        fullName: 'Test User',
+        email: 'test@example.com',
+        role: 'user'
+      }
+    });
+  }),
+  assignWorker: jest.fn().mockImplementation((req, res) => {
+    if (!req.user?.id) {
+      res.status(401).json({ message: 'No autenticado' });
+      return;
+    }
+    
+    const { workerId } = req.body;
+    
+    if (!workerId) {
+      res.status(400).json({ message: 'Es necesario proporcionar un ID de trabajador' });
+      return;
+    }
+    
+    res.status(200).json({
+      message: 'Te has asignado correctamente al trabajador',
+      worker: {
+        _id: workerId,
+        fullName: 'Trabajador Test',
+        email: 'worker@example.com',
+        workerType: 'Nutricionista'
+      }
+    });
+  }),
+  changeMyPassword: jest.fn().mockImplementation((req, res) => {
+    res.status(200).json({ message: 'Contraseña actualizada correctamente' });
+  }),
+  uploadProfilePhoto: jest.fn().mockImplementation((req, res) => {
+    res.status(200).json({ message: 'Foto de perfil actualizada correctamente' });
+  }),
+  
+  getUsers: jest.fn().mockImplementation((req, res) => {
+    res.status(200).json({ users: [] });
+  }),
+  getUserById: jest.fn().mockImplementation((req, res) => {
+    res.status(200).json({ user: {} });
+  }),
+  updateUser: jest.fn().mockImplementation((req, res) => {
+    res.status(200).json({ message: 'Usuario actualizado' });
+  }),
+  deleteUser: jest.fn().mockImplementation((req, res) => {
+    res.status(200).json({ message: 'Usuario eliminado' });
+  })
+}));
+
 jest.mock('../../src/validators/userValidators', () => ({
   loginValidator: [],
   createUserValidator: [],
@@ -223,7 +298,8 @@ jest.mock('../../src/validators/userValidators', () => ({
   step1Validator: [],
   step2Validator: [],
   step3Validator: [],
-  step4Validator: []
+  step4Validator: [],
+  assignWorkerValidator: []
 }));
 
 import app from '../../src/server';

@@ -11,13 +11,12 @@ import {
   Breadcrumbs,
   Anchor,
   Paper,
-  Box,
-  Button
+  Box
 } from '@mantine/core';
 import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
 import FormularioCrearDieta from '../components/forms/diets/FormularioCrearDieta';
 import { DietaResponse } from '../types';
-import { IconAlertCircle, IconCheck, IconUser, IconChevronRight, IconHome } from '@tabler/icons-react';
+import { IconAlertCircle, IconUser, IconChevronRight, IconHome } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 
 const CrearDietaPage: React.FC = () => {
@@ -26,21 +25,22 @@ const CrearDietaPage: React.FC = () => {
   const navigate = useNavigate();
   const state = location.state as { clienteNombre?: string } | undefined;
   
-  const clienteInfo = {
+  const [clienteInfo, setClienteInfo] = useState({
     id: clienteId || "",
-    nombre: state?.clienteNombre || "Juan Pérez"
-  };
+    nombre: state?.clienteNombre || ""
+  });
   
-  const [mensaje, setMensaje] = useState<{ tipo: 'success' | 'error', texto: string } | null>(null);
-  const [dietaCreada, setDietaCreada] = useState<DietaResponse | null>(null);
+  const [mensaje, setMensaje] = useState<{ tipo: 'error', texto: string } | null>(null);
+  
+  const handleClienteInfoUpdate = (nombre: string) => {
+    setClienteInfo(prev => ({ ...prev, nombre }));
+  };
 
   const handleDietaCreada = (dietaData: DietaResponse) => {
-    setDietaCreada(dietaData);
-    setMensaje({
-      tipo: 'success',
-      texto: `Dieta "${dietaData.nombre}" creada con éxito para ${clienteInfo.nombre}.`
-    });
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    // Redirigir directamente a la página de editar dieta
+    if (dietaData._id) {
+      navigate(`/editar-dieta/${dietaData._id}`);
+    }
   };
 
   const handleError = (error: Error) => {
@@ -52,16 +52,12 @@ const CrearDietaPage: React.FC = () => {
     setTimeout(() => setMensaje(null), 5000);
   };
   
-  const handleContinuar = () => {
-    if (dietaCreada?._id) {
-      navigate(`/editar-dieta/${dietaCreada._id}`);
-    }
-  };
+  // Ya no necesitamos la función handleContinuar
 
   const items = [
     { title: 'Inicio', href: '/', icon: <IconHome size={14} /> },
     { title: 'Clientes', href: '/clientes' },
-    { title: clienteInfo.nombre, href: `/clientes/${clienteInfo.id}` },
+    { title: 'Detalles del cliente', href: `/clientes/${clienteInfo.id}` },
     { title: 'Crear dieta', href: '#' },
   ].map((item, index) => (
     <Anchor component={Link} to={item.href} key={index} size="sm" c="nutroos-green">
@@ -112,9 +108,19 @@ const CrearDietaPage: React.FC = () => {
           <Box style={{ flex: 1 }}>
             <Title order={2} mb={5} c="nutroos-green.6">Crear Nueva Dieta</Title>
             <Group gap="xs">
-              <Text c="dimmed">Para:</Text>
-              <Text fw={600}>{clienteInfo.nombre}</Text>
-              <Badge color="nutroos-green">Cliente</Badge>
+              {clienteInfo.nombre ? (
+                <>
+                  <Text c="dimmed">Para:</Text>
+                  <Text fw={600}>{clienteInfo.nombre}</Text>
+                  <Badge color="nutroos-green">Cliente</Badge>
+                </>
+              ) : (
+                <>
+                  <Text c="dimmed">Para cliente con ID:</Text>
+                  <Text fw={600}>{clienteInfo.id}</Text>
+                  <Badge color="nutroos-green">Cliente</Badge>
+                </>
+              )}
             </Group>
           </Box>
         </Group>
@@ -127,40 +133,27 @@ const CrearDietaPage: React.FC = () => {
           transition={{ duration: 0.3 }}
         >
           <Alert 
-            icon={mensaje.tipo === 'success' ? <IconCheck size={16} /> : <IconAlertCircle size={16} />}
-            title={mensaje.tipo === 'success' ? "¡Éxito!" : "Error"}
-            color={mensaje.tipo === 'success' ? "nutroos-green" : "red"}
+            icon={<IconAlertCircle size={16} />}
+            title="Error"
+            color="red"
             variant="filled"
             mb="md"
             withCloseButton
             onClose={() => setMensaje(null)}
           >
             {mensaje.texto}
-            
-            {mensaje.tipo === 'success' && dietaCreada && (
-              <Group justify="right" mt="md">
-                <Button 
-                  onClick={handleContinuar}
-                  color="white"
-                  variant="outline"
-                >
-                  Continuar con planificación de comidas
-                </Button>
-              </Group>
-            )}
           </Alert>
           <Space h="md" />
         </motion.div>
       )}
         
-      {!dietaCreada && (
-        <FormularioCrearDieta 
-          onSuccess={handleDietaCreada}
-          onError={handleError}
-          clienteId={clienteInfo.id}
-          clienteNombre={clienteInfo.nombre}
-        />
-      )}
+      <FormularioCrearDieta 
+        onSuccess={handleDietaCreada}
+        onError={handleError}
+        clienteId={clienteInfo.id}
+        clienteNombre={clienteInfo.nombre}
+        onClienteNombreLoaded={handleClienteInfoUpdate}
+      />
     </Container>
   );
 };

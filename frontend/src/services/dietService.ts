@@ -1,3 +1,4 @@
+import { DietaResponse } from '../types/diets';
 import axios from 'axios';
 import { CrearDietaDTO, ApiDietaResponse, Receta, Dieta, Plato, DietaActualizacionDTO, DiaDieta } from '../types';
 
@@ -371,4 +372,19 @@ export const publicarDieta = async (dietaId: string): Promise<Dieta> => {
       throw new Error('Error inesperado al comunicarse con el servidor');
     }
   }
+};
+
+export const getDietsByWorkerAndClient = async (workerId: string, clientId: string): Promise<{ dietas: DietaResponse[] }> => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    throw new Error('No autorizado - Inicie sesión para continuar');
+  }
+  const response = await axios.get(`/api/diets/worker/${workerId}/client/${clientId}`,
+    {
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
+    }
+  );
+  return response.data;
 };

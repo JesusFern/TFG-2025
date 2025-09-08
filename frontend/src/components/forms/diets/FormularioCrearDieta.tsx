@@ -35,23 +35,30 @@ import {
 import { useMediaQuery } from '@mantine/hooks';
 import { crearDieta } from '../../../services/dietService';
 import { CrearDietaDTO, DietaResponse } from '../../../types';
+import { useParams } from 'react-router-dom';
+import { getUserById } from '../../../services/userService';
 
 interface FormularioCrearDietaProps {
   onSuccess: (dietaData: DietaResponse) => void;
   onError: (error: Error) => void;
   clienteId?: string;
   clienteNombre?: string;
+  onClienteNombreLoaded?: (nombre: string) => void;
 }
 
 const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({ 
   onSuccess, 
   onError, 
-  clienteId = "687526841859b1606e92f3f9",
-  clienteNombre = "Juan Pérez" 
+  clienteId,
+  clienteNombre: initialClienteNombre,
+  onClienteNombreLoaded
 }) => {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
   const isMobile = useMediaQuery('(max-width: 48em)');
+  const { id: routeClienteId } = useParams<{ id?: string }>();
+  const [clienteNombre, setClienteNombre] = useState(initialClienteNombre || '');
+  const actualClienteId = clienteId || routeClienteId;
   
   const [activeStep, setActiveStep] = useState(0);
   const [formData, setFormData] = useState<CrearDietaDTO>({
@@ -61,7 +68,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
     duracion: 28,
     comidasDiarias: 5,
     fechaInicio: new Date(Date.now() + 86400000).toISOString().split('T')[0],
-    asignadaA: clienteId || '',
+    asignadaA: actualClienteId || '',
     horasComidas: ['08:00', '11:00', '14:00', '17:00', '20:00'],
     nombreComidas: ['Desayuno', 'Media mañana', 'Almuerzo', 'Merienda', 'Cena']
   });
@@ -131,18 +138,38 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
 
   const isValidMongoId = (id?: string) => id && /^[0-9a-fA-F]{24}$/.test(id);
 
+  // Efecto para cargar los datos del cliente y actualizar el ID del cliente en el formulario
   useEffect(() => {
-    if (clienteId) {
-      if (isValidMongoId(clienteId)) {
+    if (actualClienteId) {
+      if (isValidMongoId(actualClienteId)) {
         setFormData(prev => ({
           ...prev,
-          asignadaA: clienteId
+          asignadaA: actualClienteId
         }));
+        
+        // Si no tenemos el nombre del cliente, cargamos la información
+        if (!clienteNombre) {
+          const fetchClienteData = async () => {
+            try {
+              const userData = await getUserById(actualClienteId);
+              setClienteNombre(userData.fullName);
+              // Notificar al componente padre sobre el nombre cargado
+              if (onClienteNombreLoaded) {
+                onClienteNombreLoaded(userData.fullName);
+              }
+            } catch (error) {
+              console.error('Error al obtener información del cliente:', error);
+              onError(error instanceof Error ? error : new Error('Error al cargar los datos del cliente'));
+            }
+          };
+          
+          fetchClienteData();
+        }
       } else {
-        console.error(`ID de cliente inválido: ${clienteId}`);
+        console.error(`ID de cliente inválido: ${actualClienteId}`);
       }
     }
-  }, [clienteId]);
+  }, [actualClienteId, clienteNombre, onError, onClienteNombreLoaded]);
 
   const handleInputChange = (field: keyof CrearDietaDTO, value: string | number | string[] | Date) => {
     if (field === 'fechaInicio' && value instanceof Date) {
@@ -474,10 +501,17 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
                     <ActionIcon variant="light" color="nutroos-green" radius="xl" size="md">
                       <IconUser size="1.2rem" />
                     </ActionIcon>
-                    <Text fw={500}>{clienteNombre}</Text>
+                    <div style={{ flex: 1 }}>
+                      {clienteNombre ? (
+                        <Text fw={600} size="md">{clienteNombre}</Text>
+                      ) : (
+                        <Text fw={400} size="sm" fs="italic" c="dimmed">Cargando información del cliente...</Text>
+                      )}
+                    </div>
                   </Group>
                 </Card>
-                <input type="hidden" value={clienteId || ''} />
+                <Text size="xs" mt={5} c="dimmed">Esta dieta se creará para las necesidades específicas de este cliente</Text>
+                <input type="hidden" value={actualClienteId || ''} />
               </Box>
             </SimpleGrid>
           </>
@@ -593,6 +627,26 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
       }}
     >
       <div>
+        {actualClienteId && (
+          <Box mb="lg">
+            <Group justify="center" mb="xs">
+              <ActionIcon variant="light" color="nutroos-green" radius="xl" size="lg">
+                <IconUser size="1.5rem" />
+              </ActionIcon>
+              <Title order={3} fw={600} c="nutroos-green.7">
+                {clienteNombre 
+                  ? `Creando dieta para ${clienteNombre}` 
+                  : 'Cargando datos del cliente...'}
+              </Title>
+            </Group>
+            {!clienteNombre && (
+              <Text ta="center" c="dimmed" size="sm">
+                Obteniendo información del cliente con ID: {actualClienteId}
+              </Text>
+            )}
+          </Box>
+        )}
+
         {stepError && (
           <Alert 
             icon={<IconAlertCircle size={16} />} 

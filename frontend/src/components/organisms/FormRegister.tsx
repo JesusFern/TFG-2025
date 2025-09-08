@@ -313,7 +313,7 @@ const RegisterForm = () => {
       }
       
       if (data?.token) {
-        localStorage.setItem('token', data.token);
+        localStorage.setItem('authToken', data.token);
       }
       
       setSubmitSuccess('¡Cuenta creada exitosamente! Redirigiendo al login...');

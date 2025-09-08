@@ -40,6 +40,7 @@ export interface DietaResponse {
   }>;
   createdAt?: string;
   updatedAt?: string;
+  draftMode?: boolean;
 }
 
 export interface Receta {
