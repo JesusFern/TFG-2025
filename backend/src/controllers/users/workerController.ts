@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import User from '../../models/users/user';
-import { MongoError } from '../../types';
+import { MongoError, AuthenticatedRequest } from '../../types';
 
 export const registerWorker = async (req: Request, res: Response): Promise<void> => {
   try {
@@ -26,6 +26,7 @@ export const registerWorker = async (req: Request, res: Response): Promise<void>
       workerType,
       biography,
       availability,
+      isWorkerAvailable: true,
       role: 'worker'
     });
 
@@ -43,6 +44,7 @@ export const registerWorker = async (req: Request, res: Response): Promise<void>
         workerType: worker.workerType,
         biography: worker.biography,
         availability: worker.availability,
+        isWorkerAvailable: worker.isWorkerAvailable,
         role: worker.role
       }
     });
@@ -59,5 +61,58 @@ export const registerWorker = async (req: Request, res: Response): Promise<void>
     } else {
       res.status(500).json({ message: (error as Error).message || 'Error interno del servidor' });
     }
+  }
+};
+
+export const getAssignedClients = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const workerId = req.user?.id;
+    if (!workerId) {
+      res.status(401).json({ message: 'No autenticado' });
+      return;
+    }
+
+    const worker = await User.findById(workerId);
+    if (!worker) {
+      res.status(404).json({ message: 'Trabajador no encontrado' });
+      return;
+    }
+
+    if (worker.role !== 'worker') {
+      res.status(403).json({ message: 'Solo los trabajadores pueden acceder a esta información' });
+      return;
+    }
+
+    if (worker.workerType !== 'Nutricionista' && worker.workerType !== 'Nutricionista y Entrenador personal') {
+      res.status(403).json({ message: 'Solo los nutricionistas pueden acceder a esta información' });
+      return;
+    }
+
+    if (!worker.clientesAsignados || worker.clientesAsignados.length === 0) {
+      res.status(200).json({ 
+        message: 'No tienes clientes asignados actualmente',
+        clientes: []
+      });
+      return;
+    }
+
+    const clientes = await User.find(
+      { _id: { $in: worker.clientesAsignados } },
+      { 
+        password: 0, 
+        __v: 0,
+      }
+    ).populate('datosSaludYNutricion datosActividadFisica');
+
+    res.status(200).json({
+      message: `Se encontraron ${clientes.length} clientes asignados`,
+      clientes
+    });
+  } catch (error: unknown) {
+    const err = error as Error;
+    res.status(500).json({ 
+      message: 'Error al obtener los clientes asignados',
+      error: err.message 
+    });
   }
 };

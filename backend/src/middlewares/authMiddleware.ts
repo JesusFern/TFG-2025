@@ -52,7 +52,7 @@ export const authorizeWorker = async (req: AuthenticatedRequest, res: Response, 
     return;
   }
   if (role !== 'worker') {
-    res.status(403).json({ message: 'Solo los trabajadores pueden crear dietas' });
+    res.status(403).json({ message: 'Solo los trabajadores pueden realizar esta acción' });
     return;
   }
   next();
@@ -61,21 +61,36 @@ export const authorizeWorker = async (req: AuthenticatedRequest, res: Response, 
 export const authorizeNutricionista = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const { id, role } = req.user as JwtPayload;
   if (!id) {
+    console.log('DEBUG: No hay ID de usuario');
     res.status(401).json({ message: 'No autenticado' });
     return;
   }
   if (role !== 'worker') {
-    res.status(403).json({ message: 'Solo los trabajadores pueden crear dietas' });
+    console.log(`DEBUG: El rol no es worker, es ${role}`);
+    res.status(403).json({ message: 'Solo los trabajadores pueden realizar esta acción' });
     return;
   }
-  const user = await User.findById(id);
-  if (
-    !user ||
-    (user.workerType !== 'Nutricionista' &&
-     user.workerType !== 'Nutricionista y Entrenador personal')
-  ) {
-    res.status(403).json({ message: 'Solo los nutricionistas pueden realizar esta acción' });
-    return;
+  
+  try {
+    const user = await User.findById(id);
+    if (!user) {
+      console.log(`DEBUG: No se encontró usuario con ID ${id}`);
+      res.status(404).json({ message: 'Usuario no encontrado' });
+      return;
+    }
+    
+    console.log(`DEBUG: Usuario encontrado - workerType: ${user.workerType}`);
+    
+    if (user.workerType !== 'Nutricionista' && 
+        user.workerType !== 'Nutricionista y Entrenador personal') {
+      console.log(`DEBUG: No es nutricionista, es ${user.workerType}`);
+      res.status(403).json({ message: 'Solo los nutricionistas pueden realizar esta acción' });
+      return;
+    }
+    
+    next();
+  } catch (error) {
+    console.error('DEBUG Error:', error);
+    res.status(500).json({ message: 'Error al verificar el tipo de trabajador' });
   }
-  next();
 };
