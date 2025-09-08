@@ -59,7 +59,6 @@ const WorkerClientDietsList: React.FC = () => {
     };
   }, []);
   
-  // Formatear fecha
   const formatDate = (dateString?: string) => {
     if (!dateString) return 'No disponible';
     const date = new Date(dateString);
@@ -205,8 +204,8 @@ const WorkerClientDietsList: React.FC = () => {
                 borderLeftWidth: 4,
                 borderLeftStyle: 'solid',
                 borderLeftColor: dieta.draftMode === false ? 
-                  theme.colors["nutroos-green"][isDark ? 5 : 6] : 
-                  isDark ? theme.colors.dark[3] : theme.colors.gray[4],
+                  (isDark ? theme.colors["nutroos-green"][5] : theme.colors["nutroos-green"][6]) : 
+                  (isDark ? theme.colors.dark[3] : theme.colors.gray[4]),
                 overflow: 'hidden',
                 boxShadow: isDark ? '0 4px 8px rgba(0, 0, 0, 0.4)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
               }}
@@ -215,14 +214,18 @@ const WorkerClientDietsList: React.FC = () => {
                 e.currentTarget.style.boxShadow = isDark ? '0 8px 16px rgba(0, 0, 0, 0.6)' : theme.shadows.xl;
                 e.currentTarget.style.transform = 'translateY(-2px)';
                 if (dieta.draftMode === false) {
-                  e.currentTarget.style.borderLeftColor = theme.colors["nutroos-green"][isDark ? 4 : 5];
+                  e.currentTarget.style.borderLeftColor = isDark 
+                    ? theme.colors["nutroos-green"][4]
+                    : theme.colors["nutroos-green"][5];
                 }
               }}
               onMouseOut={e => {
                 e.currentTarget.style.boxShadow = isDark ? '0 4px 8px rgba(0, 0, 0, 0.4)' : theme.shadows.md;
                 e.currentTarget.style.transform = 'translateY(0)';
                 if (dieta.draftMode === false) {
-                  e.currentTarget.style.borderLeftColor = theme.colors["nutroos-green"][isDark ? 5 : 6];
+                  e.currentTarget.style.borderLeftColor = isDark 
+                    ? theme.colors["nutroos-green"][5]
+                    : theme.colors["nutroos-green"][6];
                 }
               }}
             >
@@ -252,18 +255,15 @@ const WorkerClientDietsList: React.FC = () => {
                         color={isDark ? theme.colors.blue[3] : theme.colors.blue[6]}
                       />
                       {dieta.tipo.map((tipo, index) => {
-                        // Colores mejorados para modo oscuro
-                        const badgeColors = [
-                          isDark ? "blue.5" : "blue.6", 
-                          isDark ? "cyan.5" : "cyan.6", 
-                          isDark ? "teal.5" : "teal.6"
-                        ];
+                        const badgeColors = isDark 
+                          ? ["blue.5", "cyan.5", "teal.5"] 
+                          : ["blue.6", "cyan.6", "teal.6"];
                         
                         return (
                           <Badge 
                             key={index} 
                             color={badgeColors[index % 3]}
-                            variant={isDark ? "light" : "light"}
+                            variant="light"
                             size="sm"
                             radius="sm"
                             style={{ 
@@ -309,8 +309,8 @@ const WorkerClientDietsList: React.FC = () => {
                 </div>
                 <Badge
                   size="lg"
-                  color={dieta.draftMode === false ? 'nutroos-green' : isDark ? 'gray.6' : 'gray'}
-                  variant={dieta.draftMode === false ? 'filled' : isDark ? 'light' : 'outline'}
+                  color={dieta.draftMode === false ? 'nutroos-green' : (isDark ? 'gray.6' : 'gray')}
+                  variant={dieta.draftMode === false ? 'filled' : (isDark ? 'light' : 'outline')}
                   leftSection={
                     dieta.draftMode === false 
                       ? <IconCheck size={16} stroke={1.5} /> 
