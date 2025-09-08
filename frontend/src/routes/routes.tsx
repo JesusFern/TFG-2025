@@ -9,6 +9,7 @@ import VerDietaPage from '../pages/VerDietaPage';
 import ProfilePage from '../pages/ProfilePage';
 import DashboardPage from '../pages/DashboardPage';
 import WorkerLoginPage from '../pages/WorkerLoginPage';
+import WorkerClientsDashboard from '../pages/WorkerClientsDashboard';
 import Layout from '../components/layout/Layout';
 import { useAuth } from '../hooks/useAuth';
 import LoginPage from '../pages/LoginPage';
@@ -52,6 +53,8 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, workerRoute?: boolea
   return <>{children}</>;
 };
 
+import WorkerClientDietsList from '../pages/WorkerClientDietsList';
+
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
@@ -85,14 +88,22 @@ const AppRoutes: React.FC = () => {
         </ProtectedRoute>
       } />
       
-      <Route path="/clients" element={
+      <Route path="/worker/dashboard-clients" element={
         <ProtectedRoute workerRoute={true}>
           <Layout>
-            <DashboardPage />
+            <WorkerClientsDashboard />
           </Layout>
         </ProtectedRoute>
       } />
       
+      <Route path="/worker/dashboard-clients/:clientId/diets" element={
+        <ProtectedRoute workerRoute={true}>
+          <Layout>
+            <WorkerClientDietsList />
+          </Layout>
+        </ProtectedRoute>
+      } />
+
       <Route path="/profile" element={
         <ProtectedRoute>
           <Layout>

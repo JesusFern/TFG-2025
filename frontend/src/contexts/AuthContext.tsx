@@ -15,8 +15,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   useEffect(() => {
     // Verificar si hay un token guardado al cargar la app
-    const savedToken = localStorage.getItem('token');
-    const savedUser = localStorage.getItem('user');
+    const savedToken = localStorage.getItem('authToken');
+    const savedUser = localStorage.getItem('userData');
     
     if (savedToken && savedUser) {
       try {
@@ -31,13 +31,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } else {
           // Token expirado, limpiar
           console.log('Token expirado, limpiando datos');
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('userData');
         }
       } catch (error) {
         console.error('Error parsing saved user data or token:', error);
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
+        localStorage.removeItem('authToken');
+        localStorage.removeItem('userData');
       }
     }
     
@@ -47,20 +47,20 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = (newToken: string, newUser: UserProfile) => {
     setToken(newToken);
     setUser(newUser);
-    localStorage.setItem('token', newToken);
-    localStorage.setItem('user', JSON.stringify(newUser));
+    localStorage.setItem('authToken', newToken);
+    localStorage.setItem('userData', JSON.stringify(newUser));
   };
 
   const logout = () => {
     setToken(null);
     setUser(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userData');
   };
 
   const updateUser = (updatedUser: UserProfile) => {
     setUser(updatedUser);
-    localStorage.setItem('user', JSON.stringify(updatedUser));
+    localStorage.setItem('userData', JSON.stringify(updatedUser));
   };
 
   const value: AuthContextType = {

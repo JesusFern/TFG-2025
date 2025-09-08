@@ -187,6 +187,18 @@ const Header: React.FC = () => {
                       Dashboard
                     </Menu.Item>
 
+                    {user.role === 'worker' && user.workerType === 'nutricionista' && (
+                      <Menu.Item
+                        leftSection={<IconUser size={14} />}
+                        onClick={() => {
+                          navigate('/worker/dashboard-clients');
+                          closeMobileMenu();
+                        }}
+                      >
+                        Mis Clientes
+                      </Menu.Item>
+                    )}
+
                     <Menu.Item
                       leftSection={<IconSettings size={14} />}
                       onClick={handleProfileClick}
@@ -269,6 +281,22 @@ const Header: React.FC = () => {
               >
                 Dashboard
               </Button>
+              
+              {user.role === 'worker' && user.workerType === 'nutricionista' && (
+                <Button
+                  variant="light"
+                  leftSection={<IconUser size={16} />}
+                  onClick={() => {
+                    navigate('/worker/dashboard-clients');
+                    closeMobileMenu();
+                  }}
+                  fullWidth
+                  color="nutroos-green"
+                >
+                  Mis Clientes
+                </Button>
+              )}
+              
               <Button
                 variant="light"
                 leftSection={<IconSettings size={16} />}

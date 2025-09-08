@@ -158,7 +158,7 @@ const DashboardPage: React.FC = () => {
         description: 'Administra tus clientes y sus progresos',
         icon: <IconSettings size={32} />,
         color: 'indigo',
-        onClick: () => navigate('/clients')
+        onClick: () => navigate('/worker/dashboard-clients')
       }
     );
   }
@@ -223,7 +223,7 @@ const DashboardPage: React.FC = () => {
                   leftSection={<IconPlus size={16} />}
                   color="nutroos-green"
                   variant="filled"
-                  onClick={() => navigate('/clients')}
+                  onClick={() => navigate('/worker/dashboard-clients')}
                 >
                   Seleccionar Cliente para Dieta
                 </Button>
