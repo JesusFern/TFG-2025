@@ -4,14 +4,15 @@ import { AuthenticatedRequest } from '../../types';
 import { crearDietaService, obtenerDietaService, actualizarDietaService, actualizarDiaDietaService } from '../../service/diets/dietService';
 import { actualizarPlatosService } from '../../service/diets/plateService';
 import logger from '../../utils/logger';
-import { isValidObjectId } from '../../utils/mongoValidators';
+import mongoose from 'mongoose';
 import { 
   verificarAutenticacion,
   verificarDietaExiste,
   verificarPermisosCreador,
   verificarDietaEditable,
   verificarArraysComidas,
-  manejarErrorDieta
+  manejarErrorDieta,
+  esIdValido
 } from '../../validators/dietValidators';
 
 export const crearDieta = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -248,8 +249,7 @@ export const obtenerDietasPorWorkerYCliente = async (req: AuthenticatedRequest, 
       return;
     }
 
-    // Validar que los IDs son ObjectId válidos de MongoDB
-    if (!isValidObjectId(workerId) || !isValidObjectId(clientId)) {
+    if (!esIdValido(workerId) || !esIdValido(clientId)) {
       res.status(400).json({ message: 'Los IDs de worker o cliente no son válidos' });
       return;
     }
@@ -259,9 +259,12 @@ export const obtenerDietasPorWorkerYCliente = async (req: AuthenticatedRequest, 
       return;
     }
 
+    const workerObjectId = new mongoose.Types.ObjectId(workerId);
+    const clientObjectId = new mongoose.Types.ObjectId(clientId);
+
     const dietas = await Dieta.find({
-      creador: workerId,
-      asignadaA: clientId
+      creador: workerObjectId,
+      asignadaA: clientObjectId
     }).sort({ createdAt: -1 });
 
     res.status(200).json({ dietas });
