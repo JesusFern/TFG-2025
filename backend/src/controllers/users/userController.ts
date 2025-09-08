@@ -440,3 +440,81 @@ export const uploadProfilePhoto = async (req: AuthenticatedRequest, res: Respons
     });
   }
 };
+
+export const assignWorker = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: 'No autenticado' });
+      return;
+    }
+
+    const { workerId } = req.body;
+
+    if (!workerId) {
+      res.status(400).json({ message: 'Es necesario proporcionar un ID de trabajador' });
+      return;
+    }
+
+    if (!Types.ObjectId.isValid(workerId)) {
+      res.status(400).json({ message: 'ID de trabajador no válido' });
+      return;
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: 'Usuario no encontrado' });
+      return;
+    }
+
+    if (user.role !== 'user') {
+      res.status(403).json({ message: 'Solo los usuarios pueden asignarse a un trabajador' });
+      return;
+    }
+
+    const worker = await User.findById(workerId);
+    if (!worker) {
+      res.status(404).json({ message: 'Trabajador no encontrado' });
+      return;
+    }
+
+    if (worker.role !== 'worker') {
+      res.status(400).json({ message: 'El ID proporcionado no corresponde a un trabajador' });
+      return;
+    }
+
+    if (!worker.isWorkerAvailable) {
+      res.status(400).json({ message: 'El trabajador seleccionado no está disponible actualmente' });
+      return;
+    }
+
+    if (worker.clientesAsignados && worker.clientesAsignados.some(clienteId => clienteId.toString() === userId)) {
+      res.status(400).json({ message: 'Ya estás asignado a este trabajador' });
+      return;
+    }
+
+    if (!worker.clientesAsignados) {
+      worker.clientesAsignados = [];
+    }
+    
+    worker.clientesAsignados.push(new Types.ObjectId(userId));
+    await worker.save();
+
+    res.status(200).json({ 
+      message: 'Te has asignado correctamente al trabajador',
+      worker: {
+        _id: worker._id,
+        fullName: worker.fullName,
+        email: worker.email,
+        workerType: worker.workerType,
+        profilePicture: worker.profilePicture
+      }
+    });
+  } catch (error: unknown) {
+    const err = error as Error;
+    res.status(500).json({ 
+      message: 'Error interno del servidor al asignar el trabajador',
+      error: err.message 
+    });
+  }
+};
