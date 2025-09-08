@@ -86,8 +86,8 @@ const WorkerLoginPage: React.FC = () => {
                 updatedAt: String(userResponse.data.updatedAt || new Date().toISOString())
               };
               
-              // Guardar datos usando el contexto de autenticación
-              authLogin(response.token, userProfile);            navigate('/worker/dashboard');
+              authLogin(response.token, userProfile);            
+              navigate('/worker/dashboard');
           } else {
             setError('No se pudieron obtener los datos del usuario');
           }
