@@ -32,8 +32,32 @@ const WorkerClientDietsList: React.FC = () => {
 
   // Hooks de Mantine deben ir aquí, dentro del componente
   const theme = useMantineTheme();
-  // Detectar modo oscuro basado en CSS
-  const isDark = document.documentElement.getAttribute('data-mantine-color-scheme') === 'dark';
+  const [isDark, setIsDark] = useState(
+    document.documentElement.getAttribute('data-mantine-color-scheme') === 'dark'
+  );
+  
+  useEffect(() => {
+    const checkTheme = () => {
+      const darkMode = document.documentElement.getAttribute('data-mantine-color-scheme') === 'dark';
+      setIsDark(darkMode);
+    };
+    
+    checkTheme();
+    
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'data-mantine-color-scheme') {
+          checkTheme();
+        }
+      });
+    });
+    
+    observer.observe(document.documentElement, { attributes: true });
+    
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
   
   // Formatear fecha
   const formatDate = (dateString?: string) => {
@@ -106,9 +130,12 @@ const WorkerClientDietsList: React.FC = () => {
         radius="md" 
         mb="xl" 
         withBorder
+        bg={isDark ? "dark.6" : "gray.0"}
+        c={isDark ? "gray.0" : "dark.9"}
         style={{ 
-          backgroundColor: isDark ? theme.colors.dark[6] : 'var(--mantine-color-gray-0)',
-          borderColor: isDark ? theme.colors.dark[4] : 'var(--mantine-color-gray-3)'
+          borderColor: isDark ? theme.colors.dark[4] : theme.colors.gray[3],
+          transition: 'all 0.3s ease',
+          boxShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.4)' : '0 1px 2px rgba(0, 0, 0, 0.05)'
         }}
       >
         <Title order={2} mb="xs">
@@ -137,7 +164,27 @@ const WorkerClientDietsList: React.FC = () => {
       </Paper>
       
       {dietas.length === 0 ? (
-        <Alert color="yellow" icon={<IconClock size={20} />} title="Sin dietas" variant="filled">
+        <Alert 
+          color={isDark ? "yellow.6" : "yellow"} 
+          icon={<IconClock size={20} stroke={1.5} />} 
+          title="Sin dietas" 
+          variant={isDark ? "filled" : "light"}
+          radius="md"
+          styles={{
+            title: {
+              color: isDark ? theme.colors.yellow[1] : theme.colors.yellow[8],
+              fontWeight: 700
+            },
+            message: {
+              color: isDark ? theme.colors.gray[2] : theme.colors.gray[7],
+              marginTop: 5,
+              fontWeight: 500
+            },
+            root: {
+              border: isDark ? `1px solid ${theme.colors.dark[4]}` : undefined
+            }
+          }}
+        >
           No hay dietas creadas para este cliente todavía.
         </Alert>
       ) : (
@@ -149,86 +196,155 @@ const WorkerClientDietsList: React.FC = () => {
               shadow="md"
               p="md"
               radius="md"
+              bg={isDark ? theme.colors.dark[7] : 'white'}
+              c={isDark ? theme.colors.gray[0] : theme.colors.gray[9]}
               style={{
-                backgroundColor: isDark ? theme.colors.dark[6] : theme.white,
                 borderColor: isDark ? theme.colors.dark[4] : theme.colors.gray[3],
                 transition: 'all 0.3s ease',
                 cursor: 'pointer',
                 borderLeftWidth: 4,
                 borderLeftStyle: 'solid',
                 borderLeftColor: dieta.draftMode === false ? 
-                  `var(--mantine-color-nutroos-green-${isDark ? '6' : '6'})` : 
-                  `var(--mantine-color-gray-${isDark ? '6' : '5'})`,
+                  theme.colors["nutroos-green"][isDark ? 5 : 6] : 
+                  isDark ? theme.colors.dark[3] : theme.colors.gray[4],
                 overflow: 'hidden',
+                boxShadow: isDark ? '0 4px 8px rgba(0, 0, 0, 0.4)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
               }}
               onClick={() => handleVerDieta(dieta._id, dieta.draftMode)}
               onMouseOver={e => {
-                e.currentTarget.style.boxShadow = theme.shadows.xl;
+                e.currentTarget.style.boxShadow = isDark ? '0 8px 16px rgba(0, 0, 0, 0.6)' : theme.shadows.xl;
                 e.currentTarget.style.transform = 'translateY(-2px)';
+                if (dieta.draftMode === false) {
+                  e.currentTarget.style.borderLeftColor = theme.colors["nutroos-green"][isDark ? 4 : 5];
+                }
               }}
               onMouseOut={e => {
-                e.currentTarget.style.boxShadow = theme.shadows.md;
+                e.currentTarget.style.boxShadow = isDark ? '0 4px 8px rgba(0, 0, 0, 0.4)' : theme.shadows.md;
                 e.currentTarget.style.transform = 'translateY(0)';
+                if (dieta.draftMode === false) {
+                  e.currentTarget.style.borderLeftColor = theme.colors["nutroos-green"][isDark ? 5 : 6];
+                }
               }}
             >
               <Group justify="space-between" align="flex-start">
                 <div>
-                  <Title order={4} mb={4} style={{ color: isDark ? theme.white : theme.colors.gray[8] }}>
+                  <Title order={4} mb={4} fw={600} c={isDark ? "gray.0" : "gray.9"}>
                     {dieta.nombre}
                   </Title>
                   {dieta.descripcion && (
-                    <Text size="sm" c="dimmed" mb={6} lineClamp={2}>
+                    <Text 
+                      size="sm" 
+                      c={isDark ? "gray.2" : "gray.7"} 
+                      mb={6} 
+                      lineClamp={2}
+                      fw={400}
+                      style={{ transition: 'color 0.3s ease' }}
+                    >
                       {dieta.descripcion}
                     </Text>
                   )}
                   {dieta.tipo && dieta.tipo.length > 0 && (
                     <Group gap="xs" mb={6}>
-                      <IconApple size={14} style={{ color: 'var(--mantine-color-blue-6)' }} />
-                      {dieta.tipo.map((tipo, index) => (
-                        <Badge 
-                          key={index} 
-                          color={index % 3 === 0 ? "blue" : index % 3 === 1 ? "cyan" : "teal"}
-                          variant="light"
-                          size="sm"
-                          radius="sm"
-                        >
-                          {tipo}
-                        </Badge>
-                      ))}
+                      <IconApple 
+                        size={14}
+                        stroke={1.5}
+                        style={{ transition: 'color 0.3s ease' }}
+                        color={isDark ? theme.colors.blue[3] : theme.colors.blue[6]}
+                      />
+                      {dieta.tipo.map((tipo, index) => {
+                        // Colores mejorados para modo oscuro
+                        const badgeColors = [
+                          isDark ? "blue.5" : "blue.6", 
+                          isDark ? "cyan.5" : "cyan.6", 
+                          isDark ? "teal.5" : "teal.6"
+                        ];
+                        
+                        return (
+                          <Badge 
+                            key={index} 
+                            color={badgeColors[index % 3]}
+                            variant={isDark ? "light" : "light"}
+                            size="sm"
+                            radius="sm"
+                            style={{ 
+                              transition: 'all 0.3s ease',
+                              fontWeight: 500
+                            }}
+                          >
+                            {tipo}
+                          </Badge>
+                        );
+                      })}
                     </Group>
                   )}
                   <Group gap="xs" mt={8}>
-                    <Text size="xs" c="dimmed" fw={500}>
-                      <IconCalendar size={14} style={{ verticalAlign: 'text-top', marginRight: 4 }} />
+                    <Text size="xs" c={isDark ? "gray.2" : "gray.7"} fw={600} style={{ transition: 'color 0.3s ease' }}>
+                      <IconCalendar 
+                        size={14} 
+                        style={{ verticalAlign: 'text-top', marginRight: 4, transition: 'color 0.3s ease' }}
+                        stroke={1.5}
+                        color={isDark ? theme.colors.blue[3] : theme.colors.blue[6]} 
+                      />
                       Inicio: {formatDate(dieta.fechaInicio)}
                     </Text>
-                    <Text size="xs" c="dimmed" fw={500}>
-                      <IconClock size={14} style={{ verticalAlign: 'text-top', marginRight: 4 }} />
+                    <Text size="xs" c={isDark ? "gray.2" : "gray.7"} fw={600} style={{ transition: 'color 0.3s ease' }}>
+                      <IconClock 
+                        size={14} 
+                        style={{ verticalAlign: 'text-top', marginRight: 4, transition: 'color 0.3s ease' }}
+                        stroke={1.5}
+                        color={isDark ? theme.colors.cyan[3] : theme.colors.cyan[6]} 
+                      />
                       {dieta.duracion} días
                     </Text>
-                    <Text size="xs" c="dimmed" fw={500}>
-                      <IconList size={14} style={{ verticalAlign: 'text-top', marginRight: 4 }} />
+                    <Text size="xs" c={isDark ? "gray.2" : "gray.7"} fw={600} style={{ transition: 'color 0.3s ease' }}>
+                      <IconList 
+                        size={14} 
+                        style={{ verticalAlign: 'text-top', marginRight: 4, transition: 'color 0.3s ease' }}
+                        stroke={1.5}
+                        color={isDark ? theme.colors.teal[3] : theme.colors.teal[6]} 
+                      />
                       {dieta.comidasDiarias} comidas diarias
                     </Text>
                   </Group>
                 </div>
                 <Badge
                   size="lg"
-                  color={dieta.draftMode === false ? 'nutroos-green' : 'gray'}
-                  variant={dieta.draftMode === false ? 'filled' : 'light'}
-                  leftSection={dieta.draftMode === false ? <IconCheck size={16}/> : <IconClock size={16}/> }
+                  color={dieta.draftMode === false ? 'nutroos-green' : isDark ? 'gray.6' : 'gray'}
+                  variant={dieta.draftMode === false ? 'filled' : isDark ? 'light' : 'outline'}
+                  leftSection={
+                    dieta.draftMode === false 
+                      ? <IconCheck size={16} stroke={1.5} /> 
+                      : <IconClock size={16} stroke={1.5} />
+                  }
+                  fw={700}
+                  tt="uppercase"
+                  c={isDark && dieta.draftMode ? theme.white : undefined}
                   style={{
-                    fontWeight: 700,
                     letterSpacing: 0.5,
                     minWidth: 120,
                     justifyContent: 'center',
+                    boxShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.25)' : 'none',
+                    transition: 'all 0.3s ease'
                   }}
                 >
-                  {dieta.draftMode === false ? 'PUBLICADA' : 'NO PUBLICADA'}
+                  {dieta.draftMode === false ? 'Publicada' : 'No publicada'}
                 </Badge>
               </Group>
-              <Text c="dimmed" size="xs" ta="right" mt="md" style={{ fontStyle: 'italic' }}>
-                Haz clic para {dieta.draftMode ? 'editar' : 'ver'} esta dieta
+              <Text 
+                c={isDark ? "gray.2" : "gray.6"} 
+                size="xs" 
+                ta="right" 
+                mt="md" 
+                fs="italic"
+                fw={500}
+                style={{ 
+                  transition: 'color 0.3s ease',
+                  opacity: 0.9
+                }}
+              >
+                Haz clic para <Text span fw={700} c={isDark ? "nutroos-green.3" : "nutroos-green.6"} inherit>
+                  {dieta.draftMode ? 'editar' : 'ver'}
+                </Text> esta dieta
               </Text>
             </Card>
           ))}
