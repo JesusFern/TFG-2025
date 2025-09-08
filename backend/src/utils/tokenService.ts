@@ -2,8 +2,7 @@ import jwt from 'jsonwebtoken';
 
 export class TokenService {
   private static readonly secret = process.env.JWT_SECRET ?? 'secret';
-  private static readonly expiresIn = '1h';
-
+  private static readonly expiresIn = '7d';
   static generateToken(payload: object): string {
     return jwt.sign(payload, this.secret, { expiresIn: this.expiresIn });
   }
