@@ -18,27 +18,36 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const savedToken = localStorage.getItem('token');
     const savedUser = localStorage.getItem('user');
     
+    console.log('🔍 Debug AuthContext - Token guardado:', savedToken ? 'Presente' : 'Ausente');
+    console.log('🔍 Debug AuthContext - User guardado:', savedUser ? 'Presente' : 'Ausente');
+    
     if (savedToken && savedUser) {
       try {
         // Validar que el token no haya expirado (JWT exp)
         const tokenPayload = JSON.parse(atob(savedToken.split('.')[1]));
         const currentTime = Date.now() / 1000;
         
+        console.log('🔍 Debug AuthContext - Token exp:', tokenPayload.exp);
+        console.log('🔍 Debug AuthContext - Tiempo actual:', currentTime);
+        
         if (tokenPayload.exp && tokenPayload.exp > currentTime) {
           // Token válido, restaurar usuario
+          console.log('✅ Token válido, restaurando usuario');
           setToken(savedToken);
           setUser(JSON.parse(savedUser));
         } else {
           // Token expirado, limpiar
-          console.log('Token expirado, limpiando datos');
+          console.log('❌ Token expirado, limpiando datos');
           localStorage.removeItem('token');
           localStorage.removeItem('user');
         }
       } catch (error) {
-        console.error('Error parsing saved user data or token:', error);
+        console.error('❌ Error parsing saved user data or token:', error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
+    } else {
+      console.log('❌ No hay token o usuario guardado');
     }
     
     setIsLoading(false);

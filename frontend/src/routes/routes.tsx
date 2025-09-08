@@ -8,6 +8,7 @@ import EditarDietaPage from '../pages/EditarDietaPage';
 import VerDietaPage from '../pages/VerDietaPage';
 import ProfilePage from '../pages/ProfilePage';
 import DashboardPage from '../pages/DashboardPage';
+import { ChatPage } from '../pages/ChatPage';
 import WorkerLoginPage from '../pages/WorkerLoginPage';
 import Layout from '../components/layout/Layout';
 import { useAuth } from '../hooks/useAuth';
@@ -106,6 +107,14 @@ const AppRoutes: React.FC = () => {
           <Layout>
             <CrearDietaPage />
           </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/chat" element={
+        <ProtectedRoute>
+          <Layout>
+            <ChatPage />
+            </Layout>
         </ProtectedRoute>
       } />
       

@@ -2,19 +2,25 @@ import express, { Request, Response, NextFunction } from "express";
 import mongoose from "mongoose";
 import cors from "cors";
 import dotenv from "dotenv";
+import { createServer } from "http";
 import userRoutes from "./routes/users/userRoutes";
 import workerRoutes from './routes/users/workerRoutes';
 import dietRoutes from './routes/diets/dietRoutes';
 import trainingRoutes from './routes/training';
+import messagingRoutes from './routes/chats';
+import { SocketServer } from './socket/socketServer';
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
-app.use(express.json({ limit: '50mb' })); // AUMENTADO: Límite de 50MB para imágenes
-app.use(express.urlencoded({ extended: true, limit: '50mb' })); // AUMENTADO: Límite para formularios
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 const PORT = process.env.PORT || 5000;
+
+// Crear servidor HTTP para Socket.IO
+const httpServer = createServer(app);
 
 const mongoUri = process.env.NODE_ENV === 'test' 
   ? process.env.MONGO_URI_TEST || 'mongodb://localhost:27017/nutroos_test'
@@ -37,6 +43,7 @@ app.use("/api/users", userRoutes);
 app.use('/api/workers', workerRoutes);
 app.use('/api/diets', dietRoutes);
 app.use('/api/training', trainingRoutes);
+app.use('/api/messaging', messagingRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("API corriendo...");
@@ -45,12 +52,20 @@ app.get("/", (req: Request, res: Response) => {
 app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
   console.error(`[${req.method}] ${req.originalUrl} - Error: ${err.message}`);
   res.status(500).json({ message: err.message || "Error interno del servidor" });
-  // Evita warning del linter por parámetro no usado manteniendo la firma de middleware de error
   void _next;
 });
 
+// Inicializar Socket.IO
+const socketServer = new SocketServer(httpServer);
+
+// Exportar para uso en tests o módulos externos
+export { socketServer };
+
 if (process.env.NODE_ENV !== "test") {
-  app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
+  httpServer.listen(PORT, () => {
+    console.log(`Servidor corriendo en el puerto ${PORT}`);
+    console.log('Socket.IO inicializado y listo para conexiones WebSocket');
+  });
 }
 
 export default app;
