@@ -1,0 +1,49 @@
+services:
+  mongodb:
+    image: mongo:latest
+    container_name: mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb-data:/data/db
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=password
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: nutroos-backend
+    restart: always
+    ports:
+      - "5000:5000"
+    depends_on:
+      - mongodb
+    environment:
+      - NODE_ENV=production
+      - MONGO_URI=mongodb://root:password@mongodb:27017/nutroos?authSource=admin
+      - MONGO_URI_TEST=mongodb://root:password@mongodb:27017/nutroos_test?authSource=admin
+      - PORT=5000
+      - JWT_SECRET=eec5a427b25b0155065a34ca15786bf42e3f90631cece182742f337dfe9acbdca9d8c2582d56f401ee681056e2fd69e49ae1c9e6219cda86cad9d7551c6033c9
+      - LOG_LEVEL=debug
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: nutroos-frontend
+    restart: always
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+    environment:
+      - VITE_API_URL=http://localhost:5000/api
+
+volumes:
+  mongodb-data:

@@ -18,14 +18,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const savedToken = localStorage.getItem('authToken');
     const savedUser = localStorage.getItem('userData');
     
+    console.log('🔍 Debug AuthContext - Token guardado:', savedToken ? 'Presente' : 'Ausente');
+    console.log('🔍 Debug AuthContext - User guardado:', savedUser ? 'Presente' : 'Ausente');
+    
     if (savedToken && savedUser) {
       try {
         // Validar que el token no haya expirado (JWT exp)
         const tokenPayload = JSON.parse(atob(savedToken.split('.')[1]));
         const currentTime = Date.now() / 1000;
         
+        console.log('🔍 Debug AuthContext - Token exp:', tokenPayload.exp);
+        console.log('🔍 Debug AuthContext - Tiempo actual:', currentTime);
+        
         if (tokenPayload.exp && tokenPayload.exp > currentTime) {
           // Token válido, restaurar usuario
+          console.log('✅ Token válido, restaurando usuario');
           setToken(savedToken);
           setUser(JSON.parse(savedUser));
         } else {
@@ -39,6 +46,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         localStorage.removeItem('authToken');
         localStorage.removeItem('userData');
       }
+    } else {
+      console.log('❌ No hay token o usuario guardado');
     }
     
     setIsLoading(false);

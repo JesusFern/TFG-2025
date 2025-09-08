@@ -12,7 +12,7 @@ export class TokenService {
       const decoded = jwt.verify(token, this.secret);
       return typeof decoded === 'object' && decoded !== null ? decoded : null;
     } catch (error) {
-      console.error('Token verification failed:', error);
+      console.error('❌ Token verification failed:', error);
       return null;
     }
   }

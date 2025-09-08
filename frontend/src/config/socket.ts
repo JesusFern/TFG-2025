@@ -1,0 +1,51 @@
+// Configuración del socket
+export const SOCKET_CONFIG = {
+  // URL del servidor backend
+  url: 'http://localhost:5000',
+  
+  // Opciones de conexión
+  options: {
+    transports: ['websocket', 'polling'],
+    autoConnect: false, // No conectar automáticamente
+    reconnection: true,
+    reconnectionAttempts: 5,
+    reconnectionDelay: 1000,
+    reconnectionDelayMax: 5000,
+    timeout: 20000,
+    forceNew: true,
+    withCredentials: true
+  }
+};
+
+// Eventos del socket
+export const SOCKET_EVENTS = {
+  // Eventos de conexión
+  CONNECT: 'connect',
+  DISCONNECT: 'disconnect',
+  CONNECT_ERROR: 'connect_error',
+  
+  // Eventos de mensajería
+  NEW_MESSAGE: 'new_message',
+  MESSAGE_NOTIFICATION: 'message_notification',
+  MESSAGE_ERROR: 'message_error',
+  
+  // Eventos de usuario
+  USER_TYPING: 'user_typing',
+  USER_JOINED_CONVERSATION: 'user_joined_conversation',
+  USER_STATUS_CHANGE: 'user_status_change',
+  USER_ONLINE: 'user_online',
+  
+  // Eventos de mensajes
+  MESSAGE_READ: 'message_read',
+  MESSAGES_READ: 'messages_read',
+  
+  // Eventos de conversación
+  JOIN_CONVERSATION: 'join_conversation',
+  LEAVE_CONVERSATION: 'leave_conversation',
+  
+  // Eventos de envío
+  SEND_MESSAGE: 'send_message',
+  MARK_AS_READ: 'mark_as_read',
+  TYPING_START: 'typing_start',
+  TYPING_STOP: 'typing_stop'
+};

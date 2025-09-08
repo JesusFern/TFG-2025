@@ -15,19 +15,33 @@ export const apiConfig = {
 export const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${apiConfig.baseURL}${endpoint}`;
   
+  
+  
+  // Obtener el token del localStorage
+  const token = localStorage.getItem('token');
+  
   const defaultOptions: RequestInit = {
     headers: {
       'Content-Type': 'application/json',
+      ...(token && { 'Authorization': `Bearer ${token}` }),
       ...options.headers,
     },
     ...options,
   };
 
-  try {
+  
+
+  
     const response = await fetch(url, defaultOptions);
-    return response;
-  } catch (error) {
-    console.error('Error en petición API:', error);
-    throw error;
-  }
+    
+    
+    // Si la respuesta es 401, el token puede haber expirado
+    if (response.status === 401) {
+      localStorage.removeItem('token');
+      window.location.href = '/login';
+      return response;
+    }
+    
+  return response;
+  
 };
