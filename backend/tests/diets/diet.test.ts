@@ -6,6 +6,7 @@ import { AuthenticatedRequest } from '../../src/types';
 const workerId = new mongoose.Types.ObjectId().toString();
 const clienteId = new mongoose.Types.ObjectId().toString();
 const platoId = new mongoose.Types.ObjectId().toString();
+const dietaId = new mongoose.Types.ObjectId().toString();
 
 interface Plato {
   _id?: string;
@@ -24,6 +25,25 @@ interface Plato {
   tiempoPreparacion?: number;
   [key: string]: unknown;
 }
+
+jest.mock('../../src/models/diets/dieta', () => {
+  return {
+    findById: jest.fn().mockImplementation((id) => {
+      return {
+        _id: id,
+        nombre: "Dieta Test",
+        creador: workerId,
+        draftMode: true,
+        save: jest.fn().mockResolvedValue({
+          _id: id,
+          nombre: "Dieta Test",
+          creador: workerId,
+          draftMode: false
+        })
+      };
+    })
+  };
+});
 
 jest.mock('../../src/middlewares/authMiddleware', () => {
   return {
@@ -81,8 +101,9 @@ jest.mock('../../src/service/diets/dietService', () => ({
       genero: '',
       requerimientosHidratacion: '',
       cumplimiento: false,
-      comidas: Array.from({ length: dietaData.comidasDiarias }, () => ({
-        horaEstimada: null,
+      comidas: Array.from({ length: dietaData.comidasDiarias }, (_, index) => ({
+        nombreComida: dietaData.nombreComidas[index],
+        horaEstimada: dietaData.horasComidas[index],
         platos: [{
           _id: platoId,
           orden: 1,
@@ -93,7 +114,7 @@ jest.mock('../../src/service/diets/dietService', () => ({
     }));
 
     return {
-      _id: new mongoose.Types.ObjectId().toString(),
+      _id: dietaId,
       nombre: dietaData.nombre,
       descripcion: dietaData.descripcion,
       tipo: dietaData.tipo,
@@ -102,7 +123,83 @@ jest.mock('../../src/service/diets/dietService', () => ({
       fechaInicio: fechaInicio,
       creador: dietaData.creadorId,
       asignadaA: [dietaData.asignadaA],
+      draftMode: true,
       dias
+    };
+  }),
+  
+  obtenerDietaService: jest.fn().mockImplementation(async (id) => {
+    return {
+      _id: id,
+      nombre: "Dieta Test",
+      descripcion: "Dieta de prueba",
+      tipo: ["Mediterránea"],
+      duracion: 2,
+      comidasDiarias: 2,
+      fechaInicio: new Date(),
+      creador: workerId,
+      asignadaA: [clienteId],
+      draftMode: true,
+      dias: [
+        {
+          caloriasTotales: 2000,
+          comidas: [
+            {
+              nombreComida: "Desayuno",
+              horaEstimada: "08:00",
+              platos: [{ _id: platoId, nombre: "Plato Test", receta: null }]
+            },
+            {
+              nombreComida: "Almuerzo",
+              horaEstimada: "14:00",
+              platos: [{ _id: platoId, nombre: "Plato Test", receta: null }]
+            }
+          ]
+        },
+        {
+          caloriasTotales: 2100,
+          comidas: [
+            {
+              nombreComida: "Desayuno",
+              horaEstimada: "08:00",
+              platos: [{ _id: platoId, nombre: "Plato Test", receta: null }]
+            },
+            {
+              nombreComida: "Almuerzo",
+              horaEstimada: "14:00",
+              platos: [{ _id: platoId, nombre: "Plato Test", receta: null }]
+            }
+          ]
+        }
+      ]
+    };
+  }),
+  
+  actualizarDietaService: jest.fn().mockImplementation(async (id, userId, datosActualizacion) => {
+    return {
+      _id: id,
+      ...datosActualizacion,
+      creador: workerId,
+      asignadaA: [clienteId],
+      draftMode: true
+    };
+  }),
+  
+  actualizarDiaDietaService: jest.fn().mockImplementation(async (dietaId, userId, diaIndex, datosDia) => {
+    return {
+      ...datosDia,
+      comidas: [
+        {
+          nombreComida: "Desayuno Actualizado",
+          horaEstimada: "08:30",
+          platos: [{ _id: platoId, nombre: "Plato Test", receta: null }]
+        },
+        {
+          nombreComida: "Almuerzo Actualizado",
+          horaEstimada: "14:30",
+          platos: [{ _id: platoId, nombre: "Plato Test", receta: null }]
+        }
+      ]
     };
   })
 }));
@@ -150,7 +247,9 @@ describe('Diet Endpoints', () => {
         duracion: 2,
         comidasDiarias: 2,
         asignadaA: clienteId,
-        fechaInicio: fechaFormateada
+        fechaInicio: fechaFormateada,
+        horasComidas: ["08:00", "14:00"],
+        nombreComidas: ["Desayuno", "Almuerzo"]
       });
     
     expect(res.statusCode).toEqual(201);
@@ -173,6 +272,57 @@ describe('Diet Endpoints', () => {
     expect(res.statusCode).toEqual(200);
     expect(res.body.platos[0].nombre).toBe("Plato Actualizado");
     expect(res.body.platos[0].receta).toBeNull();
+  });
+
+  it('debería obtener una dieta por ID', async () => {
+    const res = await request(app)
+      .get(`/api/diets/${dietaId}`)
+      .set('Authorization', 'Bearer fake-token');
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty('dieta');
+    expect(res.body.dieta).toHaveProperty('_id', dietaId);
+    expect(res.body.dieta).toHaveProperty('nombre', 'Dieta Test');
+  });
+
+  it('debería actualizar una dieta', async () => {
+    const res = await request(app)
+      .patch(`/api/diets/${dietaId}`)
+      .set('Authorization', 'Bearer fake-token')
+      .send({
+        nombre: "Dieta Actualizada",
+        descripcion: "Descripción actualizada"
+      });
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty('dieta');
+    expect(res.body.dieta).toHaveProperty('nombre', 'Dieta Actualizada');
+    expect(res.body.dieta).toHaveProperty('descripcion', 'Descripción actualizada');
+  });
+
+  it('debería actualizar un día de dieta', async () => {
+    const res = await request(app)
+      .patch(`/api/diets/${dietaId}/dias/0`)
+      .set('Authorization', 'Bearer fake-token')
+      .send({
+        caloriasTotales: 2500,
+        macronutrientes: "50% carbohidratos, 30% proteínas, 20% grasas"
+      });
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty('dia');
+    expect(res.body.dia).toHaveProperty('caloriasTotales', 2500);
+    expect(res.body.dia).toHaveProperty('macronutrientes', '50% carbohidratos, 30% proteínas, 20% grasas');
+  });
+
+  it('debería publicar una dieta (cambiar draftMode a false)', async () => {
+    const res = await request(app)
+      .patch(`/api/diets/${dietaId}/publicar`)
+      .set('Authorization', 'Bearer fake-token');
+
+    expect(res.statusCode).toEqual(200);
+    expect(res.body).toHaveProperty('dieta');
+    expect(res.body.dieta).toHaveProperty('draftMode', false);
   });
 });
 

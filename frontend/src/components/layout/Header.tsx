@@ -1,49 +1,54 @@
+import React from 'react';
 import { 
-  Container, 
+  Box, 
   Group, 
   Burger, 
   Text, 
   Button, 
   Drawer, 
-  Stack,
-  ActionIcon,
+  Avatar, 
+  ActionIcon, 
   useMantineColorScheme,
   Tooltip,
-  Box,
   Paper,
   rem,
-  Avatar,
-  Menu
+  Menu,
+  Stack,
+  Container
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { IconSun, IconMoon, IconUser, IconLogout, IconSettings } from '@tabler/icons-react';
+import { 
+  IconUser, 
+  IconLogout, 
+  IconSettings,
+  IconSun, 
+  IconMoon 
+} from '@tabler/icons-react';
 import logo from '../../assets/images/Logo-Nutroos.svg';
 import { useAuth } from '../../hooks/useAuth';
 
 const Header: React.FC = () => {
-  const [mobileMenuOpened, { toggle: toggleMobileMenu, close: closeMobileMenu }] = useDisclosure(false);
-  const { colorScheme, setColorScheme } = useMantineColorScheme();
+  const [mobileMenuOpened, { close: closeMobileMenu, toggle: toggleMobileMenu }] = useDisclosure();
+  const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout, isAuthenticated } = useAuth();
   const isDark = colorScheme === 'dark';
   
-  const toggleColorScheme = () => {
-    setColorScheme(colorScheme === 'dark' ? 'light' : 'dark');
-  };
-  
   const isLinkActive = (path: string) => {
     return location.pathname === path;
   };
-  
+
   const handleLogin = () => {
     navigate('/login');
+    closeMobileMenu();
   };
-
+  
   const handleLogout = () => {
     logout();
     navigate('/');
+    closeMobileMenu();
   };
 
   const handleProfileClick = () => {
@@ -62,19 +67,18 @@ const Header: React.FC = () => {
   ];
   
   return (
-    <Paper 
-      shadow="sm" 
-      p="md" 
+    <Paper
+      component="header"
+      p="md"
       radius={0}
-      style={{ 
-        position: 'sticky', 
-        top: 0, 
-        zIndex: 100,
-        backgroundColor: 'var(--app-header-bg)',
-        borderBottom: '1px solid var(--app-border-color)'
+      style={{
+        position: 'sticky',
+        top: 0,
+        zIndex: 1000,
       }}
+      withBorder
     >
-      <Container size="xl">
+      <Container size="lg">
         <Group justify="space-between">
           <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
             <Group gap="xs">
@@ -89,8 +93,26 @@ const Header: React.FC = () => {
                   }}
                 />
               </Box>
-              <Text fw={700} size="xl" c={isDark ? "gray.1" : "gray.8"}>
-                NUTROOS
+              <Text 
+                fw={700} 
+                size="md" 
+                style={{ 
+                  textTransform: 'uppercase',
+                  letterSpacing: '-0.5px',
+                  color: isDark ? 'white' : 'inherit'
+                }}
+              >
+                Nutroos
+                {user?.role === 'worker' && (
+                  <Text 
+                    component="span" 
+                    c="nutroos-green.6" 
+                    fw={700} 
+                    ml={5}
+                  >
+                    Pro
+                  </Text>
+                )}
               </Text>
             </Group>
           </Link>
@@ -114,7 +136,7 @@ const Header: React.FC = () => {
             <Tooltip label={isDark ? 'Modo claro' : 'Modo oscuro'}>
               <ActionIcon 
                 variant="subtle" 
-                onClick={toggleColorScheme}
+                onClick={() => toggleColorScheme()}
                 aria-label="Toggle color scheme"
                 color="nutroos-green"
               >
@@ -123,57 +145,67 @@ const Header: React.FC = () => {
             </Tooltip>
             
             {isAuthenticated && user ? (
-              <Menu shadow="md" width={200}>
-                <Menu.Target>
-                  <Avatar
-                    src={user.profilePicture}
-                    alt={user.fullName}
-                    size="md"
-                    radius="xl"
-                    style={{ cursor: 'pointer' }}
-                  >
-                    {user.fullName.charAt(0).toUpperCase()}
-                  </Avatar>
-                </Menu.Target>
+              <>
+                <Button
+                  variant="subtle"
+                  color="red"
+                  leftSection={<IconLogout size={16} />}
+                  onClick={handleLogout}
+                >
+                  Cerrar Sesión
+                </Button>
+                <Menu shadow="md" width={200}>
+                  <Menu.Target>
+                    <Avatar
+                      src={user.profilePicture}
+                      alt={user.fullName}
+                      size="md"
+                      radius="xl"
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {user.fullName.charAt(0).toUpperCase()}
+                    </Avatar>
+                  </Menu.Target>
 
-                <Menu.Dropdown>
-                  <Menu.Label>
-                    <Text size="sm" fw={500}>
-                      {user.fullName}
-                    </Text>
-                    <Text size="xs" c="dimmed">
-                      {user.role === 'admin' ? 'Administrador' : 
-                       user.role === 'worker' ? user.workerType || 'Trabajador' : 'Usuario'}
-                    </Text>
-                  </Menu.Label>
+                  <Menu.Dropdown>
+                    <Menu.Label>
+                      <Text size="sm" fw={500}>
+                        {user.fullName}
+                      </Text>
+                      <Text size="xs" c="dimmed">
+                        {user.role === 'admin' ? 'Administrador' : 
+                         user.role === 'worker' ? user.workerType || 'Trabajador' : 'Usuario'}
+                      </Text>
+                    </Menu.Label>
 
-                  <Menu.Divider />
+                    <Menu.Divider />
 
-                  <Menu.Item
-                    leftSection={<IconUser size={14} />}
-                    onClick={handleDashboardClick}
-                  >
-                    Dashboard
-                  </Menu.Item>
+                    <Menu.Item
+                      leftSection={<IconUser size={14} />}
+                      onClick={handleDashboardClick}
+                    >
+                      Dashboard
+                    </Menu.Item>
 
-                  <Menu.Item
-                    leftSection={<IconSettings size={14} />}
-                    onClick={handleProfileClick}
-                  >
-                    Mi Perfil
-                  </Menu.Item>
+                    <Menu.Item
+                      leftSection={<IconSettings size={14} />}
+                      onClick={handleProfileClick}
+                    >
+                      Mi Perfil
+                    </Menu.Item>
 
-                  <Menu.Divider />
+                    <Menu.Divider />
 
-                  <Menu.Item
-                    leftSection={<IconLogout size={14} />}
-                    onClick={handleLogout}
-                    color="red"
-                  >
-                    Cerrar Sesión
-                  </Menu.Item>
-                </Menu.Dropdown>
-              </Menu>
+                    <Menu.Item
+                      leftSection={<IconLogout size={14} />}
+                      onClick={handleLogout}
+                      color="red"
+                    >
+                      Cerrar Sesión
+                    </Menu.Item>
+                  </Menu.Dropdown>
+                </Menu>
+              </>
             ) : (
               <Group gap="sm">
                 <Button variant="subtle" onClick={handleLogin}>
@@ -213,30 +245,15 @@ const Header: React.FC = () => {
             <Button
               key={item.path}
               variant={isLinkActive(item.path) ? "light" : "subtle"}
-              color="nutroos-green"
-              onClick={() => {
-                navigate(item.path);
-                closeMobileMenu();
-              }}
+              component={Link}
+              to={item.path}
+              onClick={closeMobileMenu}
               fullWidth
+              color={isLinkActive(item.path) ? "nutroos-green" : "gray"}
             >
               {item.label}
             </Button>
           ))}
-          
-          <Box my="xs">
-            <Group justify="space-between">
-              <Text size="sm">Cambiar tema</Text>
-              <ActionIcon 
-                variant="subtle" 
-                onClick={toggleColorScheme}
-                aria-label="Toggle color scheme"
-                color="nutroos-green"
-              >
-                {isDark ? <IconSun size={rem(18)} /> : <IconMoon size={rem(18)} />}
-              </ActionIcon>
-            </Group>
-          </Box>
           
           {isAuthenticated && user ? (
             <>

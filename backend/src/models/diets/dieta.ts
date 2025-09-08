@@ -12,7 +12,9 @@ const DietaSchema = new mongoose.Schema({
   dias: [DiaDietaSchema],
   fechaInicio: { type: Date, required: true },
   creador: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-  asignadaA: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }]
+  asignadaA: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }],
+  draftMode: { type: Boolean, default: true }
+
 });
 
 // Middleware para validar que el creador es un usuario con rol 'worker' y los asignados son 'user'

@@ -1,5 +1,10 @@
 import Dieta from '../../models/diets/dieta';
 import User from '../../models/users/user';
+import { 
+  buscarDietaYVerificarPermisos,
+  actualizarCamposBasicosDieta,
+  actualizarDatosDiaDieta
+} from '../../helpers/dietHelper';
 
 export async function crearDietaService({
   creadorId,
@@ -9,7 +14,10 @@ export async function crearDietaService({
   duracion,
   comidasDiarias,
   asignadaA,
-  fechaInicio
+  fechaInicio,
+  horasComidas,
+  nombreComidas,
+  draftMode = true
 }: {
   creadorId: string;
   nombre: string;
@@ -19,6 +27,9 @@ export async function crearDietaService({
   comidasDiarias: number;
   asignadaA: string;
   fechaInicio: string;
+  horasComidas: string[];
+  nombreComidas: string[];
+  draftMode?: boolean;
 }) {
   const usuarioAsignado = await User.findById(asignadaA);
   if (!usuarioAsignado || usuarioAsignado.role !== 'user') {
@@ -29,18 +40,27 @@ export async function crearDietaService({
     throw new Error('La duración debe ser un número entero mayor que 0');
   }
 
-if (
-  !comidasDiarias ||
-  !Number.isInteger(comidasDiarias) ||
-  comidasDiarias <= 1 ||
-  comidasDiarias >= 10
-) {
-  throw new Error('El número de comidas diarias debe ser un número entero mayor que 1 y menor que 10');
-}
+  if (
+    !comidasDiarias ||
+    !Number.isInteger(comidasDiarias) ||
+    comidasDiarias <= 1 ||
+    comidasDiarias >= 10
+  ) {
+    throw new Error('El número de comidas diarias debe ser un número entero mayor que 1 y menor que 10');
+  }
 
   if (!fechaInicio) {
     throw new Error('La fecha de inicio es obligatoria');
   }
+  
+  if (!horasComidas || !Array.isArray(horasComidas) || horasComidas.length !== comidasDiarias) {
+    throw new Error(`El array horasComidas debe tener exactamente ${comidasDiarias} elementos`);
+  }
+
+  if (!nombreComidas || !Array.isArray(nombreComidas) || nombreComidas.length !== comidasDiarias) {
+    throw new Error(`El array nombreComidas debe tener exactamente ${comidasDiarias} elementos`);
+  }
+
   const [day, month, year] = fechaInicio.split('-').map(Number);
   const fechaInicioDate = new Date(year, month - 1, day);
 
@@ -54,19 +74,19 @@ if (
     caloriasTotales: null,
     macronutrientes: '',
     micronutrientes: '',
-    numeroComidas: null,
-    genero: '',
+    numeroComidas: comidasDiarias,
     requerimientosHidratacion: '',
     cumplimiento: false,
-    comidas: Array.from({ length: comidasDiarias }, () => ({
-        horaEstimada: null,
+    comidas: Array.from({ length: comidasDiarias }, (_, comidaIndex) => ({
+        horaEstimada: horasComidas[comidaIndex],
+        nombreComida: nombreComidas[comidaIndex],
         platos: Array.from({ length: 3 }, (_, i) => ({
             orden: i,
             nombre: null,
             receta: null
-            }))
         }))
-    }));
+    }))
+  }));
 
   const dieta = new Dieta({
     nombre,
@@ -77,9 +97,100 @@ if (
     dias,
     fechaInicio: fechaInicioDate,
     creador: creadorId,
-    asignadaA: [asignadaA]
+    asignadaA: [asignadaA],
+    draftMode
   });
 
   await dieta.save();
   return dieta;
+}
+
+export async function obtenerDietaService(dietaId: string, userId: string) {
+  return await buscarDietaYVerificarPermisos(dietaId, userId, false);
+}
+export async function actualizarDietaService(
+  dietaId: string, 
+  userId: string, 
+  datosActualizacion: {
+    nombre?: string;
+    descripcion?: string;
+    tipo?: string[];
+    duracion?: number;
+    comidasDiarias?: number;
+    fechaInicio?: string;
+    dias?: Array<{
+      _dayIndex?: number;
+      caloriasTotales?: number;
+      macronutrientes?: string;
+      micronutrientes?: string;
+      numeroComidas?: number;
+      requerimientosHidratacion?: string;
+      cumplimiento?: boolean;
+      comidas?: Array<{
+        horaEstimada?: string;
+        nombreComida?: string;
+      }>;
+    }>;
+    draftMode?: boolean;
+  }
+) {
+  // Buscar dieta y verificar permisos
+  const dieta = await buscarDietaYVerificarPermisos(dietaId, userId, true);
+
+  // Actualizar días si se proporcionan
+  if (datosActualizacion.dias && Array.isArray(datosActualizacion.dias)) {
+    for (const diaActualizado of datosActualizacion.dias) {
+      if (typeof diaActualizado._dayIndex === 'number') {
+        const index = diaActualizado._dayIndex;
+        
+        if (index >= 0 && index < dieta.dias.length) {
+          const diaExistente = dieta.dias[index];
+          
+          // Actualizar los datos del día usando la función común
+          actualizarDatosDiaDieta(diaExistente, diaActualizado);
+        }
+      }
+    }
+  }
+
+  // Actualizar campos básicos de la dieta
+  actualizarCamposBasicosDieta(dieta, datosActualizacion);
+
+  await dieta.save();
+  return dieta;
+}
+
+export async function actualizarDiaDietaService(
+  dietaId: string,
+  userId: string,
+  diaIndex: number,
+  datosDia: {
+    caloriasTotales?: number;
+    macronutrientes?: string;
+    micronutrientes?: string;
+    numeroComidas?: number;
+    requerimientosHidratacion?: string;
+    cumplimiento?: boolean;
+    comidas?: Array<{
+      horaEstimada?: string;
+      nombreComida?: string;
+    }>;
+  }
+) {
+  // Buscar dieta y verificar permisos
+  const dieta = await buscarDietaYVerificarPermisos(dietaId, userId, true);
+
+  // Verificar que el índice del día es válido
+  if (diaIndex < 0 || diaIndex >= dieta.dias.length) {
+    throw new Error('Índice de día inválido');
+  }
+
+  const diaExistente = dieta.dias[diaIndex];
+  
+  // Actualizar los datos del día
+  actualizarDatosDiaDieta(diaExistente, datosDia);
+
+  await dieta.save();
+  
+  return diaExistente;
 }

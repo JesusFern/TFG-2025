@@ -1,5 +1,5 @@
 import React from 'react';
-import { Box, Container } from '@mantine/core';
+import { Box } from '@mantine/core';
 import Header from './Header';
 import Footer from './Footer';
 
@@ -18,10 +18,16 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
     }}>
       <Header />
       
-      <Box component="main" style={{ flex: 1 }} py="md">
-        <Container size="xl">
-          {children}
-        </Container>
+      {/* Main content - ahora ocupa todo el ancho */}
+      <Box 
+        component="main" 
+        style={{ 
+          flex: 1,
+          width: '100%' 
+        }} 
+        p="md"
+      >
+        {children}
       </Box>
       
       <Footer />
