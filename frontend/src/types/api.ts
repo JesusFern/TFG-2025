@@ -8,3 +8,9 @@ export interface ApiResponse<T> {
 export interface ApiDietaResponse extends ApiResponse<DietaResponse> {
   dieta: DietaResponse;
 }
+
+export interface ApiError {
+  message: string;
+  status?: number;
+  [key: string]: unknown;
+}

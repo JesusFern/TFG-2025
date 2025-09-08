@@ -160,9 +160,9 @@ const VerDietaPage: React.FC = () => {
         <Button 
           mt="lg" 
           color="nutroos-green"
-          onClick={() => navigate('/dietas')}
+          onClick={() => navigate(-1)}
         >
-          Volver a dietas
+          Volver
         </Button>
       </Container>
     );
@@ -199,9 +199,51 @@ const VerDietaPage: React.FC = () => {
               variant="outline"
               color="nutroos-green"
               leftSection={<IconArrowLeft size={18} />}
-              onClick={() => navigate('/dietas')}
+              onClick={() => {
+                try {
+                  let clientId = null;
+                  
+                  if (dieta.asignadaA && Array.isArray(dieta.asignadaA) && dieta.asignadaA.length > 0) {
+                    const clientData = dieta.asignadaA[0];
+                    
+                    if (typeof clientData === 'string') {
+                      clientId = clientData;
+                    } 
+                    else if (typeof clientData === 'object' && clientData !== null) {
+                      type ClientObject = { _id?: string; id?: string; };
+                      const clientObj = clientData as unknown as ClientObject;
+                      
+                      if (clientObj._id) {
+                        clientId = clientObj._id;
+                      } else if (clientObj.id) {
+                        clientId = clientObj.id;
+                      } else {
+                        // Último recurso: convertir a string
+                        clientId = String(clientData);
+                      }
+                    }
+                    // 3. Cualquier otro caso, intenta la conversión a string
+                    else if (clientData) {
+                      clientId = String(clientData);
+                    }
+                  }
+                  
+                  console.log("Cliente original:", dieta.asignadaA && dieta.asignadaA[0]);
+                  console.log("Cliente ID extraído:", clientId);
+                  
+                  if (clientId) {
+                    navigate(`/worker/dashboard-clients/${clientId}/diets`);
+                  } else {
+                    console.warn("No se pudo extraer un ID de cliente válido, navegando hacia atrás");
+                    navigate(-1);
+                  }
+                } catch (err) {
+                  console.error("Error al navegar:", err);
+                  navigate(-1);
+                }
+              }}
             >
-              Volver a dietas
+              Volver a dietas del cliente
             </Button>
           </Group>
         </Group>
