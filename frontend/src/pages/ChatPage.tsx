@@ -29,19 +29,11 @@ export const ChatPage: React.FC = () => {
     crearConversacion,
     archivarConversacion,
     eliminarConversacion,
-    archivarMensaje,
     eliminarMensaje,
     refreshConversaciones
   } = useChat();
   
-  // Debug: mostrar información del estado
-  console.log('🔍 ChatPage - Estado actual:', {
-    conversaciones: conversaciones.length,
-    conversacionActiva: conversacionActiva?._id,
-    mensajes: mensajes.length,
-    isLoading,
-    error
-  });
+  
   
   // Estado para nueva conversación
   const [showNuevaConversacion, setShowNuevaConversacion] = useState(false);
@@ -76,7 +68,6 @@ export const ChatPage: React.FC = () => {
 
   // Manejar refrescar conversaciones
   const handleRefreshConversaciones = async () => {
-    console.log('🔄 ChatPage: Refrescando conversaciones manualmente');
     await refreshConversaciones();
   };
 
@@ -105,7 +96,7 @@ export const ChatPage: React.FC = () => {
             onSendMessage={handleSendMessage}
             onReply={(mensajeId: string) => console.log('Reply to:', mensajeId)}
             onDelete={eliminarMensaje}
-            onArchive={archivarMensaje}
+            onArchive={() => console.log('Archive')}
             onSearch={() => console.log('Search')}
             onInfo={() => console.log('Info')}
             onArchiveConversacion={() => conversacionActiva && archivarConversacion(conversacionActiva._id)}

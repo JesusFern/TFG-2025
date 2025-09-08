@@ -1,6 +1,6 @@
 import React from 'react';
 import { Box, Text, Badge, Group, ActionIcon, Paper, Avatar, Stack } from '@mantine/core';
-import { IconArrowBackUp, IconTrash, IconArchive, IconCheck, IconChecks, IconClock, IconPaperclip } from '@tabler/icons-react';
+import { IconArrowBackUp, IconTrash, IconCheck, IconChecks, IconClock, IconPaperclip } from '@tabler/icons-react';
 import { Mensaje } from '../../types/chat';
 
 interface ChatMessageProps {
@@ -8,15 +8,13 @@ interface ChatMessageProps {
   esMio: boolean;
   onReply?: (mensajeId: string) => void;
   onDelete?: (mensajeId: string) => void;
-  onArchive?: (mensajeId: string) => void;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
   mensaje,
   esMio,
   onReply,
-  onDelete,
-  onArchive
+  onDelete
 }) => {
   const getPriorityColor = (prioridad: string) => {
     switch (prioridad) {
@@ -142,16 +140,7 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
                 </ActionIcon>
               )}
               
-              {onArchive && (
-                <ActionIcon
-                  variant="subtle"
-                  size="sm"
-                  color="gray"
-                  onClick={() => onArchive(mensaje._id)}
-                >
-                  <IconArchive size={16} />
-                </ActionIcon>
-              )}
+              
               
               {onDelete && (
                 <ActionIcon

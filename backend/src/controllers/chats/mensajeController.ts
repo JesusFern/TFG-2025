@@ -1,6 +1,6 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../types';
-import { crearMensajeService, obtenerMensajesService, obtenerMensajePorIdService, marcarComoLeidoService, archivarMensajeService, eliminarMensajeService } from '../../service/chats/mensajeService';
+import { crearMensajeService, obtenerMensajesService, obtenerMensajePorIdService, marcarComoLeidoService, eliminarMensajeService } from '../../service/chats/mensajeService';
 import { CrearMensajeData, FiltrosMensajes } from '../../models/chats';
 
 // Crear un nuevo mensaje
@@ -167,23 +167,6 @@ export const marcarComoLeido = async (req: AuthenticatedRequest, res: Response):
   }
 };
 
-// Archivar mensaje
-export const archivarMensaje = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  try {
-    const usuarioId = req.user?.id;
-    if (!usuarioId) {
-      res.status(401).json({ message: 'Usuario no autenticado' });
-      return;
-    }
-
-    const { id } = req.params;
-    const mensaje = await archivarMensajeService(id, usuarioId);
-    res.json({ message: 'Mensaje archivado exitosamente', mensaje });
-  } catch (error) {
-    console.error('Error al archivar mensaje:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
-  }
-};
 
 // Eliminar un mensaje
 export const eliminarMensaje = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -196,15 +179,10 @@ export const eliminarMensaje = async (req: AuthenticatedRequest, res: Response):
 
     const { id } = req.params;
 
-    // Verificar que el usuario sea el remitente antes de eliminar
+    // Verificar existencia del mensaje (autorización se valida en el servicio)
     const mensajeExistente = await obtenerMensajePorIdService(id);
     if (!mensajeExistente) {
       res.status(404).json({ message: 'Mensaje no encontrado' });
-      return;
-    }
-
-    if (mensajeExistente.remitente !== usuarioId) {
-      res.status(403).json({ message: 'Solo puedes eliminar tus propios mensajes' });
       return;
     }
 
@@ -212,6 +190,10 @@ export const eliminarMensaje = async (req: AuthenticatedRequest, res: Response):
     res.json({ message: 'Mensaje eliminado exitosamente' });
   } catch (error) {
     console.error('Error al eliminar mensaje:', error);
+    if (error instanceof Error && error.message.includes('Solo puedes eliminar tus propios mensajes')) {
+      res.status(403).json({ message: 'Solo puedes eliminar tus propios mensajes' });
+      return;
+    }
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };

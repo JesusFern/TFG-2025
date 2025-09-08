@@ -79,21 +79,19 @@ export const RealTimeChat: React.FC<RealTimeChatProps> = ({
 
   // Socket.IO temporalmente deshabilitado - valores temporales
   const isConnected = false;
-  // const joinConversation = () => console.log('Socket.IO temporalmente deshabilitado'); // Temporalmente deshabilitado
-  // const leaveConversation = () => console.log('Socket.IO temporalmente deshabilitado'); // Temporalmente deshabilitado
-  // const sendMessage = () => console.log('Socket.IO temporalmente deshabilitado'); // Temporalmente deshabilitado
-  // const markAsRead = () => console.log('Socket.IO temporalmente deshabilitado'); // Temporalmente deshabilitado
-  // const startTyping = () => console.log('Socket.IO temporalmente deshabilitado'); // Temporalmente deshabilitado
-  // const stopTyping = () => console.log('Socket.IO temporalmente deshabilitado'); // Temporalmente deshabilitado
+  // const joinConversation = () => {}; // Temporalmente deshabilitado
+  // const leaveConversation = () => {}; // Temporalmente deshabilitado
+  // const sendMessage = () => {}; // Temporalmente deshabilitado
+  // const markAsRead = () => {}; // Temporalmente deshabilitado
+  // const startTyping = () => {}; // Temporalmente deshabilitado
+  // const stopTyping = () => {}; // Temporalmente deshabilitado
 
   // Unirse a la conversación cuando se monta el componente (temporalmente deshabilitado)
   useEffect(() => {
     // Socket.IO temporalmente deshabilitado
-    console.log('Socket.IO temporalmente deshabilitado');
     
     return () => {
       // Socket.IO temporalmente deshabilitado
-      console.log('Socket.IO temporalmente deshabilitado');
     };
   }, []); // Sin dependencias mientras Socket.IO esté deshabilitado
 
@@ -109,7 +107,6 @@ export const RealTimeChat: React.FC<RealTimeChatProps> = ({
     if (!nuevoMensaje.trim() || !otroParticipante) return;
 
     // Socket.IO temporalmente deshabilitado
-    console.log('Mensaje temporalmente deshabilitado:', nuevoMensaje.trim());
     setNuevoMensaje('');
   };
 

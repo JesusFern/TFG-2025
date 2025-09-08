@@ -46,7 +46,6 @@ export const ChatMain: React.FC<ChatMainProps> = ({
   onSendMessage,
   onReply,
   onDelete,
-  onArchive,
   onSearch,
   onInfo,
   onArchiveConversacion,
@@ -158,7 +157,6 @@ export const ChatMain: React.FC<ChatMainProps> = ({
                   mensaje={mensaje}
                   onReply={onReply}
                   onDelete={onDelete}
-                  onArchive={onArchive}
                   esMio={esMioCalc}
                 />
               );

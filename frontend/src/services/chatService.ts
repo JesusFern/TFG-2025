@@ -81,13 +81,6 @@ export const mensajeService = {
     });
   },
 
-  // Archivar mensaje
-  async archivarMensaje(mensajeId: string): Promise<void> {
-    await apiRequest(`/api/messaging/mensajes/${mensajeId}/archivar`, {
-      method: 'PATCH'
-    });
-  },
-
   // Eliminar mensaje
   async eliminarMensaje(mensajeId: string): Promise<void> {
     await apiRequest(`/api/messaging/mensajes/${mensajeId}`, {
@@ -164,36 +157,26 @@ export const conversacionService = {
 
   // Obtener conversaciones de un usuario
   async obtenerConversacionesUsuario(usuarioId: string, limit = 20): Promise<Conversacion[]> {
-    try {
-      console.log('🔍 chatService: Llamando a obtenerConversacionesUsuario para usuario:', usuarioId);
+    
       const response = await apiRequest(`/api/messaging/conversaciones/by-user/${usuarioId}?limit=${limit}`);
       
-      console.log('🔍 chatService: Respuesta de la API:', response);
-      console.log('🔍 chatService: Status de la respuesta:', response.status);
-      
       if (!response.ok) {
-        console.error('❌ chatService: Error en la respuesta de la API:', response.status, response.statusText);
-        const errorText = await response.text();
-        console.error('❌ chatService: Error body:', errorText);
+        await response.text();
         throw new Error(`Error en la API: ${response.status} ${response.statusText}`);
       }
       
       const responseData = await response.json() as ApiConversacionesResponse;
-      console.log('🔍 chatService: Datos parseados:', responseData);
       
       const conversaciones = responseData.conversaciones || [];
-      console.log('🔍 chatService: Conversaciones extraídas:', conversaciones.length);
       
       // Validar que las conversaciones tengan la estructura correcta
       const conversacionesValidadas = conversaciones.filter(conv => {
         if (!conv || !conv._id || !conv.participantes) {
-          console.warn('⚠️ chatService: Conversación inválida encontrada:', conv);
           return false;
         }
         
         // Validar que los participantes tengan la estructura correcta
         if (!Array.isArray(conv.participantes)) {
-          console.warn('⚠️ chatService: Participantes no es un array:', conv.participantes);
           return false;
         }
         
@@ -213,19 +196,13 @@ export const conversacionService = {
         });
         
         if (!participantesValidos) {
-          console.warn('⚠️ chatService: Participantes inválidos en conversación:', conv.participantes);
           return false;
         }
         
-        return true;
-      });
-      
-      console.log('🔍 chatService: Conversaciones validadas:', conversacionesValidadas.length);
-      return conversacionesValidadas;
-    } catch (error) {
-      console.error('❌ chatService: Error al obtener conversaciones del usuario:', error);
-      throw error;
-    }
+      return true;
+    });
+    return conversacionesValidadas;
+    
   },
 
   // Obtener conversación entre dos usuarios

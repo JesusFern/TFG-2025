@@ -26,7 +26,7 @@ interface UseChatReturn {
   archivarConversacion: (conversacionId: string) => Promise<void>;
   eliminarConversacion: (conversacionId: string) => Promise<void>;
   marcarMensajeComoLeido: (mensajeId: string) => Promise<void>;
-  archivarMensaje: (mensajeId: string) => Promise<void>;
+  
   eliminarMensaje: (mensajeId: string) => Promise<void>;
   
   // Estado de conexión
@@ -387,18 +387,7 @@ export const useChat = (): UseChatReturn => {
     }
   }, []);
 
-  // Archivar mensaje
-  const archivarMensaje = useCallback(async (mensajeId: string) => {
-    try {
-      await chatService.mensajes.archivarMensaje(mensajeId);
-      setMensajes(prev => prev.map(mensaje => 
-        mensaje._id === mensajeId ? { ...mensaje, estado: 'archivado' } : mensaje
-      ));
-    } catch (err) {
-      setError('Error al archivar mensaje');
-      console.error('Error archiving message:', err);
-    }
-  }, []);
+  
 
   // Eliminar mensaje
   const eliminarMensaje = useCallback(async (mensajeId: string) => {
@@ -429,7 +418,6 @@ export const useChat = (): UseChatReturn => {
     archivarConversacion,
     eliminarConversacion,
     marcarMensajeComoLeido,
-    archivarMensaje,
     eliminarMensaje,
     isConnected,
     isConnecting,

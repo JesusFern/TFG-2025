@@ -20,17 +20,14 @@ export const ChatDemo: React.FC = () => {
   // Configurar WebSocket de manera simple
   const { socket, isConnected, isConnecting, connect, disconnect } = useSocket({
     onConnect: () => {
-      console.log('🔌 WebSocket conectado en ChatDemo');
       setConnectionStatus('connected');
       addSystemMessage('WebSocket conectado exitosamente');
     },
     onDisconnect: (reason) => {
-      console.log('🔌 WebSocket desconectado en ChatDemo:', reason);
       setConnectionStatus('disconnected');
       addSystemMessage(`WebSocket desconectado: ${reason}`);
     },
     onError: (error) => {
-      console.error('❌ WebSocket error en ChatDemo:', error);
       addSystemMessage(`Error de WebSocket: ${error}`);
     }
   });
@@ -70,7 +67,6 @@ export const ChatDemo: React.FC = () => {
 
   const handleConnect = () => {
     if (user) {
-      console.log('🔌 Intentando conectar WebSocket...');
       connect();
     } else {
       addSystemMessage('Error: Usuario no autenticado');
@@ -78,7 +74,6 @@ export const ChatDemo: React.FC = () => {
   };
 
   const handleDisconnect = () => {
-    console.log('🔌 Desconectando WebSocket...');
     disconnect();
   };
 

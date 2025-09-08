@@ -53,13 +53,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   const [nuevoParticipante, setNuevoParticipante] = useState('');
   const [nuevoTipo, setNuevoTipo] = useState<'general' | 'entrenamiento' | 'nutricion' | 'consulta'>('general');
 
-  // Debug: mostrar información del estado
-  console.log('🔍 ChatSidebar - Estado actual:', {
-    conversacionesCount: conversaciones?.length || 0,
-    conversacionActiva,
-    searchTerm,
-    filterTipo
-  });
+  
 
   // Verificar que conversaciones sea un array válido
   const conversacionesSeguras = Array.isArray(conversaciones) ? conversaciones : [];
@@ -67,12 +61,10 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   // Validar y limpiar conversaciones para evitar errores
   const conversacionesValidadas = conversacionesSeguras.filter(conv => {
     if (!conv || !conv._id || !conv.participantes) {
-      console.warn('⚠️ ChatSidebar: Conversación sin datos básicos:', conv);
       return false;
     }
     
     if (!Array.isArray(conv.participantes)) {
-      console.warn('⚠️ ChatSidebar: Participantes no es un array:', conv.participantes);
       return false;
     }
     
@@ -90,14 +82,13 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
     });
     
     if (!participantesValidos) {
-      console.warn('⚠️ ChatSidebar: Participantes inválidos en conversación:', conv.participantes);
       return false;
     }
     
     return true;
   });
   
-  console.log('🔍 ChatSidebar: Conversaciones validadas:', conversacionesValidadas.length);
+  
   
   // Filtrar conversaciones
   const conversacionesFiltradas = conversacionesValidadas.filter(conversacion => {

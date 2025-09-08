@@ -278,29 +278,6 @@ export async function marcarComoLeidoService(mensajeId: string, usuarioId: strin
   }
 }
 
-export async function archivarMensajeService(mensajeId: string, usuarioId: string): Promise<void> {
-  try {
-    const mensaje = await Mensaje.findById(mensajeId);
-    
-    if (!mensaje) {
-      throw new Error('Mensaje no encontrado');
-    }
-
-    // Verificar que el usuario sea el remitente o destinatario
-    if (mensaje.remitente.toString() !== usuarioId && mensaje.destinatario.toString() !== usuarioId) {
-      throw new Error('No tienes permisos para archivar este mensaje');
-    }
-
-    mensaje.estado = 'archivado';
-    await mensaje.save();
-  } catch (error) {
-    if (error instanceof Error) {
-      throw new Error(`Error al archivar mensaje: ${error.message}`);
-    }
-    throw new Error('Error desconocido al archivar mensaje');
-  }
-}
-
 export async function eliminarMensajeService(mensajeId: string, usuarioId: string): Promise<void> {
   try {
     const mensaje = await Mensaje.findById(mensajeId);

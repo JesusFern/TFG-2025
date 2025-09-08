@@ -10,12 +10,7 @@ export class TokenService {
 
   static verifyToken(token: string): object | null {
     try {
-      console.log('🔍 Debug TokenService - Verificando token con secret:', this.secret);
-      console.log('🔍 Debug TokenService - Token a verificar:', token.substring(0, 20) + '...');
-      
       const decoded = jwt.verify(token, this.secret);
-      console.log('🔍 Debug TokenService - Token decodificado exitosamente:', decoded);
-      
       return typeof decoded === 'object' && decoded !== null ? decoded : null;
     } catch (error) {
       console.error('❌ Token verification failed:', error);
