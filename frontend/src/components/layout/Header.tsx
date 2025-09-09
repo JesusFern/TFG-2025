@@ -71,15 +71,11 @@ const Header: React.FC = () => {
       component="header"
       p="md"
       radius={0}
-      style={{
-        position: 'sticky',
-        top: 0,
-        zIndex: 1000,
-      }}
+      style={{ zIndex: 1000, position: 'sticky', top: 0 }}
       withBorder
     >
-      <Container size="lg">
-        <Group justify="space-between">
+      <Container fluid>
+        <Group justify="space-between" wrap="nowrap" style={{ width: '100%' }}>
           <Link to="/" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center' }}>
             <Group gap="xs">
               <Box pos="relative" style={{ width: 40, height: 40 }}>
@@ -99,7 +95,7 @@ const Header: React.FC = () => {
                 style={{ 
                   textTransform: 'uppercase',
                   letterSpacing: '-0.5px',
-                  color: isDark ? 'white' : 'inherit'
+                  color: isDark ? 'white' : 'black'
                 }}
               >
                 Nutroos
@@ -117,7 +113,7 @@ const Header: React.FC = () => {
             </Group>
           </Link>
           
-          <Group gap="lg" visibleFrom="sm">
+          <Group gap="lg" visibleFrom="sm" style={{ marginLeft: 'auto' }}>
             {navItems.map((item) => (
               <Link
                 key={item.path}
@@ -133,7 +129,7 @@ const Header: React.FC = () => {
                 <Text>{item.label}</Text>
               </Link>
             ))}
-            <Tooltip label={isDark ? 'Modo claro' : 'Modo oscuro'}>
+            <Tooltip label={isDark ? 'Modo claro' : 'Modo oscuro'} zIndex={1000}>
               <ActionIcon 
                 variant="subtle" 
                 onClick={() => toggleColorScheme()}
@@ -146,15 +142,7 @@ const Header: React.FC = () => {
             
             {isAuthenticated && user ? (
               <>
-                <Button
-                  variant="subtle"
-                  color="red"
-                  leftSection={<IconLogout size={16} />}
-                  onClick={handleLogout}
-                >
-                  Cerrar Sesión
-                </Button>
-                <Menu shadow="md" width={200}>
+                <Menu shadow="md" width={200} withArrow position="bottom-end" zIndex={1000}>
                   <Menu.Target>
                     <Avatar
                       src={user.profilePicture}

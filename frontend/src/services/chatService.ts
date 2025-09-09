@@ -151,7 +151,7 @@ export const conversacionService = {
   // Archivar conversación
   async archivarConversacion(conversacionId: string): Promise<void> {
     await apiRequest(`/api/messaging/conversaciones/${conversacionId}/archivar`, {
-      method: 'PUT'
+      method: 'PATCH'
     });
   },
 

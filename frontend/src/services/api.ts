@@ -17,8 +17,8 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
   
   
   
-  // Obtener el token del localStorage
-  const token = localStorage.getItem('token');
+  // Obtener el token del localStorage (clave unificada)
+  const token = localStorage.getItem('authToken');
   
   const defaultOptions: RequestInit = {
     headers: {
@@ -37,7 +37,7 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
     
     // Si la respuesta es 401, el token puede haber expirado
     if (response.status === 401) {
-      localStorage.removeItem('token');
+      localStorage.removeItem('authToken');
       window.location.href = '/login';
       return response;
     }

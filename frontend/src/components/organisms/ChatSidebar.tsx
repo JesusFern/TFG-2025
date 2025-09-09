@@ -47,6 +47,10 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onPinConversacion,
   onMuteConversacion
 }) => {
+  console.log('[ChatSidebar] render', {
+    total: Array.isArray(conversaciones) ? conversaciones.length : 'NA',
+    activa: conversacionActiva
+  });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTipo, setFilterTipo] = useState<string>('todos');
   const [showNuevaConversacion, setShowNuevaConversacion] = useState(false);
@@ -57,6 +61,9 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
 
   // Verificar que conversaciones sea un array válido
   const conversacionesSeguras = Array.isArray(conversaciones) ? conversaciones : [];
+  if (!Array.isArray(conversaciones)) {
+    console.log('[ChatSidebar] conversaciones no es array');
+  }
   
   // Validar y limpiar conversaciones para evitar errores
   const conversacionesValidadas = conversacionesSeguras.filter(conv => {
