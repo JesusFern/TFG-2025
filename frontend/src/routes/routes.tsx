@@ -40,7 +40,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, workerRoute?: boolea
       return <Navigate to="/worker/login" replace />;
     }
     // Para otras rutas, redirigir al login normal
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/" replace />;
   }
   
   // Si es una ruta de trabajador pero el usuario no es worker/admin
@@ -59,19 +59,14 @@ import WorkerClientDietsList from '../pages/WorkerClientDietsList';
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
+      {/* Rutas públicas */}
+      <Route path="/" element={<App />} />
       <Route path="/landingPage" element={<LandingPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/worker/login" element={<WorkerLoginPage />} />
-      
+
       {/* Rutas protegidas */}
-      <Route path="/" element={
-        <ProtectedRoute>
-          <Layout>
-            <App />
-          </Layout>
-        </ProtectedRoute>
-      } />
       
       <Route path="/dashboard" element={
         <ProtectedRoute>
@@ -125,7 +120,7 @@ const AppRoutes: React.FC = () => {
         <ProtectedRoute>
           <Layout>
             <ChatPage />
-            </Layout>
+          </Layout>
         </ProtectedRoute>
       } />
       

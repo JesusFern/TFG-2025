@@ -56,6 +56,11 @@ export const ChatMain: React.FC<ChatMainProps> = ({
   onVideoCall
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  console.log('[ChatMain] render', {
+    conversacion: conversacion?._id,
+    mensajes: mensajes?.length,
+    usuarioActual: usuarioActual?._id
+  });
 
   // Auto-scroll al último mensaje
   useEffect(() => {

@@ -31,10 +31,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('🔍 Debug AuthContext - Tiempo actual:', currentTime);
         
         if (tokenPayload.exp && tokenPayload.exp > currentTime) {
-          // Token válido, restaurar usuario
+          // Token válido, restaurar usuario normalizando _id
           console.log('✅ Token válido, restaurando usuario');
           setToken(savedToken);
-          setUser(JSON.parse(savedUser));
+          const parsed = JSON.parse(savedUser) as UserProfile & { id?: string };
+          const normalized: UserProfile = parsed._id
+            ? parsed
+            : { ...parsed, _id: (parsed.id as string) } as unknown as UserProfile;
+          setUser(normalized);
         } else {
           // Token expirado, limpiar
           console.log('Token expirado, limpiando datos');
@@ -55,9 +59,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = (newToken: string, newUser: UserProfile) => {
     setToken(newToken);
-    setUser(newUser);
+    // Normalizar _id si viene como id
+    const normalized: UserProfile = (newUser as UserProfile & { id?: string })._id
+      ? newUser
+      : { ...newUser, _id: (newUser as unknown as { id?: string }).id || '' } as unknown as UserProfile;
+    setUser(normalized);
     localStorage.setItem('authToken', newToken);
-    localStorage.setItem('userData', JSON.stringify(newUser));
+    localStorage.setItem('userData', JSON.stringify(normalized));
   };
 
   const logout = () => {

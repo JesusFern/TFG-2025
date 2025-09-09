@@ -32,6 +32,14 @@ export const ChatPage: React.FC = () => {
     eliminarMensaje,
     refreshConversaciones
   } = useChat();
+  console.log('[ChatPage] render', {
+    userId: user?._id,
+    conversaciones: conversaciones?.length,
+    conversacionActiva: conversacionActiva?._id,
+    mensajes: mensajes?.length,
+    isLoading,
+    error
+  });
   
   
   
@@ -39,12 +47,14 @@ export const ChatPage: React.FC = () => {
   const [showNuevaConversacion, setShowNuevaConversacion] = useState(false);
   const [nuevoParticipante, setNuevoParticipante] = useState('');
   const [nuevoTipo, setNuevoTipo] = useState<'general' | 'entrenamiento' | 'nutricion' | 'consulta'>('general');
+  const [nuevaConvError, setNuevaConvError] = useState<string | null>(null);
 
   // Obtener la conversación activa
   const conversacionActivaId = conversacionActiva?._id || null;
 
   // Manejar envío de mensaje
   const handleSendMessage = async (data: CrearMensajeDTO) => {
+    console.log('[ChatPage] handleSendMessage', data);
     await enviarMensaje(data);
   };
 
@@ -53,16 +63,30 @@ export const ChatPage: React.FC = () => {
     if (!nuevoParticipante.trim()) return;
 
     try {
+      // Validar que el ID del participante sea un ObjectId válido
+      const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(nuevoParticipante.trim());
+      if (!isValidObjectId) {
+        setNuevaConvError('El ID del participante debe ser un ObjectId válido (24 caracteres hex).');
+        return;
+      }
+
+      console.log('[ChatPage] crearConversacion con', {
+        participantes: [nuevoParticipante, user?._id], tipo: nuevoTipo
+      });
       await crearConversacion({
-        participantes: [nuevoParticipante],
+        participantes: [nuevoParticipante, user?._id || ''],
         metadata: { tipo: nuevoTipo }
       });
       
       setShowNuevaConversacion(false);
       setNuevoParticipante('');
       setNuevoTipo('general');
+      setNuevaConvError(null);
+      // Refrescar la lista para garantizar que aparezca
+      await refreshConversaciones();
     } catch (err) {
       console.error('Error creating conversation:', err);
+      setNuevaConvError('No se pudo crear la conversación. Verifica el ID del participante y vuelve a intentar.');
     }
   };
 
@@ -77,7 +101,10 @@ export const ChatPage: React.FC = () => {
       <ChatSidebar
         conversaciones={conversaciones}
         conversacionActiva={conversacionActivaId}
-        onSelectConversacion={seleccionarConversacion}
+        onSelectConversacion={(id) => {
+          console.log('[ChatPage] onSelectConversacion', id);
+          seleccionarConversacion(id);
+        }}
         onNuevaConversacion={() => setShowNuevaConversacion(true)}
         onRefreshConversaciones={handleRefreshConversaciones}
         // onArchiveConversacion={archivarConversacion}
@@ -134,9 +161,12 @@ export const ChatPage: React.FC = () => {
         size="md"
       >
         <Stack gap="md">
+          {nuevaConvError && (
+            <Text c="red" size="sm">{nuevaConvError}</Text>
+          )}
           <TextInput
             label="Participante"
-            placeholder="Email o ID del usuario"
+            placeholder="ID de usuario (MongoId)"
             value={nuevoParticipante}
             onChange={(e) => setNuevoParticipante(e.target.value)}
             required

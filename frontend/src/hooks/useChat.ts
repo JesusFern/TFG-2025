@@ -136,14 +136,19 @@ export const useChat = (): UseChatReturn => {
 
   // Refrescar conversaciones
   const refreshConversaciones = useCallback(async () => {
-    if (!user?._id) return;
+    if (!user?._id) {
+      console.log('[useChat] refreshConversaciones: sin user._id');
+      return;
+    }
     
     try {
       setIsLoading(true);
+      console.log('[useChat] refreshConversaciones: solicitando conversaciones para', user._id);
       const conversacionesData = await chatService.conversaciones.obtenerConversacionesUsuario(user._id);
+      console.log('[useChat] refreshConversaciones: recibido', conversacionesData.length, 'conversaciones');
       setConversaciones(conversacionesData);
     } catch (err) {
-      console.error('Error refreshing conversations:', err);
+      console.error('[useChat] Error refreshing conversations:', err);
       setError('Error al cargar conversaciones');
     } finally {
       setIsLoading(false);
@@ -152,10 +157,14 @@ export const useChat = (): UseChatReturn => {
 
   // Refrescar mensajes
   const refreshMensajes = useCallback(async () => {
-    if (!conversacionActiva?._id) return;
+    if (!conversacionActiva?._id) {
+      console.log('[useChat] refreshMensajes: no hay conversacionActiva');
+      return;
+    }
     
     try {
       setIsLoading(true);
+      console.log('[useChat] refreshMensajes: solicitando mensajes de', conversacionActiva._id);
       const mensajesData = await chatService.mensajes.obtenerMensajes({
         conversacionId: conversacionActiva._id,
         limit: 100
@@ -166,9 +175,10 @@ export const useChat = (): UseChatReturn => {
         new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
       );
       
+      console.log('[useChat] refreshMensajes: recibido', mensajesData.mensajes.length, 'mensajes');
       setMensajes(mensajesOrdenados);
     } catch (err) {
-      console.error('Error refreshing messages:', err);
+      console.error('[useChat] Error refreshing messages:', err);
       setError('Error al cargar mensajes');
     } finally {
       setIsLoading(false);
@@ -191,6 +201,7 @@ export const useChat = (): UseChatReturn => {
 
   // Seleccionar conversación
   const seleccionarConversacion = useCallback((conversacionId: string) => {
+    console.log('[useChat] seleccionarConversacion:', conversacionId);
     const conversacion = conversaciones.find(c => c._id === conversacionId);
     if (conversacion) {
       setConversacionActiva(conversacion);
@@ -205,9 +216,13 @@ export const useChat = (): UseChatReturn => {
 
   // Enviar mensaje
   const enviarMensaje = useCallback(async (data: CrearMensajeDTO) => {
-    if (!conversacionActiva || !user) return;
+    if (!conversacionActiva || !user) {
+      console.log('[useChat] enviarMensaje: faltan conversacionActiva o user');
+      return;
+    }
     
     try {
+      console.log('[useChat] enviarMensaje: preparando destinatario para conversacion', conversacionActiva._id);
       // Validar que la conversación activa tenga participantes válidos
       if (!conversacionActiva.participantes || !Array.isArray(conversacionActiva.participantes)) {
         throw new Error('Conversación activa no tiene participantes válidos');
@@ -245,7 +260,7 @@ export const useChat = (): UseChatReturn => {
         throw new Error('No puedes enviar un mensaje a ti mismo');
       }
 
-      console.log('🚀 Enviando mensaje a:', destinatarioId);
+      console.log('[useChat] Enviando mensaje a:', destinatarioId, 'contenido:', data.contenido);
       
       // Crear el mensaje
       const mensaje = await chatService.mensajes.crearMensaje({
@@ -253,7 +268,7 @@ export const useChat = (): UseChatReturn => {
         destinatario: destinatarioId
       });
       
-      console.log('✅ Mensaje creado exitosamente:', mensaje._id);
+      console.log('[useChat] Mensaje creado exitosamente:', mensaje._id);
       
       // Verificar que el mensaje se creó correctamente
       if (!mensaje || !mensaje._id) {
