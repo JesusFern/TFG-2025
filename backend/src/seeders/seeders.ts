@@ -1,4 +1,5 @@
 import { seedAdminUser, seedUsers } from './users/seedUsers';
+import { seedSuscriptionPlans } from './suscriptionPlans/seedSuscriptionPlans';
 import mongoose from 'mongoose';
 import User from '../models/users/user';
 import dotenv from 'dotenv';
@@ -15,6 +16,8 @@ async function runSeed() {
   await seedAdminUser();
 
   await seedUsers();
+
+  await seedSuscriptionPlans();
 
   await mongoose.disconnect();
   console.log('Seed finalizado');
