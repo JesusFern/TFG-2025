@@ -19,6 +19,7 @@ interface UserDocument extends mongoose.Document {
   clientesAsignados?: mongoose.Types.ObjectId[];
   datosSaludYNutricion?: mongoose.Types.ObjectId;
   datosActividadFisica?: mongoose.Types.ObjectId;
+  suscripcion?: mongoose.Types.ObjectId;
   isNew: boolean;
 }
 
@@ -94,6 +95,10 @@ const UserSchema = new mongoose.Schema({
   datosActividadFisica: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'DatosActividadFisica'
+  },
+  suscripcion: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'UserSuscription'
   }
 }, { timestamps: true });
 
@@ -151,8 +156,8 @@ UserSchema.pre('save', async function (next) {
   // Comprueba si estamos en un entorno de test
   const isTestEnvironment = process.env.NODE_ENV === 'test';
   
-  if (!isTestEnvironment && doc.role !== 'user' && (doc.datosSaludYNutricion || doc.datosActividadFisica)) {
-    return next(new Error('Solo los usuarios normales pueden tener datos de salud o actividad física'));
+  if (!isTestEnvironment && doc.role !== 'user' && (doc.datosSaludYNutricion || doc.datosActividadFisica || doc.suscripcion)) {
+    return next(new Error('Solo los usuarios normales pueden tener datos de salud, actividad física o suscripciones'));
   }
   
   if (!isTestEnvironment && doc.role !== 'worker' && (doc.workerType || doc.biography || doc.availability || doc.isWorkerAvailable !== undefined || doc.clientesAsignados?.length)) {
