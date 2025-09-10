@@ -149,23 +149,38 @@ UserSchema.pre('validate', function (next) {
   next();
 });
 
+// Inicializar valor de satisfacción para trabajadores nuevos
+UserSchema.pre('save', function (next) {
+  const doc = this as UserDocument;
+  
+  if (doc.isNew && doc.role === 'worker' && doc.satisfactionRating === undefined) {
+    doc.satisfactionRating = 0;
+  }
+  
+  next();
+});
+
 // Validación de consistencia de datos según el rol
 UserSchema.pre('save', async function (next) {
   const doc = this as UserDocument;
   
-  // Comprueba si estamos en un entorno de test
-  const isTestEnvironment = process.env.NODE_ENV === 'test';
-  
-  if (!isTestEnvironment && doc.role !== 'user' && (doc.datosSaludYNutricion || doc.datosActividadFisica || doc.suscripcion)) {
+  // Establecer campos de worker a undefined si el rol es admin o user
+  if (doc.role === 'admin' || doc.role === 'user') {
+    doc.clientesAsignados = undefined;
+    doc.workerType = undefined;
+    doc.biography = undefined;
+    doc.availability = undefined;
+    doc.isWorkerAvailable = undefined;
+  }
+
+  // Solo usuarios pueden tener datos de salud, actividad física o suscripciones
+  if (doc.role !== 'user' && (doc.datosSaludYNutricion || doc.datosActividadFisica || doc.suscripcion)) {
     return next(new Error('Solo los usuarios normales pueden tener datos de salud, actividad física o suscripciones'));
   }
   
-  if (!isTestEnvironment && doc.role !== 'worker' && (doc.workerType || doc.biography || doc.availability || doc.isWorkerAvailable !== undefined || doc.clientesAsignados?.length)) {
-    return next(new Error('Solo los trabajadores pueden tener campos de trabajador o clientes asignados'));
-  }
-  
-  if (doc.isNew && doc.role === 'worker' && doc.satisfactionRating === undefined) {
-    doc.satisfactionRating = 0;
+  // Solo workers pueden tener campos específicos de trabajador
+  if (doc.role !== 'worker' && (doc.workerType || doc.biography || doc.availability || doc.isWorkerAvailable !== undefined)) {
+    return next(new Error('Solo los trabajadores pueden tener campos de trabajador'));
   }
   
   // Validar que los clientes asignados sean usuarios con rol 'user'

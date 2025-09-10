@@ -48,7 +48,7 @@ jest.mock('../../src/models/diets/dieta', () => {
 jest.mock('../../src/middlewares/authMiddleware', () => {
   return {
     authenticateToken: (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
-      req.user = { id: workerId, role: 'worker' };
+      req.user = { id: workerId, role: 'worker', email: 'worker@example.com' };
       next();
     },
     authorizeWorker: (_req: AuthenticatedRequest, _res: Response, next: NextFunction) => {

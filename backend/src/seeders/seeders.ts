@@ -1,4 +1,5 @@
 import { seedAdminUser, seedUsers } from './users/seedUsers';
+import { seedWorkers } from './users/seedWorkers';
 import { seedSuscriptionPlans } from './suscriptionPlans/seedSuscriptionPlans';
 import mongoose from 'mongoose';
 import User from '../models/users/user';
@@ -6,24 +7,35 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+// Establecer variables de entorno para el proceso de seeding
+process.env.SKIP_VALIDATIONS = 'true';
+
 async function runSeed() {
-  const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/nutroos';
-  await mongoose.connect(mongoUri);
+  try {
+    const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/nutroos';
+    await mongoose.connect(mongoUri);
 
-  await User.deleteMany({});
-  console.log('Colección de usuarios borrada.');
+    await User.deleteMany({});
+    console.log('Colección de usuarios borrada.');
 
-  await seedAdminUser();
+    // Crear usuarios en orden: admin, trabajadores, usuarios regulares
+    await seedAdminUser();
+    await seedWorkers();
+    await seedUsers();
 
-  await seedUsers();
+    // Crear planes de suscripción
+    await seedSuscriptionPlans();
 
-  await seedSuscriptionPlans();
-
-  await mongoose.disconnect();
-  console.log('Seed finalizado');
+    await mongoose.disconnect();
+    console.log('Seed finalizado exitosamente');
+  } catch (error) {
+    console.error('Error en el seed:', error);
+    await mongoose.disconnect();
+    process.exit(1);
+  }
 }
 
 runSeed().catch((err) => {
-  console.error('Error en el seed:', err);
+  console.error('Error general en el seed:', err);
   process.exit(1);
 });

@@ -11,9 +11,9 @@ jest.mock('../../src/middlewares/authMiddleware', () => {
     authenticateToken: (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
       const url = (req as unknown as { originalUrl?: string }).originalUrl || '';
       if (url.includes('/api/training/sesiones/') && (url.endsWith('/completar') || url.endsWith('/notas'))) {
-        req.user = { id: clienteId, role: 'user' };
+        req.user = { id: clienteId, role: 'user', email: 'user@example.com' };
       } else {
-        req.user = { id: workerId, role: 'worker' };
+        req.user = { id: workerId, role: 'worker', email: 'worker@example.com' };
       }
       next();
     },
