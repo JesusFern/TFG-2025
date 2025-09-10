@@ -60,7 +60,6 @@ export const trainingService = {
     });
     if (!res.ok) throw new Error((await res.json()).message || 'Error al crear plan');
     const response = await res.json();
-    console.log('Respuesta del backend al crear plan:', response);
     return response.plan || response;
   },
 
@@ -76,7 +75,6 @@ export const trainingService = {
     const res = await apiRequest(`${base}/planes/${id}`);
     if (!res.ok) throw new Error((await res.json()).message || 'Error al obtener plan');
     const response = await res.json();
-    console.log('Respuesta del backend al obtener plan:', response);
     return response.plan || response;
   },
 
@@ -124,7 +122,6 @@ export const trainingService = {
     const res = await apiRequest(`${base}/sesiones${query ? `?${query}` : ''}`);
     if (!res.ok) throw new Error((await res.json()).message || 'Error al obtener sesiones');
     const data = await res.json();
-    console.log('Respuesta del backend al obtener sesiones:', data);
     return data.sesiones || data.items || data;
   },
 
