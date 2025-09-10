@@ -8,6 +8,7 @@ import workerRoutes from './routes/users/workerRoutes';
 import dietRoutes from './routes/diets/dietRoutes';
 import trainingRoutes from './routes/training';
 import messagingRoutes from './routes/chats';
+import suscriptionPlanRoutes from './routes/suscriptionPlan/suscriptionPlanRoutes';
 import { SocketServer } from './socket/socketServer';
 
 dotenv.config();
@@ -44,6 +45,7 @@ app.use('/api/workers', workerRoutes);
 app.use('/api/diets', dietRoutes);
 app.use('/api/training', trainingRoutes);
 app.use('/api/messaging', messagingRoutes);
+app.use('/api/suscription-plans', suscriptionPlanRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("API corriendo...");

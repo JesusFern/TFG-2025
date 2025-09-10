@@ -49,6 +49,7 @@
     "mongoose": "^8.12.2",
     "socket.io": "^4.8.1",
     "socket.io-client": "^4.8.1",
+    "stripe": "^18.5.0",
     "winston": "^3.17.0"
   }
 }
