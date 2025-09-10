@@ -172,6 +172,8 @@ describe('Plan de Entrenamiento Endpoints', () => {
         objetivo: "Ganancia muscular",
         duracionDias: 30,
         sesionesPorSemana: 4,
+        fechaInicio: new Date().toISOString(),
+        diasSemana: [1, 3, 5, 0], // Lunes, Miércoles, Viernes, Domingo
         clientes: [clienteId],
         publico: false
       };

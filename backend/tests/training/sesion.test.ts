@@ -195,10 +195,13 @@ describe('Sesión Endpoints', () => {
 
   describe('POST /api/training/sesiones', () => {
     it('debería crear una sesión correctamente', async () => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
       const sesionData = {
         clienteId,
         planId,
-        fecha: new Date().toISOString(),
+        fecha: tomorrow.toISOString(),
         hora: "09:00",
         tipoEntrenamiento: "Fuerza",
         duracion: 60,
@@ -272,7 +275,7 @@ describe('Sesión Endpoints', () => {
     it('debería fallar si hay ejercicios duplicados en el mismo orden', async () => {
       const sesionData = {
         clienteId,
-        fecha: new Date().toISOString(),
+        fecha: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // Pasado mañana
         tipoEntrenamiento: "Fuerza",
         duracion: 60,
         ejercicios: [
@@ -476,7 +479,7 @@ describe('Sesión Endpoints', () => {
     it('debería validar tipo de entrenamiento válido', async () => {
       const sesionData = {
         clienteId,
-        fecha: new Date().toISOString(),
+        fecha: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // Pasado mañana
         tipoEntrenamiento: "Tipo Invalido",
         duracion: 60,
         ejercicios: [{
@@ -499,7 +502,7 @@ describe('Sesión Endpoints', () => {
     it('debería validar duración mínima', async () => {
       const sesionData = {
         clienteId,
-        fecha: new Date().toISOString(),
+        fecha: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // Pasado mañana
         tipoEntrenamiento: "Fuerza",
         duracion: 0,
         ejercicios: [{
@@ -522,7 +525,7 @@ describe('Sesión Endpoints', () => {
     it('debería validar que los ejercicios existen', async () => {
       const sesionData = {
         clienteId,
-        fecha: new Date().toISOString(),
+        fecha: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // Pasado mañana
         tipoEntrenamiento: "Fuerza",
         duracion: 60,
         ejercicios: [{

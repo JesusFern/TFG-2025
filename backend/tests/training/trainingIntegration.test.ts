@@ -209,6 +209,8 @@ describe('Training Module Integration Tests', () => {
         objetivo: "Ganancia muscular",
         duracionDias: 30,
         sesionesPorSemana: 4,
+        fechaInicio: new Date().toISOString(),
+        diasSemana: [1, 3, 5, 0], // Lunes, Miércoles, Viernes, Domingo
         clientes: [clienteId],
         publico: false
       };
@@ -223,10 +225,13 @@ describe('Training Module Integration Tests', () => {
       planId = planRes.body.plan._id;
 
       // 3. Crear sesión
+      const dayAfterTomorrow = new Date();
+      dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+      
       const sesionData = {
         clienteId,
         planId,
-        fecha: new Date().toISOString(),
+        fecha: dayAfterTomorrow.toISOString(),
         hora: "09:00",
         tipoEntrenamiento: "Fuerza",
         duracion: 60,
