@@ -1,5 +1,51 @@
 import PlanEntrenamiento from '../../models/training/planEntrenamiento';
 import User from '../../models/users/user';
+import Sesion from '../../models/training/sesion';
+
+// Función auxiliar para crear sesiones para un cliente
+async function crearSesionesParaCliente(
+  planId: string,
+  clienteId: string,
+  entrenadorId: string,
+  fechaInicio: string,
+  diasSemana: number[],
+  duracionDias: number
+) {
+  const sesiones = [];
+  const fechaInicioDate = new Date(fechaInicio);
+  
+  // Calcular todas las fechas de sesiones
+  const fechasSesiones = [];
+  for (let dia = 0; dia < duracionDias; dia++) {
+    const fechaActual = new Date(fechaInicioDate);
+    fechaActual.setDate(fechaActual.getDate() + dia);
+    
+    const diaSemana = fechaActual.getDay(); // 0 = Domingo, 1 = Lunes, etc.
+    
+    if (diasSemana.includes(diaSemana)) {
+      fechasSesiones.push(fechaActual);
+    }
+  }
+  
+  // Crear una sesión para cada fecha
+  for (const fecha of fechasSesiones) {
+    const sesion = new Sesion({
+      entrenador: entrenadorId,
+      cliente: clienteId,
+      plan: planId,
+      fecha: fecha.toISOString(),
+      tipoEntrenamiento: 'Fuerza', // Por defecto, se puede cambiar después
+      duracion: 60, // 60 minutos por defecto
+      ejercicios: [], // Se pueden añadir ejercicios después
+      completada: false
+    });
+    
+    await sesion.save();
+    sesiones.push(sesion);
+  }
+  
+  return sesiones;
+}
 
 export async function crearPlanEntrenamientoService({
   entrenadorId,
@@ -8,6 +54,8 @@ export async function crearPlanEntrenamientoService({
   objetivo,
   duracionDias,
   sesionesPorSemana,
+  fechaInicio,
+  diasSemana,
   clientes,
   publico
 }: {
@@ -17,6 +65,8 @@ export async function crearPlanEntrenamientoService({
   objetivo: string;
   duracionDias: number;
   sesionesPorSemana: number;
+  fechaInicio: string;
+  diasSemana: number[];
   clientes: string[];
   publico: boolean;
 }) {
@@ -60,12 +110,26 @@ export async function crearPlanEntrenamientoService({
     objetivo,
     duracionDias,
     sesionesPorSemana,
+    fechaInicio: new Date(fechaInicio),
+    diasSemana,
     entrenador: entrenadorId,
     clientes,
     publico
   });
 
   await plan.save();
+
+  // Crear sesiones automáticamente para cada cliente
+  const sesionesCreadas = [];
+  for (const clienteId of clientes) {
+    const sesionesDelCliente = await crearSesionesParaCliente(plan._id.toString(), clienteId, entrenadorId, fechaInicio, diasSemana, duracionDias);
+    sesionesCreadas.push(...sesionesDelCliente);
+  }
+
+  // Actualizar el plan con las sesiones creadas
+  plan.sesiones = sesionesCreadas.map(sesion => sesion._id);
+  await plan.save();
+
   return plan;
 }
 

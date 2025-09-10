@@ -35,6 +35,9 @@ export const crearPlanEntrenamientoValidator = [
   body('objetivo').isIn(['Pérdida de peso', 'Ganancia muscular', 'Mantenimiento', 'Resistencia', 'Flexibilidad', 'Potencia', 'Estabilidad', 'Salud general']).withMessage('Objetivo no válido'),
   body('duracionDias').isInt({ min: 1, max: 365 }).toInt().withMessage('La duración debe ser un número entero entre 1 y 365 días'),
   body('sesionesPorSemana').isInt({ min: 1, max: 7 }).toInt().withMessage('Las sesiones por semana deben ser un número entero entre 1 y 7'),
+  body('fechaInicio').isISO8601().withMessage('La fecha de inicio debe ser una fecha válida'),
+  body('diasSemana').isArray({ min: 1, max: 7 }).withMessage('Debe seleccionar entre 1 y 7 días de la semana'),
+  body('diasSemana.*').isInt({ min: 0, max: 6 }).toInt().withMessage('Cada día debe ser un número entre 0 (Domingo) y 6 (Sábado)'),
   body('clientes').isArray({ min: 0 }).withMessage('Los clientes deben ser un array'),
   body('clientes.*').isMongoId().withMessage('Cada cliente debe tener un ID válido'),
   body('publico').isBoolean().toBoolean().withMessage('El campo público debe ser un booleano')
@@ -47,6 +50,9 @@ export const actualizarPlanEntrenamientoValidator = [
   body('objetivo').optional().isIn(['Pérdida de peso', 'Ganancia muscular', 'Mantenimiento', 'Resistencia', 'Flexibilidad', 'Potencia', 'Estabilidad', 'Salud general']).withMessage('Objetivo no válido'),
   body('duracionDias').optional().isInt({ min: 1, max: 365 }).toInt().withMessage('La duración debe ser un número entero entre 1 y 365 días'),
   body('sesionesPorSemana').optional().isInt({ min: 1, max: 7 }).toInt().withMessage('Las sesiones por semana deben ser un número entero entre 1 y 7'),
+  body('fechaInicio').optional().isISO8601().withMessage('La fecha de inicio debe ser una fecha válida'),
+  body('diasSemana').optional().isArray({ min: 1, max: 7 }).withMessage('Debe seleccionar entre 1 y 7 días de la semana'),
+  body('diasSemana.*').optional().isInt({ min: 0, max: 6 }).toInt().withMessage('Cada día debe ser un número entre 0 (Domingo) y 6 (Sábado)'),
   body('clientes').optional().isArray({ min: 0 }).withMessage('Los clientes deben ser un array'),
   body('clientes.*').optional().isMongoId().withMessage('Cada cliente debe tener un ID válido'),
   body('publico').optional().isBoolean().toBoolean().withMessage('El campo público debe ser un booleano')

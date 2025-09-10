@@ -19,6 +19,8 @@ type PlanCreateAllowed = {
   objetivo: string;
   duracionDias: number;
   sesionesPorSemana: number;
+  fechaInicio: string;
+  diasSemana: number[];
   clientes: string[];
   publico: boolean;
 };
@@ -40,6 +42,8 @@ export const crearPlanEntrenamiento = async (req: AuthenticatedRequest, res: Res
       objetivo: string;
       duracionDias: number;
       sesionesPorSemana: number;
+      fechaInicio: string;
+      diasSemana: number[];
       clientes: string[];
       publico: boolean;
     };
@@ -59,6 +63,8 @@ export const crearPlanEntrenamiento = async (req: AuthenticatedRequest, res: Res
       objetivo: data.objetivo,
       duracionDias: data.duracionDias,
       sesionesPorSemana: data.sesionesPorSemana,
+      fechaInicio: data.fechaInicio,
+      diasSemana: data.diasSemana,
       clientes: Array.isArray(data.clientes) ? data.clientes : [],
       publico: data.publico
     };
