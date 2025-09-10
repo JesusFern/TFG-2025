@@ -81,7 +81,7 @@ const mockUserForAssignWorker = {
 
 // Middleware to authenticate user
 const authMiddleware = (req: AuthenticatedRequest, _res: Response, next: NextFunction) => {
-  req.user = { id: USER_ID, role: 'user' };
+  req.user = { id: USER_ID, role: 'user', email: 'user@example.com' };
   next();
 };
 
@@ -348,7 +348,7 @@ describe('Worker Management Tests', () => {
     beforeEach(() => {
       // Reset mocks for each test
       mockRequest = {
-        user: { id: 'nutricionista_id', role: 'worker' }
+        user: { id: 'nutricionista_id', role: 'worker', email: 'worker@example.com' }
       };
       
       responseObject = {};
