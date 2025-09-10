@@ -57,6 +57,14 @@ const WorkerClientsDashboard: React.FC = () => {
 		navigate(`/worker/dashboard-clients/${clienteId}/diets`);
 	};
 
+	const handleCrearPlan = (clienteId: string) => {
+		navigate(`/training/planes/crear?clientId=${clienteId}`);
+	};
+
+	const handleVerPlanes = (clienteId: string) => {
+		navigate(`/training/planes?clientId=${clienteId}`);
+	};
+	
 	const getBadgeColor = (genero?: string) => {
 		if (!genero) return 'gray';
 		switch (genero.toLowerCase()) {
@@ -293,6 +301,19 @@ const WorkerClientsDashboard: React.FC = () => {
 														onClick={() => handleVerDietas(cliente._id)}
 													>
 														Ver dietas
+													</Button>
+													<Button 
+														color="blue"
+														onClick={() => handleCrearPlan(cliente._id)}
+													>
+														Crear plan
+													</Button>
+													<Button 
+														variant="outline"
+														color="blue"
+														onClick={() => handleVerPlanes(cliente._id)}
+													>
+														Ver planes
 													</Button>
 												</Group>
 							</Card>
