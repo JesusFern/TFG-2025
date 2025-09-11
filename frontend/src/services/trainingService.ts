@@ -7,7 +7,7 @@ import type {
   CrearPlanDTO, 
   ActualizarPlanDTO, 
   SesionPlan, 
-  CrearSesionDTO, 
+  CrearSesionAPIDTO,
   ActualizarSesionDTO 
 } from '../types/training';
 
@@ -21,7 +21,8 @@ export const trainingService = {
       body: JSON.stringify(data)
     });
     if (!res.ok) throw new Error((await res.json()).message || 'Error al crear ejercicio');
-    return await res.json();
+    const response = await res.json();
+    return response.ejercicio;
   },
 
   async obtenerEjercicios(params: Record<string, string | number | boolean> = {}): Promise<Ejercicio[]> {
@@ -107,8 +108,14 @@ export const trainingService = {
     return await res.json();
   },
 
+  async publicarPlan(id: string): Promise<PlanEntrenamiento> {
+    const res = await apiRequest(`${base}/planes/${id}/publicar`, { method: 'PATCH' });
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al publicar plan');
+    return await res.json();
+  },
+
   // Sesiones
-  async crearSesion(data: CrearSesionDTO): Promise<SesionPlan> {
+  async crearSesion(data: CrearSesionAPIDTO): Promise<{ message: string; sesion: SesionPlan }> {
     const res = await apiRequest(`${base}/sesiones`, {
       method: 'POST',
       body: JSON.stringify(data)

@@ -62,7 +62,7 @@ const WorkerClientsDashboard: React.FC = () => {
 	};
 
 	const handleVerPlanes = (clienteId: string) => {
-		navigate(`/training/planes?clientId=${clienteId}`);
+		navigate(`/worker/dashboard-clients/${clienteId}/training`);
 	};
 	
 	const getBadgeColor = (genero?: string) => {

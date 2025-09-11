@@ -55,6 +55,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, workerRoute?: boolea
 };
 
 import WorkerClientDietsList from '../pages/WorkerClientDietsList';
+import WorkerClientTrainingPlansList from '../pages/WorkerClientTrainingPlansList';
 import EjerciciosListPage from '../pages/EjerciciosListPage';
 import TrainingPlansListPage from '../pages/TrainingPlansListPage';
 import CrearEjercicioPage from '../pages/CrearEjercicioPage';
@@ -103,6 +104,14 @@ const AppRoutes: React.FC = () => {
         <ProtectedRoute workerRoute={true}>
           <Layout>
             <WorkerClientDietsList />
+          </Layout>
+        </ProtectedRoute>
+      } />
+
+      <Route path="/worker/dashboard-clients/:clientId/training" element={
+        <ProtectedRoute workerRoute={true}>
+          <Layout>
+            <WorkerClientTrainingPlansList />
           </Layout>
         </ProtectedRoute>
       } />

@@ -29,6 +29,7 @@ export interface PlanEntrenamiento {
   clientes: string[];
   publico: boolean;
   activo?: boolean;
+  draftMode: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -62,13 +63,41 @@ export interface SesionPlan {
   updatedAt?: string;
 }
 
-export type CrearEjercicioDTO = Omit<Ejercicio, '_id' | 'creador' | 'createdAt' | 'updatedAt'>;
+export type CrearEjercicioDTO = Omit<Ejercicio, '_id' | 'creador' | 'createdAt' | 'updatedAt'> & {
+  publico: boolean;
+};
 export type ActualizarEjercicioDTO = Partial<CrearEjercicioDTO>;
 
 export type CrearPlanDTO = Omit<PlanEntrenamiento, '_id' | 'entrenador' | 'activo' | 'createdAt' | 'updatedAt'>;
 export type ActualizarPlanDTO = Partial<CrearPlanDTO>;
 
 export type CrearSesionDTO = Omit<SesionPlan, '_id' | 'createdAt' | 'updatedAt'>;
+
+// Tipo específico para la API que usa clienteId y planId
+export type CrearSesionAPIDTO = {
+  clienteId: string;
+  planId?: string;
+  fecha: string;
+  hora?: string;
+  tipoEntrenamiento: string;
+  duracion: number;
+  ejercicios: Array<{
+    ejercicio: string;
+    orden: number;
+    series: number;
+    repeticiones: number;
+    peso?: number;
+    tiempoDescanso: number;
+    ejerciciosAlternativos?: string[];
+    opcionesProgresion?: {
+      aumentarPeso: boolean;
+      masRepeticiones: boolean;
+      mayorIntensidad: boolean;
+    };
+  }>;
+  notas?: string;
+};
+
 export type ActualizarSesionDTO = Partial<CrearSesionDTO>;
 
 export interface Paginado<T> {

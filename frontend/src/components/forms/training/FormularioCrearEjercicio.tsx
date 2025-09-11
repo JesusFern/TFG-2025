@@ -40,7 +40,7 @@ const FormularioCrearEjercicio: React.FC<FormularioCrearEjercicioProps> = ({
     nivelIntensidad: 'Media',
     videoDemostrativo: '',
     publico: false,
-  } as unknown as CrearEjercicioDTO & { publico?: boolean });
+  });
   
   const [formError, setFormError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
