@@ -72,6 +72,25 @@ jest.mock('../../src/models/training/planEntrenamiento', () => {
   return { __esModule: true, default: PlanMock };
 });
 
+jest.mock('../../src/models/training/sesion', () => {
+  class SesionMock {
+    static findById(id: string) {
+      if (id === sesionId) {
+        const doc = { _id: id, entrenador: workerId, cliente: clienteId, completada: false };
+        return {
+          ...doc,
+          populate: function() { return Promise.resolve(doc); },
+          save: function() { return Promise.resolve(doc); }
+        };
+      }
+      return null;
+    }
+    static findByIdAndUpdate() { return Promise.resolve({}); }
+    static findByIdAndDelete() { return Promise.resolve({}); }
+  }
+  return { __esModule: true, default: SesionMock };
+});
+
 // Mock ligero de ejercicio para validar existencia por IDs
 jest.mock('../../src/models/training/ejercicio', () => {
   type FindQuery = { _id?: { $in?: string[] } } | undefined;
@@ -164,6 +183,10 @@ jest.mock('../../src/service/training/sesionService', () => ({
     ejercicios?: Array<{ ejercicio: string; orden: number; series?: number; repeticiones?: number; tiempoDescanso?: number; }>;
     notas?: string;
   }) => {
+    // Verificar que la sesión existe
+    if (id !== sesionId) {
+      throw new Error('Sesión no encontrada');
+    }
     return {
       _id: id,
       fecha: datos.fecha ? new Date(datos.fecha) : new Date(),
@@ -177,7 +200,11 @@ jest.mock('../../src/service/training/sesionService', () => ({
       notas: datos.notas || ''
     };
   }),
-  eliminarSesionService: jest.fn().mockImplementation(async () => {
+  eliminarSesionService: jest.fn().mockImplementation(async (id: string) => {
+    // Verificar que la sesión existe
+    if (id !== sesionId) {
+      throw new Error('Sesión no encontrada');
+    }
     return { message: 'Sesión eliminada correctamente' };
   }),
   marcarSesionCompletadaService: jest.fn().mockImplementation(async (id: string) => {

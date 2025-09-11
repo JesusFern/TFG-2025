@@ -76,6 +76,24 @@ jest.mock('../../src/models/users/user', () => {
   };
 });
 
+jest.mock('../../src/models/training/planEntrenamiento', () => {
+  class PlanMock {
+    static findById(id: string) {
+      if (id === planId) {
+        const doc = { _id: id, activo: true, draftMode: true, entrenador: workerId, clientes: [clienteId], sesiones: [] };
+        return Promise.resolve({
+          ...doc,
+          populate: function() { return Promise.resolve(doc); },
+          save: function() { return Promise.resolve(doc); }
+        });
+      }
+      return Promise.resolve(null);
+    }
+    static findByIdAndUpdate() { return Promise.resolve({}); }
+  }
+  return { __esModule: true, default: PlanMock };
+});
+
 jest.mock('../../src/service/training/planEntrenamientoService', () => ({
   crearPlanEntrenamientoService: jest.fn().mockImplementation(async (planData) => {
     return {
@@ -125,6 +143,10 @@ jest.mock('../../src/service/training/planEntrenamientoService', () => ({
     };
   }),
   actualizarPlanEntrenamientoService: jest.fn().mockImplementation(async (id, entrenadorId, datos) => {
+    // Verificar que el plan existe
+    if (id !== planId) {
+      throw new Error('Plan de entrenamiento no encontrado');
+    }
     return {
       _id: id,
       nombre: datos.nombre || "Plan de Fuerza",
@@ -138,7 +160,11 @@ jest.mock('../../src/service/training/planEntrenamientoService', () => ({
       activo: true
     };
   }),
-  eliminarPlanEntrenamientoService: jest.fn().mockImplementation(async () => {
+  eliminarPlanEntrenamientoService: jest.fn().mockImplementation(async (id) => {
+    // Verificar que el plan existe
+    if (id !== planId) {
+      throw new Error('Plan de entrenamiento no encontrado');
+    }
     return { message: 'Plan de entrenamiento eliminado correctamente' };
   }),
   asignarClienteService: jest.fn().mockImplementation(async (planId, entrenadorId, clienteId) => {

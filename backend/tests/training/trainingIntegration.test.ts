@@ -128,7 +128,7 @@ jest.mock('../../src/models/training/planEntrenamiento', () => {
     _id?: string;
     static genId() { const base = (Date.now().toString(16) + 'f'.repeat(24)).slice(0,24); return base; }
     static store = new Map<string, Record<string, unknown>>();
-    save() { this._id = this._id || PlanMock.genId(); const doc = { _id: this._id, activo: true, clientes: this.data?.clientes || [clienteId], entrenador: workerId, sesiones: [], ...this.data } as Record<string, unknown>; PlanMock.store.set(this._id, doc); return Promise.resolve(doc); }
+    save() { this._id = this._id || PlanMock.genId(); const doc = { _id: this._id, activo: true, draftMode: true, clientes: this.data?.clientes || [clienteId], entrenador: workerId, sesiones: [], ...this.data } as Record<string, unknown>; PlanMock.store.set(this._id, doc); return Promise.resolve(doc); }
     static findOne() { return Promise.resolve(null); }
     static find() {
       return {
@@ -137,7 +137,7 @@ jest.mock('../../src/models/training/planEntrenamiento', () => {
       };
     }
     static findById(id: string) { 
-      const doc = (PlanMock.store.get(id) as Record<string, unknown>) || { _id: id, activo: true, entrenador: workerId, clientes: [clienteId], sesiones: [] } as Record<string, unknown>;
+      const doc = (PlanMock.store.get(id) as Record<string, unknown>) || { _id: id, activo: true, draftMode: true, entrenador: workerId, clientes: [clienteId], sesiones: [] } as Record<string, unknown>;
       (doc as { save?: () => Promise<unknown> }).save = function() { PlanMock.store.set(id, doc); return Promise.resolve(doc); };
       return Promise.resolve(doc); 
     }
@@ -160,7 +160,15 @@ jest.mock('../../src/models/training/sesion', () => {
         sort: function() { return []; }
       };
     }
-    static findById(id: string) { const doc = (SesionMock.store.get(id) as Record<string, unknown>) || { _id: id, entrenador: workerId, cliente: clienteId, completada: false } as Record<string, unknown>; (doc as { save?: () => Promise<unknown> }).save = function() { SesionMock.store.set(id, doc); return Promise.resolve(doc); }; return Promise.resolve(doc); }
+    static findById(id: string) { 
+      const doc = (SesionMock.store.get(id) as Record<string, unknown>) || { _id: id, entrenador: workerId, cliente: clienteId, completada: false } as Record<string, unknown>; 
+      const docWithMethods = {
+        ...doc,
+        save: function() { SesionMock.store.set(id, doc); return Promise.resolve(doc); },
+        populate: function() { return Promise.resolve(doc); }
+      };
+      return docWithMethods; 
+    }
     static findByIdAndUpdate(id: string, update: Record<string, unknown>) { const doc = SesionMock.store.get(id); if (doc) { Object.assign(doc, update); SesionMock.store.set(id, doc); } return Promise.resolve((doc as Record<string, unknown>) || {}); }
     static findByIdAndDelete(id: string) { const doc = SesionMock.store.get(id); SesionMock.store.delete(id); return Promise.resolve(doc || {}); }
   }
