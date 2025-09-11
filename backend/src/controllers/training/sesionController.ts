@@ -1,5 +1,10 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../types';
+import Sesion from '../../models/training/sesion';
+
+interface SesionConPlan {
+  plan: { draftMode: boolean };
+}
 import { 
   crearSesionService, 
   obtenerSesionesService, 
@@ -163,6 +168,19 @@ export const actualizarSesion = async (req: AuthenticatedRequest, res: Response)
       campos: Object.keys(datosActualizacion)
     });
 
+    // Verificar si la sesión pertenece a un plan publicado
+    const sesionExistente = await Sesion.findById(id).populate('plan');
+    if (!sesionExistente) {
+      res.status(404).json({ message: 'Sesión no encontrada' });
+      return;
+    }
+
+    const plan = (sesionExistente as unknown as SesionConPlan).plan;
+    if (plan && !plan.draftMode) {
+      res.status(403).json({ message: 'No se puede editar una sesión de un plan publicado' });
+      return;
+    }
+
     const sesion = await actualizarSesionService(id, entrenadorId, datosActualizacion);
 
     logger.info('Sesión actualizada correctamente', { sesionId: id });
@@ -192,6 +210,19 @@ export const eliminarSesion = async (req: AuthenticatedRequest, res: Response) =
       entrenadorId,
       sesionId: id
     });
+
+    // Verificar si la sesión pertenece a un plan publicado
+    const sesionExistente = await Sesion.findById(id).populate('plan');
+    if (!sesionExistente) {
+      res.status(404).json({ message: 'Sesión no encontrada' });
+      return;
+    }
+
+    const plan = (sesionExistente as unknown as SesionConPlan).plan;
+    if (plan && !plan.draftMode) {
+      res.status(403).json({ message: 'No se puede eliminar una sesión de un plan publicado' });
+      return;
+    }
 
     const resultado = await eliminarSesionService(id, entrenadorId);
 

@@ -12,7 +12,8 @@ export async function crearEjercicioService({
   tiempoDescanso,
   nivelDificultad,
   nivelIntensidad,
-  videoDemostrativo
+  videoDemostrativo,
+  publico = false
 }: {
   creadorId: string;
   nombre: string;
@@ -25,6 +26,7 @@ export async function crearEjercicioService({
   nivelDificultad: string;
   nivelIntensidad: string;
   videoDemostrativo?: string;
+  publico?: boolean;
 }) {
   // Validar que el creador es un worker
   const creadorUser = await User.findById(creadorId);
@@ -53,6 +55,7 @@ export async function crearEjercicioService({
     nivelDificultad,
     nivelIntensidad,
     videoDemostrativo,
+    publico,
     creador: creadorId
   });
 
@@ -114,6 +117,7 @@ export async function actualizarEjercicioService(
     nivelDificultad: string;
     nivelIntensidad: string;
     videoDemostrativo: string;
+    publico: boolean;
   }>
 ) {
   const ejercicio = await Ejercicio.findById(ejercicioId);

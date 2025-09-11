@@ -3,7 +3,7 @@ import { body, param, query } from 'express-validator';
 // Validadores para ejercicios
 export const crearEjercicioValidator = [
   body('nombre').isString().trim().isLength({ min: 1, max: 100 }).withMessage('El nombre es obligatorio y debe tener entre 1 y 100 caracteres'),
-  body('descripcion').isString().trim().isLength({ min: 1, max: 500 }).withMessage('La descripción es obligatoria y debe tener entre 1 y 500 caracteres'),
+  body('descripcion').optional().isString().trim().isLength({ min: 0, max: 500 }).withMessage('La descripción debe tener entre 0 y 500 caracteres'),
   body('grupoMuscular').isIn(['Piernas', 'Espalda', 'Pecho', 'Hombros', 'Brazos', 'Core', 'Glúteos', 'Pantorrillas']).withMessage('Grupo muscular no válido'),
   body('equipamiento').isIn(['Mancuernas', 'Barra', 'Cuerda para saltar', 'Ninguno', 'Máquina', 'Peso corporal', 'Pelota medicinal', 'Bandas de resistencia']).withMessage('Equipamiento no válido'),
   body('series').isInt({ min: 1, max: 20 }).toInt().withMessage('Las series deben ser un número entero entre 1 y 20'),
@@ -11,13 +11,14 @@ export const crearEjercicioValidator = [
   body('tiempoDescanso').isInt({ min: 0, max: 600 }).toInt().withMessage('El tiempo de descanso debe ser un número entero entre 0 y 600 segundos'),
   body('nivelDificultad').isIn(['Principiante', 'Intermedio', 'Avanzado']).withMessage('Nivel de dificultad no válido'),
   body('nivelIntensidad').isIn(['Baja', 'Media', 'Alta']).withMessage('Nivel de intensidad no válido'),
-  body('videoDemostrativo').optional().isURL().withMessage('El video demostrativo debe ser una URL válida')
+  body('videoDemostrativo').optional().isURL().withMessage('El video demostrativo debe ser una URL válida'),
+  body('publico').optional().isBoolean().toBoolean().withMessage('El campo público debe ser un booleano')
 ];
 
 export const actualizarEjercicioValidator = [
   param('id').isMongoId().withMessage('ID de ejercicio no válido'),
   body('nombre').optional().isString().trim().isLength({ min: 1, max: 100 }).withMessage('El nombre debe tener entre 1 y 100 caracteres'),
-  body('descripcion').optional().isString().trim().isLength({ min: 1, max: 500 }).withMessage('La descripción debe tener entre 1 y 500 caracteres'),
+  body('descripcion').optional().isString().trim().isLength({ min: 0, max: 500 }).withMessage('La descripción debe tener entre 0 y 500 caracteres'),
   body('grupoMuscular').optional().isIn(['Piernas', 'Espalda', 'Pecho', 'Hombros', 'Brazos', 'Core', 'Glúteos', 'Pantorrillas']).withMessage('Grupo muscular no válido'),
   body('equipamiento').optional().isIn(['Mancuernas', 'Barra', 'Cuerda para saltar', 'Ninguno', 'Máquina', 'Peso corporal', 'Pelota medicinal', 'Bandas de resistencia']).withMessage('Equipamiento no válido'),
   body('series').optional().isInt({ min: 1, max: 20 }).toInt().withMessage('Las series deben ser un número entero entre 1 y 20'),
@@ -25,7 +26,8 @@ export const actualizarEjercicioValidator = [
   body('tiempoDescanso').optional().isInt({ min: 0, max: 600 }).toInt().withMessage('El tiempo de descanso debe ser un número entero entre 0 y 600 segundos'),
   body('nivelDificultad').optional().isIn(['Principiante', 'Intermedio', 'Avanzado']).withMessage('Nivel de dificultad no válido'),
   body('nivelIntensidad').optional().isIn(['Baja', 'Media', 'Alta']).withMessage('Nivel de intensidad no válido'),
-  body('videoDemostrativo').optional().isURL().withMessage('El video demostrativo debe ser una URL válida')
+  body('videoDemostrativo').optional().isURL().withMessage('El video demostrativo debe ser una URL válida'),
+  body('publico').optional().isBoolean().toBoolean().withMessage('El campo público debe ser un booleano')
 ];
 
 // Validadores para planes de entrenamiento
@@ -66,7 +68,7 @@ export const crearSesionValidator = [
   body('hora').optional().matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('La hora debe tener formato HH:MM'),
   body('tipoEntrenamiento').isIn(['Fuerza', 'Resistencia', 'Cardio', 'HIIT', 'Movilidad', 'Flexibilidad', 'Potencia', 'Estabilidad']).withMessage('Tipo de entrenamiento no válido'),
   body('duracion').isInt({ min: 1, max: 480 }).toInt().withMessage('La duración debe ser un número entero entre 1 y 480 minutos'),
-  body('ejercicios').isArray({ min: 1 }).withMessage('Debe haber al menos un ejercicio'),
+  body('ejercicios').isArray({ min: 0 }).withMessage('Los ejercicios deben ser un array'),
   body('ejercicios.*.ejercicio').isMongoId().withMessage('Cada ejercicio debe tener un ID válido'),
   body('ejercicios.*.orden').isInt({ min: 1 }).toInt().withMessage('El orden debe ser un número entero mayor que 0'),
   body('ejercicios.*.series').isInt({ min: 1, max: 20 }).toInt().withMessage('Las series deben ser un número entero entre 1 y 20'),

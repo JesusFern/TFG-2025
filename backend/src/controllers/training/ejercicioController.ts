@@ -28,7 +28,8 @@ export const crearEjercicio = async (req: AuthenticatedRequest, res: Response) =
       tiempoDescanso,
       nivelDificultad,
       nivelIntensidad,
-      videoDemostrativo
+      videoDemostrativo,
+      publico
     } = matchedData(req, { locations: ['body'], includeOptionals: true }) as {
       nombre: string;
       descripcion: string;
@@ -40,6 +41,7 @@ export const crearEjercicio = async (req: AuthenticatedRequest, res: Response) =
       nivelDificultad: string;
       nivelIntensidad: string;
       videoDemostrativo?: string;
+      publico?: boolean;
     };
 
     logger.debug('Procesando datos para crear ejercicio', {
@@ -60,7 +62,8 @@ export const crearEjercicio = async (req: AuthenticatedRequest, res: Response) =
       tiempoDescanso,
       nivelDificultad,
       nivelIntensidad,
-      videoDemostrativo
+      videoDemostrativo,
+      publico
     });
 
     logger.info('Ejercicio creado correctamente', { ejercicioId: ejercicio._id });
@@ -138,6 +141,7 @@ export const actualizarEjercicio = async (req: AuthenticatedRequest, res: Respon
       nivelDificultad: string;
       nivelIntensidad: string;
       videoDemostrativo: string;
+      publico: boolean;
     }>;
 
     logger.debug('Procesando actualización de ejercicio', {

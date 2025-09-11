@@ -17,6 +17,7 @@ const PlanEntrenamientoSchema = new mongoose.Schema({
   clientes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }],
   publico: { type: Boolean, default: false },
   activo: { type: Boolean, default: true },
+  draftMode: { type: Boolean, default: true },
   sesiones: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Sesion' }]
 }, {
   timestamps: true
