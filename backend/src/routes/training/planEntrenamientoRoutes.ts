@@ -6,7 +6,8 @@ import {
   actualizarPlanEntrenamiento, 
   eliminarPlanEntrenamiento,
   asignarCliente,
-  removerCliente
+  removerCliente,
+  publicarPlanEntrenamiento
 } from '../../controllers/training/planEntrenamientoController';
 import { authenticateToken, authorizeWorker } from '../../middlewares/authMiddleware';
 import { 
@@ -31,5 +32,8 @@ router.delete('/:id', authenticateToken, authorizeWorker, idValidator, validateR
 // Rutas para gestión de clientes
 router.post('/:id/clientes', authenticateToken, authorizeWorker, asignarClienteValidator, validateRequest, asignarCliente);
 router.delete('/:id/clientes/:clienteId', authenticateToken, authorizeWorker, removerClienteValidator, validateRequest, removerCliente);
+
+// Ruta para publicar plan de entrenamiento
+router.patch('/:id/publicar', authenticateToken, authorizeWorker, idValidator, validateRequest, publicarPlanEntrenamiento);
 
 export default router;

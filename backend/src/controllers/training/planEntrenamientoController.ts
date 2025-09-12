@@ -1,6 +1,7 @@
 import { Response } from 'express';
 import { matchedData } from 'express-validator';
 import { AuthenticatedRequest } from '../../types';
+import PlanEntrenamiento from '../../models/training/planEntrenamiento';
 import { 
   crearPlanEntrenamientoService, 
   obtenerPlanesEntrenamientoService, 
@@ -19,6 +20,8 @@ type PlanCreateAllowed = {
   objetivo: string;
   duracionDias: number;
   sesionesPorSemana: number;
+  fechaInicio: string;
+  diasSemana: number[];
   clientes: string[];
   publico: boolean;
 };
@@ -40,6 +43,8 @@ export const crearPlanEntrenamiento = async (req: AuthenticatedRequest, res: Res
       objetivo: string;
       duracionDias: number;
       sesionesPorSemana: number;
+      fechaInicio: string;
+      diasSemana: number[];
       clientes: string[];
       publico: boolean;
     };
@@ -59,6 +64,8 @@ export const crearPlanEntrenamiento = async (req: AuthenticatedRequest, res: Res
       objetivo: data.objetivo,
       duracionDias: data.duracionDias,
       sesionesPorSemana: data.sesionesPorSemana,
+      fechaInicio: data.fechaInicio,
+      diasSemana: data.diasSemana,
       clientes: Array.isArray(data.clientes) ? data.clientes : [],
       publico: data.publico
     };
@@ -139,6 +146,18 @@ export const actualizarPlanEntrenamiento = async (req: AuthenticatedRequest, res
       campos: Object.keys(update)
     });
 
+    // Verificar que el plan existe y no está publicado
+    const planExistente = await PlanEntrenamiento.findById(id);
+    if (!planExistente) {
+      res.status(404).json({ message: 'Plan de entrenamiento no encontrado' });
+      return;
+    }
+
+    if (!planExistente.draftMode) {
+      res.status(403).json({ message: 'No se puede editar un plan de entrenamiento publicado' });
+      return;
+    }
+
     const plan = await actualizarPlanEntrenamientoService(id, entrenadorId, update);
 
     logger.info('Plan de entrenamiento actualizado correctamente', { planId: id });
@@ -168,6 +187,18 @@ export const eliminarPlanEntrenamiento = async (req: AuthenticatedRequest, res: 
       entrenadorId,
       planId: id
     });
+
+    // Verificar que el plan existe y no está publicado
+    const planExistente = await PlanEntrenamiento.findById(id);
+    if (!planExistente) {
+      res.status(404).json({ message: 'Plan de entrenamiento no encontrado' });
+      return;
+    }
+
+    if (!planExistente.draftMode) {
+      res.status(403).json({ message: 'No se puede eliminar un plan de entrenamiento publicado' });
+      return;
+    }
 
     const resultado = await eliminarPlanEntrenamientoService(id, entrenadorId);
 
@@ -242,6 +273,52 @@ export const removerCliente = async (req: AuthenticatedRequest, res: Response) =
     });
     res.status(400).json({
       message: 'Error al remover cliente',
+      error: error instanceof Error ? error.message : error
+    });
+  }
+};
+
+export const publicarPlanEntrenamiento = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const entrenadorId = req.user?.id;
+    if (!entrenadorId) {
+      res.status(401).json({ message: 'No autenticado' });
+      return;
+    }
+
+    const planId = req.params.id;
+
+    logger.debug('Solicitud para publicar plan de entrenamiento', { 
+      planId, 
+      entrenadorId
+    });
+
+    const plan = await PlanEntrenamiento.findById(planId);
+    if (!plan) {
+      res.status(404).json({ message: 'Plan de entrenamiento no encontrado' });
+      return;
+    }
+
+    // Verificar que el entrenador es el creador del plan
+    if (plan.entrenador.toString() !== entrenadorId) {
+      res.status(403).json({ message: 'No tienes permisos para publicar este plan' });
+      return;
+    }
+
+    plan.draftMode = false;
+    await plan.save();
+
+    logger.info('Plan de entrenamiento publicado correctamente', { planId });
+    res.status(200).json({ 
+      message: 'Plan de entrenamiento publicado correctamente', 
+      plan 
+    });
+  } catch (error) {
+    logger.error('Error al publicar plan de entrenamiento', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    res.status(400).json({
+      message: 'Error al publicar plan de entrenamiento',
       error: error instanceof Error ? error.message : error
     });
   }

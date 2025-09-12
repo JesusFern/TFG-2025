@@ -60,7 +60,6 @@ jest.mock('../../src/models/users/user', () => {
   };
 });
 
-// Mock ligero de plan para devolver plan válido cuando se pida por ID
 jest.mock('../../src/models/training/planEntrenamiento', () => {
   class PlanMock {
     static findById(id: string) {
@@ -68,11 +67,35 @@ jest.mock('../../src/models/training/planEntrenamiento', () => {
       return Promise.resolve(null);
     }
     static findByIdAndUpdate() { return Promise.resolve({}); }
+    static findOne(query: { sesiones?: string; draftMode?: boolean }) {
+      if (query.sesiones && query.draftMode === false) {
+        return Promise.resolve(null); // No hay planes publicados en los tests
+      }
+      return Promise.resolve(null);
+    }
   }
   return { __esModule: true, default: PlanMock };
 });
 
-// Mock ligero de ejercicio para validar existencia por IDs
+jest.mock('../../src/models/training/sesion', () => {
+  class SesionMock {
+    static findById(id: string) {
+      if (id === sesionId) {
+        const doc = { _id: id, entrenador: workerId, cliente: clienteId, completada: false };
+        return {
+          ...doc,
+          populate: function() { return Promise.resolve(doc); },
+          save: function() { return Promise.resolve(doc); }
+        };
+      }
+      return null;
+    }
+    static findByIdAndUpdate() { return Promise.resolve({}); }
+    static findByIdAndDelete() { return Promise.resolve({}); }
+  }
+  return { __esModule: true, default: SesionMock };
+});
+
 jest.mock('../../src/models/training/ejercicio', () => {
   type FindQuery = { _id?: { $in?: string[] } } | undefined;
   type EjercicioLite = { _id: string; activo: boolean };
@@ -85,7 +108,6 @@ jest.mock('../../src/models/training/ejercicio', () => {
   return { __esModule: true, default: EjercicioMock };
 });
 
-// Usar servicios reales en esta suite
 jest.mock('../../src/service/training/sesionService', () => ({
   crearSesionService: jest.fn().mockImplementation(async (sesionData: {
     fecha?: string;
@@ -95,7 +117,6 @@ jest.mock('../../src/service/training/sesionService', () => ({
     ejercicios?: Array<{ ejercicio: string; orden: number; series?: number; repeticiones?: number; tiempoDescanso?: number; }>; 
     clienteId?: string;
   }) => {
-    // Validación de fecha pasada
     if (sesionData.fecha) {
       const fechaSesion = new Date(sesionData.fecha);
       const hoy = new Date();
@@ -104,7 +125,6 @@ jest.mock('../../src/service/training/sesionService', () => ({
         throw new Error('La fecha de la sesión no puede ser anterior al día actual');
       }
     }
-    // Validación de duplicados en orden
     if (Array.isArray(sesionData.ejercicios)) {
       const ordenes = sesionData.ejercicios.map((e) => e.orden);
       const set = new Set(ordenes);
@@ -164,6 +184,10 @@ jest.mock('../../src/service/training/sesionService', () => ({
     ejercicios?: Array<{ ejercicio: string; orden: number; series?: number; repeticiones?: number; tiempoDescanso?: number; }>;
     notas?: string;
   }) => {
+    // Verificar que la sesión existe
+    if (id !== sesionId) {
+      throw new Error('Sesión no encontrada');
+    }
     return {
       _id: id,
       fecha: datos.fecha ? new Date(datos.fecha) : new Date(),
@@ -177,7 +201,11 @@ jest.mock('../../src/service/training/sesionService', () => ({
       notas: datos.notas || ''
     };
   }),
-  eliminarSesionService: jest.fn().mockImplementation(async () => {
+  eliminarSesionService: jest.fn().mockImplementation(async (id: string) => {
+    // Verificar que la sesión existe
+    if (id !== sesionId) {
+      throw new Error('Sesión no encontrada');
+    }
     return { message: 'Sesión eliminada correctamente' };
   }),
   marcarSesionCompletadaService: jest.fn().mockImplementation(async (id: string) => {
@@ -190,15 +218,17 @@ jest.mock('../../src/service/training/sesionService', () => ({
 
 describe('Sesión Endpoints', () => {
   beforeAll(async () => {
-    // Setup inicial si es necesario
   });
 
   describe('POST /api/training/sesiones', () => {
     it('debería crear una sesión correctamente', async () => {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      
       const sesionData = {
         clienteId,
         planId,
-        fecha: new Date().toISOString(),
+        fecha: tomorrow.toISOString(),
         hora: "09:00",
         tipoEntrenamiento: "Fuerza",
         duracion: 60,
@@ -272,7 +302,7 @@ describe('Sesión Endpoints', () => {
     it('debería fallar si hay ejercicios duplicados en el mismo orden', async () => {
       const sesionData = {
         clienteId,
-        fecha: new Date().toISOString(),
+        fecha: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // Pasado mañana
         tipoEntrenamiento: "Fuerza",
         duracion: 60,
         ejercicios: [
@@ -476,7 +506,7 @@ describe('Sesión Endpoints', () => {
     it('debería validar tipo de entrenamiento válido', async () => {
       const sesionData = {
         clienteId,
-        fecha: new Date().toISOString(),
+        fecha: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // Pasado mañana
         tipoEntrenamiento: "Tipo Invalido",
         duracion: 60,
         ejercicios: [{
@@ -499,7 +529,7 @@ describe('Sesión Endpoints', () => {
     it('debería validar duración mínima', async () => {
       const sesionData = {
         clienteId,
-        fecha: new Date().toISOString(),
+        fecha: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // Pasado mañana
         tipoEntrenamiento: "Fuerza",
         duracion: 0,
         ejercicios: [{
@@ -522,7 +552,7 @@ describe('Sesión Endpoints', () => {
     it('debería validar que los ejercicios existen', async () => {
       const sesionData = {
         clienteId,
-        fecha: new Date().toISOString(),
+        fecha: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(), // Pasado mañana
         tipoEntrenamiento: "Fuerza",
         duracion: 60,
         ejercicios: [{
