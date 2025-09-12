@@ -2,11 +2,10 @@ import React, { useState } from 'react';
 import {
   Modal,
   Title,
-  Text,
   Group,
-  Stack,
   Tabs,
-  Badge
+  Badge,
+  MantineProvider
 } from '@mantine/core';
 import { IconBarbell } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
@@ -57,9 +56,6 @@ const ModalGestionarEjercicios: React.FC<ModalGestionarEjerciciosProps> = ({
     if (onEjercicioCreado) {
       onEjercicioCreado(ejercicio);
     }
-    
-    // Las opciones de progresión se manejan dentro del componente CrearEjercicioForm
-    // y se pasan a través del callback onAddEjercicio
     onClose();
   };
 
@@ -80,55 +76,54 @@ const ModalGestionarEjercicios: React.FC<ModalGestionarEjerciciosProps> = ({
       centered
       overlayProps={{ backgroundOpacity: 0.55, blur: 3 }}
     >
-      <Stack gap="lg">
-        <Group justify="space-between" align="center">
-          <Text size="sm" c="dimmed">
-            Agrega ejercicios a tu sesión de entrenamiento
-          </Text>
-          <Badge color="nutroos-green" variant="light" size="sm">
-            Orden: {siguienteOrden}
-          </Badge>
-        </Group>
+      <Group justify="space-between" align="center" mb="md">
+        <Badge color="nutroos-green" variant="light" size="sm">
+          Orden: {siguienteOrden}
+        </Badge>
+      </Group>
 
-        <Tabs value={activeTab} onChange={setActiveTab}>
-          <Tabs.List>
-            <Tabs.Tab value="seleccionar">
-              Seleccionar Existente
-            </Tabs.Tab>
-            <Tabs.Tab value="crear">
-              Crear Nuevo
-            </Tabs.Tab>
-          </Tabs.List>
+      <Tabs value={activeTab} onChange={setActiveTab}>
+        <Tabs.List>
+          <Tabs.Tab value="seleccionar">
+            Seleccionar Existente
+          </Tabs.Tab>
+          <Tabs.Tab value="crear">
+            Crear Nuevo
+          </Tabs.Tab>
+        </Tabs.List>
 
-          <Tabs.Panel value="seleccionar" pt="md">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
+        <Tabs.Panel value="seleccionar" pt="md">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <MantineProvider>
               <SeleccionEjercicio
                 ejerciciosExistentes={ejerciciosExistentes}
                 siguienteOrden={siguienteOrden}
                 onEjercicioSeleccionado={handleEjercicioSeleccionado}
               />
-            </motion.div>
-          </Tabs.Panel>
+            </MantineProvider>
+          </motion.div>
+        </Tabs.Panel>
 
-          <Tabs.Panel value="crear" pt="md">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-            >
+        <Tabs.Panel value="crear" pt="md">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+          >
+            <MantineProvider>
               <CrearEjercicioForm
                 onEjercicioCreado={handleEjercicioCreado}
                 onAddEjercicio={onAddEjercicio}
                 siguienteOrden={siguienteOrden}
               />
-            </motion.div>
-          </Tabs.Panel>
-        </Tabs>
-      </Stack>
+            </MantineProvider>
+          </motion.div>
+        </Tabs.Panel>
+      </Tabs>
     </Modal>
   );
 };

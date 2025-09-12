@@ -41,3 +41,15 @@ img {
     color: var(--primary-color);
   }
 }
+
+/* Fix para z-index de dropdowns de Mantine en modales */
+.mantine-Select-dropdown,
+.mantine-Combobox-dropdown,
+.mantine-MultiSelect-dropdown {
+  z-index: 2000 !important;
+}
+
+/* Asegurar que los dropdowns aparezcan por encima de modales */
+[data-mantine-portal] {
+  z-index: 2000 !important;
+}

@@ -1077,17 +1077,17 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                     const diaSemana = currentSesionInfo.fecha.getDay();
                     const esDiaValido = plan.diasSemana.includes(diaSemana);
                     return esDiaValido ? (
-                      <Button 
-                        size="sm" 
-                        color="nutroos-green"
-                        leftSection={<IconBarbell size={16} />}
+                  <Button 
+                    size="sm" 
+                    color="nutroos-green"
+                    leftSection={<IconBarbell size={16} />}
                         disabled={!plan?.draftMode}
-                        onClick={() => {
+                    onClick={() => {
                           handleConfigurarSesion(currentSesionInfo.fecha.toISOString());
-                        }}
-                      >
-                        Configurar sesión
-                      </Button>
+                    }}
+                  >
+                    Configurar sesión
+                  </Button>
                     ) : (
                       <Text size="sm" c="dimmed">
                         Este día no está incluido en el plan de entrenamiento.

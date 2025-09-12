@@ -39,7 +39,11 @@ interface CrearEjercicioFormProps {
   siguienteOrden: number;
 }
 
-const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({ onEjercicioCreado, onAddEjercicio, siguienteOrden }) => {
+const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({ 
+  onEjercicioCreado, 
+  onAddEjercicio, 
+  siguienteOrden 
+}) => {
   const [nuevoEjercicio, setNuevoEjercicio] = useState<CrearEjercicioDTO>({
     nombre: '',
     descripcion: '',
@@ -65,15 +69,38 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({ onEjercicioCrea
   });
 
   const gruposMusculares = [
-    'Piernas', 'Espalda', 'Pecho', 'Hombros', 'Brazos', 'Core', 'Glúteos', 'Pantorrillas'
+    { value: 'Piernas', label: 'Piernas' },
+    { value: 'Espalda', label: 'Espalda' },
+    { value: 'Pecho', label: 'Pecho' },
+    { value: 'Hombros', label: 'Hombros' },
+    { value: 'Brazos', label: 'Brazos' },
+    { value: 'Core', label: 'Core' },
+    { value: 'Glúteos', label: 'Glúteos' },
+    { value: 'Pantorrillas', label: 'Pantorrillas' }
   ];
 
   const equipamientos = [
-    'Mancuernas', 'Barra', 'Cuerda para saltar', 'Ninguno', 'Máquina', 'Peso corporal', 'Pelota medicinal', 'Bandas de resistencia'
+    { value: 'Mancuernas', label: 'Mancuernas' },
+    { value: 'Barra', label: 'Barra' },
+    { value: 'Cuerda para saltar', label: 'Cuerda para saltar' },
+    { value: 'Ninguno', label: 'Ninguno' },
+    { value: 'Máquina', label: 'Máquina' },
+    { value: 'Peso corporal', label: 'Peso corporal' },
+    { value: 'Pelota medicinal', label: 'Pelota medicinal' },
+    { value: 'Bandas de resistencia', label: 'Bandas de resistencia' }
   ];
 
-  const nivelesDificultad = ['Principiante', 'Intermedio', 'Avanzado'];
-  const nivelesIntensidad = ['Baja', 'Media', 'Alta'];
+  const nivelesDificultad = [
+    { value: 'Principiante', label: 'Principiante' },
+    { value: 'Intermedio', label: 'Intermedio' },
+    { value: 'Avanzado', label: 'Avanzado' }
+  ];
+  
+  const nivelesIntensidad = [
+    { value: 'Baja', label: 'Baja' },
+    { value: 'Media', label: 'Media' },
+    { value: 'Alta', label: 'Alta' }
+  ];
 
   const handleCrearEjercicio = async () => {
     if (!nuevoEjercicio.nombre.trim()) {
@@ -170,6 +197,11 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({ onEjercicioCrea
             data={gruposMusculares}
             value={nuevoEjercicio.grupoMuscular}
             onChange={(value) => setNuevoEjercicio(prev => ({ ...prev, grupoMuscular: value || 'Pecho' }))}
+            styles={{
+              dropdown: {
+                zIndex: 2000
+              }
+            }}
           />
         </Grid.Col>
         <Grid.Col span={6}>
@@ -178,6 +210,11 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({ onEjercicioCrea
             data={equipamientos}
             value={nuevoEjercicio.equipamiento}
             onChange={(value) => setNuevoEjercicio(prev => ({ ...prev, equipamiento: value || 'Mancuernas' }))}
+            styles={{
+              dropdown: {
+                zIndex: 2000
+              }
+            }}
           />
         </Grid.Col>
         <Grid.Col span={4}>
@@ -213,6 +250,11 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({ onEjercicioCrea
             data={nivelesDificultad}
             value={nuevoEjercicio.nivelDificultad}
             onChange={(value) => setNuevoEjercicio(prev => ({ ...prev, nivelDificultad: value || 'Intermedio' }))}
+            styles={{
+              dropdown: {
+                zIndex: 2000
+              }
+            }}
           />
         </Grid.Col>
         <Grid.Col span={6}>
@@ -221,6 +263,11 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({ onEjercicioCrea
             data={nivelesIntensidad}
             value={nuevoEjercicio.nivelIntensidad}
             onChange={(value) => setNuevoEjercicio(prev => ({ ...prev, nivelIntensidad: value || 'Media' }))}
+            styles={{
+              dropdown: {
+                zIndex: 2000
+              }
+            }}
           />
         </Grid.Col>
       </Grid>

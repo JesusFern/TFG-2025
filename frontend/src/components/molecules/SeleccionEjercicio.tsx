@@ -10,8 +10,10 @@ import {
   Divider,
   Card,
   Badge,
-  Grid
+  Grid,
+  Alert
 } from '@mantine/core';
+import { IconAlertCircle } from '@tabler/icons-react';
 import type { Ejercicio } from '../../types/training';
 
 interface EjercicioSesion {
@@ -78,7 +80,6 @@ const SeleccionEjercicio: React.FC<SeleccionEjercicioProps> = ({
     }));
   };
 
-
   const ejercicioSeleccionadoData = ejerciciosExistentes.find(ej => ej._id === ejercicioSeleccionado);
 
   return (
@@ -87,19 +88,33 @@ const SeleccionEjercicio: React.FC<SeleccionEjercicioProps> = ({
         Selecciona un ejercicio existente y configura sus parámetros
       </Text>
 
-      <Select
-        label="Seleccionar Ejercicio"
-        placeholder="Busca y selecciona un ejercicio"
-        data={ejerciciosExistentes.map(ejercicio => ({
-          value: ejercicio._id || '',
-          label: ejercicio.nombre
-        }))}
-        value={ejercicioSeleccionado}
-        onChange={(value) => setEjercicioSeleccionado(value || '')}
-        searchable
-        clearable
-        required
-      />
+      {ejerciciosExistentes.length === 0 ? (
+        <Alert
+          icon={<IconAlertCircle size={16} />}
+          title="Sin ejercicios disponibles"
+          color="blue"
+        >
+          No hay ejercicios disponibles para seleccionar. Crea un nuevo ejercicio en la pestaña "Crear Nuevo".
+        </Alert>
+      ) : (
+        <Select
+          label="Seleccionar Ejercicio"
+          placeholder="Busca y selecciona un ejercicio"
+          data={ejerciciosExistentes.map(ejercicio => ({
+            value: ejercicio._id!,
+            label: ejercicio.nombre
+          }))}
+          value={ejercicioSeleccionado}
+          onChange={(value) => setEjercicioSeleccionado(value || '')}
+          searchable
+          clearable
+          styles={{
+            dropdown: {
+              zIndex: 2000
+            }
+          }}
+        />
+      )}
 
       {ejercicioSeleccionadoData && (
         <Card withBorder p="md" style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
