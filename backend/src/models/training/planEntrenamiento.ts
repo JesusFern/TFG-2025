@@ -11,10 +11,13 @@ const PlanEntrenamientoSchema = new mongoose.Schema({
   },
   duracionDias: { type: Number, required: true, min: 1 },
   sesionesPorSemana: { type: Number, required: true, min: 1, max: 7 },
+  fechaInicio: { type: Date, required: true },
+  diasSemana: [{ type: Number, min: 0, max: 6 }], // 0 = Domingo, 1 = Lunes, etc.
   entrenador: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
   clientes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }],
   publico: { type: Boolean, default: false },
   activo: { type: Boolean, default: true },
+  draftMode: { type: Boolean, default: true },
   sesiones: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Sesion' }]
 }, {
   timestamps: true

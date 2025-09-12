@@ -55,6 +55,10 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, workerRoute?: boolea
 };
 
 import WorkerClientDietsList from '../pages/WorkerClientDietsList';
+import WorkerClientTrainingPlansList from '../pages/WorkerClientTrainingPlansList';
+import CrearPlanEntrenamientoPage from '../pages/CrearPlanEntrenamientoPage';
+import EditarPlanEntrenamientoPage from '../pages/EditarPlanEntrenamientoPage';
+import VerPlanEntrenamientoPage from '../pages/VerPlanEntrenamientoPage';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -100,6 +104,14 @@ const AppRoutes: React.FC = () => {
         </ProtectedRoute>
       } />
 
+      <Route path="/worker/dashboard-clients/:clientId/training" element={
+        <ProtectedRoute workerRoute={true}>
+          <Layout>
+            <WorkerClientTrainingPlansList />
+          </Layout>
+        </ProtectedRoute>
+      } />
+
       <Route path="/profile" element={
         <ProtectedRoute>
           <Layout>
@@ -136,6 +148,28 @@ const AppRoutes: React.FC = () => {
         <ProtectedRoute workerRoute={true}>
           <Layout>
             <VerDietaPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+
+      <Route path="/training/planes/crear" element={
+        <ProtectedRoute workerRoute={true}>
+          <Layout>
+            <CrearPlanEntrenamientoPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/training/planes/:planId/editar" element={
+        <ProtectedRoute workerRoute={true}>
+          <Layout>
+            <EditarPlanEntrenamientoPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/training/planes/:planId" element={
+        <ProtectedRoute workerRoute={true}>
+          <Layout>
+            <VerPlanEntrenamientoPage />
           </Layout>
         </ProtectedRoute>
       } />

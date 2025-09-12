@@ -2,7 +2,7 @@ import mongoose from 'mongoose';
 
 const EjercicioSchema = new mongoose.Schema({
   nombre: { type: String, required: true },
-  descripcion: { type: String, required: true },
+  descripcion: { type: String},
   grupoMuscular: { 
     type: String, 
     required: true,
@@ -28,6 +28,7 @@ const EjercicioSchema = new mongoose.Schema({
   },
   videoDemostrativo: { type: String },
   creador: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  publico: { type: Boolean, default: false },
   activo: { type: Boolean, default: true }
 }, {
   timestamps: true

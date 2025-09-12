@@ -3,6 +3,7 @@ import PlanEntrenamiento from '../../models/training/planEntrenamiento';
 import User from '../../models/users/user';
 import Ejercicio from '../../models/training/ejercicio';
 
+
 export async function crearSesionService({
   entrenadorId,
   clienteId,
@@ -202,12 +203,24 @@ export async function actualizarSesionService(
   // Si se están cambiando los ejercicios, validar que todos existen
   if (datosActualizacion.ejercicios) {
     const ejerciciosIds = datosActualizacion.ejercicios.map(e => e.ejercicio);
-    const ejerciciosExistentes = await Ejercicio.find({ 
+    
+    // Buscar ejercicios existentes con un pequeño retraso para ejercicios recién creados
+    let ejerciciosExistentes = await Ejercicio.find({ 
       _id: { $in: ejerciciosIds },
       activo: true 
     });
+    
+    // Si no se encuentran todos los ejercicios, esperar un poco y volver a intentar
     if (ejerciciosExistentes.length !== ejerciciosIds.length) {
-      throw new Error('Algunos ejercicios no existen o no están activos');
+      await new Promise(resolve => setTimeout(resolve, 100));
+      ejerciciosExistentes = await Ejercicio.find({ 
+        _id: { $in: ejerciciosIds },
+        activo: true 
+      });
+      
+      if (ejerciciosExistentes.length !== ejerciciosIds.length) {
+        throw new Error('Algunos ejercicios no existen o no están activos');
+      }
     }
 
     // Validar que no hay ejercicios duplicados en el mismo orden

@@ -10,6 +10,7 @@ interface DatePickerInputProps {
   name?: string;
   leftSection?: React.ReactNode;
   leftSectionPointerEvents?: "none" | "auto";
+  zIndex?: number;
 }
 
 const DatePickerInput: React.FC<DatePickerInputProps> = ({
@@ -21,6 +22,7 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
   name,
   leftSection,
   leftSectionPointerEvents,
+  zIndex = 1000,
 }) => (
   <MantineDatePickerInput
     label={label}
@@ -30,8 +32,9 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
     required={required}
     name={name}
     placeholder="Selecciona una fecha"
-    popoverProps={{ withinPortal: true }}
+    popoverProps={{ withinPortal: true, zIndex: zIndex + 100 }}
     dropdownType="modal"
+    modalProps={{ zIndex: zIndex + 200 }}
     valueFormat="DD/MM/YYYY"
     leftSection={leftSection}
     leftSectionPointerEvents={leftSectionPointerEvents}
