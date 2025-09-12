@@ -25,6 +25,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { WeeklyProgressChart } from '../components/molecules/WeeklyProgressChart';
+import { CurrentSubscription } from '../components/molecules/CurrentSubscription';
 
 interface DashboardCardProps {
   title: string;
@@ -201,11 +202,16 @@ const DashboardPage: React.FC = () => {
         {/* Gráfico de Progreso Semanal */}
         <Grid gutter="lg">
           <Grid.Col span={{ base: 12, lg: 4 }}>
-            <WeeklyProgressChart
-              nutritionProgress={weeklyProgress.nutrition}
-              exerciseProgress={weeklyProgress.exercise}
-              goalProgress={weeklyProgress.goal}
-            />
+            <Stack gap="lg">
+              <WeeklyProgressChart
+                nutritionProgress={weeklyProgress.nutrition}
+                exerciseProgress={weeklyProgress.exercise}
+                goalProgress={weeklyProgress.goal}
+              />
+              {user?.role === 'user' && (
+                <CurrentSubscription />
+              )}
+            </Stack>
           </Grid.Col>
           
           {/* Grid de Funcionalidades */}

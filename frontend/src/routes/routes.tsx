@@ -14,6 +14,9 @@ import WorkerClientsDashboard from '../pages/WorkerClientsDashboard';
 import Layout from '../components/layout/Layout';
 import { useAuth } from '../hooks/useAuth';
 import LoginPage from '../pages/LoginPage';
+import SuscriptionPlansPage from '../pages/SuscriptionPlansPage';
+import PaymentConfirmationPage from '../pages/ConfirmarPagoPage';
+import PaymentCancellationPage from '../pages/CancelarPagoPage';
 
 // Componente para proteger rutas
 const ProtectedRoute: React.FC<{ children: React.ReactNode, workerRoute?: boolean }> = ({ children, workerRoute = false }) => {
@@ -65,6 +68,9 @@ const AppRoutes: React.FC = () => {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/worker/login" element={<WorkerLoginPage />} />
+      <Route path="/planes-suscripcion" element={<SuscriptionPlansPage />} />
+      <Route path="/payment/confirm" element={<PaymentConfirmationPage />} />
+      <Route path="/payment/cancel" element={<PaymentCancellationPage />} />
 
       {/* Rutas protegidas */}
       
