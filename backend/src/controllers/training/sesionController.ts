@@ -13,13 +13,28 @@ import {
 } from '../../service/training/sesionService';
 import logger from '../../utils/logger';
 import { matchedData } from 'express-validator';
+import mongoose from 'mongoose';
 
 async function verificarPlanPublicado(sesionId: string): Promise<boolean> {
-  const plan = await PlanEntrenamiento.findOne({ 
-    sesiones: sesionId,
-    draftMode: false 
-  });
-  return !!plan;
+  // Validar que el sesionId sea un ObjectId válido antes de usarlo en la consulta
+  if (!mongoose.Types.ObjectId.isValid(sesionId)) {
+    logger.warn('ID de sesión inválido proporcionado', { sesionId });
+    return false;
+  }
+
+  try {
+    const plan = await PlanEntrenamiento.findOne({ 
+      sesiones: new mongoose.Types.ObjectId(sesionId),
+      draftMode: false 
+    });
+    return !!plan;
+  } catch (error) {
+    logger.error('Error al verificar si el plan está publicado', { 
+      sesionId, 
+      error: error instanceof Error ? error.message : String(error) 
+    });
+    return false;
+  }
 }
 
 export const crearSesion = async (req: AuthenticatedRequest, res: Response) => {
