@@ -1,10 +1,7 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../types';
 import Sesion from '../../models/training/sesion';
-
-interface SesionConPlan {
-  plan: { draftMode: boolean };
-}
+import PlanEntrenamiento from '../../models/training/planEntrenamiento';
 import { 
   crearSesionService, 
   obtenerSesionesService, 
@@ -16,6 +13,15 @@ import {
 } from '../../service/training/sesionService';
 import logger from '../../utils/logger';
 import { matchedData } from 'express-validator';
+
+// Función auxiliar para verificar si una sesión pertenece a un plan publicado
+async function verificarPlanPublicado(sesionId: string): Promise<boolean> {
+  const plan = await PlanEntrenamiento.findOne({ 
+    sesiones: sesionId,
+    draftMode: false 
+  });
+  return !!plan;
+}
 
 export const crearSesion = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -168,15 +174,16 @@ export const actualizarSesion = async (req: AuthenticatedRequest, res: Response)
       campos: Object.keys(datosActualizacion)
     });
 
-    // Verificar si la sesión pertenece a un plan publicado
-    const sesionExistente = await Sesion.findById(id).populate('plan');
+    // Verificar si la sesión existe
+    const sesionExistente = await Sesion.findById(id);
     if (!sesionExistente) {
       res.status(404).json({ message: 'Sesión no encontrada' });
       return;
     }
 
-    const plan = (sesionExistente as unknown as SesionConPlan).plan;
-    if (plan && !plan.draftMode) {
+    // Verificar si la sesión pertenece a un plan publicado
+    const esPlanPublicado = await verificarPlanPublicado(id);
+    if (esPlanPublicado) {
       res.status(403).json({ message: 'No se puede editar una sesión de un plan publicado' });
       return;
     }
@@ -211,15 +218,16 @@ export const eliminarSesion = async (req: AuthenticatedRequest, res: Response) =
       sesionId: id
     });
 
-    // Verificar si la sesión pertenece a un plan publicado
-    const sesionExistente = await Sesion.findById(id).populate('plan');
+    // Verificar si la sesión existe
+    const sesionExistente = await Sesion.findById(id);
     if (!sesionExistente) {
       res.status(404).json({ message: 'Sesión no encontrada' });
       return;
     }
 
-    const plan = (sesionExistente as unknown as SesionConPlan).plan;
-    if (plan && !plan.draftMode) {
+    // Verificar si la sesión pertenece a un plan publicado
+    const esPlanPublicado = await verificarPlanPublicado(id);
+    if (esPlanPublicado) {
       res.status(403).json({ message: 'No se puede eliminar una sesión de un plan publicado' });
       return;
     }

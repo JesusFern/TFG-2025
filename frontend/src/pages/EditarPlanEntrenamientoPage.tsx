@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { 
   Container, 
-  Title, 
   Paper, 
   Tabs, 
   Button, 
@@ -11,39 +10,36 @@ import {
   useMantineColorScheme,
   Box,
   Loader,
-  Divider,
   Pagination,
-  Badge,
   Select,
   Modal,
   ActionIcon,
-  Stack
+  Stack,
+  Divider,
+  Badge,
+  Title
 } from '@mantine/core';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
-  IconAlertCircle, 
-  IconCalendarEvent,
-  IconCheck,
   IconBarbell,
   IconPlus,
   IconEdit,
   IconTrash,
-  IconChevronRight,
-  IconHome
+  IconAlertCircle,
+  IconCheck
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import trainingService from '../services/trainingService';
 import { PlanEntrenamiento, SesionPlan, Ejercicio } from '../types/training';
-import GlobalNotificationOverlay from '../components/atoms/GlobalNotificationOverlay';
 import ModalGestionarEjercicios from '../components/molecules/ModalGestionarEjercicios';
 import ModalEditarEjercicioSesion from '../components/molecules/ModalEditarEjercicioSesion';
 import ModalEditarSesion from '../components/molecules/ModalEditarSesion';
 import ModalEliminarSesion from '../components/molecules/ModalEliminarSesion';
 import ModalCrearSesion from '../components/molecules/ModalCrearSesion';
-import { Breadcrumbs, Anchor } from '@mantine/core';
-import { Link } from 'react-router-dom';
+import EditarPlanHeader from '../components/molecules/EditarPlanHeader';
+import PlanInfo from '../components/molecules/PlanInfo';
 
 interface SesionInfo {
   weekDayIndex: number;
@@ -270,8 +266,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
             setActiveTab(sesionIndex.toString());
           }
         }
-      } catch (err) {
-        console.error("Error al cargar el plan:", err);
+      } catch {
         setError("Error al cargar el plan. Por favor intenta de nuevo.");
       } finally {
         setLoading(false);
@@ -812,21 +807,6 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     }
   };
 
-  const breadcrumbItems = [
-    { title: 'Inicio', href: '/', icon: <IconHome size={14} /> },
-    { title: 'Entrenamiento', href: '/training/planes' },
-    { title: plan?.nombre || 'Plan', href: '#' },
-  ].map((item, index) => (
-    <Anchor component={Link} to={item.href} key={index} size="sm" c="nutroos-green">
-      {item.icon && (
-        <Group gap={4}>
-          {item.icon}
-          <span>{item.title}</span>
-        </Group>
-      )}
-      {!item.icon && item.title}
-    </Anchor>
-  ));
 
   if (loading) {
     return (
@@ -863,18 +843,6 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
 
   return (
     <Container size="xl" py="xl">
-      <Paper 
-        p="md" 
-        mb="lg" 
-        style={{ 
-          backgroundColor: 'var(--app-paper-bg)', 
-          borderBottom: '1px solid var(--app-border-color)' 
-        }}
-      >
-        <Breadcrumbs separator={<IconChevronRight size={14} />}>
-          {breadcrumbItems}
-        </Breadcrumbs>
-      </Paper>
 
       <Paper 
         p="lg" 
@@ -886,45 +854,17 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
           borderColor: 'var(--app-border-color)'
         }}
       >
-        <Group justify="space-between" mb="xs" wrap="wrap">
-          <Box>
-            <Group gap="md" align="center">
-              <Title order={2} c="nutroos-green.6">
-                {plan.nombre}
-              </Title>
-              {!plan.draftMode && (
-                <Badge color="green" variant="filled" size="sm">
-                  Publicado
-                </Badge>
-              )}
-              <Badge color="green" variant="filled" size="sm">
-                Activo
-              </Badge>
-            </Group>
-            <Text size="sm" c="dimmed">
-              {plan.descripcion || "Sin descripción"}
-            </Text>
-          </Box>
-          <Group gap="md">
-            {plan?.draftMode && (
-              <Button
-                color="green"
-                leftSection={<IconCheck size={18} />}
-                loading={publishLoading}
-                onClick={handlePublicarPlan}
-              >
-                Publicar entrenamiento
-              </Button>
-            )}
-          </Group>
-        </Group>
+        <EditarPlanHeader 
+          plan={plan} 
+          publishLoading={publishLoading}
+          onPublish={handlePublicarPlan}
+        />
         
-        <Group mt="lg" mb="md" gap="xs">
-          <IconCalendarEvent size={18} color={isDark ? 'var(--mantine-color-gray-4)' : 'var(--mantine-color-gray-6)'} />
-          <Text size="sm" c="dimmed">
-            {plan.duracionDias} días | {plan.sesionesPorSemana} sesiones/semana | Inicio: {fechaInicioFormateada}
-          </Text>
-        </Group>
+        <PlanInfo 
+          plan={plan}
+          fechaInicioFormateada={fechaInicioFormateada}
+          isDark={isDark}
+        />
         
         <Divider my="sm" />
         
@@ -1258,14 +1198,6 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
         siguienteOrden={ejerciciosSesion.length + 1}
       />
 
-      <GlobalNotificationOverlay
-        message={error || successMessage}
-        type={error ? 'error' : successMessage ? 'success' : undefined}
-        onClose={() => {
-          setError(null);
-          setSuccessMessage(null);
-        }}
-      />
       
       {/* Modal de edición de ejercicio */}
       <ModalEditarEjercicioSesion

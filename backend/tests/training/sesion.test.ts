@@ -68,6 +68,13 @@ jest.mock('../../src/models/training/planEntrenamiento', () => {
       return Promise.resolve(null);
     }
     static findByIdAndUpdate() { return Promise.resolve({}); }
+    static findOne(query: { sesiones?: string; draftMode?: boolean }) {
+      // Para verificar si una sesión pertenece a un plan publicado
+      if (query.sesiones && query.draftMode === false) {
+        return Promise.resolve(null); // No hay planes publicados en los tests
+      }
+      return Promise.resolve(null);
+    }
   }
   return { __esModule: true, default: PlanMock };
 });

@@ -88,7 +88,7 @@ export const actualizarSesionValidator = [
   body('hora').optional().matches(/^([01]?[0-9]|2[0-3]):[0-5][0-9]$/).withMessage('La hora debe tener formato HH:MM'),
   body('tipoEntrenamiento').optional().isIn(['Fuerza', 'Resistencia', 'Cardio', 'HIIT', 'Movilidad', 'Flexibilidad', 'Potencia', 'Estabilidad']).withMessage('Tipo de entrenamiento no válido'),
   body('duracion').optional().isInt({ min: 1, max: 480 }).toInt().withMessage('La duración debe ser un número entero entre 1 y 480 minutos'),
-  body('ejercicios').optional().isArray({ min: 1 }).withMessage('Debe haber al menos un ejercicio'),
+  body('ejercicios').optional().isArray({ min: 0 }).withMessage('Los ejercicios deben ser un array'),
   body('ejercicios.*.ejercicio').optional().isMongoId().withMessage('Cada ejercicio debe tener un ID válido'),
   body('ejercicios.*.orden').optional().isInt({ min: 1 }).toInt().withMessage('El orden debe ser un número entero mayor que 0'),
   body('ejercicios.*.series').optional().isInt({ min: 1, max: 20 }).toInt().withMessage('Las series deben ser un número entero entre 1 y 20'),

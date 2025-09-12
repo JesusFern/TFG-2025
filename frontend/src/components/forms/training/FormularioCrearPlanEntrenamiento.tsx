@@ -68,6 +68,7 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
     diasSemana: [],
     clientes: clientId ? [clientId] : [],
     publico: false,
+    draftMode: true,
   });
   
   const [activeStep, setActiveStep] = useState(0);
@@ -165,7 +166,8 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
         fechaInicio: form.fechaInicio!.toISOString(),
         diasSemana: form.diasSemana,
         clientes: form.clientes,
-        publico: form.publico
+        publico: form.publico,
+        draftMode: form.draftMode
       };
 
       const response = await trainingService.crearPlan(planData);
