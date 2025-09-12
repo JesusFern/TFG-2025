@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Container, 
@@ -16,17 +16,16 @@ import {
 import { IconAlertCircle, IconCheck, IconClock, IconCalendar, IconTarget, IconBarbell } from '@tabler/icons-react';
 import trainingService from '../services/trainingService';
 import { PlanEntrenamiento } from '../types/training';
-import { getUserData, getClientById } from '../services/authService';
+import { getClientById } from '../services/authService';
+import { usePermissions } from '../hooks/usePermissions';
+import { useThemeDetection } from '../hooks/useThemeDetection';
 
 const WorkerClientTrainingPlansList: React.FC = () => {
   const navigate = useNavigate();
   const { clientId } = useParams<{ clientId: string }>();
-  const user = getUserData();
-  const workerId = user?._id;
+  const { hasPermission, workerId } = usePermissions();
+  const isDark = useThemeDetection();
   
-  const hasPermission = useMemo(() => {
-    return user && (user.role === 'worker' || user.role === 'admin');
-  }, [user]);
   const [planes, setPlanes] = useState<PlanEntrenamiento[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -34,33 +33,6 @@ const WorkerClientTrainingPlansList: React.FC = () => {
   const [loadingClient, setLoadingClient] = useState(true);
 
   const theme = useMantineTheme();
-  const [isDark, setIsDark] = useState(
-    document.documentElement.getAttribute('data-mantine-color-scheme') === 'dark'
-  );
-  
-  useEffect(() => {
-    const checkTheme = () => {
-      const darkMode = document.documentElement.getAttribute('data-mantine-color-scheme') === 'dark';
-      setIsDark(darkMode);
-    };
-    
-    checkTheme();
-    
-    const observer = new MutationObserver((mutations) => {
-      mutations.forEach((mutation) => {
-        if (mutation.attributeName === 'data-mantine-color-scheme') {
-          checkTheme();
-        }
-      });
-    });
-    
-    observer.observe(document.documentElement, {
-      attributes: true,
-      attributeFilter: ['data-mantine-color-scheme']
-    });
-    
-    return () => observer.disconnect();
-  }, []);
 
   useEffect(() => {
     const fetchPlanes = async () => {

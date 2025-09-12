@@ -1,19 +1,17 @@
 import React from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { 
   Group, 
   Text, 
   Badge,
-  Button,
-  Breadcrumbs,
-  Anchor
+  Button
 } from '@mantine/core';
 import { 
-  IconChevronRight,
   IconArrowLeft,
   IconHome,
   IconCalendarEvent
 } from '@tabler/icons-react';
+import TrainingBreadcrumbs from '../atoms/TrainingBreadcrumbs';
 import type { PlanEntrenamiento } from '../../types/training';
 
 interface TrainingPlanHeaderProps {
@@ -27,21 +25,11 @@ const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
 }) => {
   const navigate = useNavigate();
 
-  const breadcrumbItems = [
+  const breadcrumbs = [
     { title: 'Inicio', href: '/', icon: <IconHome size={14} /> },
     { title: 'Entrenamiento', href: '/training/planes' },
     { title: 'Ver plan', href: '#' },
-  ].map((item, index) => (
-    <Anchor component={Link} to={item.href} key={index} size="sm" c="nutroos-green">
-      {item.icon && (
-        <Group gap={4}>
-          {item.icon}
-          <span>{item.title}</span>
-        </Group>
-      )}
-      {!item.icon && item.title}
-    </Anchor>
-  ));
+  ];
 
   const handleBackToClientPlans = () => {
     try {
@@ -82,7 +70,7 @@ const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
 
   return (
     <>
-      <Breadcrumbs separator={<IconChevronRight size={14} />}>{breadcrumbItems}</Breadcrumbs>
+      <TrainingBreadcrumbs items={breadcrumbs} />
       
       <Group justify="space-between" mb="xs" wrap="wrap">
         <Group gap="md" align="center">

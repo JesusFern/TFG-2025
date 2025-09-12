@@ -1,20 +1,17 @@
 import React from 'react';
-import { Link } from 'react-router-dom';
 import { 
   Group, 
   Text, 
   Badge,
   Button,
-  Breadcrumbs,
-  Anchor,
   Alert
 } from '@mantine/core';
 import { 
-  IconChevronRight,
   IconHome,
   IconCheck,
   IconAlertCircle
 } from '@tabler/icons-react';
+import TrainingBreadcrumbs from '../atoms/TrainingBreadcrumbs';
 import type { PlanEntrenamiento } from '../../types/training';
 
 interface EditarPlanHeaderProps {
@@ -28,25 +25,15 @@ const EditarPlanHeader: React.FC<EditarPlanHeaderProps> = ({
   publishLoading,
   onPublish
 }) => {
-  const breadcrumbItems = [
+  const breadcrumbs = [
     { title: 'Inicio', href: '/', icon: <IconHome size={14} /> },
     { title: 'Entrenamiento', href: '/training/planes' },
     { title: 'Editar plan', href: '#' },
-  ].map((item, index) => (
-    <Anchor component={Link} to={item.href} key={index} size="sm" c="nutroos-green">
-      {item.icon && (
-        <Group gap={4}>
-          {item.icon}
-          <span>{item.title}</span>
-        </Group>
-      )}
-      {!item.icon && item.title}
-    </Anchor>
-  ));
+  ];
 
   return (
     <>
-      <Breadcrumbs separator={<IconChevronRight size={14} />}>{breadcrumbItems}</Breadcrumbs>
+      <TrainingBreadcrumbs items={breadcrumbs} />
       
       <Group justify="space-between" mb="md" wrap="wrap">
         <Group gap="md" align="center">
