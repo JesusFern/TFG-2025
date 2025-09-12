@@ -1,0 +1,203 @@
+import React, { useState } from 'react';
+import {
+  Select,
+  NumberInput,
+  Switch,
+  Stack,
+  Group,
+  Button,
+  Text,
+  Divider,
+  Card,
+  Badge,
+  Grid
+} from '@mantine/core';
+import type { Ejercicio } from '../../types/training';
+
+interface EjercicioSesion {
+  ejercicio: string;
+  orden: number;
+  series: number;
+  repeticiones: number;
+  peso?: number;
+  tiempoDescanso: number;
+  ejerciciosAlternativos?: string[];
+  opcionesProgresion?: {
+    aumentarPeso: boolean;
+    masRepeticiones: boolean;
+    mayorIntensidad: boolean;
+  };
+}
+
+interface SeleccionEjercicioProps {
+  ejerciciosExistentes: Ejercicio[];
+  siguienteOrden: number;
+  onEjercicioSeleccionado: (ejercicio: EjercicioSesion) => void;
+}
+
+const SeleccionEjercicio: React.FC<SeleccionEjercicioProps> = ({
+  ejerciciosExistentes,
+  siguienteOrden,
+  onEjercicioSeleccionado
+}) => {
+  const [ejercicioSeleccionado, setEjercicioSeleccionado] = useState<string>('');
+  const [series, setSeries] = useState<number>(3);
+  const [repeticiones, setRepeticiones] = useState<number>(10);
+  const [peso, setPeso] = useState<number | undefined>(undefined);
+  const [tiempoDescanso, setTiempoDescanso] = useState<number>(60);
+  const [ejerciciosAlternativos] = useState<string[]>([]);
+  const [opcionesProgresion, setOpcionesProgresion] = useState({
+    aumentarPeso: true,
+    masRepeticiones: true,
+    mayorIntensidad: false
+  });
+
+  const handleSeleccionarEjercicio = () => {
+    if (!ejercicioSeleccionado) {
+      return;
+    }
+
+    const ejercicioData: EjercicioSesion = {
+      ejercicio: ejercicioSeleccionado,
+      orden: siguienteOrden,
+      series,
+      repeticiones,
+      peso,
+      tiempoDescanso,
+      ejerciciosAlternativos,
+      opcionesProgresion
+    };
+
+    onEjercicioSeleccionado(ejercicioData);
+  };
+
+  const handleProgresionChange = (field: keyof typeof opcionesProgresion, value: boolean) => {
+    setOpcionesProgresion(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+
+  const ejercicioSeleccionadoData = ejerciciosExistentes.find(ej => ej._id === ejercicioSeleccionado);
+
+  return (
+    <Stack gap="md">
+      <Text size="sm" c="dimmed">
+        Selecciona un ejercicio existente y configura sus parámetros
+      </Text>
+
+      <Select
+        label="Seleccionar Ejercicio"
+        placeholder="Busca y selecciona un ejercicio"
+        data={ejerciciosExistentes.map(ejercicio => ({
+          value: ejercicio._id || '',
+          label: ejercicio.nombre
+        }))}
+        value={ejercicioSeleccionado}
+        onChange={(value) => setEjercicioSeleccionado(value || '')}
+        searchable
+        clearable
+        required
+      />
+
+      {ejercicioSeleccionadoData && (
+        <Card withBorder p="md" style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
+          <Text fw={500} size="sm" mb="xs">Información del Ejercicio</Text>
+          <Text size="sm" c="dimmed" mb="xs">{ejercicioSeleccionadoData.descripcion}</Text>
+          <Group gap="xs">
+            <Badge size="sm" color="blue" variant="light">
+              {ejercicioSeleccionadoData.grupoMuscular}
+            </Badge>
+            <Badge size="sm" color="green" variant="light">
+              {ejercicioSeleccionadoData.equipamiento}
+            </Badge>
+            <Badge size="sm" color="orange" variant="light">
+              {ejercicioSeleccionadoData.nivelDificultad}
+            </Badge>
+          </Group>
+        </Card>
+      )}
+
+      <Divider label="Configuración de la Sesión" labelPosition="center" />
+
+      <Grid>
+        <Grid.Col span={6}>
+          <NumberInput
+            label="Series"
+            value={series}
+            onChange={(value) => setSeries(Number(value) || 3)}
+            min={1}
+            max={20}
+          />
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <NumberInput
+            label="Repeticiones"
+            value={repeticiones}
+            onChange={(value) => setRepeticiones(Number(value) || 10)}
+            min={1}
+            max={100}
+          />
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <NumberInput
+            label="Peso (kg)"
+            value={peso}
+            onChange={(value) => setPeso(Number(value) || undefined)}
+            min={0}
+            decimalScale={1}
+            placeholder="Opcional"
+          />
+        </Grid.Col>
+        <Grid.Col span={6}>
+          <NumberInput
+            label="Descanso (seg)"
+            value={tiempoDescanso}
+            onChange={(value) => setTiempoDescanso(Number(value) || 60)}
+            min={0}
+            max={600}
+          />
+        </Grid.Col>
+      </Grid>
+
+      <Divider label="Opciones de progresión" labelPosition="center" />
+
+      <Stack gap="xs">
+        <Switch
+          label="Aumentar peso progresivamente"
+          checked={opcionesProgresion.aumentarPeso}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+            handleProgresionChange('aumentarPeso', e.target.checked)
+          }
+        />
+        <Switch
+          label="Aumentar repeticiones"
+          checked={opcionesProgresion.masRepeticiones}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+            handleProgresionChange('masRepeticiones', e.target.checked)
+          }
+        />
+        <Switch
+          label="Mayor intensidad"
+          checked={opcionesProgresion.mayorIntensidad}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
+            handleProgresionChange('mayorIntensidad', e.target.checked)
+          }
+        />
+      </Stack>
+
+      <Group justify="flex-end" mt="md">
+        <Button
+          color="nutroos-green"
+          onClick={handleSeleccionarEjercicio}
+          disabled={!ejercicioSeleccionado}
+        >
+          Agregar a la Sesión
+        </Button>
+      </Group>
+    </Stack>
+  );
+};
+
+export default SeleccionEjercicio;
