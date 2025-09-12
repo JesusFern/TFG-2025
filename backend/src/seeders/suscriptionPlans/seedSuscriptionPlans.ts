@@ -24,7 +24,14 @@ export async function seedSuscriptionPlans() {
     tipoPlan: null,
     precioMensual: 0,
     precioTrimestral: 0,
-    precioAnual: 0
+    precioAnual: 0,
+    beneficios: [
+      'Acceso a la plataforma básica',
+      'Calculadora de calorías',
+      'Seguimiento de peso',
+      'Artículos y consejos gratuitos',
+      'Comunidad de usuarios'
+    ]
   });
 
   await planGratuito.save();
@@ -55,6 +62,73 @@ export async function seedSuscriptionPlans() {
       const precioTrimestral = Math.round(precioMensual * 2.7 * 100) / 100;
       const precioAnual = Math.round(precioMensual * 10 * 100) / 100;
       
+      // Crear beneficios específicos según el tipo de plan
+      let beneficios: string[] = [];
+      
+      if (tipoPlan === 'Nutricion') {
+        if (tipoPrecio === 'Básico') {
+          beneficios = [
+            'Todas las funciones gratuitas',
+            'Plan nutricional personalizado',
+            'Seguimiento de macronutrientes',
+            'Recetas saludables',
+            'Soporte por correo electrónico'
+          ];
+        } else if (tipoPrecio === 'Pro') {
+          beneficios = [
+            'Todas las funciones del plan básico',
+            'Plan nutricional personalizado avanzado',
+            'Ajustes semanales de la dieta',
+            'Videoconferencias con nutricionista',
+            'Acceso a dietas especializadas',
+            'Soporte prioritario 24/7'
+          ];
+        }
+      } else if (tipoPlan === 'Entrenamiento personal') {
+        if (tipoPrecio === 'Básico') {
+          beneficios = [
+            'Todas las funciones gratuitas',
+            'Plan de entrenamiento personalizado',
+            'Seguimiento de progreso',
+            'Videos de ejercicios',
+            'Soporte por correo electrónico'
+          ];
+        } else if (tipoPrecio === 'Pro') {
+          beneficios = [
+            'Todas las funciones del plan básico',
+            'Plan de entrenamiento avanzado',
+            'Ajustes semanales del entrenamiento',
+            'Videoconferencias con entrenador personal',
+            'Acceso a rutinas especializadas',
+            'Soporte prioritario 24/7'
+          ];
+        }
+      } else if (tipoPlan === 'Nutrición y entrenamiento personal') {
+        if (tipoPrecio === 'Básico') {
+          beneficios = [
+            'Todas las funciones gratuitas',
+            'Plan nutricional personalizado',
+            'Plan de entrenamiento personalizado',
+            'Seguimiento de macronutrientes',
+            'Seguimiento de progreso',
+            'Recetas saludables',
+            'Videos de ejercicios',
+            'Soporte por correo electrónico'
+          ];
+        } else if (tipoPrecio === 'Pro') {
+          beneficios = [
+            'Todas las funciones del plan básico',
+            'Plan nutricional personalizado avanzado',
+            'Plan de entrenamiento avanzado',
+            'Ajustes semanales de dieta y entrenamiento',
+            'Videoconferencias con nutricionista y entrenador',
+            'Acceso a dietas y rutinas especializadas',
+            'Soporte prioritario 24/7',
+            'Análisis de composición corporal'
+          ];
+        }
+      }
+      
       const plan = new SuscriptionPlan({
         nombre: `Plan ${tipoPrecio} - ${tipoPlan}`,
         descripcion: `Plan ${tipoPrecio} con servicios de ${tipoPlan.toLowerCase()}`,
@@ -62,7 +136,8 @@ export async function seedSuscriptionPlans() {
         tipoPlan,
         precioMensual,
         precioTrimestral,
-        precioAnual
+        precioAnual,
+        beneficios
       });
       
       await plan.save();

@@ -5,12 +5,14 @@ import User from '../models/users/user';
 
 export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const token = req.header('Authorization')?.split(' ')[1];
+  
   if (!token) {
     res.status(401).json({ message: 'Acceso denegado' });
     return;
   }
 
   const decoded = TokenService.verifyToken(token) as JwtPayload | null;
+  
   if (!decoded) {
     res.status(400).json({ message: 'Token no válido' });
     return;
@@ -61,12 +63,10 @@ export const authorizeWorker = async (req: AuthenticatedRequest, res: Response, 
 export const authorizeNutricionista = async (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
   const { id, role } = req.user as JwtPayload;
   if (!id) {
-    console.log('DEBUG: No hay ID de usuario');
     res.status(401).json({ message: 'No autenticado' });
     return;
   }
   if (role !== 'worker') {
-    console.log(`DEBUG: El rol no es worker, es ${role}`);
     res.status(403).json({ message: 'Solo los trabajadores pueden realizar esta acción' });
     return;
   }
@@ -74,23 +74,19 @@ export const authorizeNutricionista = async (req: AuthenticatedRequest, res: Res
   try {
     const user = await User.findById(id);
     if (!user) {
-      console.log(`DEBUG: No se encontró usuario con ID ${id}`);
       res.status(404).json({ message: 'Usuario no encontrado' });
       return;
     }
     
-    console.log(`DEBUG: Usuario encontrado - workerType: ${user.workerType}`);
-    
     if (user.workerType !== 'Nutricionista' && 
         user.workerType !== 'Nutricionista y Entrenador personal') {
-      console.log(`DEBUG: No es nutricionista, es ${user.workerType}`);
       res.status(403).json({ message: 'Solo los nutricionistas pueden realizar esta acción' });
       return;
     }
     
     next();
   } catch (error) {
-    console.error('DEBUG Error:', error);
+    console.error('Error al verificar el tipo de trabajador:', error);
     res.status(500).json({ message: 'Error al verificar el tipo de trabajador' });
   }
 };

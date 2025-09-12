@@ -8,6 +8,7 @@ export interface SuscriptionPlanDocument extends mongoose.Document {
   precioMensual: number;
   precioTrimestral: number;
   precioAnual: number;
+  beneficios: string[];
 }
 
 const SuscriptionPlanSchema = new mongoose.Schema({
@@ -51,6 +52,10 @@ const SuscriptionPlanSchema = new mongoose.Schema({
     type: Number, 
     required: true,
     min: 0
+  },
+  beneficios: {
+    type: [String],
+    default: []
   }
 }, { timestamps: true });
 
