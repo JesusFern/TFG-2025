@@ -38,6 +38,7 @@ import trainingService from '../../../services/trainingService';
 import { getUserById } from '../../../services/userService';
 import DatePickerInput from '../../atoms/DatePickerInput';
 import type { CrearPlanDTO } from '../../../types/training';
+import { OBJETIVOS_ENTRENAMIENTO, DIAS_SEMANA_OPTIONS } from '../../../constants/training';
 
 interface FormularioCrearPlanEntrenamientoProps {
   onSuccess: (planData: { _id: string }) => void;
@@ -75,26 +76,7 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
   const [stepError, setStepError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const objetivosEntrenamiento = [
-    'Pérdida de peso',
-    'Ganancia muscular',
-    'Mantenimiento',
-    'Resistencia',
-    'Flexibilidad',
-    'Potencia',
-    'Estabilidad',
-    'Salud general'
-  ];
-
-  const diasSemanaOptions = [
-    { value: 0, label: 'Domingo' },
-    { value: 1, label: 'Lunes' },
-    { value: 2, label: 'Martes' },
-    { value: 3, label: 'Miércoles' },
-    { value: 4, label: 'Jueves' },
-    { value: 5, label: 'Viernes' },
-    { value: 6, label: 'Sábado' }
-  ];
+  // Usar constantes importadas
 
   useEffect(() => {
     if (clientId && !clienteNombre) {
@@ -225,7 +207,7 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
                 label="Selecciona el objetivo principal del plan"
               >
                 <SimpleGrid cols={{base: 1, xs: 2}} spacing="lg">
-                  {objetivosEntrenamiento.map((objetivo) => (
+                  {OBJETIVOS_ENTRENAMIENTO.map((objetivo) => (
                     <Radio
                       key={objetivo}
                       value={objetivo}
@@ -333,7 +315,7 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
                   required
                 >
                   <SimpleGrid cols={{base: 1, xs: 2}} spacing="md">
-                    {diasSemanaOptions.map((dia) => (
+                    {DIAS_SEMANA_OPTIONS.map((dia) => (
                       <Checkbox
                         key={dia.value}
                         value={String(dia.value)}
@@ -352,7 +334,7 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
                     <Text size="sm" c="dimmed">
                       {form.diasSemana
                         .sort((a, b) => a - b)
-                        .map(dia => diasSemanaOptions.find(d => d.value === dia)?.label)
+                        .map(dia => DIAS_SEMANA_OPTIONS.find(d => d.value === dia)?.label)
                         .join(', ')}
                     </Text>
                   </Box>

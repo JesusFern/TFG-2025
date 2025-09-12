@@ -1,11 +1,8 @@
 import { useNavigate } from 'react-router-dom';
 import type { PlanEntrenamiento } from '../types/training';
-
-interface BreadcrumbItem {
-  title: string;
-  href: string;
-  icon?: React.ReactNode;
-}
+import type { BreadcrumbItem } from '../types/trainingCommon';
+import { BREADCRUMBS_TRAINING_BASE, BREADCRUMBS_DIET_BASE } from '../constants/training';
+import { getClientIdFromPlan } from '../utils/trainingUtils';
 
 interface UseNavigationReturn {
   navigateToClientPlans: (plan: PlanEntrenamiento) => void;
@@ -21,30 +18,7 @@ export const useNavigation = (): UseNavigationReturn => {
 
   const navigateToClientPlans = (plan: PlanEntrenamiento) => {
     try {
-      let clientId = null;
-      
-      if (plan && plan.clientes && Array.isArray(plan.clientes) && plan.clientes.length > 0) {
-        const clientData = plan.clientes[0];
-        
-        if (typeof clientData === 'string') {
-          clientId = clientData;
-        } 
-        else if (typeof clientData === 'object' && clientData !== null) {
-          type ClientObject = { _id?: string; id?: string; };
-          const clientObj = clientData as unknown as ClientObject;
-          
-          if (clientObj._id) {
-            clientId = clientObj._id;
-          } else if (clientObj.id) {
-            clientId = clientObj.id;
-          } else {
-            clientId = String(clientData);
-          }
-        }
-        else if (clientData) {
-          clientId = String(clientData);
-        }
-      }
+      const clientId = getClientIdFromPlan(plan);
       
       if (clientId) {
         navigate(`/worker/dashboard-clients/${clientId}/training`);
@@ -57,20 +31,15 @@ export const useNavigation = (): UseNavigationReturn => {
   };
 
   const getTrainingBreadcrumbs = (currentPage: string): BreadcrumbItem[] => {
-    const baseBreadcrumbs = [
-      { title: 'Inicio', href: '/', icon: undefined },
-      { title: 'Entrenamiento', href: '/training/planes' }
-    ];
-
     switch (currentPage) {
       case 'ver':
-        return [...baseBreadcrumbs, { title: 'Ver plan', href: '#' }];
+        return [...BREADCRUMBS_TRAINING_BASE, { title: 'Ver plan', href: '#' }];
       case 'editar':
-        return [...baseBreadcrumbs, { title: 'Editar plan', href: '#' }];
+        return [...BREADCRUMBS_TRAINING_BASE, { title: 'Editar plan', href: '#' }];
       case 'crear':
-        return [...baseBreadcrumbs, { title: 'Crear plan', href: '#' }];
+        return [...BREADCRUMBS_TRAINING_BASE, { title: 'Crear plan', href: '#' }];
       default:
-        return baseBreadcrumbs;
+        return BREADCRUMBS_TRAINING_BASE;
     }
   };
 
@@ -87,10 +56,7 @@ export const useNavigation = (): UseNavigationReturn => {
   };
 
   const getDietBreadcrumbs = (currentPage: string, clientId?: string): BreadcrumbItem[] => {
-    const baseBreadcrumbs = [
-      { title: 'Inicio', href: '/', icon: undefined },
-      { title: 'Clientes', href: '/clientes' }
-    ];
+    const baseBreadcrumbs = [...BREADCRUMBS_DIET_BASE];
 
     if (clientId) {
       baseBreadcrumbs.push({ title: 'Detalles del cliente', href: `/clientes/${clientId}` });

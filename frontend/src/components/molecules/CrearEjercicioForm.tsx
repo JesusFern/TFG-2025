@@ -16,23 +16,10 @@ import {
 } from '@mantine/core';
 import { IconAlertCircle, IconPlus } from '@tabler/icons-react';
 import type { Ejercicio, CrearEjercicioDTO } from '../../types/training';
+import type { EjercicioSesion, OpcionesProgresion } from '../../types/trainingCommon';
 import { trainingService } from '../../services/trainingService';
 import { useExerciseOptions } from '../../hooks/useExerciseOptions';
-
-interface EjercicioSesion {
-  ejercicio: string;
-  orden: number;
-  series: number;
-  repeticiones: number;
-  peso?: number;
-  tiempoDescanso: number;
-  ejerciciosAlternativos?: string[];
-  opcionesProgresion?: {
-    aumentarPeso: boolean;
-    masRepeticiones: boolean;
-    mayorIntensidad: boolean;
-  };
-}
+import { OPCIONES_PROGRESION_DEFAULT } from '../../constants/training';
 
 interface CrearEjercicioFormProps {
   onEjercicioCreado: (ejercicio: Ejercicio) => void;
@@ -63,11 +50,7 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
   // Estados adicionales para la sesión
   const [peso, setPeso] = useState<number | undefined>(undefined);
   const [tiempoDescanso, setTiempoDescanso] = useState<number>(60);
-  const [opcionesProgresion, setOpcionesProgresion] = useState({
-    aumentarPeso: true,
-    masRepeticiones: true,
-    mayorIntensidad: false
-  });
+  const [opcionesProgresion, setOpcionesProgresion] = useState<OpcionesProgresion>(OPCIONES_PROGRESION_DEFAULT);
 
   // Usar el hook para las opciones de los Selects
   const { gruposMusculares, equipamientos, nivelesDificultad, nivelesIntensidad } = useExerciseOptions();
@@ -114,11 +97,7 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
       });
       setPeso(undefined);
       setTiempoDescanso(60);
-      setOpcionesProgresion({
-        aumentarPeso: true,
-        masRepeticiones: true,
-        mayorIntensidad: false
-      });
+      setOpcionesProgresion(OPCIONES_PROGRESION_DEFAULT);
     } catch (error) {
       setError('Error al crear el ejercicio: ' + (error as Error).message);
     } finally {

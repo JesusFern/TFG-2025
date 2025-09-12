@@ -28,13 +28,15 @@ import {
   IconCheck
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+// format y es ya no se usan directamente, se usan a través de las utilidades
 import trainingService from '../services/trainingService';
 import { SesionPlan } from '../types/training';
 import { useTrainingData } from '../hooks/useTrainingData';
 import { useThemeDetection } from '../hooks/useThemeDetection';
 import { useNavigation } from '../hooks/useNavigation';
+import { DIAS_SEMANA } from '../constants/training';
+import { formatDateWithLocale, formatDateLong, getWeekStartDate, getWeekEndDate } from '../utils/trainingUtils';
+import type { SesionInfo, EjercicioSesion } from '../types/trainingCommon';
 import ModalGestionarEjercicios from '../components/molecules/ModalGestionarEjercicios';
 import ModalEditarEjercicioSesion from '../components/molecules/ModalEditarEjercicioSesion';
 import ModalEditarSesion from '../components/molecules/ModalEditarSesion';
@@ -43,15 +45,7 @@ import ModalCrearSesion from '../components/molecules/ModalCrearSesion';
 import EditarPlanHeader from '../components/molecules/EditarPlanHeader';
 import PlanInfo from '../components/molecules/PlanInfo';
 
-interface SesionInfo {
-  weekDayIndex: number;
-  sesionIndex: number;
-  weekDayName: string;
-  fecha: Date;
-  fechaFormateada: string;
-  nombreCompleto: string;
-  data: SesionPlan | null;
-}
+// SesionInfo ya está importado desde trainingCommon
 
 interface SesionUpdateResponse {
   message: string;
@@ -88,54 +82,15 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
   
   
   const [showEjerciciosModal, setShowEjerciciosModal] = useState<boolean>(false);
-  const [ejerciciosSesion, setEjerciciosSesion] = useState<Array<{
-    ejercicio: string;
-    orden: number;
-    series: number;
-    repeticiones: number;
-    peso?: number;
-    tiempoDescanso: number;
-    ejerciciosAlternativos?: string[];
-    opcionesProgresion?: {
-      aumentarPeso: boolean;
-      masRepeticiones: boolean;
-      mayorIntensidad: boolean;
-    };
-  }>>([]);
+  const [ejerciciosSesion, setEjerciciosSesion] = useState<EjercicioSesion[]>([]);
   
   const [forceUpdate, setForceUpdate] = useState(0);
   const [currentSesionLocal, setCurrentSesionLocal] = useState<SesionInfo | null>(null);
-  const [ejerciciosSesionActual, setEjerciciosSesionActual] = useState<Array<{
-    ejercicio: string;
-    orden: number;
-    series: number;
-    repeticiones: number;
-    peso?: number;
-    tiempoDescanso: number;
-    ejerciciosAlternativos?: string[];
-    opcionesProgresion?: {
-      aumentarPeso: boolean;
-      masRepeticiones: boolean;
-      mayorIntensidad: boolean;
-    };
-  }>>([]);
+  const [ejerciciosSesionActual, setEjerciciosSesionActual] = useState<EjercicioSesion[]>([]);
   
   const [ejercicioAEliminar, setEjercicioAEliminar] = useState<number | null>(null);
   const [ejercicioAEditar, setEjercicioAEditar] = useState<number | null>(null);
-  const [ejercicioEditando, setEjercicioEditando] = useState<{
-    ejercicio: string;
-    orden: number;
-    series: number;
-    repeticiones: number;
-    peso?: number;
-    tiempoDescanso: number;
-    ejerciciosAlternativos?: string[];
-    opcionesProgresion?: {
-      aumentarPeso: boolean;
-      masRepeticiones: boolean;
-      mayorIntensidad: boolean;
-    };
-  } | null>(null);
+  const [ejercicioEditando, setEjercicioEditando] = useState<EjercicioSesion | null>(null);
 
   const [sesionAEditar, setSesionAEditar] = useState<string | null>(null);
   const [sesionEditando, setSesionEditando] = useState<{
@@ -163,22 +118,14 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     
     const totalWeeks = Math.ceil(plan.duracionDias / 7);
     
-    const startOfWeek = new Date(fechaInicio);
-    const daysToSubtract = startOfWeek.getDay() === 0 ? 6 : startOfWeek.getDay() - 1;
-    startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
-    
-    const weekStartDate = new Date(startOfWeek);
-    weekStartDate.setDate(weekStartDate.getDate() + (currentWeek - 1) * 7);
-    
-    const weekEndDate = new Date(weekStartDate);
-    weekEndDate.setDate(weekEndDate.getDate() + 6);
+    const weekStartDate = getWeekStartDate(fechaInicio, currentWeek);
+    const weekEndDate = getWeekEndDate(weekStartDate);
     
     const sesionesDeLaSemana = sesionesFiltradas.filter(sesion => {
       const sesionFecha = new Date(sesion.fecha);
       return sesionFecha >= weekStartDate && sesionFecha <= weekEndDate;
     });
     
-    const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
     const sesionesInfo: SesionInfo[] = [];
     
     for (let i = 0; i < 7; i++) {
@@ -194,10 +141,10 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
       sesionesInfo.push({
         weekDayIndex: i,
         sesionIndex: i,
-        weekDayName: diasSemana[i],
+        weekDayName: DIAS_SEMANA[i],
         fecha: fechaDelDia,
-        fechaFormateada: format(fechaDelDia, 'dd/MM', { locale: es }),
-        nombreCompleto: `${diasSemana[i]} ${format(fechaDelDia, 'dd/MM', { locale: es })}`,
+        fechaFormateada: formatDateWithLocale(fechaDelDia),
+        nombreCompleto: `${DIAS_SEMANA[i]} ${formatDateWithLocale(fechaDelDia)}`,
         data: sesionDelDia || null
       });
     }
@@ -274,7 +221,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
 
   const fechaInicioFormateada = useMemo(() => {
     if (!plan?.fechaInicio) return "";
-    return format(new Date(plan.fechaInicio), "d 'de' MMMM 'de' yyyy", { locale: es });
+    return formatDateLong(new Date(plan.fechaInicio));
   }, [plan?.fechaInicio]);
 
   // Inicializar ejercicios locales cuando cambie la sesión activa
@@ -285,20 +232,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
   }, [currentSesionInfo]);
 
   // Funciones para manejar ejercicios
-  const handleAddEjercicio = async (ejercicioData: {
-    ejercicio: string;
-    orden: number;
-    series: number;
-    repeticiones: number;
-    peso?: number;
-    tiempoDescanso: number;
-    ejerciciosAlternativos?: string[];
-    opcionesProgresion?: {
-      aumentarPeso: boolean;
-      masRepeticiones: boolean;
-      mayorIntensidad: boolean;
-    };
-  }) => {
+  const handleAddEjercicio = async (ejercicioData: EjercicioSesion) => {
     if (!currentSesionInfo || !activeTab || !currentSesionInfo.data?._id) return;
     
     try {
@@ -465,9 +399,9 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     try {
       setPublishLoading(true);
       
-      const ejerciciosActualizados = currentSesionInfo.data.ejercicios.filter((_, index) => index !== ejercicioIndex);
+      const ejerciciosActualizados = currentSesionInfo.data.ejercicios.filter((_: EjercicioSesion, index: number) => index !== ejercicioIndex);
       
-      const ejerciciosReordenados = ejerciciosActualizados.map((ejercicio, index) => ({
+      const ejerciciosReordenados = ejerciciosActualizados.map((ejercicio: EjercicioSesion, index: number) => ({
         ...ejercicio,
         orden: index + 1
       }));

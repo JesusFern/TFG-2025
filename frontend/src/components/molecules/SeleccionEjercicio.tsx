@@ -15,21 +15,8 @@ import {
 } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
 import type { Ejercicio } from '../../types/training';
-
-interface EjercicioSesion {
-  ejercicio: string;
-  orden: number;
-  series: number;
-  repeticiones: number;
-  peso?: number;
-  tiempoDescanso: number;
-  ejerciciosAlternativos?: string[];
-  opcionesProgresion?: {
-    aumentarPeso: boolean;
-    masRepeticiones: boolean;
-    mayorIntensidad: boolean;
-  };
-}
+import type { EjercicioSesion, OpcionesProgresion } from '../../types/trainingCommon';
+import { OPCIONES_PROGRESION_DEFAULT } from '../../constants/training';
 
 interface SeleccionEjercicioProps {
   ejerciciosExistentes: Ejercicio[];
@@ -48,11 +35,7 @@ const SeleccionEjercicio: React.FC<SeleccionEjercicioProps> = ({
   const [peso, setPeso] = useState<number | undefined>(undefined);
   const [tiempoDescanso, setTiempoDescanso] = useState<number>(60);
   const [ejerciciosAlternativos] = useState<string[]>([]);
-  const [opcionesProgresion, setOpcionesProgresion] = useState({
-    aumentarPeso: true,
-    masRepeticiones: true,
-    mayorIntensidad: false
-  });
+  const [opcionesProgresion, setOpcionesProgresion] = useState<OpcionesProgresion>(OPCIONES_PROGRESION_DEFAULT);
 
   const handleSeleccionarEjercicio = () => {
     if (!ejercicioSeleccionado) {

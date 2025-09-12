@@ -17,6 +17,7 @@ import { IconAlertCircle, IconCheck, IconClock, IconCalendar, IconTarget, IconBa
 import { usePermissions } from '../hooks/usePermissions';
 import { useThemeDetection } from '../hooks/useThemeDetection';
 import { useTrainingPlans } from '../hooks/useTrainingPlans';
+import { formatDate } from '../utils/trainingUtils';
 
 const WorkerClientTrainingPlansList: React.FC = () => {
   const navigate = useNavigate();
@@ -54,18 +55,7 @@ const WorkerClientTrainingPlansList: React.FC = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    try {
-      const date = new Date(dateString);
-      return date.toLocaleDateString('es-ES', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric'
-      });
-    } catch {
-      return 'Fecha no válida';
-    }
-  };
+  // formatDate ya está importado desde trainingUtils
 
   return (
     <Container size="lg" py="xl">

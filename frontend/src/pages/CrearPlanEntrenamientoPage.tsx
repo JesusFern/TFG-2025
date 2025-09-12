@@ -5,6 +5,7 @@ import { IconHome, IconBarbell, IconChevronRight } from '@tabler/icons-react';
 import GlobalNotificationOverlay from '../components/atoms/GlobalNotificationOverlay';
 import { getUserById } from '../services/userService';
 import FormularioCrearPlanEntrenamiento from '../components/forms/training/FormularioCrearPlanEntrenamiento';
+import { BREADCRUMBS_TRAINING_BASE } from '../constants/training';
 
 const CrearPlanEntrenamientoPage: React.FC = () => {
   const navigate = useNavigate();
@@ -45,9 +46,8 @@ const CrearPlanEntrenamientoPage: React.FC = () => {
   };
   
   const items = [
-    { title: 'Inicio', href: '/', icon: <IconHome size={14} /> },
-    { title: 'Entrenamiento', href: '/training/planes' },
-    { title: 'Crear plan', href: '#' },
+    ...BREADCRUMBS_TRAINING_BASE.map(item => ({ ...item, icon: item.title === 'Inicio' ? <IconHome size={14} /> : undefined })),
+    { title: 'Crear plan', href: '#', icon: undefined },
   ].map((item, index) => (
     <Anchor component={Link} to={item.href} key={index} size="sm" c="nutroos-green">
       {item.icon && (
