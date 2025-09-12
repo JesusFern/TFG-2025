@@ -15,19 +15,19 @@ import { IconAlertCircle } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import trainingService from '../../../services/trainingService';
 import type { CrearEjercicioDTO, Ejercicio } from '../../../types/training';
+import { useExerciseOptions } from '../../../hooks/useExerciseOptions';
 
 interface FormularioCrearEjercicioProps {
   onSuccess: (ejercicioData: { _id: string }) => void;
   onError: (error: Error) => void;
 }
 
-const dificultadOptions = ['Principiante', 'Intermedio', 'Avanzado'].map(v => ({ value: v, label: v }));
-const intensidadOptions = ['Baja', 'Media', 'Alta'].map(v => ({ value: v, label: v }));
-
 const FormularioCrearEjercicio: React.FC<FormularioCrearEjercicioProps> = ({ 
   onSuccess, 
   onError
 }) => {
+  // Usar el hook para las opciones de los Selects
+  const { nivelesDificultad, nivelesIntensidad } = useExerciseOptions();
   const [form, setForm] = useState<CrearEjercicioDTO>({
     nombre: '',
     descripcion: '',
@@ -148,13 +148,13 @@ const FormularioCrearEjercicio: React.FC<FormularioCrearEjercicioProps> = ({
         <Group grow>
           <Select 
             label="Dificultad" 
-            data={dificultadOptions} 
+            data={nivelesDificultad} 
             value={form.nivelDificultad} 
             onChange={(v) => handleChange('nivelDificultad', v || 'Intermedio')} 
           />
           <Select 
             label="Intensidad" 
-            data={intensidadOptions} 
+            data={nivelesIntensidad} 
             value={form.nivelIntensidad} 
             onChange={(v) => handleChange('nivelIntensidad', v || 'Media')} 
           />

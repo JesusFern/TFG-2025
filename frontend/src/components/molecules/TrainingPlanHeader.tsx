@@ -1,5 +1,4 @@
 import React from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
   Group, 
   Text, 
@@ -12,6 +11,7 @@ import {
   IconCalendarEvent
 } from '@tabler/icons-react';
 import TrainingBreadcrumbs from '../atoms/TrainingBreadcrumbs';
+import { useNavigation } from '../../hooks/useNavigation';
 import type { PlanEntrenamiento } from '../../types/training';
 
 interface TrainingPlanHeaderProps {
@@ -23,50 +23,12 @@ const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
   plan, 
   fechaInicioFormateada 
 }) => {
-  const navigate = useNavigate();
+  const { navigateToClientPlans, getTrainingBreadcrumbs } = useNavigation();
 
-  const breadcrumbs = [
-    { title: 'Inicio', href: '/', icon: <IconHome size={14} /> },
-    { title: 'Entrenamiento', href: '/training/planes' },
-    { title: 'Ver plan', href: '#' },
-  ];
-
-  const handleBackToClientPlans = () => {
-    try {
-      let clientId = null;
-      
-      if (plan && plan.clientes && Array.isArray(plan.clientes) && plan.clientes.length > 0) {
-        const clientData = plan.clientes[0];
-        
-        if (typeof clientData === 'string') {
-          clientId = clientData;
-        } 
-        else if (typeof clientData === 'object' && clientData !== null) {
-          type ClientObject = { _id?: string; id?: string; };
-          const clientObj = clientData as unknown as ClientObject;
-          
-          if (clientObj._id) {
-            clientId = clientObj._id;
-          } else if (clientObj.id) {
-            clientId = clientObj.id;
-          } else {
-            clientId = String(clientData);
-          }
-        }
-        else if (clientData) {
-          clientId = String(clientData);
-        }
-      }
-      
-      if (clientId) {
-        navigate(`/worker/dashboard-clients/${clientId}/training`);
-      } else {
-        navigate(-1);
-      }
-    } catch {
-      navigate(-1);
-    }
-  };
+  const breadcrumbs = getTrainingBreadcrumbs('ver').map(item => ({
+    ...item,
+    icon: item.title === 'Inicio' ? <IconHome size={14} /> : item.icon
+  }));
 
   return (
     <>
@@ -85,7 +47,7 @@ const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
           variant="outline"
           color="nutroos-green"
           leftSection={<IconArrowLeft size={18} />}
-          onClick={handleBackToClientPlans}
+          onClick={() => navigateToClientPlans(plan)}
         >
           Volver a planes del cliente
         </Button>

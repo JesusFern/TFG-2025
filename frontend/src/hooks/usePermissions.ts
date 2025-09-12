@@ -11,6 +11,6 @@ export const usePermissions = () => {
   return {
     user,
     hasPermission,
-    workerId: user?._id
+    workerId: user?._id || null
   };
 };

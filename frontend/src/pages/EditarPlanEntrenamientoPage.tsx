@@ -7,7 +7,6 @@ import {
   Group, 
   Text, 
   Alert, 
-  useMantineColorScheme,
   Box,
   Loader,
   Pagination,
@@ -19,7 +18,7 @@ import {
   Badge,
   Title
 } from '@mantine/core';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { 
   IconBarbell,
   IconPlus,
@@ -32,7 +31,10 @@ import { motion } from 'framer-motion';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import trainingService from '../services/trainingService';
-import { PlanEntrenamiento, SesionPlan, Ejercicio } from '../types/training';
+import { SesionPlan } from '../types/training';
+import { useTrainingData } from '../hooks/useTrainingData';
+import { useThemeDetection } from '../hooks/useThemeDetection';
+import { useNavigation } from '../hooks/useNavigation';
 import ModalGestionarEjercicios from '../components/molecules/ModalGestionarEjercicios';
 import ModalEditarEjercicioSesion from '../components/molecules/ModalEditarEjercicioSesion';
 import ModalEditarSesion from '../components/molecules/ModalEditarSesion';
@@ -59,22 +61,30 @@ interface SesionUpdateResponse {
 
 const EditarPlanEntrenamientoPage: React.FC = () => {
   const { planId } = useParams<{ planId: string }>();
-  const navigate = useNavigate();
   const location = useLocation();
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
+  const isDark = useThemeDetection();
+  const { navigateToPlansList, navigateToPlanView } = useNavigation();
   
-  const [plan, setPlan] = useState<PlanEntrenamiento | null>(null);
-  const [sesiones, setSesiones] = useState<SesionPlan[]>([]);
-  const [ejercicios, setEjercicios] = useState<Ejercicio[]>([]);
+  // Usar el hook refactorizado para cargar datos
+  const {
+    plan,
+    sesiones,
+    ejercicios,
+    loading,
+    error,
+    fechaInicio,
+    setError,
+    refetch
+  } = useTrainingData({ 
+    planId, 
+    options: { redirectToView: true, loadExercises: true } 
+  });
+  
   const [activeTab, setActiveTab] = useState<string | null>("0");
-  const [loading, setLoading] = useState<boolean>(true);
   const [publishLoading, setPublishLoading] = useState<boolean>(false);
-  const [error, setError] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   
   const [currentWeek, setCurrentWeek] = useState(1);
-  const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
   
   
   const [showEjerciciosModal, setShowEjerciciosModal] = useState<boolean>(false);
@@ -195,66 +205,20 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     return { sesiones: sesionesInfo, totalWeeks };
   }, [plan, currentWeek, sesiones, fechaInicio]);
 
+  // Procesar parámetros de URL (sesión seleccionada) cuando los datos estén cargados
   useEffect(() => {
-    const cargarPlan = async () => {
-      if (!planId) return;
-      
-      try {
-        setLoading(true);
-        const [planData, sesionesData, ejerciciosData] = await Promise.all([
-          trainingService.obtenerPlanPorId(planId),
-          trainingService.obtenerSesiones({ plan: planId }),
-          trainingService.obtenerEjercicios()
-        ]);
-        
-        setPlan(planData);
-        
-        // Verificar si el plan está publicado y redirigir si es necesario
-        if (!planData.draftMode) {
-          navigate(`/training/planes/${planId}`);
-          return;
+    if (plan && sesiones.length > 0) {
+      const sesionParam = new URLSearchParams(location.search).get('sesion');
+      if (sesionParam) {
+        const sesionIndex = parseInt(sesionParam) - 1;
+        if (sesionIndex >= 0 && sesionIndex < sesiones.length) {
+          const targetWeek = Math.ceil((sesionIndex + 1) / 7);
+          setCurrentWeek(targetWeek);
+          setActiveTab(sesionIndex.toString());
         }
-        
-        // Normalizar los ejercicios en las sesiones para que solo tengan el ID
-        const sesionesNormalizadas = sesionesData.map(sesion => ({
-          ...sesion,
-          ejercicios: sesion.ejercicios.map(ejercicio => ({
-            ...ejercicio,
-            ejercicio: typeof ejercicio.ejercicio === 'object' && ejercicio.ejercicio !== null 
-              ? (ejercicio.ejercicio as { _id: string })._id 
-              : ejercicio.ejercicio
-          }))
-        }));
-        
-        setSesiones(sesionesNormalizadas);
-        setEjercicios(ejerciciosData);
-        
-        
-        // Usar la fecha de inicio del plan
-        if (planData.fechaInicio) {
-          const fechaInicioDate = new Date(planData.fechaInicio);
-          setFechaInicio(fechaInicioDate);
-        }
-        
-        // Procesar parámetros de URL (sesión seleccionada)
-        const sesionParam = new URLSearchParams(location.search).get('sesion');
-        if (sesionParam) {
-          const sesionIndex = parseInt(sesionParam) - 1;
-          if (sesionIndex >= 0 && sesionIndex < sesionesData.length) {
-            const targetWeek = Math.ceil((sesionIndex + 1) / 7);
-            setCurrentWeek(targetWeek);
-            setActiveTab(sesionIndex.toString());
-          }
-        }
-      } catch {
-        setError("Error al cargar el plan. Por favor intenta de nuevo.");
-      } finally {
-        setLoading(false);
       }
-    };
-    
-    cargarPlan();
-  }, [planId, location.search, navigate]);
+    }
+  }, [plan, sesiones.length, location.search]);
 
   useEffect(() => {
     if (sesionesRange.sesiones.length > 0 && (activeTab === null || !sesionesRange.sesiones.some(sesion => sesion.weekDayIndex.toString() === activeTab))) {
@@ -338,7 +302,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     if (!currentSesionInfo || !activeTab || !currentSesionInfo.data?._id) return;
     
     try {
-      setLoading(true);
+      setPublishLoading(true);
       
       const nuevoEjercicio = {
         ejercicio: ejercicioData.ejercicio,
@@ -380,11 +344,8 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
         setEjerciciosSesionActual(sesionActualizada.ejercicios || currentSesionInfo.data?.ejercicios || []);
       }
       
-      setSesiones(prev => prev.map(sesion => 
-        sesion._id === currentSesionInfo.data?._id 
-          ? { ...sesion, ...sesionActualizada }
-          : sesion
-      ));
+      // Recargar datos después de actualizar sesión
+      await refetch();
       
       setForceUpdate(prev => prev + 1);
       
@@ -393,7 +354,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al agregar el ejercicio');
     } finally {
-      setLoading(false);
+      setPublishLoading(false);
     }
   };
 
@@ -407,8 +368,9 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     setShowEjerciciosModal(true);
   };
 
-  const handleEjercicioCreado = (ejercicio: Ejercicio) => {
-    setEjercicios(prev => [...prev, ejercicio]);
+  const handleEjercicioCreado = async () => {
+    // Recargar datos después de crear ejercicio
+    await refetch();
   };
 
   const handleConfirmarEliminarEjercicio = () => {
@@ -442,7 +404,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     if (!currentSesionInfo?.data || !currentSesionInfo.data._id || ejercicioAEditar === null || !ejercicioEditado) return;
 
     try {
-      setLoading(true);
+      setPublishLoading(true);
       
       const ejerciciosActualizados = [...(currentSesionInfo.data.ejercicios || [])];
       
@@ -475,11 +437,8 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
         setEjerciciosSesionActual(sesionActualizada.ejercicios || currentSesionInfo.data?.ejercicios || []);
       }
       
-      setSesiones(prev => prev.map(sesion => 
-        sesion._id === currentSesionInfo.data?._id 
-          ? { ...sesion, ...sesionActualizada }
-          : sesion
-      ));
+      // Recargar datos después de actualizar sesión
+      await refetch();
       
       setForceUpdate(prev => prev + 1);
       
@@ -491,7 +450,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al actualizar el ejercicio');
     } finally {
-      setLoading(false);
+      setPublishLoading(false);
     }
   };
 
@@ -504,7 +463,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     if (!currentSesionInfo || !currentSesionInfo.data?._id) return;
     
     try {
-      setLoading(true);
+      setPublishLoading(true);
       
       const ejerciciosActualizados = currentSesionInfo.data.ejercicios.filter((_, index) => index !== ejercicioIndex);
       
@@ -537,11 +496,8 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
         setEjerciciosSesionActual(sesionActualizada.ejercicios || currentSesionInfo.data?.ejercicios || []);
       }
       
-      setSesiones(prev => prev.map(sesion => 
-        sesion._id === currentSesionInfo.data?._id 
-          ? { ...sesion, ...sesionActualizada }
-          : sesion
-      ));
+      // Recargar datos después de actualizar sesión
+      await refetch();
       
       setForceUpdate(prev => prev + 1);
       
@@ -550,7 +506,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al eliminar el ejercicio');
     } finally {
-      setLoading(false);
+      setPublishLoading(false);
     }
   };
 
@@ -572,7 +528,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     if (!sesionAEditar || !sesionEditada) return;
 
     try {
-      setLoading(true);
+      setPublishLoading(true);
       
       const datosActualizacion = {
         fecha: sesionEditada.fecha,
@@ -584,11 +540,8 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
 
       await trainingService.actualizarSesion(sesionAEditar, datosActualizacion);
       
-      setSesiones(prev => prev.map(sesion => 
-        sesion._id === sesionAEditar 
-          ? { ...sesion, ...datosActualizacion }
-          : sesion
-      ));
+      // Recargar datos después de actualizar sesión
+      await refetch();
 
       if (currentSesionInfo?.data?._id === sesionAEditar) {
         setCurrentSesionLocal(prev => prev && prev.data ? {
@@ -612,7 +565,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al actualizar la sesión');
     } finally {
-      setLoading(false);
+      setPublishLoading(false);
     }
   };
 
@@ -629,11 +582,12 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     if (!sesionAEliminar) return;
 
     try {
-      setLoading(true);
+      setPublishLoading(true);
       
       await trainingService.eliminarSesion(sesionAEliminar);
       
-      setSesiones(prev => prev.filter(sesion => sesion._id !== sesionAEliminar));
+      // Recargar datos después de eliminar sesión
+      await refetch();
 
       if (currentSesionInfo?.data?._id === sesionAEliminar) {
         setCurrentSesionLocal(null);
@@ -647,7 +601,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al eliminar la sesión');
     } finally {
-      setLoading(false);
+      setPublishLoading(false);
     }
   };
 
@@ -666,7 +620,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     if (!plan?._id) return;
 
     try {
-      setLoading(true);
+      setPublishLoading(true);
       
       const datosSesion = {
         clienteId: typeof plan.clientes[0] === 'object' && plan.clientes[0] !== null && '_id' in plan.clientes[0] 
@@ -684,7 +638,8 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
       const response = await trainingService.crearSesion(datosSesion);
       const nuevaSesion = response.sesion;
       
-      setSesiones(prev => [...prev, nuevaSesion]);
+      // Recargar datos después de crear sesión
+      await refetch();
       if (plan && fechaInicio) {
         const sesionFecha = new Date(nuevaSesion.fecha);
         const inicioDate = new Date(fechaInicio);
@@ -713,7 +668,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al crear la sesión');
     } finally {
-      setLoading(false);
+      setPublishLoading(false);
     }
   };
 
@@ -726,7 +681,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
       await trainingService.publicarPlan(planId);
       
       // Redirigir a la vista de ver el plan publicado
-      navigate(`/training/planes/${planId}`);
+      navigateToPlanView(planId);
     } catch (error) {
       setError(error instanceof Error ? error.message : 'Error al publicar el plan de entrenamiento');
     } finally {
@@ -759,7 +714,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
         <Button 
           mt="lg" 
           color="nutroos-green"
-          onClick={() => navigate('/training/planes')}
+          onClick={navigateToPlansList}
         >
           Volver a planes
         </Button>

@@ -1,9 +1,8 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Group, Text, Box } from '@mantine/core';
-import { IconUser, IconHome } from '@tabler/icons-react';
+import { useNavigate, useSearchParams, Link } from 'react-router-dom';
+import { Group, Text, Box, Paper, Title, Avatar, Badge, Container, Breadcrumbs, Anchor } from '@mantine/core';
+import { IconHome, IconBarbell, IconChevronRight } from '@tabler/icons-react';
 import GlobalNotificationOverlay from '../components/atoms/GlobalNotificationOverlay';
-import TrainingPageLayout from '../components/atoms/TrainingPageLayout';
 import { getUserById } from '../services/userService';
 import FormularioCrearPlanEntrenamiento from '../components/forms/training/FormularioCrearPlanEntrenamiento';
 
@@ -45,11 +44,21 @@ const CrearPlanEntrenamientoPage: React.FC = () => {
     });
   };
   
-  const breadcrumbs = [
+  const items = [
     { title: 'Inicio', href: '/', icon: <IconHome size={14} /> },
     { title: 'Entrenamiento', href: '/training/planes' },
     { title: 'Crear plan', href: '#' },
-  ];
+  ].map((item, index) => (
+    <Anchor component={Link} to={item.href} key={index} size="sm" c="nutroos-green">
+      {item.icon && (
+        <Group gap={4}>
+          {item.icon}
+          <span>{item.title}</span>
+        </Group>
+      )}
+      {!item.icon && item.title}
+    </Anchor>
+  ));
 
   const renderClientInfo = () => (
     <Group gap="xs">
@@ -57,11 +66,13 @@ const CrearPlanEntrenamientoPage: React.FC = () => {
         <>
           <Text c="dimmed">Para:</Text>
           <Text fw={600}>{clienteNombre}</Text>
+          <Badge color="nutroos-green">Cliente</Badge>
         </>
       ) : clientId ? (
         <>
           <Text c="dimmed">Para cliente con ID:</Text>
           <Text fw={600}>{clientId}</Text>
+          <Badge color="nutroos-green">Cliente</Badge>
         </>
       ) : (
         <Text c="dimmed">Plan de entrenamiento general</Text>
@@ -70,16 +81,45 @@ const CrearPlanEntrenamientoPage: React.FC = () => {
   );
 
   return (
-    <TrainingPageLayout
-      breadcrumbs={breadcrumbs}
-      title="Crear Nuevo Plan de Entrenamiento"
-      icon={<IconUser size="1.5rem" />}
-    >
-      <Group mb="md" align="flex-start">
-        <Box style={{ flex: 1 }}>
-          {renderClientInfo()}
-        </Box>
-      </Group>
+    <Container size="md" py="xl">
+      <Paper 
+        p="md" 
+        mb="lg" 
+        style={{ 
+          backgroundColor: 'var(--app-paper-bg)', 
+          borderBottom: '1px solid var(--app-border-color)' 
+        }}
+      >
+        <Breadcrumbs separator={<IconChevronRight size={14} />}>
+          {items}
+        </Breadcrumbs>
+      </Paper>
+
+      <Paper 
+        p="lg" 
+        mb="xl" 
+        withBorder 
+        radius="md"
+        style={{ 
+          backgroundColor: 'var(--app-paper-bg)', 
+          borderColor: 'var(--app-border-color)' 
+        }}
+      >
+        <Group mb="md" align="flex-start">
+          <Avatar 
+            size="lg" 
+            color="nutroos-green" 
+            radius="xl"
+          >
+            <IconBarbell size="1.5rem" />
+          </Avatar>
+          
+          <Box style={{ flex: 1 }}>
+            <Title order={2} mb={5} c="nutroos-green.6">Crear Nuevo Plan de Entrenamiento</Title>
+            {renderClientInfo()}
+          </Box>
+        </Group>
+      </Paper>
       
       {notice && (
         <GlobalNotificationOverlay
@@ -96,7 +136,7 @@ const CrearPlanEntrenamientoPage: React.FC = () => {
         clienteNombre={clienteNombre}
         onClienteNombreLoaded={handleClienteInfoUpdate}
       />
-    </TrainingPageLayout>
+    </Container>
   );
 };
 

@@ -17,6 +17,7 @@ import {
 import { IconAlertCircle, IconPlus } from '@tabler/icons-react';
 import type { Ejercicio, CrearEjercicioDTO } from '../../types/training';
 import { trainingService } from '../../services/trainingService';
+import { useExerciseOptions } from '../../hooks/useExerciseOptions';
 
 interface EjercicioSesion {
   ejercicio: string;
@@ -68,39 +69,8 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
     mayorIntensidad: false
   });
 
-  const gruposMusculares = [
-    { value: 'Piernas', label: 'Piernas' },
-    { value: 'Espalda', label: 'Espalda' },
-    { value: 'Pecho', label: 'Pecho' },
-    { value: 'Hombros', label: 'Hombros' },
-    { value: 'Brazos', label: 'Brazos' },
-    { value: 'Core', label: 'Core' },
-    { value: 'Glúteos', label: 'Glúteos' },
-    { value: 'Pantorrillas', label: 'Pantorrillas' }
-  ];
-
-  const equipamientos = [
-    { value: 'Mancuernas', label: 'Mancuernas' },
-    { value: 'Barra', label: 'Barra' },
-    { value: 'Cuerda para saltar', label: 'Cuerda para saltar' },
-    { value: 'Ninguno', label: 'Ninguno' },
-    { value: 'Máquina', label: 'Máquina' },
-    { value: 'Peso corporal', label: 'Peso corporal' },
-    { value: 'Pelota medicinal', label: 'Pelota medicinal' },
-    { value: 'Bandas de resistencia', label: 'Bandas de resistencia' }
-  ];
-
-  const nivelesDificultad = [
-    { value: 'Principiante', label: 'Principiante' },
-    { value: 'Intermedio', label: 'Intermedio' },
-    { value: 'Avanzado', label: 'Avanzado' }
-  ];
-  
-  const nivelesIntensidad = [
-    { value: 'Baja', label: 'Baja' },
-    { value: 'Media', label: 'Media' },
-    { value: 'Alta', label: 'Alta' }
-  ];
+  // Usar el hook para las opciones de los Selects
+  const { gruposMusculares, equipamientos, nivelesDificultad, nivelesIntensidad } = useExerciseOptions();
 
   const handleCrearEjercicio = async () => {
     if (!nuevoEjercicio.nombre.trim()) {

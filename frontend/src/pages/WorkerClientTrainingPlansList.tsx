@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { 
   Container, 
@@ -14,75 +14,30 @@ import {
   Paper
 } from '@mantine/core';
 import { IconAlertCircle, IconCheck, IconClock, IconCalendar, IconTarget, IconBarbell } from '@tabler/icons-react';
-import trainingService from '../services/trainingService';
-import { PlanEntrenamiento } from '../types/training';
-import { getClientById } from '../services/authService';
 import { usePermissions } from '../hooks/usePermissions';
 import { useThemeDetection } from '../hooks/useThemeDetection';
+import { useTrainingPlans } from '../hooks/useTrainingPlans';
 
 const WorkerClientTrainingPlansList: React.FC = () => {
   const navigate = useNavigate();
   const { clientId } = useParams<{ clientId: string }>();
   const { hasPermission, workerId } = usePermissions();
   const isDark = useThemeDetection();
-  
-  const [planes, setPlanes] = useState<PlanEntrenamiento[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [clientInfo, setClientInfo] = useState<{id: string; fullName: string; email: string; role: string} | null>(null);
-  const [loadingClient, setLoadingClient] = useState(true);
-
   const theme = useMantineTheme();
 
-  useEffect(() => {
-    const fetchPlanes = async () => {
-      if (!workerId || !clientId) {
-        setError('ID de entrenador o cliente no encontrado');
-        setLoading(false);
-        return;
-      }
+  // Usar el hook refactorizado para cargar datos
+  const {
+    planes,
+    clientInfo,
+    loading,
+    loadingClient,
+    error
+  } = useTrainingPlans({ 
+    workerId: workerId || null, 
+    clientId: clientId || null, 
+    hasPermission: hasPermission || false
+  });
 
-      // Verificar que el usuario actual es un worker
-      if (!hasPermission) {
-        setError('No tienes permisos para acceder a esta página. Solo los entrenadores pueden ver planes de entrenamiento.');
-        setLoading(false);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        const planesData = await trainingService.obtenerPlanes({ entrenador: workerId as string, cliente: clientId });
-        setPlanes(planesData);
-      } catch (err) {
-        console.error("Error al obtener planes de entrenamiento:", err);
-        setError('Error al cargar los planes de entrenamiento');
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    fetchPlanes();
-  }, [workerId, clientId, hasPermission]);
-
-  useEffect(() => {
-    const fetchClientInfo = async () => {
-      if (!clientId) return;
-      
-      try {
-        setLoadingClient(true);
-        console.log('Intentando obtener información para el cliente:', clientId);
-        const clientData = await getClientById(clientId);
-        console.log('Información de cliente obtenida:', clientData);
-        setClientInfo(clientData);
-      } catch (err) {
-        console.error("Error al obtener información del cliente:", err);
-      } finally {
-        setLoadingClient(false);
-      }
-    };
-    
-    fetchClientInfo();
-  }, [clientId]);
 
   if (loading) {
     return <Container py="xl"><Loader color="nutroos-green" size="lg" /></Container>;

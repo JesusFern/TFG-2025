@@ -12,6 +12,7 @@ import {
   IconAlertCircle
 } from '@tabler/icons-react';
 import TrainingBreadcrumbs from '../atoms/TrainingBreadcrumbs';
+import { useNavigation } from '../../hooks/useNavigation';
 import type { PlanEntrenamiento } from '../../types/training';
 
 interface EditarPlanHeaderProps {
@@ -25,11 +26,12 @@ const EditarPlanHeader: React.FC<EditarPlanHeaderProps> = ({
   publishLoading,
   onPublish
 }) => {
-  const breadcrumbs = [
-    { title: 'Inicio', href: '/', icon: <IconHome size={14} /> },
-    { title: 'Entrenamiento', href: '/training/planes' },
-    { title: 'Editar plan', href: '#' },
-  ];
+  const { getTrainingBreadcrumbs } = useNavigation();
+
+  const breadcrumbs = getTrainingBreadcrumbs('editar').map(item => ({
+    ...item,
+    icon: item.title === 'Inicio' ? <IconHome size={14} /> : item.icon
+  }));
 
   return (
     <>

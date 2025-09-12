@@ -14,7 +14,8 @@ interface LoginResponse {
 }
 
 interface UserData {
-  id: string;
+  _id: string;
+  id?: string;
   fullName: string;
   email: string;
   role: string;
@@ -155,7 +156,7 @@ export const getClientById = async (clientId: string): Promise<UserData> => {
     
     console.log(`Intentando obtener información del cliente con ID: ${clientId}`);
     const API_BASE_URL = import.meta.env.VITE_BACKEND_HOST || '';
-    const endpoint = `${API_BASE_URL}/api/workers/client/${clientId}`;
+    const endpoint = `${API_BASE_URL}/api/users/${clientId}`;
     console.log(`URL del endpoint: ${endpoint}`);
     
     const response = await axios.get(endpoint, {
@@ -186,6 +187,7 @@ export const getClientById = async (clientId: string): Promise<UserData> => {
     
     // Crear un objeto que cumpla con la interfaz UserData
     const userDataFormatted: UserData = {
+      _id: userData._id || userData.id || clientId,
       id: userData.id || userData._id || clientId,
       fullName: userData.fullName || userData.nombre || userData.name || 'Usuario',
       email: userData.email || 'no-email',
@@ -200,35 +202,6 @@ export const getClientById = async (clientId: string): Promise<UserData> => {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<ApiError>;
       console.error('Detalles del error:', axiosError.response?.data);
-      
-      // Si el endpoint /api/workers/client/:id falla, intentamos con /api/users/:id
-      try {
-        console.log('Intentando endpoint alternativo');
-        const API_BASE_URL = import.meta.env.VITE_BACKEND_HOST || '';
-        const alternativeEndpoint = `${API_BASE_URL}/api/users/${clientId}`;
-        console.log(`URL del endpoint alternativo: ${alternativeEndpoint}`);
-        
-        const alternativeResponse = await axios.get(alternativeEndpoint, {
-          headers: {
-            Authorization: `Bearer ${localStorage.getItem('authToken')}`,
-            'Content-Type': 'application/json'
-          }
-        });
-        
-        console.log('Respuesta del servidor (endpoint alternativo):', alternativeResponse.data);
-        
-        const userData: RawUserData = alternativeResponse.data.user || alternativeResponse.data.data || alternativeResponse.data;
-        
-        return {
-          id: userData.id || userData._id || clientId,
-          fullName: userData.fullName || userData.nombre || userData.name || 'Usuario',
-          email: userData.email || 'no-email',
-          role: userData.role || 'client'
-        };
-      } catch (alternativeError) {
-        console.error('Error en endpoint alternativo:', alternativeError);
-      }
-      
       throw new Error(axiosError.response?.data.message || 'Error al obtener información del cliente');
     }
     throw new Error('Error de conexión al servidor');
