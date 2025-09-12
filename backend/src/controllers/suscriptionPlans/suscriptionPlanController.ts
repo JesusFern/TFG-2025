@@ -7,10 +7,54 @@ import UserSuscription from '../../models/suscriptionPlans/userSuscription';
 import Payment from '../../models/payments/payment';
 
 export class SuscriptionPlanController {
-  /**
-   * Obtiene todos los planes de suscripción
-   * GET /api/suscription-plans
-   */
+  static async getPlansWithUserStatus(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.id;
+      
+      const plans = await SuscriptionPlan.find({}).sort({ precioMensual: 1 }).lean();
+      
+      let userCurrentPlan: {_id: mongoose.Types.ObjectId | string} | null = null;
+      if (userId) {
+        const userIdObjectId = mongoose.Types.ObjectId.isValid(userId) 
+          ? new mongoose.Types.ObjectId(userId) 
+          : userId;
+          
+        const userSuscription = await UserSuscription.findOne({ 
+          userId: userIdObjectId
+        }).populate('planId').lean();
+        
+        if (userSuscription && userSuscription.planId) {
+          userCurrentPlan = userSuscription.planId as {_id: mongoose.Types.ObjectId | string};
+        }
+      }
+      
+      const plansWithStatus = plans.map(plan => {
+        const isUserSubscribed = userCurrentPlan && plan._id ? 
+          userCurrentPlan._id.toString() === plan._id.toString() : 
+          false;
+        
+        return {
+          ...plan,
+          isUserSubscribed
+        };
+      });
+      
+      res.status(200).json({
+        success: true,
+        data: {
+          plans: plansWithStatus,
+          userCurrentPlan
+        }
+      });
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      res.status(500).json({
+        success: false,
+        message: errorMessage
+      });
+    }
+  }
+
   static async getAllPlans(req: Request, res: Response): Promise<void> {
     try {
       const plans = await SuscriptionPlan.find({});
@@ -27,10 +71,6 @@ export class SuscriptionPlanController {
     }
   }
 
-  /**
-   * Obtiene planes de suscripción por tipo de precio (Gratuito, Básico, Premium)
-   * GET /api/suscription-plans/by-price/:tipoPrecio
-   */
   static async getPlansByPriceType(req: Request, res: Response): Promise<void> {
     try {
       const { tipoPrecio } = req.params;
@@ -57,10 +97,6 @@ export class SuscriptionPlanController {
     }
   }
 
-  /**
-   * Obtiene planes de suscripción por tipo de plan (Individual, Familiar, Profesional)
-   * GET /api/suscription-plans/by-plan/:tipoPlan
-   */
   static async getPlansByPlanType(req: Request, res: Response): Promise<void> {
     try {
       const { tipoPlan } = req.params;
@@ -87,10 +123,6 @@ export class SuscriptionPlanController {
     }
   }
 
-  /**
-   * Obtiene un plan de suscripción por su ID
-   * GET /api/suscription-plans/:id
-   */
   static async getPlanById(req: Request, res: Response): Promise<void> {
     try {
       const { id } = req.params;
@@ -126,10 +158,6 @@ export class SuscriptionPlanController {
     }
   }
 
-  /**
-   * Endpoint para que un usuario adquiera un plan de suscripción
-   * POST /api/suscription-plans/subscribe
-   */
   static async subscribeToPlan(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { planId, frecuenciaPago } = req.body;
@@ -160,10 +188,12 @@ export class SuscriptionPlanController {
         return;
       }
       
-      // URLs para redirección después del pago
-      const baseUrl = `${req.protocol}://${req.get('host')}`;
-      const successUrl = `${baseUrl}/api/suscription-plans/payment/confirm?sessionId={CHECKOUT_SESSION_ID}`;
-      const cancelUrl = `${baseUrl}/payment/cancel`;
+      // URLs para redirección después del pago (apuntar al frontend)
+      const frontendUrl = process.env.FRONTEND_URL;
+      
+      const successUrl = `${frontendUrl}/payment/confirm?sessionId={CHECKOUT_SESSION_ID}`;
+      const cancelUrl = `${frontendUrl}/payment/cancel`;
+      
       
       const result = await SuscriptionPlanService.createSubscriptionPayment(
         user.id,
@@ -203,22 +233,9 @@ export class SuscriptionPlanController {
     }
   }
 
-  /**
-   * Confirma un pago después de completarlo en Stripe
-   * GET /api/suscription-plans/payment/confirm
-   */
-  static async confirmPayment(req: AuthenticatedRequest, res: Response): Promise<void> {
+  static async confirmPayment(req: Request, res: Response): Promise<void> {
     try {
       const { sessionId } = req.query;
-      const { user } = req;
-      
-      if (!user || !user.id) {
-        res.status(401).json({
-          success: false,
-          message: 'Usuario no autenticado'
-        });
-        return;
-      }
       
       if (!sessionId || typeof sessionId !== 'string') {
         res.status(400).json({
@@ -228,23 +245,25 @@ export class SuscriptionPlanController {
         return;
       }
       
-      // Verificar que el pago existe y pertenece al usuario
+      // Buscar el pago por sessionId
       const payment = await Payment.findOne({ 
-        stripeSessionId: sessionId,
-        userId: user.id
+        stripeSessionId: sessionId
       });
       
       if (!payment) {
         res.status(404).json({
           success: false,
-          message: 'Pago no encontrado o no pertenece al usuario'
+          message: 'Pago no encontrado'
         });
         return;
       }
       
+      // Usar el userId del pago para buscar la suscripción
+      const userId = payment.userId;
+      
       // Si el pago ya está completado, devolver éxito
       if (payment.status === 'completed') {
-        const subscription = await UserSuscription.findOne({ userId: user.id })
+        const subscription = await UserSuscription.findOne({ userId })
           .populate('planId');
         
         res.status(200).json({
@@ -290,10 +309,6 @@ export class SuscriptionPlanController {
     }
   }
   
-  /**
-   * Verifica el estado de un pago
-   * GET /api/suscription-plans/payment/status/:sessionId
-   */
   static async checkPaymentStatus(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { sessionId } = req.params;
@@ -359,10 +374,6 @@ export class SuscriptionPlanController {
     }
   }
   
-  /**
-   * Obtiene la suscripción actual del usuario
-   * GET /api/suscription-plans/my-subscription
-   */
   static async getUserSubscription(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const { user } = req;
@@ -375,8 +386,20 @@ export class SuscriptionPlanController {
         return;
       }
       
+      // Validar que el userId sea un ObjectId válido
+      if (!mongoose.Types.ObjectId.isValid(user.id)) {
+        res.status(400).json({
+          success: false,
+          message: 'ID de usuario no válido'
+        });
+        return;
+      }
+      
+      // Convertir el string ID a ObjectId
+      const userId = new mongoose.Types.ObjectId(user.id);
+      
       // Buscar la suscripción del usuario
-      const subscription = await UserSuscription.findOne({ userId: user.id })
+      const subscription = await UserSuscription.findOne({ userId })
         .populate('planId');
       
       if (!subscription) {

@@ -64,6 +64,7 @@ const Header: React.FC = () => {
   const navItems = [
     { label: 'Inicio', path: '/' },
     { label: 'Acerca de', path: '/landingPage' },
+    { label: 'Planes', path: '/planes-suscripcion' },
   ];
   
   return (
@@ -141,71 +142,69 @@ const Header: React.FC = () => {
             </Tooltip>
             
             {isAuthenticated && user ? (
-              <>
-                <Menu shadow="md" width={200} withArrow position="bottom-end" zIndex={1000}>
-                  <Menu.Target>
-                    <Avatar
-                      src={user.profilePicture}
-                      alt={user.fullName}
-                      size="md"
-                      radius="xl"
-                      style={{ cursor: 'pointer' }}
-                    >
-                      {user.fullName.charAt(0).toUpperCase()}
-                    </Avatar>
-                  </Menu.Target>
+              <Menu shadow="md" width={200} withArrow position="bottom-end" zIndex={1000}>
+                <Menu.Target>
+                  <Avatar
+                    src={user.profilePicture}
+                    alt={user.fullName}
+                    size="md"
+                    radius="xl"
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {user.fullName.charAt(0).toUpperCase()}
+                  </Avatar>
+                </Menu.Target>
 
-                  <Menu.Dropdown>
-                    <Menu.Label>
-                      <Text size="sm" fw={500}>
-                        {user.fullName}
-                      </Text>
-                      <Text size="xs" c="dimmed">
-                        {user.role === 'admin' ? 'Administrador' : 
-                         user.role === 'worker' ? user.workerType || 'Trabajador' : 'Usuario'}
-                      </Text>
-                    </Menu.Label>
+                <Menu.Dropdown>
+                  <Menu.Label>
+                    <Text size="sm" fw={500}>
+                      {user.fullName}
+                    </Text>
+                    <Text size="xs" c="dimmed">
+                      {user.role === 'admin' ? 'Administrador' : 
+                       user.role === 'worker' ? user.workerType || 'Trabajador' : 'Usuario'}
+                    </Text>
+                  </Menu.Label>
 
-                    <Menu.Divider />
+                  <Menu.Divider />
 
+                  <Menu.Item
+                    leftSection={<IconUser size={14} />}
+                    onClick={handleDashboardClick}
+                  >
+                    Dashboard
+                  </Menu.Item>
+
+                  {user.role === 'worker' && user.workerType === 'nutricionista' && (
                     <Menu.Item
                       leftSection={<IconUser size={14} />}
-                      onClick={handleDashboardClick}
+                      onClick={() => {
+                        navigate('/worker/dashboard-clients');
+                        closeMobileMenu();
+                      }}
                     >
-                      Dashboard
+                      Mis Clientes
                     </Menu.Item>
+                  )}
 
-                    {user.role === 'worker' && user.workerType === 'nutricionista' && (
-                      <Menu.Item
-                        leftSection={<IconUser size={14} />}
-                        onClick={() => {
-                          navigate('/worker/dashboard-clients');
-                          closeMobileMenu();
-                        }}
-                      >
-                        Mis Clientes
-                      </Menu.Item>
-                    )}
+                  <Menu.Item
+                    leftSection={<IconSettings size={14} />}
+                    onClick={handleProfileClick}
+                  >
+                    Mi Perfil
+                  </Menu.Item>
 
-                    <Menu.Item
-                      leftSection={<IconSettings size={14} />}
-                      onClick={handleProfileClick}
-                    >
-                      Mi Perfil
-                    </Menu.Item>
+                  <Menu.Divider />
 
-                    <Menu.Divider />
-
-                    <Menu.Item
-                      leftSection={<IconLogout size={14} />}
-                      onClick={handleLogout}
-                      color="red"
-                    >
-                      Cerrar Sesión
-                    </Menu.Item>
-                  </Menu.Dropdown>
-                </Menu>
-              </>
+                  <Menu.Item
+                    leftSection={<IconLogout size={14} />}
+                    onClick={handleLogout}
+                    color="red"
+                  >
+                    Cerrar Sesión
+                  </Menu.Item>
+                </Menu.Dropdown>
+              </Menu>
             ) : (
               <Group gap="sm">
                 <Button variant="subtle" onClick={handleLogin}>
@@ -256,7 +255,7 @@ const Header: React.FC = () => {
           ))}
           
           {isAuthenticated && user ? (
-            <>
+            <Stack>
               <Text size="sm" fw={500} c="dimmed">
                 {user.fullName}
               </Text>
@@ -302,7 +301,7 @@ const Header: React.FC = () => {
               >
                 Cerrar Sesión
               </Button>
-            </>
+            </Stack>
           ) : (
             <Group gap="sm">
               <Button variant="light" onClick={handleLogin} fullWidth>

@@ -129,7 +129,7 @@ export class SuscriptionPlanService {
       planId,
       fechaInicio,
       fechaFin,
-      frecuenciaDePago: 'anual', // Por defecto en gratuito
+      frecuenciaDePago: 'Anual',
     });
 
     await userSubscription.save();
@@ -141,6 +141,20 @@ export class SuscriptionPlanService {
    * Se llama desde el webhook de Stripe cuando un pago se completa
    */
   static async confirmPayment(sessionId: string) {
+    // Convertir frecuencia de pago a formato esperado por el modelo
+    const convertirFrecuenciaPago = (frecuencia: string) => {
+      switch (frecuencia) {
+        case 'mensual':
+          return 'Mensual';
+        case 'trimestral':
+          return 'Trimestral';
+        case 'anual':
+          return 'Anual';
+        default:
+          return 'Mensual';
+      }
+    };
+
     // Buscar el pago por ID de sesión
     const payment = await Payment.findOne({ stripeSessionId: sessionId });
     if (!payment) {
@@ -170,6 +184,8 @@ export class SuscriptionPlanService {
       }
       
       existingSub.fechaFin = fechaFin;
+      // Actualizar también la frecuencia de pago si es diferente
+      existingSub.frecuenciaDePago = convertirFrecuenciaPago(payment.frecuenciaPago);
       await existingSub.save();
       
       // Actualizar el pago con la referencia a la suscripción si no existe
@@ -203,7 +219,7 @@ export class SuscriptionPlanService {
       planId: payment.suscriptionPlanId,
       fechaInicio,
       fechaFin,
-      frecuenciaDePago: payment.frecuenciaPago
+      frecuenciaDePago: convertirFrecuenciaPago(payment.frecuenciaPago)
     });
 
     await userSubscription.save();

@@ -18,14 +18,15 @@ const authorizeUser = (req: AuthenticatedRequest, res: Response, next: NextFunct
     });
     return;
   }
+  
   next();
 };
 
 // Rutas públicas para ver planes
 router.get('/', SuscriptionPlanController.getAllPlans);
+router.get('/with-user-status', authenticateToken, SuscriptionPlanController.getPlansWithUserStatus);
 router.get('/by-price/:tipoPrecio', SuscriptionPlanController.getPlansByPriceType);
 router.get('/by-plan/:tipoPlan', SuscriptionPlanController.getPlansByPlanType);
-router.get('/:id', SuscriptionPlanController.getPlanById);
 
 // Rutas protegidas que requieren autenticación
 router.put(
@@ -38,10 +39,9 @@ router.put(
 );
 
 // Ruta para confirmar pagos después de completarlos en Stripe
+// Esta ruta debe ser pública ya que es un callback de Stripe
 router.get(
   '/payment/confirm', 
-  authenticateToken, 
-  authorizeUser,
   SuscriptionPlanController.confirmPayment
 );
 
@@ -60,5 +60,8 @@ router.get(
   authorizeUser,
   SuscriptionPlanController.getUserSubscription
 );
+
+// Ruta para obtener un plan por ID (debe ir al final para no interferir con rutas específicas)
+router.get('/:id', SuscriptionPlanController.getPlanById);
 
 export default router;
