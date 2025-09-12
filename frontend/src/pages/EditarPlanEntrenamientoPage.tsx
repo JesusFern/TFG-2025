@@ -30,10 +30,10 @@ import {
 import { motion } from 'framer-motion';
 // format y es ya no se usan directamente, se usan a través de las utilidades
 import trainingService from '../services/trainingService';
-import { SesionPlan } from '../types/training';
 import { useTrainingData } from '../hooks/useTrainingData';
 import { useThemeDetection } from '../hooks/useThemeDetection';
 import { useNavigation } from '../hooks/useNavigation';
+import { useExerciseSessionHandlers } from '../hooks/useExerciseSessionHandlers';
 import { DIAS_SEMANA } from '../constants/training';
 import { formatDateWithLocale, formatDateLong, getWeekStartDate, getWeekEndDate } from '../utils/trainingUtils';
 import type { SesionInfo, EjercicioSesion } from '../types/trainingCommon';
@@ -47,10 +47,7 @@ import PlanInfo from '../components/molecules/PlanInfo';
 
 // SesionInfo ya está importado desde trainingCommon
 
-interface SesionUpdateResponse {
-  message: string;
-  sesion: SesionPlan;
-}
+// SesionUpdateResponse ya no se usa directamente, está en el hook
 
 
 const EditarPlanEntrenamientoPage: React.FC = () => {
@@ -88,9 +85,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
   const [currentSesionLocal, setCurrentSesionLocal] = useState<SesionInfo | null>(null);
   const [ejerciciosSesionActual, setEjerciciosSesionActual] = useState<EjercicioSesion[]>([]);
   
-  const [ejercicioAEliminar, setEjercicioAEliminar] = useState<number | null>(null);
-  const [ejercicioAEditar, setEjercicioAEditar] = useState<number | null>(null);
-  const [ejercicioEditando, setEjercicioEditando] = useState<EjercicioSesion | null>(null);
+  // Estados de ejercicios manejados por el hook
 
   const [sesionAEditar, setSesionAEditar] = useState<string | null>(null);
   const [sesionEditando, setSesionEditando] = useState<{
@@ -104,6 +99,8 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
   const [sesionAEliminar, setSesionAEliminar] = useState<string | null>(null);
   const [showCrearSesionModal, setShowCrearSesionModal] = useState(false);
   const [fechaSesionACrear, setFechaSesionACrear] = useState<string>('');
+
+  // Hook para manejo de ejercicios en sesiones - se inicializa después de currentSesionInfo
 
   const sesionesRange = useMemo(() => {
     if (!plan || !fechaInicio) return { sesiones: [], totalWeeks: 0 };
@@ -209,7 +206,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
       const sesionConEjerciciosLocales = {
         ...sesionFromRange,
         data: {
-          ...sesionFromRange.data,
+          ...(sesionFromRange.data as Record<string, unknown>),
           ejercicios: ejerciciosSesionActual
         }
       };
@@ -226,222 +223,43 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
 
   // Inicializar ejercicios locales cuando cambie la sesión activa
   useEffect(() => {
-    if (currentSesionInfo && currentSesionInfo.data?.ejercicios) {
-      setEjerciciosSesionActual(currentSesionInfo.data.ejercicios);
+    if (currentSesionInfo && currentSesionInfo.data) {
+      const data = currentSesionInfo.data as { ejercicios?: EjercicioSesion[]; [key: string]: unknown };
+      if (data.ejercicios) {
+        setEjerciciosSesionActual(data.ejercicios);
+      }
     }
   }, [currentSesionInfo]);
 
-  // Funciones para manejar ejercicios
-  const handleAddEjercicio = async (ejercicioData: EjercicioSesion) => {
-    if (!currentSesionInfo || !activeTab || !currentSesionInfo.data?._id) return;
-    
-    try {
-      setPublishLoading(true);
-      
-      const nuevoEjercicio = {
-        ejercicio: ejercicioData.ejercicio,
-        orden: ejercicioData.orden,
-        series: ejercicioData.series,
-        repeticiones: ejercicioData.repeticiones,
-        peso: ejercicioData.peso,
-        tiempoDescanso: ejercicioData.tiempoDescanso,
-        ejerciciosAlternativos: ejercicioData.ejerciciosAlternativos,
-        opcionesProgresion: ejercicioData.opcionesProgresion
-      };
-      
-      // Crear la nueva lista de ejercicios
-      const ejerciciosActualizados = [...(currentSesionInfo.data?.ejercicios || []), nuevoEjercicio];
-      
-      // Preparar los datos de actualización incluyendo todos los campos requeridos
-      const datosActualizacion = {
-        fecha: currentSesionInfo.data.fecha,
-        tipoEntrenamiento: currentSesionInfo.data.tipoEntrenamiento,
-        duracion: currentSesionInfo.data.duracion,
-        ejercicios: ejerciciosActualizados
-      };
-      
-      
-      const response = await trainingService.actualizarSesion(currentSesionInfo.data._id, datosActualizacion);
-      
-      const sesionActualizada = (response as unknown as SesionUpdateResponse).sesion || response;
-      
-      if (currentSesionInfo) {
-        const sesionActualizadaLocal = {
-          ...currentSesionInfo,
-          data: {
-            ...currentSesionInfo.data,
-            ...sesionActualizada
-          }
-        };
-        setCurrentSesionLocal(sesionActualizadaLocal);
-        
-        setEjerciciosSesionActual(sesionActualizada.ejercicios || currentSesionInfo.data?.ejercicios || []);
-      }
-      
-      // Recargar datos después de actualizar sesión
-      await refetch();
-      
-      setForceUpdate(prev => prev + 1);
-      
-      setSuccessMessage("Ejercicio agregado y guardado en la sesión");
-      setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al agregar el ejercicio');
-    } finally {
-      setPublishLoading(false);
-    }
-  };
+  // Hook para manejo de ejercicios en sesiones
+  const {
+    ejercicioAEliminar,
+    setEjercicioAEliminar,
+    ejercicioAEditar,
+    ejercicioEditando,
+    handleAddEjercicio,
+    handleEditarEjercicio,
+    handleGuardarEjercicioEditado,
+    handleConfirmarEliminarEjercicio,
+    handleCancelarEdicion,
+    handleOpenEjerciciosModal,
+    handleEjercicioCreado
+  } = useExerciseSessionHandlers({
+    currentSesionInfo,
+    activeTab,
+    setPublishLoading,
+    setCurrentSesionLocal,
+    setEjerciciosSesionActual,
+    setForceUpdate,
+    setSuccessMessage,
+    setError,
+    refetch
+  });
 
-
-  const handleOpenEjerciciosModal = () => {
-    if (currentSesionInfo?.data?.ejercicios) {
-      setEjerciciosSesion(currentSesionInfo.data.ejercicios);
-    } else {
-      setEjerciciosSesion([]);
-    }
-    setShowEjerciciosModal(true);
-  };
-
-  const handleEjercicioCreado = async () => {
-    // Recargar datos después de crear ejercicio
-    await refetch();
-  };
-
-  const handleConfirmarEliminarEjercicio = () => {
-    if (ejercicioAEliminar === null) return;
-    eliminarEjercicio(ejercicioAEliminar);
-    setEjercicioAEliminar(null);
-  };
-
-  const handleEditarEjercicio = (ejercicioIndex: number) => {
-    if (!currentSesionInfo?.data?.ejercicios) return;
-    
-    const ejercicio = currentSesionInfo.data.ejercicios[ejercicioIndex];
-    setEjercicioEditando({
-      ejercicio: ejercicio.ejercicio,
-      orden: ejercicio.orden,
-      series: ejercicio.series,
-      repeticiones: ejercicio.repeticiones,
-      peso: ejercicio.peso,
-      tiempoDescanso: ejercicio.tiempoDescanso,
-      ejerciciosAlternativos: ejercicio.ejerciciosAlternativos || [],
-      opcionesProgresion: ejercicio.opcionesProgresion || {
-        aumentarPeso: false,
-        masRepeticiones: false,
-        mayorIntensidad: false
-      }
-    });
-    setEjercicioAEditar(ejercicioIndex);
-  };
-
-  const handleGuardarEjercicioEditado = async (ejercicioEditado: typeof ejercicioEditando) => {
-    if (!currentSesionInfo?.data || !currentSesionInfo.data._id || ejercicioAEditar === null || !ejercicioEditado) return;
-
-    try {
-      setPublishLoading(true);
-      
-      const ejerciciosActualizados = [...(currentSesionInfo.data.ejercicios || [])];
-      
-      ejerciciosActualizados[ejercicioAEditar] = {
-        ...ejerciciosActualizados[ejercicioAEditar],
-        ...ejercicioEditado
-      };
-
-      const datosActualizacion = {
-        fecha: currentSesionInfo.data.fecha,
-        tipoEntrenamiento: currentSesionInfo.data.tipoEntrenamiento,
-        duracion: currentSesionInfo.data.duracion,
-        ejercicios: ejerciciosActualizados
-      };
-      
-      const response = await trainingService.actualizarSesion(currentSesionInfo.data._id, datosActualizacion);
-      
-      const sesionActualizada = (response as unknown as SesionUpdateResponse).sesion || response;
-      
-      if (currentSesionInfo) {
-        const sesionActualizadaLocal = {
-          ...currentSesionInfo,
-          data: {
-            ...currentSesionInfo.data,
-            ...sesionActualizada
-          }
-        };
-        setCurrentSesionLocal(sesionActualizadaLocal);
-        
-        setEjerciciosSesionActual(sesionActualizada.ejercicios || currentSesionInfo.data?.ejercicios || []);
-      }
-      
-      // Recargar datos después de actualizar sesión
-      await refetch();
-      
-      setForceUpdate(prev => prev + 1);
-      
-      setSuccessMessage("Ejercicio actualizado correctamente");
-      setTimeout(() => setSuccessMessage(null), 3000);
-      
-      setEjercicioAEditar(null);
-      setEjercicioEditando(null);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al actualizar el ejercicio');
-    } finally {
-      setPublishLoading(false);
-    }
-  };
-
-  const handleCancelarEdicion = () => {
-    setEjercicioAEditar(null);
-    setEjercicioEditando(null);
-  };
-
-  const eliminarEjercicio = async (ejercicioIndex: number) => {
-    if (!currentSesionInfo || !currentSesionInfo.data?._id) return;
-    
-    try {
-      setPublishLoading(true);
-      
-      const ejerciciosActualizados = currentSesionInfo.data.ejercicios.filter((_: EjercicioSesion, index: number) => index !== ejercicioIndex);
-      
-      const ejerciciosReordenados = ejerciciosActualizados.map((ejercicio: EjercicioSesion, index: number) => ({
-        ...ejercicio,
-        orden: index + 1
-      }));
-      
-      const datosActualizacion = {
-        fecha: currentSesionInfo.data.fecha,
-        tipoEntrenamiento: currentSesionInfo.data.tipoEntrenamiento,
-        duracion: currentSesionInfo.data.duracion,
-        ejercicios: ejerciciosReordenados
-      };
-      
-      const response = await trainingService.actualizarSesion(currentSesionInfo.data._id, datosActualizacion);
-      
-      const sesionActualizada = (response as unknown as SesionUpdateResponse).sesion || response;
-      
-      if (currentSesionInfo) {
-        const sesionActualizadaLocal = {
-          ...currentSesionInfo,
-          data: {
-            ...currentSesionInfo.data,
-            ...sesionActualizada
-          }
-        };
-        setCurrentSesionLocal(sesionActualizadaLocal);
-        
-        setEjerciciosSesionActual(sesionActualizada.ejercicios || currentSesionInfo.data?.ejercicios || []);
-      }
-      
-      // Recargar datos después de actualizar sesión
-      await refetch();
-      
-      setForceUpdate(prev => prev + 1);
-      
-      setSuccessMessage("Ejercicio eliminado de la sesión");
-      setTimeout(() => setSuccessMessage(null), 3000);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al eliminar el ejercicio');
-    } finally {
-      setPublishLoading(false);
-    }
+  // Las funciones de manejo de ejercicios ahora están en el hook useExerciseSessionHandlers
+  
+  const handleOpenEjerciciosModalWrapper = () => {
+    handleOpenEjerciciosModal(setEjerciciosSesion, setShowEjerciciosModal);
   };
 
   const handleEditarSesion = (sesionId: string) => {
@@ -477,7 +295,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
       // Recargar datos después de actualizar sesión
       await refetch();
 
-      if (currentSesionInfo?.data?._id === sesionAEditar) {
+      if (currentSesionInfo?.data && (currentSesionInfo.data as { _id?: string })._id === sesionAEditar) {
         setCurrentSesionLocal(prev => prev && prev.data ? {
           ...prev,
           data: {
@@ -523,7 +341,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
       // Recargar datos después de eliminar sesión
       await refetch();
 
-      if (currentSesionInfo?.data?._id === sesionAEliminar) {
+      if (currentSesionInfo?.data && (currentSesionInfo.data as { _id?: string })._id === sesionAEliminar) {
         setCurrentSesionLocal(null);
         setEjerciciosSesionActual([]);
       }
@@ -806,7 +624,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                       <ActionIcon 
                         color="nutroos-green" 
                         variant="light"
-                        onClick={() => handleEditarSesion(currentSesionInfo.data?._id || '')}
+                        onClick={() => handleEditarSesion((currentSesionInfo.data as { _id?: string })?._id || '')}
                         disabled={!plan?.draftMode}
                       >
                         <IconEdit size={16} />
@@ -814,7 +632,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                       <ActionIcon 
                         color="red" 
                         variant="light"
-                        onClick={() => handleEliminarSesion(currentSesionInfo.data?._id || '')}
+                        onClick={() => handleEliminarSesion((currentSesionInfo.data as { _id?: string })?._id || '')}
                         disabled={!plan?.draftMode}
                       >
                         <IconTrash size={16} />
@@ -829,7 +647,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                         size="sm" 
                         color="nutroos-green"
                         leftSection={<IconPlus size={16} />}
-                        onClick={handleOpenEjerciciosModal}
+                        onClick={handleOpenEjerciciosModalWrapper}
                         loading={loading}
                         disabled={!plan?.draftMode}
                       >
@@ -837,9 +655,9 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                       </Button>
                     </Group>
 
-                    {currentSesionInfo.data.ejercicios && currentSesionInfo.data.ejercicios.length > 0 ? (
-                      <Stack key={`ejercicios-${forceUpdate}-${currentSesionInfo.data._id}`} gap="md">
-                        {currentSesionInfo.data.ejercicios.map((ejercicio: {
+                    {(currentSesionInfo.data as { ejercicios?: EjercicioSesion[]; _id?: string }).ejercicios && (currentSesionInfo.data as { ejercicios?: EjercicioSesion[]; _id?: string }).ejercicios!.length > 0 ? (
+                      <Stack key={`ejercicios-${forceUpdate}-${(currentSesionInfo.data as { _id?: string })._id}`} gap="md">
+                        {(currentSesionInfo.data as { ejercicios?: EjercicioSesion[] }).ejercicios!.map((ejercicio: {
                           ejercicio: string;
                           orden: number;
                           series: number;
@@ -939,7 +757,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                             size="sm" 
                             color="nutroos-green"
                             leftSection={<IconPlus size={16} />}
-                            onClick={handleOpenEjerciciosModal}
+                            onClick={handleOpenEjerciciosModalWrapper}
                             disabled={!plan?.draftMode}
                           >
                             Añadir primer ejercicio
@@ -949,10 +767,10 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                     )}
                   </Paper>
                   
-                  {currentSesionInfo.data.notas && (
+                  {(currentSesionInfo.data as { notas?: string }).notas && (
                     <Paper p="md" withBorder radius="md" style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
                       <Text fw={500} size="sm" mb="xs">Notas de la sesión:</Text>
-                      <Text size="sm">{currentSesionInfo.data.notas}</Text>
+                      <Text size="sm">{(currentSesionInfo.data as { notas?: string }).notas}</Text>
                     </Paper>
                   )}
                 </Box>

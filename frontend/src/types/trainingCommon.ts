@@ -30,5 +30,5 @@ export interface SesionInfo {
   fecha: Date;
   fechaFormateada: string;
   nombreCompleto: string;
-  data: any | null;
+  data: unknown | null;
 }

@@ -4,20 +4,19 @@ import {
   Title, 
   Alert, 
   Space,
-  Text,
   Group,
   Avatar,
-  Badge,
   Breadcrumbs,
-  Anchor,
   Paper,
   Box
 } from '@mantine/core';
-import { useParams, useLocation, Link, useNavigate } from 'react-router-dom';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import FormularioCrearDieta from '../components/forms/diets/FormularioCrearDieta';
 import { DietaResponse } from '../types';
-import { IconAlertCircle, IconUser, IconChevronRight, IconHome } from '@tabler/icons-react';
+import { IconAlertCircle, IconUser, IconChevronRight } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
+import { BREADCRUMBS_DIET_BASE } from '../constants/training';
+import { createBreadcrumbItems, renderClientInfo } from '../components/common/BreadcrumbUtils';
 
 const CrearDietaPage: React.FC = () => {
   const { clienteId } = useParams<{ clienteId?: string }>();
@@ -54,22 +53,10 @@ const CrearDietaPage: React.FC = () => {
   
   // Ya no necesitamos la función handleContinuar
 
-  const items = [
-    { title: 'Inicio', href: '/', icon: <IconHome size={14} /> },
-    { title: 'Clientes', href: '/clientes' },
+  const items = createBreadcrumbItems(BREADCRUMBS_DIET_BASE, [
     { title: 'Detalles del cliente', href: `/clientes/${clienteInfo.id}` },
-    { title: 'Crear dieta', href: '#' },
-  ].map((item, index) => (
-    <Anchor component={Link} to={item.href} key={index} size="sm" c="nutroos-green">
-      {item.icon && (
-        <Group gap={4}>
-          {item.icon}
-          <span>{item.title}</span>
-        </Group>
-      )}
-      {!item.icon && item.title}
-    </Anchor>
-  ));
+    { title: 'Crear dieta', href: '#' }
+  ]);
 
   return (
     <Container size="md" py="xl">
@@ -107,21 +94,7 @@ const CrearDietaPage: React.FC = () => {
           
           <Box style={{ flex: 1 }}>
             <Title order={2} mb={5} c="nutroos-green.6">Crear Nueva Dieta</Title>
-            <Group gap="xs">
-              {clienteInfo.nombre ? (
-                <>
-                  <Text c="dimmed">Para:</Text>
-                  <Text fw={600}>{clienteInfo.nombre}</Text>
-                  <Badge color="nutroos-green">Cliente</Badge>
-                </>
-              ) : (
-                <>
-                  <Text c="dimmed">Para cliente con ID:</Text>
-                  <Text fw={600}>{clienteInfo.id}</Text>
-                  <Badge color="nutroos-green">Cliente</Badge>
-                </>
-              )}
-            </Group>
+            {renderClientInfo(clienteInfo.nombre, clienteInfo.id)}
           </Box>
         </Group>
       </Paper>

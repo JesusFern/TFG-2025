@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Group, Text, Badge, Container, Paper, Breadcrumbs, Anchor, Title, Avatar, Box } from '@mantine/core';
-import { IconHome, IconBarbell, IconChevronRight } from '@tabler/icons-react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Container, Paper, Breadcrumbs, Title, Avatar, Box, Group } from '@mantine/core';
+import { IconBarbell, IconChevronRight } from '@tabler/icons-react';
 import GlobalNotificationOverlay from '../components/atoms/GlobalNotificationOverlay';
 import { getUserById } from '../services/userService';
 import FormularioCrearPlanEntrenamiento from '../components/forms/training/FormularioCrearPlanEntrenamiento';
 import { BREADCRUMBS_TRAINING_BASE } from '../constants/training';
+import { createBreadcrumbItems, renderClientInfo } from '../components/common/BreadcrumbUtils';
 
 const CrearPlanEntrenamientoPage: React.FC = () => {
   const navigate = useNavigate();
@@ -45,40 +46,9 @@ const CrearPlanEntrenamientoPage: React.FC = () => {
     });
   };
   
-  const items = [
-    ...BREADCRUMBS_TRAINING_BASE.map(item => ({ ...item, icon: item.title === 'Inicio' ? <IconHome size={14} /> : undefined })),
-    { title: 'Crear plan', href: '#', icon: undefined },
-  ].map((item, index) => (
-    <Anchor component={Link} to={item.href} key={index} size="sm" c="nutroos-green">
-      {item.icon && (
-        <Group gap={4}>
-          {item.icon}
-          <span>{item.title}</span>
-        </Group>
-      )}
-      {!item.icon && item.title}
-    </Anchor>
-  ));
-
-  const renderClientInfo = () => (
-    <Group gap="xs">
-      {clienteNombre ? (
-        <>
-          <Text c="dimmed">Para:</Text>
-          <Text fw={600}>{clienteNombre}</Text>
-          <Badge color="nutroos-green">Cliente</Badge>
-        </>
-      ) : clientId ? (
-        <>
-          <Text c="dimmed">Para cliente con ID:</Text>
-          <Text fw={600}>{clientId}</Text>
-          <Badge color="nutroos-green">Cliente</Badge>
-        </>
-      ) : (
-        <Text c="dimmed">Plan de entrenamiento general</Text>
-      )}
-    </Group>
-  );
+  const items = createBreadcrumbItems(BREADCRUMBS_TRAINING_BASE, [
+    { title: 'Crear plan', href: '#', icon: undefined }
+  ]);
 
   return (
     <Container size="md" py="xl">
@@ -116,7 +86,7 @@ const CrearPlanEntrenamientoPage: React.FC = () => {
           
           <Box style={{ flex: 1 }}>
             <Title order={2} mb={5} c="nutroos-green.6">Crear Nuevo Plan de Entrenamiento</Title>
-            {renderClientInfo()}
+            {renderClientInfo(clienteNombre, clientId)}
           </Box>
         </Group>
       </Paper>
