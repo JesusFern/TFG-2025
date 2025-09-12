@@ -56,7 +56,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, workerRoute?: boolea
 
 import WorkerClientDietsList from '../pages/WorkerClientDietsList';
 import WorkerClientTrainingPlansList from '../pages/WorkerClientTrainingPlansList';
-import CrearEjercicioPage from '../pages/CrearEjercicioPage';
 import CrearPlanEntrenamientoPage from '../pages/CrearPlanEntrenamientoPage';
 import EditarPlanEntrenamientoPage from '../pages/EditarPlanEntrenamientoPage';
 import VerPlanEntrenamientoPage from '../pages/VerPlanEntrenamientoPage';
@@ -153,13 +152,6 @@ const AppRoutes: React.FC = () => {
         </ProtectedRoute>
       } />
 
-      <Route path="/training/ejercicios/crear" element={
-        <ProtectedRoute workerRoute={true}>
-          <Layout>
-            <CrearEjercicioPage />
-          </Layout>
-        </ProtectedRoute>
-      } />
       <Route path="/training/planes/crear" element={
         <ProtectedRoute workerRoute={true}>
           <Layout>

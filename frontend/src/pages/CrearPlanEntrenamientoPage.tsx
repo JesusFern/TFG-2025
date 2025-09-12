@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams, Link } from 'react-router-dom';
-import { Group, Text, Box, Paper, Title, Avatar, Badge, Container, Breadcrumbs, Anchor } from '@mantine/core';
+import { Group, Text, Badge, Container, Paper, Breadcrumbs, Anchor, Title, Avatar, Box } from '@mantine/core';
 import { IconHome, IconBarbell, IconChevronRight } from '@tabler/icons-react';
 import GlobalNotificationOverlay from '../components/atoms/GlobalNotificationOverlay';
 import { getUserById } from '../services/userService';
