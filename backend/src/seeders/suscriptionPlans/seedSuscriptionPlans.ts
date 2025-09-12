@@ -4,6 +4,67 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+function getBeneficios(tipoPlan: string, tipoPrecio: string): string[] {
+  const baseBeneficios = tipoPrecio === 'Básico' 
+    ? ['Todas las funciones gratuitas'] 
+    : ['Todas las funciones del plan básico'];
+
+  const beneficiosEspecificos: Record<string, Record<string, string[]>> = {
+    'Nutricion': {
+      'Básico': [
+        'Plan nutricional personalizado',
+        'Seguimiento de macronutrientes',
+        'Recetas saludables',
+        'Soporte por correo electrónico'
+      ],
+      'Pro': [
+        'Plan nutricional personalizado avanzado',
+        'Ajustes semanales de la dieta',
+        'Videoconferencias con nutricionista',
+        'Acceso a dietas especializadas',
+        'Soporte prioritario 24/7'
+      ]
+    },
+    'Entrenamiento personal': {
+      'Básico': [
+        'Plan de entrenamiento personalizado',
+        'Seguimiento de progreso',
+        'Videos de ejercicios',
+        'Soporte por correo electrónico'
+      ],
+      'Pro': [
+        'Plan de entrenamiento avanzado',
+        'Ajustes semanales del entrenamiento',
+        'Videoconferencias con entrenador personal',
+        'Acceso a rutinas especializadas',
+        'Soporte prioritario 24/7'
+      ]
+    },
+    'Nutrición y entrenamiento personal': {
+      'Básico': [
+        'Plan nutricional personalizado',
+        'Plan de entrenamiento personalizado',
+        'Seguimiento de macronutrientes',
+        'Seguimiento de progreso',
+        'Recetas saludables',
+        'Videos de ejercicios',
+        'Soporte por correo electrónico'
+      ],
+      'Pro': [
+        'Plan nutricional personalizado avanzado',
+        'Plan de entrenamiento avanzado',
+        'Ajustes semanales de dieta y entrenamiento',
+        'Videoconferencias con nutricionista y entrenador',
+        'Acceso a dietas y rutinas especializadas',
+        'Soporte prioritario 24/7',
+        'Análisis de composición corporal'
+      ]
+    }
+  };
+
+  return [...baseBeneficios, ...(beneficiosEspecificos[tipoPlan]?.[tipoPrecio] || [])];
+}
+
 export async function seedSuscriptionPlans() {
   const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/nutroos';
   await mongoose.connect(mongoUri);
@@ -62,72 +123,7 @@ export async function seedSuscriptionPlans() {
       const precioTrimestral = Math.round(precioMensual * 2.7 * 100) / 100;
       const precioAnual = Math.round(precioMensual * 10 * 100) / 100;
       
-      // Crear beneficios específicos según el tipo de plan
-      let beneficios: string[] = [];
-      
-      if (tipoPlan === 'Nutricion') {
-        if (tipoPrecio === 'Básico') {
-          beneficios = [
-            'Todas las funciones gratuitas',
-            'Plan nutricional personalizado',
-            'Seguimiento de macronutrientes',
-            'Recetas saludables',
-            'Soporte por correo electrónico'
-          ];
-        } else if (tipoPrecio === 'Pro') {
-          beneficios = [
-            'Todas las funciones del plan básico',
-            'Plan nutricional personalizado avanzado',
-            'Ajustes semanales de la dieta',
-            'Videoconferencias con nutricionista',
-            'Acceso a dietas especializadas',
-            'Soporte prioritario 24/7'
-          ];
-        }
-      } else if (tipoPlan === 'Entrenamiento personal') {
-        if (tipoPrecio === 'Básico') {
-          beneficios = [
-            'Todas las funciones gratuitas',
-            'Plan de entrenamiento personalizado',
-            'Seguimiento de progreso',
-            'Videos de ejercicios',
-            'Soporte por correo electrónico'
-          ];
-        } else if (tipoPrecio === 'Pro') {
-          beneficios = [
-            'Todas las funciones del plan básico',
-            'Plan de entrenamiento avanzado',
-            'Ajustes semanales del entrenamiento',
-            'Videoconferencias con entrenador personal',
-            'Acceso a rutinas especializadas',
-            'Soporte prioritario 24/7'
-          ];
-        }
-      } else if (tipoPlan === 'Nutrición y entrenamiento personal') {
-        if (tipoPrecio === 'Básico') {
-          beneficios = [
-            'Todas las funciones gratuitas',
-            'Plan nutricional personalizado',
-            'Plan de entrenamiento personalizado',
-            'Seguimiento de macronutrientes',
-            'Seguimiento de progreso',
-            'Recetas saludables',
-            'Videos de ejercicios',
-            'Soporte por correo electrónico'
-          ];
-        } else if (tipoPrecio === 'Pro') {
-          beneficios = [
-            'Todas las funciones del plan básico',
-            'Plan nutricional personalizado avanzado',
-            'Plan de entrenamiento avanzado',
-            'Ajustes semanales de dieta y entrenamiento',
-            'Videoconferencias con nutricionista y entrenador',
-            'Acceso a dietas y rutinas especializadas',
-            'Soporte prioritario 24/7',
-            'Análisis de composición corporal'
-          ];
-        }
-      }
+      const beneficios = getBeneficios(tipoPlan, tipoPrecio);
       
       const plan = new SuscriptionPlan({
         nombre: `Plan ${tipoPrecio} - ${tipoPlan}`,
