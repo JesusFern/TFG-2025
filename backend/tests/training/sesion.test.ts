@@ -60,7 +60,6 @@ jest.mock('../../src/models/users/user', () => {
   };
 });
 
-// Mock ligero de plan para devolver plan válido cuando se pida por ID
 jest.mock('../../src/models/training/planEntrenamiento', () => {
   class PlanMock {
     static findById(id: string) {
@@ -69,7 +68,6 @@ jest.mock('../../src/models/training/planEntrenamiento', () => {
     }
     static findByIdAndUpdate() { return Promise.resolve({}); }
     static findOne(query: { sesiones?: string; draftMode?: boolean }) {
-      // Para verificar si una sesión pertenece a un plan publicado
       if (query.sesiones && query.draftMode === false) {
         return Promise.resolve(null); // No hay planes publicados en los tests
       }
@@ -98,7 +96,6 @@ jest.mock('../../src/models/training/sesion', () => {
   return { __esModule: true, default: SesionMock };
 });
 
-// Mock ligero de ejercicio para validar existencia por IDs
 jest.mock('../../src/models/training/ejercicio', () => {
   type FindQuery = { _id?: { $in?: string[] } } | undefined;
   type EjercicioLite = { _id: string; activo: boolean };
@@ -111,7 +108,6 @@ jest.mock('../../src/models/training/ejercicio', () => {
   return { __esModule: true, default: EjercicioMock };
 });
 
-// Usar servicios reales en esta suite
 jest.mock('../../src/service/training/sesionService', () => ({
   crearSesionService: jest.fn().mockImplementation(async (sesionData: {
     fecha?: string;
@@ -121,7 +117,6 @@ jest.mock('../../src/service/training/sesionService', () => ({
     ejercicios?: Array<{ ejercicio: string; orden: number; series?: number; repeticiones?: number; tiempoDescanso?: number; }>; 
     clienteId?: string;
   }) => {
-    // Validación de fecha pasada
     if (sesionData.fecha) {
       const fechaSesion = new Date(sesionData.fecha);
       const hoy = new Date();
@@ -130,7 +125,6 @@ jest.mock('../../src/service/training/sesionService', () => ({
         throw new Error('La fecha de la sesión no puede ser anterior al día actual');
       }
     }
-    // Validación de duplicados en orden
     if (Array.isArray(sesionData.ejercicios)) {
       const ordenes = sesionData.ejercicios.map((e) => e.orden);
       const set = new Set(ordenes);
@@ -224,7 +218,6 @@ jest.mock('../../src/service/training/sesionService', () => ({
 
 describe('Sesión Endpoints', () => {
   beforeAll(async () => {
-    // Setup inicial si es necesario
   });
 
   describe('POST /api/training/sesiones', () => {

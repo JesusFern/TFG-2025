@@ -14,7 +14,6 @@ import {
 import logger from '../../utils/logger';
 import { matchedData } from 'express-validator';
 
-// Función auxiliar para verificar si una sesión pertenece a un plan publicado
 async function verificarPlanPublicado(sesionId: string): Promise<boolean> {
   const plan = await PlanEntrenamiento.findOne({ 
     sesiones: sesionId,
@@ -174,14 +173,12 @@ export const actualizarSesion = async (req: AuthenticatedRequest, res: Response)
       campos: Object.keys(datosActualizacion)
     });
 
-    // Verificar si la sesión existe
     const sesionExistente = await Sesion.findById(id);
     if (!sesionExistente) {
       res.status(404).json({ message: 'Sesión no encontrada' });
       return;
     }
 
-    // Verificar si la sesión pertenece a un plan publicado
     const esPlanPublicado = await verificarPlanPublicado(id);
     if (esPlanPublicado) {
       res.status(403).json({ message: 'No se puede editar una sesión de un plan publicado' });
@@ -218,14 +215,12 @@ export const eliminarSesion = async (req: AuthenticatedRequest, res: Response) =
       sesionId: id
     });
 
-    // Verificar si la sesión existe
     const sesionExistente = await Sesion.findById(id);
     if (!sesionExistente) {
       res.status(404).json({ message: 'Sesión no encontrada' });
       return;
     }
 
-    // Verificar si la sesión pertenece a un plan publicado
     const esPlanPublicado = await verificarPlanPublicado(id);
     if (esPlanPublicado) {
       res.status(403).json({ message: 'No se puede eliminar una sesión de un plan publicado' });

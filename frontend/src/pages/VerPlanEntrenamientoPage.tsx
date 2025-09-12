@@ -21,7 +21,6 @@ import TrainingPlanHeader from '../components/molecules/TrainingPlanHeader';
 import WeekSelector from '../components/molecules/WeekSelector';
 import TrainingSessionsTable from '../components/molecules/TrainingSessionsTable';
 
-// Interfaces para manejo de sesiones
 interface SesionInfo {
   weekDayIndex: number;
   weekDayName: string;
@@ -47,7 +46,6 @@ const VerPlanEntrenamientoPage: React.FC = () => {
   const [currentWeek, setCurrentWeek] = useState(1);
   const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
 
-  // Calcular sesiones por semana (similar a EditarPlanEntrenamientoPage)
   const sesionesRange = useMemo(() => {
     if (!plan || !fechaInicio) return { sesiones: [] as SesionInfo[], totalWeeks: 0 };
     
@@ -66,7 +64,6 @@ const VerPlanEntrenamientoPage: React.FC = () => {
         const weekDayName = DIAS_SEMANA[diaSemana];
         const fechaFormateada = format(fecha, 'dd/MM');
         
-        // Buscar si hay una sesión para este día en las sesiones cargadas
         const sesionExistente = sesiones.find(sesion => {
           const sesionFecha = new Date(sesion.fecha);
           return sesionFecha.toDateString() === fecha.toDateString();
@@ -90,7 +87,6 @@ const VerPlanEntrenamientoPage: React.FC = () => {
       if (!planId) return;
       setLoading(true);
       try {
-        // Cargar plan, sesiones y ejercicios en paralelo
         const [planData, sesionesData, ejerciciosData] = await Promise.all([
           trainingService.obtenerPlanPorId(planId),
           trainingService.obtenerSesiones({ plan: planId }),
@@ -99,13 +95,11 @@ const VerPlanEntrenamientoPage: React.FC = () => {
         
         setPlan(planData);
         
-        // Verificar si el plan está en modo borrador y redirigir
         if (planData.draftMode) {
           navigate(`/editar-plan-entrenamiento/${planId}`);
           return;
         }
         
-        // Normalizar los ejercicios en las sesiones
         const sesionesNormalizadas = sesionesData.map(sesion => ({
           ...sesion,
           ejercicios: sesion.ejercicios.map(ejercicio => ({
@@ -119,7 +113,6 @@ const VerPlanEntrenamientoPage: React.FC = () => {
         setSesiones(sesionesNormalizadas);
         setEjercicios(ejerciciosData);
         
-        // Configurar fecha de inicio
         if (planData.fechaInicio) {
           const fechaInicioDate = new Date(planData.fechaInicio);
           setFechaInicio(fechaInicioDate);
@@ -134,17 +127,14 @@ const VerPlanEntrenamientoPage: React.FC = () => {
     void load();
   }, [planId, navigate]);
 
-  // Función para cambiar semana
   const handleWeekChange = (newWeek: number) => {
     setCurrentWeek(newWeek);
   };
 
-  // Función para obtener ejercicio por ID
   const getEjercicioById = (ejercicioId: string): Ejercicio | null => {
     return ejercicios.find(ej => ej._id === ejercicioId) || null;
   };
 
-  // Formatear fecha de inicio
   const fechaInicioFormateada = useMemo(() => {
     if (!plan?.fechaInicio) return "";
     return format(new Date(plan.fechaInicio), "d 'de' MMMM 'de' yyyy");

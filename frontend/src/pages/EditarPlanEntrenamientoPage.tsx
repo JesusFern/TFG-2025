@@ -77,7 +77,6 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
   const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
   
   
-  // Estados para el modal de ejercicios
   const [showEjerciciosModal, setShowEjerciciosModal] = useState<boolean>(false);
   const [ejerciciosSesion, setEjerciciosSesion] = useState<Array<{
     ejercicio: string;
@@ -94,13 +93,8 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     };
   }>>([]);
   
-  // Estado para forzar re-render
   const [forceUpdate, setForceUpdate] = useState(0);
-  
-  // Estado local para la sesión actual (para actualización inmediata)
   const [currentSesionLocal, setCurrentSesionLocal] = useState<SesionInfo | null>(null);
-  
-  // Estado para los ejercicios de la sesión actual (para actualización inmediata)
   const [ejerciciosSesionActual, setEjerciciosSesionActual] = useState<Array<{
     ejercicio: string;
     orden: number;
@@ -116,10 +110,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     };
   }>>([]);
   
-  // Estado para el modal de confirmación de eliminación
   const [ejercicioAEliminar, setEjercicioAEliminar] = useState<number | null>(null);
-  
-  // Estado para el modal de edición de ejercicio
   const [ejercicioAEditar, setEjercicioAEditar] = useState<number | null>(null);
   const [ejercicioEditando, setEjercicioEditando] = useState<{
     ejercicio: string;
@@ -136,7 +127,6 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     };
   } | null>(null);
 
-  // Estado para el modal de edición de sesión
   const [sesionAEditar, setSesionAEditar] = useState<string | null>(null);
   const [sesionEditando, setSesionEditando] = useState<{
     fecha: string;
@@ -146,32 +136,25 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     notas?: string;
   } | null>(null);
 
-  // Estado para el modal de eliminación de sesión
   const [sesionAEliminar, setSesionAEliminar] = useState<string | null>(null);
-
-  // Estado para el modal de crear sesión
   const [showCrearSesionModal, setShowCrearSesionModal] = useState(false);
   const [fechaSesionACrear, setFechaSesionACrear] = useState<string>('');
 
   const sesionesRange = useMemo(() => {
     if (!plan || !fechaInicio) return { sesiones: [], totalWeeks: 0 };
     
-    // Filtrar sesiones que coincidan con los días de la semana del plan
     const sesionesFiltradas = sesiones.filter(sesion => {
       const sesionFecha = new Date(sesion.fecha);
       const diaSemana = sesionFecha.getDay();
       return plan.diasSemana.includes(diaSemana);
     });
 
-    // Ordenar sesiones por fecha
     sesionesFiltradas.sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
     
-    // Calcular el número total de semanas basado en la duración del plan
     const totalWeeks = Math.ceil(plan.duracionDias / 7);
     
-    // Calcular el rango de fechas para la semana actual
     const startOfWeek = new Date(fechaInicio);
-    const daysToSubtract = startOfWeek.getDay() === 0 ? 6 : startOfWeek.getDay() - 1; // Lunes = 1, Domingo = 0
+    const daysToSubtract = startOfWeek.getDay() === 0 ? 6 : startOfWeek.getDay() - 1;
     startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
     
     const weekStartDate = new Date(startOfWeek);
@@ -180,13 +163,11 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     const weekEndDate = new Date(weekStartDate);
     weekEndDate.setDate(weekEndDate.getDate() + 6);
     
-    // Filtrar sesiones que estén en la semana actual
     const sesionesDeLaSemana = sesionesFiltradas.filter(sesion => {
       const sesionFecha = new Date(sesion.fecha);
       return sesionFecha >= weekStartDate && sesionFecha <= weekEndDate;
     });
     
-    // Crear array de días de la semana (Lunes a Domingo)
     const diasSemana = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
     const sesionesInfo: SesionInfo[] = [];
     
@@ -202,7 +183,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
       
       sesionesInfo.push({
         weekDayIndex: i,
-        sesionIndex: i, // Usar índice del día de la semana
+        sesionIndex: i,
         weekDayName: diasSemana[i],
         fecha: fechaDelDia,
         fechaFormateada: format(fechaDelDia, 'dd/MM', { locale: es }),
@@ -230,7 +211,6 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
         
         // Verificar si el plan está publicado y redirigir si es necesario
         if (!planData.draftMode) {
-          // Redirigir a vista de ver el plan publicado
           navigate(`/training/planes/${planId}`);
           return;
         }
@@ -278,7 +258,6 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
 
   useEffect(() => {
     if (sesionesRange.sesiones.length > 0 && (activeTab === null || !sesionesRange.sesiones.some(sesion => sesion.weekDayIndex.toString() === activeTab))) {
-      // Seleccionar la primera sesión que tenga datos
       const primeraSesionConDatos = sesionesRange.sesiones.find(sesion => sesion.data !== null);
       if (primeraSesionConDatos) {
         setActiveTab(primeraSesionConDatos.weekDayIndex.toString());
@@ -293,7 +272,6 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
   const handleTabChange = (newTabValue: string | null) => {
     if (newTabValue === activeTab) return;
     setActiveTab(newTabValue);
-    // Limpiar la sesión local cuando cambie de pestaña
     setCurrentSesionLocal(null);
     setEjerciciosSesionActual([]);
   };
@@ -301,9 +279,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
   const handleWeekChange = (newWeek: number) => {
     setCurrentWeek(newWeek);
     
-    // Resetear la pestaña activa cuando cambie de semana
     setActiveTab(null);
-    // Limpiar la sesión local cuando cambie de semana
     setCurrentSesionLocal(null);
     setEjerciciosSesionActual([]);
   };
@@ -314,12 +290,10 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     const currentSesionIndex = parseInt(activeTab);
     const sesionFromRange = sesionesRange.sesiones.find(sesion => sesion.weekDayIndex === currentSesionIndex) || null;
     
-    // Si tenemos una sesión local actualizada, usarla; si no, usar la del rango
     if (currentSesionLocal && currentSesionLocal.weekDayIndex === currentSesionIndex) {
       return currentSesionLocal;
     }
     
-    // Si tenemos ejercicios locales para esta sesión, usarlos
     if (sesionFromRange && ejerciciosSesionActual.length > 0) {
       const sesionConEjerciciosLocales = {
         ...sesionFromRange,
@@ -367,8 +341,8 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
       setLoading(true);
       
       const nuevoEjercicio = {
-        ejercicio: ejercicioData.ejercicio, // Solo el ID del ejercicio
-        orden: ejercicioData.orden, // Usar el orden que viene del modal
+        ejercicio: ejercicioData.ejercicio,
+        orden: ejercicioData.orden,
         series: ejercicioData.series,
         repeticiones: ejercicioData.repeticiones,
         peso: ejercicioData.peso,
@@ -389,13 +363,10 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
       };
       
       
-      // Actualizar la sesión en la base de datos
       const response = await trainingService.actualizarSesion(currentSesionInfo.data._id, datosActualizacion);
       
-      // Extraer la sesión de la respuesta
       const sesionActualizada = (response as unknown as SesionUpdateResponse).sesion || response;
       
-      // Actualizar la sesión local inmediatamente para la vista
       if (currentSesionInfo) {
         const sesionActualizadaLocal = {
           ...currentSesionInfo,
@@ -406,18 +377,15 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
         };
         setCurrentSesionLocal(sesionActualizadaLocal);
         
-        // También actualizar los ejercicios locales
         setEjerciciosSesionActual(sesionActualizada.ejercicios || currentSesionInfo.data?.ejercicios || []);
       }
       
-      // Actualizar el estado de sesiones para sincronizar
       setSesiones(prev => prev.map(sesion => 
         sesion._id === currentSesionInfo.data?._id 
           ? { ...sesion, ...sesionActualizada }
           : sesion
       ));
       
-      // Forzar re-render de la vista
       setForceUpdate(prev => prev + 1);
       
       setSuccessMessage("Ejercicio agregado y guardado en la sesión");
@@ -440,7 +408,6 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
   };
 
   const handleEjercicioCreado = (ejercicio: Ejercicio) => {
-    // Agregar el ejercicio recién creado a la lista de ejercicios
     setEjercicios(prev => [...prev, ejercicio]);
   };
 
@@ -477,16 +444,13 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     try {
       setLoading(true);
       
-      // Crear una copia de los ejercicios actuales
       const ejerciciosActualizados = [...(currentSesionInfo.data.ejercicios || [])];
       
-      // Actualizar el ejercicio editado
       ejerciciosActualizados[ejercicioAEditar] = {
         ...ejerciciosActualizados[ejercicioAEditar],
         ...ejercicioEditado
       };
 
-      // Preparar datos para actualizar la sesión
       const datosActualizacion = {
         fecha: currentSesionInfo.data.fecha,
         tipoEntrenamiento: currentSesionInfo.data.tipoEntrenamiento,
@@ -494,13 +458,10 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
         ejercicios: ejerciciosActualizados
       };
       
-      // Actualizar la sesión en la base de datos
       const response = await trainingService.actualizarSesion(currentSesionInfo.data._id, datosActualizacion);
       
-      // Extraer la sesión de la respuesta
       const sesionActualizada = (response as unknown as SesionUpdateResponse).sesion || response;
       
-      // Actualizar la sesión local inmediatamente
       if (currentSesionInfo) {
         const sesionActualizadaLocal = {
           ...currentSesionInfo,
@@ -511,24 +472,20 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
         };
         setCurrentSesionLocal(sesionActualizadaLocal);
         
-        // También actualizar los ejercicios locales
         setEjerciciosSesionActual(sesionActualizada.ejercicios || currentSesionInfo.data?.ejercicios || []);
       }
       
-      // Actualizar el estado de sesiones para sincronizar
       setSesiones(prev => prev.map(sesion => 
         sesion._id === currentSesionInfo.data?._id 
           ? { ...sesion, ...sesionActualizada }
           : sesion
       ));
       
-      // Forzar re-render
       setForceUpdate(prev => prev + 1);
       
       setSuccessMessage("Ejercicio actualizado correctamente");
       setTimeout(() => setSuccessMessage(null), 3000);
       
-      // Cerrar modal
       setEjercicioAEditar(null);
       setEjercicioEditando(null);
     } catch (err) {
@@ -549,16 +506,13 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     try {
       setLoading(true);
       
-      // Crear nueva lista de ejercicios sin el ejercicio eliminado
       const ejerciciosActualizados = currentSesionInfo.data.ejercicios.filter((_, index) => index !== ejercicioIndex);
       
-      // Reordenar los ejercicios restantes
       const ejerciciosReordenados = ejerciciosActualizados.map((ejercicio, index) => ({
         ...ejercicio,
         orden: index + 1
       }));
       
-      // Preparar los datos de actualización
       const datosActualizacion = {
         fecha: currentSesionInfo.data.fecha,
         tipoEntrenamiento: currentSesionInfo.data.tipoEntrenamiento,
@@ -566,13 +520,10 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
         ejercicios: ejerciciosReordenados
       };
       
-      // Actualizar la sesión en la base de datos
       const response = await trainingService.actualizarSesion(currentSesionInfo.data._id, datosActualizacion);
       
-      // Extraer la sesión de la respuesta
       const sesionActualizada = (response as unknown as SesionUpdateResponse).sesion || response;
       
-      // Actualizar la sesión local inmediatamente
       if (currentSesionInfo) {
         const sesionActualizadaLocal = {
           ...currentSesionInfo,
@@ -583,18 +534,15 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
         };
         setCurrentSesionLocal(sesionActualizadaLocal);
         
-        // También actualizar los ejercicios locales
         setEjerciciosSesionActual(sesionActualizada.ejercicios || currentSesionInfo.data?.ejercicios || []);
       }
       
-      // Actualizar el estado de sesiones para sincronizar
       setSesiones(prev => prev.map(sesion => 
         sesion._id === currentSesionInfo.data?._id 
           ? { ...sesion, ...sesionActualizada }
           : sesion
       ));
       
-      // Forzar re-render
       setForceUpdate(prev => prev + 1);
       
       setSuccessMessage("Ejercicio eliminado de la sesión");
@@ -606,7 +554,6 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     }
   };
 
-  // Funciones para manejar sesiones
   const handleEditarSesion = (sesionId: string) => {
     const sesion = sesiones.find(s => s._id === sesionId);
     if (!sesion) return;
@@ -627,7 +574,6 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     try {
       setLoading(true);
       
-      // Preparar datos para actualizar la sesión
       const datosActualizacion = {
         fecha: sesionEditada.fecha,
         hora: sesionEditada.hora,
@@ -636,17 +582,14 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
         notas: sesionEditada.notas
       };
 
-      // Actualizar la sesión en la base de datos
       await trainingService.actualizarSesion(sesionAEditar, datosActualizacion);
       
-      // Actualizar el estado local de sesiones
       setSesiones(prev => prev.map(sesion => 
         sesion._id === sesionAEditar 
           ? { ...sesion, ...datosActualizacion }
           : sesion
       ));
 
-      // Si la sesión editada es la actual, actualizar también el estado local
       if (currentSesionInfo?.data?._id === sesionAEditar) {
         setCurrentSesionLocal(prev => prev && prev.data ? {
           ...prev,
@@ -664,7 +607,6 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
       setSuccessMessage("Sesión actualizada correctamente");
       setError(null);
       
-      // Cerrar modal
       setSesionAEditar(null);
       setSesionEditando(null);
     } catch (err) {
@@ -689,13 +631,10 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     try {
       setLoading(true);
       
-      // Eliminar la sesión de la base de datos
       await trainingService.eliminarSesion(sesionAEliminar);
       
-      // Actualizar el estado local de sesiones
       setSesiones(prev => prev.filter(sesion => sesion._id !== sesionAEliminar));
 
-      // Si la sesión eliminada era la actual, limpiar el estado
       if (currentSesionInfo?.data?._id === sesionAEliminar) {
         setCurrentSesionLocal(null);
         setEjerciciosSesionActual([]);
@@ -704,7 +643,6 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
       setSuccessMessage("Sesión eliminada correctamente");
       setError(null);
       
-      // Cerrar modal
       setSesionAEliminar(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Error al eliminar la sesión');
@@ -713,7 +651,6 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     }
   };
 
-  // Funciones para crear nueva sesión
   const handleConfigurarSesion = (fecha: string) => {
     setFechaSesionACrear(fecha);
     setShowCrearSesionModal(true);
@@ -731,48 +668,39 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     try {
       setLoading(true);
       
-      // Preparar datos para crear la sesión
       const datosSesion = {
         clienteId: typeof plan.clientes[0] === 'object' && plan.clientes[0] !== null && '_id' in plan.clientes[0] 
           ? (plan.clientes[0] as { _id: string })._id 
-          : plan.clientes[0] as string, // Extraer el ID del cliente
+          : plan.clientes[0] as string,
         planId: plan._id,
         fecha: sesionData.fecha,
         hora: sesionData.hora,
         tipoEntrenamiento: sesionData.tipoEntrenamiento,
         duracion: sesionData.duracion,
-        ejercicios: [], // Sesión vacía inicialmente
+        ejercicios: [],
         notas: sesionData.notas
       };
 
-      // Crear la sesión en la base de datos
       const response = await trainingService.crearSesion(datosSesion);
-      const nuevaSesion = response.sesion; // Extraer la sesión del objeto respuesta
+      const nuevaSesion = response.sesion;
       
-      // Actualizar el estado local de sesiones
       setSesiones(prev => [...prev, nuevaSesion]);
-
-      // Calcular en qué semana se creó la sesión para navegar automáticamente
       if (plan && fechaInicio) {
         const sesionFecha = new Date(nuevaSesion.fecha);
         const inicioDate = new Date(fechaInicio);
         
-        // Calcular la diferencia en días
         const diffTime = sesionFecha.getTime() - inicioDate.getTime();
         const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
         const semanaSesion = Math.ceil(diffDays / 7);
         
-        // Cambiar a la semana donde se creó la sesión si es diferente a la actual
         if (semanaSesion !== currentWeek && semanaSesion > 0) {
           setCurrentWeek(semanaSesion);
         }
 
-        // Seleccionar automáticamente la sesión creada
-        // Esperar un momento para que se actualice el estado y luego seleccionar la sesión
         setTimeout(() => {
           const sesionFecha = new Date(nuevaSesion.fecha);
           const diaSemana = sesionFecha.getDay();
-          const weekDayIndex = diaSemana === 0 ? 6 : diaSemana - 1; // Convertir Domingo=0 a Domingo=6
+          const weekDayIndex = diaSemana === 0 ? 6 : diaSemana - 1;
           setActiveTab(weekDayIndex.toString());
         }, 100);
       }
@@ -780,7 +708,6 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
       setSuccessMessage("Sesión creada correctamente");
       setError(null);
       
-      // Cerrar modal
       setShowCrearSesionModal(false);
       setFechaSesionACrear('');
     } catch (err) {

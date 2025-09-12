@@ -24,7 +24,6 @@ const WorkerClientTrainingPlansList: React.FC = () => {
   const user = getUserData();
   const workerId = user?._id;
   
-  // Memoizar la verificación de permisos para evitar bucles infinitos
   const hasPermission = useMemo(() => {
     return user && (user.role === 'worker' || user.role === 'admin');
   }, [user]);
