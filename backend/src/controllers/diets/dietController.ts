@@ -274,13 +274,19 @@ export const eliminarPlato = async (req: AuthenticatedRequest, res: Response): P
     
     const { platoId } = req.params;
     
-    
     if (!platoId) {
       res.status(400).json({ message: 'ID del plato es requerido' });
       return;
     }
+
+    if (!esIdValido(platoId)) {
+      res.status(400).json({ message: 'ID del plato no es válido' });
+      return;
+    }
+
+    const platoObjectId = new mongoose.Types.ObjectId(platoId.toString());
     
-    const dieta = await Dieta.findOne({ 'dias.comidas.platos._id': platoId });
+    const dieta = await Dieta.findOne({ 'dias.comidas.platos._id': platoObjectId });
     if (!dieta) {
       res.status(404).json({ message: 'Plato no encontrado' });
       return;
@@ -297,7 +303,7 @@ export const eliminarPlato = async (req: AuthenticatedRequest, res: Response): P
     for (let d = 0; d < dieta.dias.length; d++) {
       for (let c = 0; c < dieta.dias[d].comidas.length; c++) {
         const platoIndex = dieta.dias[d].comidas[c].platos.findIndex(
-          plato => plato._id?.toString() === platoId
+          plato => plato._id?.toString() === platoObjectId.toString()
         );
         
         if (platoIndex !== -1) {
