@@ -203,7 +203,7 @@ jest.mock('../../src/service/diets/dietService', () => ({
     };
   }),
   
-  publicarDietaService: jest.fn().mockImplementation(async (dietaId, userId) => {
+  publicarDietaService: jest.fn().mockImplementation(async (dietaId) => {
     return {
       dieta: {
         _id: dietaId,
@@ -250,7 +250,7 @@ jest.mock('../../src/service/diets/plateService', () => ({
 }));
 
 jest.mock('../../src/helpers/dietHelper', () => ({
-  buscarDietaYVerificarPermisos: jest.fn().mockImplementation(async (dietaId, userId, verificarCreador) => {
+  buscarDietaYVerificarPermisos: jest.fn().mockImplementation(async (dietaId) => {
     return {
       _id: dietaId,
       nombre: "Dieta Test",
