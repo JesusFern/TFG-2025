@@ -13,7 +13,13 @@ import {
   Pagination,
   Badge,
   Select,
-  Button
+  Button,
+  Grid,
+  Card,
+  Stack,
+  Progress,
+  ThemeIcon,
+  Tooltip
 } from '@mantine/core';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
@@ -21,7 +27,13 @@ import {
   IconAlertCircle, 
   IconCalendarEvent,
   IconArrowLeft,
-  IconChevronLeft
+  IconChevronLeft,
+  IconClock,
+  IconUsers,
+  IconTarget,
+  IconLeaf,
+  IconTrendingUp,
+  IconInfoCircle
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -136,6 +148,7 @@ const VerDietaPage: React.FC = () => {
     return formatearFecha(dieta.fechaInicio, "d 'de' MMMM 'de' yyyy");
   }, [dieta?.fechaInicio]);
 
+
   if (loading) {
     return (
       <Container size="xl" py="xl">
@@ -180,79 +193,101 @@ const VerDietaPage: React.FC = () => {
           ...styles.paperBorder
         }}
       >
-        <Group justify="space-between" mb="xs" wrap="wrap">
+        {/* Header principal con título y botón de navegación */}
+        <Group justify="space-between" mb="lg" wrap="wrap">
           <Box>
-            <Group gap="md" align="center">
-              <Title order={2} c="nutroos-green.6">
+            <Group gap="md" align="center" mb="sm">
+              <Title order={2} c="green.6" fw={700}>
                 {dieta.nombre}
               </Title>
-              <Badge color="green" variant="filled" size="sm">
+              <Badge 
+                color="green" 
+                variant="light" 
+                size="lg"
+                leftSection={<IconLeaf size={14} />}
+                style={styles.statusBadge(isDark)}
+              >
                 Publicada
               </Badge>
             </Group>
-            <Text size="sm" c="dimmed">
-              {dieta.descripcion || "Sin descripción"}
+            <Text size="md" c="dimmed" mb="md" style={{ maxWidth: '600px' }}>
+              {dieta.descripcion || "Esta dieta no tiene descripción disponible."}
             </Text>
+            
+            {/* Información básica con iconos */}
+            <Group gap="lg" mb="md">
+              <Group gap="xs">
+                <ThemeIcon size="sm" color="green" variant="light">
+                  <IconCalendarEvent size={16} />
+                </ThemeIcon>
+                <Text size="sm" fw={500} c="green.7">
+                  {dieta.duracion} días
+                </Text>
+              </Group>
+              <Group gap="xs">
+                <ThemeIcon size="sm" color="green" variant="light">
+                  <IconClock size={16} />
+                </ThemeIcon>
+                <Text size="sm" fw={500} c="green.7">
+                  {dieta.comidasDiarias} comidas diarias
+                </Text>
+              </Group>
+              <Group gap="xs">
+                <ThemeIcon size="sm" color="green" variant="light">
+                  <IconTarget size={16} />
+                </ThemeIcon>
+                <Text size="sm" fw={500} c="green.7">
+                  Inicio: {fechaInicioFormateada}
+                </Text>
+              </Group>
+            </Group>
           </Box>
-          <Group gap="md">
-            <Button
-              variant="outline"
-              color="nutroos-green"
-              leftSection={<IconArrowLeft size={18} />}
-              onClick={() => {
-                try {
-                  let clientId = null;
+          
+          <Button
+            variant="outline"
+            color="green"
+            leftSection={<IconArrowLeft size={18} />}
+            size="md"
+            onClick={() => {
+              try {
+                let clientId = null;
+                
+                if (dieta.asignadaA && Array.isArray(dieta.asignadaA) && dieta.asignadaA.length > 0) {
+                  const clientData = dieta.asignadaA[0];
                   
-                  if (dieta.asignadaA && Array.isArray(dieta.asignadaA) && dieta.asignadaA.length > 0) {
-                    const clientData = dieta.asignadaA[0];
+                  if (typeof clientData === 'string') {
+                    clientId = clientData;
+                  } 
+                  else if (typeof clientData === 'object' && clientData !== null) {
+                    type ClientObject = { _id?: string; id?: string; };
+                    const clientObj = clientData as unknown as ClientObject;
                     
-                    if (typeof clientData === 'string') {
-                      clientId = clientData;
-                    } 
-                    else if (typeof clientData === 'object' && clientData !== null) {
-                      type ClientObject = { _id?: string; id?: string; };
-                      const clientObj = clientData as unknown as ClientObject;
-                      
-                      if (clientObj._id) {
-                        clientId = clientObj._id;
-                      } else if (clientObj.id) {
-                        clientId = clientObj.id;
-                      } else {
-                        // Último recurso: convertir a string
-                        clientId = String(clientData);
-                      }
-                    }
-                    // 3. Cualquier otro caso, intenta la conversión a string
-                    else if (clientData) {
+                    if (clientObj._id) {
+                      clientId = clientObj._id;
+                    } else if (clientObj.id) {
+                      clientId = clientObj.id;
+                    } else {
                       clientId = String(clientData);
                     }
                   }
-                  
-                  console.log("Cliente original:", dieta.asignadaA && dieta.asignadaA[0]);
-                  console.log("Cliente ID extraído:", clientId);
-                  
-                  if (clientId) {
-                    navigate(`/worker/dashboard-clients/${clientId}/diets`);
-                  } else {
-                    console.warn("No se pudo extraer un ID de cliente válido, navegando hacia atrás");
-                    navigate(-1);
+                  else if (clientData) {
+                    clientId = String(clientData);
                   }
-                } catch (err) {
-                  console.error("Error al navegar:", err);
+                }
+                
+                if (clientId) {
+                  navigate(`/worker/dashboard-clients/${clientId}/diets`);
+                } else {
                   navigate(-1);
                 }
-              }}
-            >
-              Volver a dietas del cliente
-            </Button>
-          </Group>
-        </Group>
-        
-        <Group mt="lg" mb="md" gap="xs">
-          <IconCalendarEvent size={18} color={isDark ? 'var(--mantine-color-gray-4)' : 'var(--mantine-color-gray-6)'} />
-          <Text size="sm" c="dimmed">
-            {dieta.duracion} días | {dieta.comidasDiarias} comidas diarias | Inicio: {fechaInicioFormateada}
-          </Text>
+              } catch (err) {
+                console.error("Error al navegar:", err);
+                navigate(-1);
+              }
+            }}
+          >
+            Volver a dietas del cliente
+          </Button>
         </Group>
         
         <Divider my="md" />
@@ -299,7 +334,7 @@ const VerDietaPage: React.FC = () => {
               <Button 
                 size="sm" 
                 variant="subtle" 
-                color="nutroos-green" 
+                color="green" 
                 leftSection={<IconChevronLeft size={16} />} 
                 disabled={currentWeek <= 1}
                 onClick={() => handleWeekChange(currentWeek - 1)}
@@ -319,7 +354,7 @@ const VerDietaPage: React.FC = () => {
               <Button 
                 size="sm" 
                 variant="subtle" 
-                color="nutroos-green" 
+                color="green" 
                 rightSection={<IconChevronRight size={16} />} 
                 disabled={currentWeek >= daysRange.totalWeeks}
                 onClick={() => handleWeekChange(currentWeek + 1)}
@@ -328,13 +363,26 @@ const VerDietaPage: React.FC = () => {
               </Button>
             </Group>
             
-            <Text size="md" fw={600} c="nutroos-green.7">
+            <Text size="md" fw={600} c="green.7">
               {currentWeek} de {daysRange.totalWeeks} semanas
             </Text>
           </Group>
         </Box>
         
-        <Box px="xl" py="md" mx="auto" style={{ overflowX: 'auto' }}>
+        <Box 
+          px={{ base: 'md', md: 'xl' }} 
+          py="md" 
+          mx="auto" 
+          style={{ 
+            overflowX: 'auto',
+            borderRadius: '12px',
+            background: isDark 
+              ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.02) 0%, rgba(34, 197, 94, 0.01) 100%)'
+              : 'linear-gradient(135deg, rgba(34, 197, 94, 0.01) 0%, rgba(34, 197, 94, 0.005) 100%)',
+            padding: '16px',
+            border: '1px solid rgba(34, 197, 94, 0.12)'
+          }}
+        >
           <table style={styles.tableStyles}>
             <thead>
               <tr>
@@ -343,7 +391,7 @@ const VerDietaPage: React.FC = () => {
                     key={`header-${dayInfo.dietDayIndex}`}
                     style={styles.tableHeader(isDark)}
                   >
-                    <Text fw={700} c="nutroos-green" size="sm" ta="center">
+                    <Text fw={700} c="green.7" size="sm" ta="center">
                       {dayInfo.weekDayName}
                     </Text>
                     <Text size="xs" c="dimmed" ta="center">
@@ -379,52 +427,92 @@ const VerDietaPage: React.FC = () => {
                             ...styles.rowBg(isDark, comidaIndex % 2 === 0)
                           }}
                         >
-                          <Text 
-                            fw={600} 
-                            size="sm" 
-                            c="nutroos-green" 
-                            mb="4px"
-                            p="4px 6px"
-                            style={styles.mealTitle(isDark)}
+                          <Tooltip 
+                            label={`${comida.nombreComida || `Comida ${comidaIndex + 1}`}${comida.horaEstimada ? ` - ${comida.horaEstimada}` : ''}`}
+                            position="top"
+                            withArrow
                           >
-                            {comida.nombreComida || `Comida ${comidaIndex + 1}`} 
-                            {comida.horaEstimada && <Text component="span" size="sm" fw={400}> ({comida.horaEstimada})</Text>}
-                          </Text>
+                            <Text 
+                              fw={600} 
+                              size="sm" 
+                              c="green.7" 
+                              mb="4px"
+                              p="6px 8px"
+                              style={styles.mealTitle(isDark)}
+                            >
+                              {comida.nombreComida || `Comida ${comidaIndex + 1}`} 
+                              {comida.horaEstimada && (
+                                <Text component="span" size="xs" fw={400} c="dimmed" ml="xs">
+                                  ({comida.horaEstimada})
+                                </Text>
+                              )}
+                            </Text>
+                          </Tooltip>
                           
                           {comida.platos.length > 0 && comida.platos.some(plato => plato.nombre !== null || plato.receta !== null) ? (
-                            <Box ml="sm" style={{ display: 'table', width: '100%' }}>
+                            <Stack gap="xs" mt="sm">
                               {comida.platos
                                 .filter(plato => plato.nombre !== null || plato.receta !== null)
                                 .map((plato, platoIndex) => (
-                                <div 
+                                <Group 
                                   key={platoIndex}
-                                  style={{ 
-                                    marginBottom: '3px',
-                                    lineHeight: 1.3,
-                                    display: 'table-row'
-                                  }}
+                                  gap="xs"
+                                  align="center"
+                                  p="xs"
+                                  style={styles.plateCard(isDark)}
                                 >
-                                  <span style={{ 
-                                    display: 'table-cell', 
-                                    paddingRight: '8px', 
-                                    verticalAlign: 'top',
-                                    color: 'var(--mantine-color-nutroos-green-5)',
-                                    fontSize: '18px',
-                                    lineHeight: '1'
-                                  }}>•</span>
-                                  <Text 
-                                    component="span"
+                                  <ThemeIcon 
                                     size="xs" 
+                                    color="green" 
+                                    variant="light"
+                                    radius="xl"
+                                  >
+                                    <IconLeaf size={10} />
+                                  </ThemeIcon>
+                                  <Text 
+                                    size="xs" 
+                                    fw={500}
                                     lineClamp={1} 
-                                    title={plato.nombre || 'Plato sin nombre'} 
-                                    style={{ display: 'table-cell' }}
+                                    style={{ 
+                                      flex: 1,
+                                      color: isDark ? 'var(--mantine-color-gray-2)' : 'var(--mantine-color-gray-7)'
+                                    }}
                                   >
                                     {plato.nombre || 'Plato sin nombre'}
                                   </Text>
-                                </div>
+                                  {plato.receta && (
+                                    <ThemeIcon 
+                                      size="xs" 
+                                      color="green" 
+                                      variant="light"
+                                      radius="xl"
+                                    >
+                                      <IconInfoCircle size={8} />
+                                    </ThemeIcon>
+                                  )}
+                                </Group>
                               ))}
+                            </Stack>
+                          ) : (
+                            <Box 
+                              p="sm" 
+                              mt="sm"
+                              style={{
+                                backgroundColor: isDark ? 'rgba(75, 192, 120, 0.02)' : 'rgba(75, 192, 120, 0.01)',
+                                borderRadius: '6px',
+                                border: '1px dashed rgba(75, 192, 120, 0.2)',
+                                textAlign: 'center'
+                              }}
+                            >
+                              <Text 
+                                size="xs" 
+                                c="dimmed" 
+                                fs="italic"
+                              >
+                                Sin platos asignados
+                              </Text>
                             </Box>
-                          ) : null}
+                          )}
                         </td>
                       );
                     })}
@@ -437,14 +525,65 @@ const VerDietaPage: React.FC = () => {
                     key={`calories-${dayInfo.dietDayIndex}`}
                     style={styles.calorieCellStyle(isDark)}
                   >
-                    {(dayInfo.data.caloriasTotales && dayInfo.data.caloriasTotales > 0) ? (
-                      <Text fw={700} size="xs" ta="right">
-                        Total: {dayInfo.data.caloriasTotales} kcal
-                      </Text>
-                    ) : null}
+                    <Stack gap="xs" align="flex-end">
+                      {(dayInfo.data.caloriasTotales && dayInfo.data.caloriasTotales > 0) && (
+                        <Text fw={700} size="xs">
+                          Total: {dayInfo.data.caloriasTotales} kcal
+                        </Text>
+                      )}
+                      {dayInfo.data.macronutrientes && (
+                        <Text size="xs" c="dimmed" ta="right" style={{ maxWidth: '120px' }}>
+                          {dayInfo.data.macronutrientes}
+                        </Text>
+                      )}
+                    </Stack>
                   </td>
                 ))}
               </tr>
+              
+              {/* Fila adicional para micronutrientes e hidratación */}
+              {(daysRange.days.some(day => day.data.micronutrientes || day.data.requerimientosHidratacion)) && (
+                <tr style={{ 
+                  backgroundColor: isDark ? 'rgba(148, 163, 184, 0.02)' : 'rgba(148, 163, 184, 0.01)',
+                  borderTop: '1px solid rgba(148, 163, 184, 0.1)'
+                }}>
+                  {daysRange.days.map((dayInfo: DayInfo) => (
+                    <td 
+                      key={`details-${dayInfo.dietDayIndex}`}
+                      style={{
+                        padding: '8px 12px',
+                        borderLeft: '1px solid rgba(148, 163, 184, 0.15)',
+                        borderRight: '1px solid rgba(148, 163, 184, 0.15)',
+                        borderBottom: '1px solid rgba(148, 163, 184, 0.15)',
+                        verticalAlign: 'top'
+                      }}
+                    >
+                      <Stack gap="xs">
+                        {dayInfo.data.micronutrientes && (
+                          <Box>
+                            <Text size="xs" fw={600} c="green.6" mb="xs">
+                              Micronutrientes:
+                            </Text>
+                            <Text size="xs" c="dimmed" style={{ lineHeight: 1.3 }}>
+                              {dayInfo.data.micronutrientes}
+                            </Text>
+                          </Box>
+                        )}
+                        {dayInfo.data.requerimientosHidratacion && (
+                          <Box>
+                            <Text size="xs" fw={600} c="green.6" mb="xs">
+                              Hidratación:
+                            </Text>
+                            <Text size="xs" c="dimmed" style={{ lineHeight: 1.3 }}>
+                              {dayInfo.data.requerimientosHidratacion}
+                            </Text>
+                          </Box>
+                        )}
+                      </Stack>
+                    </td>
+                  ))}
+                </tr>
+              )}
             </tbody>
           </table>
         </Box>
@@ -455,7 +594,7 @@ const VerDietaPage: React.FC = () => {
               value={currentWeek}
               onChange={handleWeekChange}
               total={daysRange.totalWeeks}
-              color="nutroos-green"
+              color="green"
               withEdges
               size="sm"
               radius="xs"

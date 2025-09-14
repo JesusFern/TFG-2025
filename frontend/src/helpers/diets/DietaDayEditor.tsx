@@ -213,6 +213,7 @@ const DietaDayEditor: React.FC<DietaDayEditorProps> = ({
             diaIndex={dayNumber - 1}
             onUpdate={(updatedComida) => handleUpdateComida(index, updatedComida)}
             dietaId={dietaId}
+            diaCompleto={day}
           />
         </Paper>
       ))}

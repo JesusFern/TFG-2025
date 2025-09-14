@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Title,
   TextInput, 
@@ -14,7 +14,8 @@ import {
   Modal,
   Paper,
   LoadingOverlay,
-  Notification
+  Notification,
+  Tooltip
 } from '@mantine/core';
 import { useDisclosure } from '@mantine/hooks';
 import { 
@@ -28,9 +29,10 @@ import {
   IconCheck,
   IconX
 } from '@tabler/icons-react';
-import { Comida, Plato } from '../../types';
+import { Comida, Plato, DiaDieta } from '../../types';
 import PlatoForm from '../../components/forms/diets/PlatoForm';
-import { actualizarPlatos, crearPlato } from '../../services/dietService';
+import { actualizarDiaDieta } from '../../services/dietService';
+import { actualizarPlatos, crearPlato, eliminarPlato } from '../../services/platoService';
 
 interface ComidaEditorProps {
   comida: Comida;
@@ -38,9 +40,10 @@ interface ComidaEditorProps {
   diaIndex: number;
   onUpdate: (updatedComida: Comida, markAsChanged?: boolean) => void;
   dietaId?: string;
+  diaCompleto?: DiaDieta; // Para tener acceso a todas las comidas del día
 }
 
-const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaIndex, onUpdate, dietaId }) => {
+const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaIndex, onUpdate, dietaId, diaCompleto }) => {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
   const [opened, { toggle }] = useDisclosure(true);
@@ -48,6 +51,9 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
   const [editingPlatoIndex, setEditingPlatoIndex] = useState<number | null>(null);
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [horaTemporal, setHoraTemporal] = useState(comida.horaEstimada);
+  const [editandoHora, setEditandoHora] = useState(false);
+  const [errorHora, setErrorHora] = useState<string | null>(null);
   const [notification, setNotification] = useState<{
     show: boolean;
     message: string;
@@ -67,11 +73,100 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
     { index: 5, nombre: 'Snack nocturno', hora: '23:00' }
   ];
 
-  const handleUpdateHora = (hora: string) => {
-    onUpdate({
-      ...comida,
-      horaEstimada: hora
-    }, false); 
+  // Sincronizar hora temporal cuando cambie la hora de la comida
+  useEffect(() => {
+    setHoraTemporal(comida.horaEstimada);
+    setEditandoHora(false);
+    setErrorHora(null);
+  }, [comida.horaEstimada]);
+
+  // Función para validar el formato de hora XX:XX
+  const validarFormatoHora = (hora: string): boolean => {
+    if (!hora) return true; // Permitir campo vacío
+    const regex = /^([0-1]?[0-9]|2[0-3]):[0-5][0-9]$/;
+    return regex.test(hora);
+  };
+
+  // Función para manejar el cambio de hora temporal
+  const handleCambioHoraTemporal = (nuevaHora: string) => {
+    setHoraTemporal(nuevaHora);
+    setErrorHora(null);
+    
+    if (nuevaHora && !validarFormatoHora(nuevaHora)) {
+      setErrorHora('Formato inválido. Use XX:XX (ej: 08:30)');
+    }
+  };
+
+  // Función para iniciar la edición de hora
+  const iniciarEdicionHora = () => {
+    setEditandoHora(true);
+    setErrorHora(null);
+  };
+
+  // Función para cancelar la edición de hora
+  const cancelarEdicionHora = () => {
+    setHoraTemporal(comida.horaEstimada);
+    setEditandoHora(false);
+    setErrorHora(null);
+  };
+
+  // Función para confirmar el cambio de hora
+  const confirmarCambioHora = async () => {
+    if (!validarFormatoHora(horaTemporal)) {
+      setErrorHora('Formato inválido. Use XX:XX (ej: 08:30)');
+      return;
+    }
+
+    if (horaTemporal === comida.horaEstimada) {
+      setEditandoHora(false);
+      return;
+    }
+
+    await handleUpdateHora(horaTemporal);
+    setEditandoHora(false);
+  };
+
+  const handleUpdateHora = async (hora: string) => {
+    try {
+      // Actualizar localmente primero
+      const comidaActualizada = {
+        ...comida,
+        horaEstimada: hora
+      };
+      
+      onUpdate(comidaActualizada, false);
+      
+      // Si tenemos dietaId y diaCompleto, guardar en el backend
+      if (dietaId && diaCompleto && diaCompleto.comidas) {
+        console.log('Actualizando hora en el backend:', { diaIndex, comidaIndex, hora });
+        
+        // Crear el array de comidas con la hora actualizada
+        const comidasActualizadas = diaCompleto.comidas.map((comidaDelDia: Comida, index: number) => {
+          if (index === comidaIndex) {
+            return {
+              horaEstimada: hora,
+              nombreComida: comidaDelDia.nombreComida || ''
+            };
+          }
+          return {
+            horaEstimada: comidaDelDia.horaEstimada || '',
+            nombreComida: comidaDelDia.nombreComida || ''
+          };
+        });
+        
+        // Usar type assertion para evitar el error de TypeScript
+        await actualizarDiaDieta(dietaId, diaIndex, {
+          comidas: comidasActualizadas as Comida[]
+        });
+        
+        showNotification(`Hora actualizada a ${hora}`, 'success');
+      } else {
+        console.log('Actualizando hora solo localmente (sin dietaId o diaCompleto)');
+      }
+    } catch (error) {
+      console.error('Error al actualizar la hora:', error);
+      showNotification('Error al guardar la hora. Se mantendrá localmente.', 'error');
+    }
   };
 
   const showNotification = (message: string, type: 'success' | 'error') => {
@@ -94,6 +189,7 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
       let platoToUpdate: Plato;
       
       if (editingPlatoIndex !== null) {
+        // Editando un plato existente
         platoToUpdate = { ...comida.platos[editingPlatoIndex], ...plato };
         platoToUpdate.orden = editingPlatoIndex + 1;
         updatedPlatos = [...comida.platos];
@@ -105,10 +201,16 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
           showNotification(`Plato "${platoToUpdate.nombre}" actualizado correctamente`, 'success');
         } else if (dietaId) {
           console.log('Creando plato nuevo (caso de edición sin ID)');
-          await crearPlato(dietaId, diaIndex, comidaIndex, platoToUpdate);
+          const platoCreado = await crearPlato(dietaId, diaIndex, comidaIndex, platoToUpdate);
+          platoToUpdate = { ...platoToUpdate, _id: platoCreado._id };
+          updatedPlatos[editingPlatoIndex] = platoToUpdate;
           showNotification(`Plato "${platoToUpdate.nombre}" creado correctamente`, 'success');
+        } else {
+          console.log('Sin dietaId - guardando solo localmente');
+          showNotification(`Plato "${platoToUpdate.nombre}" guardado localmente`, 'success');
         }
       } else {
+        // Creando un plato nuevo
         platoToUpdate = { 
           ...plato,
           orden: comida.platos.length + 1
@@ -126,6 +228,9 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
             console.error('Error al crear el plato:', error);
             showNotification('Error al crear el plato. Se guardará localmente.', 'error');
           }
+        } else {
+          console.log('Sin dietaId - guardando solo localmente');
+          showNotification(`Plato "${platoToUpdate.nombre}" guardado localmente`, 'success');
         }
       }
       
@@ -151,18 +256,30 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
 
     try {
       const platoToDelete = comida.platos[index];
+      
+      if (dietaId && (platoToDelete._id || platoToDelete.idPlato)) {
+        // Si el plato tiene ID, eliminarlo del backend
+        const platoId = platoToDelete._id || platoToDelete.idPlato;
+        if (platoId) {
+          console.log('Eliminando plato del backend:', platoId);
+          
+          await eliminarPlato(platoId);
+          showNotification(`Plato "${platoToDelete.nombre}" eliminado correctamente`, 'success');
+        }
+      } else {
+        // Si no tiene ID, solo eliminar localmente
+        console.log('Plato sin ID - eliminando solo localmente');
+        showNotification(`Plato "${platoToDelete.nombre}" eliminado localmente`, 'success');
+      }
+      
+      // Actualizar la lista de platos localmente
       let updatedPlatos = comida.platos.filter((_, i) => i !== index);
       
+      // Reordenar los platos restantes
       updatedPlatos = updatedPlatos.map((plato, i) => ({
         ...plato,
         orden: i + 1 
       }));
-      
-      if (dietaId && 'idPlato' in platoToDelete && platoToDelete.idPlato) {
-
-        await actualizarPlatos([platoToDelete]);
-        showNotification(`Plato "${platoToDelete.nombre}" eliminado correctamente`, 'success');
-      }
       
       console.log('handleDeletePlato en ComidaEditor, pasando markAsChanged: false');
       onUpdate({
@@ -221,24 +338,82 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
         </Group>
         
         <Group gap="xs">
-          <TextInput
-            placeholder="Hora estimada"
-            value={comida.horaEstimada}
-            onChange={(e) => handleUpdateHora(e.target.value)}
-            size="xs"
-            leftSection={<IconClock size={16} />}
-            rightSection={
-              !comida.horaEstimada && comidaIndex < tiposComida.length ? (
+          {editandoHora ? (
+            <Group gap="xs" align="flex-end">
+              <Tooltip 
+                label="Formato: HH:MM (ej: 08:30, 14:15)" 
+                position="top"
+                withArrow
+              >
+                <TextInput
+                  placeholder="HH:MM"
+                  value={horaTemporal}
+                  onChange={(e) => handleCambioHoraTemporal(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      confirmarCambioHora();
+                    } else if (e.key === 'Escape') {
+                      e.preventDefault();
+                      cancelarEdicionHora();
+                    }
+                  }}
+                  size="xs"
+                  leftSection={<IconClock size={16} />}
+                  error={errorHora}
+                  style={{ minWidth: 100 }}
+                  autoFocus
+                />
+              </Tooltip>
+              <Group gap={2}>
                 <ActionIcon 
                   size="xs" 
-                  onClick={() => handleUpdateHora(tiposComida[comidaIndex].hora)}
-                  color="nutroos-green"
+                  onClick={confirmarCambioHora}
+                  color="green"
+                  disabled={!!errorHora || horaTemporal === comida.horaEstimada}
                 >
-                  <IconEdit size={12} />
+                  <IconCheck size={12} />
                 </ActionIcon>
-              ) : null
-            }
-          />
+                <ActionIcon 
+                  size="xs" 
+                  onClick={cancelarEdicionHora}
+                  color="red"
+                >
+                  <IconX size={12} />
+                </ActionIcon>
+              </Group>
+            </Group>
+          ) : (
+            <Group gap="xs">
+              <TextInput
+                placeholder="Hora estimada"
+                value={comida.horaEstimada || ''}
+                readOnly
+                size="xs"
+                leftSection={<IconClock size={16} />}
+                rightSection={
+                  <ActionIcon 
+                    size="xs" 
+                    onClick={iniciarEdicionHora}
+                    color="nutroos-green"
+                  >
+                    <IconEdit size={12} />
+                  </ActionIcon>
+                }
+                style={{ minWidth: 100 }}
+              />
+              {!comida.horaEstimada && comidaIndex < tiposComida.length && (
+                <Button
+                  size="xs"
+                  variant="light"
+                  color="nutroos-green"
+                  onClick={() => handleUpdateHora(tiposComida[comidaIndex].hora)}
+                >
+                  {tiposComida[comidaIndex].hora}
+                </Button>
+              )}
+            </Group>
+          )}
           <ActionIcon 
             onClick={toggle} 
             variant="subtle" 
