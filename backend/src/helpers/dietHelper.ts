@@ -25,7 +25,10 @@ export async function buscarDietaYVerificarPermisos(
 
   // Verificar permisos
   if (verificarCreador) {
-    if (dieta.creador.toString() !== userId) {
+    const esCreador = dieta.creador && 
+      (dieta.creador._id?.toString() === userId || dieta.creador.toString() === userId);
+    
+    if (!esCreador) {
       throw new Error('No tienes permisos para actualizar esta dieta');
     }
     return dieta;
