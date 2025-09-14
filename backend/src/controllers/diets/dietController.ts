@@ -1,7 +1,7 @@
 import Dieta from '../../models/diets/dieta';
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../types';
-import { crearDietaService, obtenerDietaService, actualizarDietaService, actualizarDiaDietaService } from '../../service/diets/dietService';
+import { crearDietaService, obtenerDietaService, actualizarDietaService, actualizarDiaDietaService, publicarDietaService } from '../../service/diets/dietService';
 import { actualizarPlatosService } from '../../service/diets/plateService';
 import logger from '../../utils/logger';
 import mongoose from 'mongoose';
@@ -44,7 +44,6 @@ export const crearDieta = async (req: AuthenticatedRequest, res: Response): Prom
       nombreComidas
     });
 
-    // Validar arrays de comidas
     if (!verificarArraysComidas(comidasDiarias, horasComidas, nombreComidas, res)) {
       return;
     }
@@ -81,14 +80,11 @@ export const actualizarPlatos = async (req: AuthenticatedRequest, res: Response)
     if (platos && platos.length > 0 && platos[0].dietaId) {
       const dietaId = platos[0].dietaId;
       
-      // Verificar que la dieta existe
       const dieta = await verificarDietaExiste(dietaId, res);
       if (!dieta) return;
       
-      // Verificar que el usuario tiene permisos
       if (!verificarPermisosCreador(dieta, userId, res, 'actualizar platos')) return;
       
-      // Verificar que la dieta está en modo borrador
       if (!verificarDietaEditable(dieta, userId, res, 'actualizar platos')) return;
     }
     
@@ -107,7 +103,6 @@ export const obtenerDieta = async (req: AuthenticatedRequest, res: Response): Pr
     if (!userId) return;
     
     const dietaId = req.params.id;
-    logger.debug('Solicitud para obtener dieta', { dietaId, userId });
     
     const dieta = await obtenerDietaService(dietaId, userId);
     
@@ -125,25 +120,17 @@ export const actualizarDieta = async (req: AuthenticatedRequest, res: Response):
     const dietaId = req.params.id;
     const datosActualizacion = req.body;
     
-    logger.debug('Solicitud para actualizar dieta', { 
-      dietaId, 
-      userId, 
-      datosActualizacion
-    });
     
     if (!datosActualizacion) {
       res.status(400).json({ message: 'No se proporcionaron datos para actualizar la dieta' });
       return;
     }
     
-    // Verificar que la dieta existe
     const dieta = await verificarDietaExiste(dietaId, res);
     if (!dieta) return;
     
-    // Verificar que el usuario tiene permisos
     if (!verificarPermisosCreador(dieta, userId, res, 'actualizar dieta')) return;
     
-    // Verificar que la dieta está en modo borrador
     if (!verificarDietaEditable(dieta, userId, res, 'actualizar dieta')) return;
     
     const dietaActualizada = await actualizarDietaService(dietaId, userId, datosActualizacion);
@@ -165,32 +152,22 @@ export const actualizarDiaDieta = async (req: AuthenticatedRequest, res: Respons
     const diaIndex = parseInt(req.params.diaIndex);
     const datosDia = req.body;
     
-    logger.debug('Solicitud para actualizar día de dieta', { 
-      dietaId, 
-      diaIndex,
-      userId, 
-      datosDia
-    });
     
     if (!datosDia) {
       res.status(400).json({ message: 'No se proporcionaron datos para actualizar el día' });
       return;
     }
     
-    // Validar que diaIndex es un número
     if (isNaN(diaIndex)) {
       res.status(400).json({ message: 'El índice del día debe ser un número' });
       return;
     }
     
-    // Verificar que la dieta existe
     const dieta = await verificarDietaExiste(dietaId, res);
     if (!dieta) return;
     
-    // Verificar que el usuario tiene permisos
     if (!verificarPermisosCreador(dieta, userId, res, 'actualizar día de dieta')) return;
     
-    // Verificar que la dieta está en modo borrador
     if (!verificarDietaEditable(dieta, userId, res, 'actualizar día')) return;
     
     const diaActualizado = await actualizarDiaDietaService(dietaId, userId, diaIndex, datosDia);
@@ -215,26 +192,161 @@ export const publicarDieta = async (req: AuthenticatedRequest, res: Response): P
     
     const dietaId = req.params.id;
     
-    logger.debug('Solicitud para publicar dieta', { 
-      dietaId, 
-      userId
+    
+    const result = await publicarDietaService(dietaId, userId);
+    
+    if (result.platosEliminados > 0) {
+      logger.info(`Se eliminaron ${result.platosEliminados} platos vacíos antes de publicar la dieta`, { dietaId });
+    }
+    
+    logger.info('Dieta publicada correctamente', { dietaId, platosEliminados: result.platosEliminados });
+    res.status(200).json({ 
+      message: 'Dieta publicada correctamente', 
+      dieta: result.dieta,
+      platosEliminados: result.platosEliminados
     });
+  } catch (error) {
+    manejarErrorDieta(error, res, 'publicar la dieta', { dietaId: req.params.id });
+  }
+};
+
+export const crearPlato = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = verificarAutenticacion(req, res, 'crear plato');
+    if (!userId) return;
+    
+    const { plato } = req.body;
+    const { dietaId, diaIndex, comidaIndex } = plato;
+    
+    
+    if (!plato || !dietaId || typeof diaIndex !== 'number' || typeof comidaIndex !== 'number') {
+      res.status(400).json({ message: 'Faltan datos requeridos para crear el plato' });
+      return;
+    }
     
     const dieta = await verificarDietaExiste(dietaId, res);
     if (!dieta) return;
     
-    if (!verificarPermisosCreador(dieta, userId, res, 'publicar dieta')) return;
+    if (!verificarPermisosCreador(dieta, userId, res, 'crear plato')) return;
     
-    dieta.draftMode = false;
+    if (!verificarDietaEditable(dieta, userId, res, 'crear plato')) return;
+    
+    if (!dieta.dias[diaIndex]) {
+      res.status(400).json({ message: 'El día especificado no existe' });
+      return;
+    }
+    
+    if (!dieta.dias[diaIndex].comidas[comidaIndex]) {
+      res.status(400).json({ message: 'La comida especificada no existe' });
+      return;
+    }
+    
+    const nuevoPlato = {
+      orden: plato.orden || (dieta.dias[diaIndex].comidas[comidaIndex].platos.length + 1),
+      nombre: plato.nombre || '',
+      receta: plato.receta ? new mongoose.Types.ObjectId(plato.receta) : null
+    };
+    
+    dieta.dias[diaIndex].comidas[comidaIndex].platos.push(nuevoPlato);
+    
     await dieta.save();
     
-    logger.info('Dieta publicada correctamente', { dietaId });
-    res.status(200).json({ 
-      message: 'Dieta publicada correctamente', 
-      dieta 
+    const platoCreado = dieta.dias[diaIndex].comidas[comidaIndex].platos[dieta.dias[diaIndex].comidas[comidaIndex].platos.length - 1];
+    
+    logger.info('Plato creado correctamente', { dietaId, diaIndex, comidaIndex, platoId: platoCreado._id });
+    res.status(201).json({ 
+      message: 'Plato creado correctamente', 
+      plato: platoCreado 
     });
   } catch (error) {
-    manejarErrorDieta(error, res, 'publicar la dieta', { dietaId: req.params.id });
+    manejarErrorDieta(error, res, 'crear el plato', { 
+      dietaId: req.body?.plato?.dietaId,
+      diaIndex: req.body?.plato?.diaIndex,
+      comidaIndex: req.body?.plato?.comidaIndex
+    });
+  }
+};
+
+export const eliminarPlato = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = verificarAutenticacion(req, res, 'eliminar plato');
+    if (!userId) return;
+    
+    const { platoId } = req.params;
+    
+    if (!platoId) {
+      res.status(400).json({ message: 'ID del plato es requerido' });
+      return;
+    }
+
+    if (!esIdValido(platoId)) {
+      res.status(400).json({ message: 'ID del plato no es válido' });
+      return;
+    }
+
+    const platoObjectId = new mongoose.Types.ObjectId(platoId.toString());
+    
+    const dieta = await Dieta.findOne({ 'dias.comidas.platos._id': platoObjectId });
+    if (!dieta) {
+      res.status(404).json({ message: 'Plato no encontrado' });
+      return;
+    }
+    
+    if (!verificarPermisosCreador(dieta, userId, res, 'eliminar plato')) return;
+    
+    if (!verificarDietaEditable(dieta, userId, res, 'eliminar plato')) return;
+    
+    let platoEliminado = null;
+    let diaIndex = -1;
+    let comidaIndex = -1;
+    
+    for (let d = 0; d < dieta.dias.length; d++) {
+      for (let c = 0; c < dieta.dias[d].comidas.length; c++) {
+        const platoIndex = dieta.dias[d].comidas[c].platos.findIndex(
+          plato => plato._id?.toString() === platoObjectId.toString()
+        );
+        
+        if (platoIndex !== -1) {
+          platoEliminado = dieta.dias[d].comidas[c].platos[platoIndex];
+          diaIndex = d;
+          comidaIndex = c;
+          
+          dieta.dias[d].comidas[c].platos.splice(platoIndex, 1);
+          
+          dieta.dias[d].comidas[c].platos.forEach((plato, index) => {
+            plato.orden = index + 1;
+          });
+          
+          break;
+        }
+      }
+      if (platoEliminado) break;
+    }
+    
+    if (!platoEliminado) {
+      res.status(404).json({ message: 'Plato no encontrado en la dieta' });
+      return;
+    }
+    
+    await dieta.save();
+    
+    logger.info('Plato eliminado correctamente', { 
+      dietaId: dieta._id, 
+      platoId, 
+      diaIndex, 
+      comidaIndex 
+    });
+    
+    res.status(200).json({ 
+      message: 'Plato eliminado correctamente',
+      plato: platoEliminado,
+      diaIndex,
+      comidaIndex
+    });
+  } catch (error) {
+    manejarErrorDieta(error, res, 'eliminar el plato', { 
+      platoId: req.params.platoId
+    });
   }
 };
 

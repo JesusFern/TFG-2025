@@ -1,10 +1,17 @@
 import Dieta from '../../models/diets/dieta';
 import User from '../../models/users/user';
+import mongoose from 'mongoose';
 import { 
   buscarDietaYVerificarPermisos,
   actualizarCamposBasicosDieta,
   actualizarDatosDiaDieta
 } from '../../helpers/dietHelper';
+
+interface PlatoDocument {
+  orden: number;
+  nombre?: string;
+  receta?: mongoose.Types.ObjectId;
+}
 
 export async function crearDietaService({
   creadorId,
@@ -134,10 +141,8 @@ export async function actualizarDietaService(
     draftMode?: boolean;
   }
 ) {
-  // Buscar dieta y verificar permisos
   const dieta = await buscarDietaYVerificarPermisos(dietaId, userId, true);
 
-  // Actualizar días si se proporcionan
   if (datosActualizacion.dias && Array.isArray(datosActualizacion.dias)) {
     for (const diaActualizado of datosActualizacion.dias) {
       if (typeof diaActualizado._dayIndex === 'number') {
@@ -146,14 +151,12 @@ export async function actualizarDietaService(
         if (index >= 0 && index < dieta.dias.length) {
           const diaExistente = dieta.dias[index];
           
-          // Actualizar los datos del día usando la función común
           actualizarDatosDiaDieta(diaExistente, diaActualizado);
         }
       }
     }
   }
 
-  // Actualizar campos básicos de la dieta
   actualizarCamposBasicosDieta(dieta, datosActualizacion);
 
   await dieta.save();
@@ -177,20 +180,61 @@ export async function actualizarDiaDietaService(
     }>;
   }
 ) {
-  // Buscar dieta y verificar permisos
   const dieta = await buscarDietaYVerificarPermisos(dietaId, userId, true);
 
-  // Verificar que el índice del día es válido
   if (diaIndex < 0 || diaIndex >= dieta.dias.length) {
     throw new Error('Índice de día inválido');
   }
 
   const diaExistente = dieta.dias[diaIndex];
   
-  // Actualizar los datos del día
   actualizarDatosDiaDieta(diaExistente, datosDia);
 
   await dieta.save();
   
   return diaExistente;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function limpiarPlatosVaciosService(dieta: any): Promise<number> {
+  let platosEliminados = 0;
+  
+  for (let diaIndex = 0; diaIndex < dieta.dias.length; diaIndex++) {
+    const dia = dieta.dias[diaIndex];
+    
+    for (let comidaIndex = 0; comidaIndex < dia.comidas.length; comidaIndex++) {
+      const comida = dia.comidas[comidaIndex];
+      
+      const platosOriginales = comida.platos.length;
+      comida.platos = comida.platos.filter((plato: PlatoDocument) => {
+        const tieneNombre = plato.nombre && plato.nombre.trim() !== '';
+        const tieneReceta = plato.receta && plato.receta.toString() !== '';
+        return tieneNombre || tieneReceta;
+      });
+      
+      comida.platos.forEach((plato: PlatoDocument, index: number) => {
+        plato.orden = index + 1;
+      });
+      
+      const platosEliminadosEnComida = platosOriginales - comida.platos.length;
+      platosEliminados += platosEliminadosEnComida;
+    }
+  }
+  
+  return platosEliminados;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function publicarDietaService(dietaId: string, userId: string): Promise<{ dieta: any; platosEliminados: number }> {
+  const dieta = await buscarDietaYVerificarPermisos(dietaId, userId, true);
+  
+  const platosEliminados = await limpiarPlatosVaciosService(dieta);
+  
+  dieta.draftMode = false;
+  await dieta.save();
+  
+  return {
+    dieta,
+    platosEliminados
+  };
 }

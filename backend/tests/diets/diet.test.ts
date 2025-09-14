@@ -201,6 +201,41 @@ jest.mock('../../src/service/diets/dietService', () => ({
         }
       ]
     };
+  }),
+  
+  publicarDietaService: jest.fn().mockImplementation(async (dietaId) => {
+    return {
+      dieta: {
+        _id: dietaId,
+        nombre: "Dieta Test",
+        descripcion: "Dieta de prueba",
+        tipo: ["Mediterránea"],
+        duracion: 2,
+        comidasDiarias: 2,
+        fechaInicio: new Date(),
+        creador: workerId,
+        asignadaA: [clienteId],
+        draftMode: false,
+        dias: [
+          {
+            caloriasTotales: 2000,
+            comidas: [
+              {
+                nombreComida: "Desayuno",
+                horaEstimada: "08:00",
+                platos: [{ _id: platoId, nombre: "Plato Test", receta: null }]
+              },
+              {
+                nombreComida: "Almuerzo",
+                horaEstimada: "14:00",
+                platos: [{ _id: platoId, nombre: "Plato Test", receta: null }]
+              }
+            ]
+          }
+        ]
+      },
+      platosEliminados: 0
+    };
   })
 }));
 
@@ -212,6 +247,71 @@ jest.mock('../../src/service/diets/plateService', () => ({
       receta: p.receta === null ? null : (p.receta || "Receta original")
     }));
   })
+}));
+
+jest.mock('../../src/helpers/dietHelper', () => ({
+  buscarDietaYVerificarPermisos: jest.fn().mockImplementation(async (dietaId) => {
+    return {
+      _id: dietaId,
+      nombre: "Dieta Test",
+      descripcion: "Dieta de prueba",
+      tipo: ["Mediterránea"],
+      duracion: 2,
+      comidasDiarias: 2,
+      fechaInicio: new Date(),
+      creador: workerId,
+      asignadaA: [clienteId],
+      draftMode: true,
+      dias: [
+        {
+          caloriasTotales: 2000,
+          comidas: [
+            {
+              nombreComida: "Desayuno",
+              horaEstimada: "08:00",
+              platos: [{ _id: platoId, nombre: "Plato Test", receta: null }]
+            },
+            {
+              nombreComida: "Almuerzo",
+              horaEstimada: "14:00",
+              platos: [{ _id: platoId, nombre: "Plato Test", receta: null }]
+            }
+          ]
+        }
+      ],
+      save: jest.fn().mockResolvedValue({
+        _id: dietaId,
+        nombre: "Dieta Test",
+        descripcion: "Dieta de prueba",
+        tipo: ["Mediterránea"],
+        duracion: 2,
+        comidasDiarias: 2,
+        fechaInicio: new Date(),
+        creador: workerId,
+        asignadaA: [clienteId],
+        draftMode: false,
+        dias: [
+          {
+            caloriasTotales: 2000,
+            comidas: [
+              {
+                nombreComida: "Desayuno",
+                horaEstimada: "08:00",
+                platos: [{ _id: platoId, nombre: "Plato Test", receta: null }]
+              },
+              {
+                nombreComida: "Almuerzo",
+                horaEstimada: "14:00",
+                platos: [{ _id: platoId, nombre: "Plato Test", receta: null }]
+              }
+            ]
+          }
+        ]
+      })
+    };
+  }),
+  actualizarCamposBasicosDieta: jest.fn(),
+  actualizarDatosDiaDieta: jest.fn()
 }));
 
 // Mock controllers
