@@ -14,10 +14,7 @@ import {
   Badge,
   Select,
   Button,
-  Grid,
-  Card,
   Stack,
-  Progress,
   ThemeIcon,
   Tooltip
 } from '@mantine/core';
@@ -29,10 +26,8 @@ import {
   IconArrowLeft,
   IconChevronLeft,
   IconClock,
-  IconUsers,
   IconTarget,
   IconLeaf,
-  IconTrendingUp,
   IconInfoCircle
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
