@@ -1,27 +1,8 @@
 import { Response } from 'express';
-import { AuthenticatedRequest } from '../../types';
 import logger from '../../utils/logger';
 import Receta from '../../models/diets/receta';
 import User from '../../models/users/user';
-import mongoose from 'mongoose';
-
-export const verificarAutenticacion = (
-  req: AuthenticatedRequest, 
-  res: Response, 
-  operacion: string
-): string | null => {
-  const userId = req.user?.id;
-  if (!userId) {
-    logger.info(`Intento de ${operacion} sin autenticación`, { path: req.path });
-    res.status(401).json({ message: 'No autenticado' });
-    return null;
-  }
-  return userId;
-};
-
-export const esIdValido = (id: string): boolean => {
-  return mongoose.Types.ObjectId.isValid(id);
-};
+import { esIdValido } from '../commonValidators';
 
 export const verificarRecetaExiste = async (
   recetaId: string,

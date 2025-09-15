@@ -6,14 +6,13 @@ import { actualizarPlatosService } from '../../service/diets/plateService';
 import logger from '../../utils/logger';
 import mongoose from 'mongoose';
 import { 
-  verificarAutenticacion,
   verificarDietaExiste,
   verificarPermisosCreador,
   verificarDietaEditable,
   verificarArraysComidas,
-  manejarErrorDieta,
-  esIdValido
+  manejarErrorDieta
 } from '../../validators/diets/dietValidators';
+import { verificarAutenticacion, esIdValido } from '../../validators/commonValidators';
 
 export const crearDieta = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {

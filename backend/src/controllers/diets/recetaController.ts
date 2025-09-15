@@ -8,13 +8,13 @@ import {
   obtenerRecetasPublicasYPropiasService
 } from '../../service/diets/recetaService';
 import {
-  verificarAutenticacion,
   validarDatosReceta,
   verificarCreadorNutricionista,
   verificarRecetaExiste,
   verificarPermisosAccesoReceta,
   manejarErrorReceta
 } from '../../validators/diets/recetaValidators';
+import { verificarAutenticacion } from '../../validators/commonValidators';
 import logger from '../../utils/logger';
 import path from 'path';
 
