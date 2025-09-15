@@ -6,6 +6,7 @@ import { createServer } from "http";
 import userRoutes from "./routes/users/userRoutes";
 import workerRoutes from './routes/users/workerRoutes';
 import dietRoutes from './routes/diets/dietRoutes';
+import recetaRoutes from './routes/diets/recetaRoutes';
 import trainingRoutes from './routes/training';
 import messagingRoutes from './routes/chats';
 import suscriptionPlanRoutes from './routes/suscriptionPlan/suscriptionPlanRoutes';
@@ -40,9 +41,12 @@ mongoose
     process.exit(1);
   });
 
+app.use('/uploads', express.static('uploads'));
+
 app.use("/api/users", userRoutes);
 app.use('/api/workers', workerRoutes);
 app.use('/api/diets', dietRoutes);
+app.use('/api/recetas', recetaRoutes);
 app.use('/api/training', trainingRoutes);
 app.use('/api/messaging', messagingRoutes);
 app.use('/api/suscription-plans', suscriptionPlanRoutes);
