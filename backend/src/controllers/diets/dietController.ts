@@ -13,7 +13,7 @@ import {
   verificarArraysComidas,
   manejarErrorDieta,
   esIdValido
-} from '../../validators/dietValidators';
+} from '../../validators/diets/dietValidators';
 
 export const crearDieta = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {

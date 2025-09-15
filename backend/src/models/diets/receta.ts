@@ -6,7 +6,16 @@ const RecetaSchema = new mongoose.Schema({
   pasosPreparacion: [{ type: String }],
   tiempoPreparacion: { type: String },
   informacionNutricional: { type: String },
-  imagen: { type: String }
+  imagenes: [{ 
+    type: String,
+    default: ''
+  }],
+  creador: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User',
+    required: false 
+  },
+  publica: { type: Boolean, required: true }
 });
 
 export default mongoose.model('Receta', RecetaSchema);
