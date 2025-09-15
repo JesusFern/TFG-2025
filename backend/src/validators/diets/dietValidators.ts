@@ -1,7 +1,7 @@
 import { Response } from 'express';
-import { AuthenticatedRequest } from '../types';
-import logger from '../utils/logger';
-import Dieta from '../models/diets/dieta';
+import { AuthenticatedRequest } from '../../types';
+import logger from '../../utils/logger';
+import Dieta from '../../models/diets/dieta';
 import mongoose from 'mongoose';
 
 export const verificarAutenticacion = (
