@@ -15,33 +15,29 @@ export const apiConfig = {
 export const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
   const url = `${apiConfig.baseURL}${endpoint}`;
   
-  
-  
   // Obtener el token del localStorage (clave unificada)
   const token = localStorage.getItem('authToken');
   
+  // Si el body es FormData, no establecer Content-Type
+  const isFormData = options.body instanceof FormData;
+  
   const defaultOptions: RequestInit = {
     headers: {
-      'Content-Type': 'application/json',
+      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
       ...(token && { 'Authorization': `Bearer ${token}` }),
       ...options.headers,
     },
     ...options,
   };
 
+  const response = await fetch(url, defaultOptions);
   
-
+  // Si la respuesta es 401, el token puede haber expirado
+  if (response.status === 401) {
+    localStorage.removeItem('authToken');
+    window.location.href = '/login';
+    return response;
+  }
   
-    const response = await fetch(url, defaultOptions);
-    
-    
-    // Si la respuesta es 401, el token puede haber expirado
-    if (response.status === 401) {
-      localStorage.removeItem('authToken');
-      window.location.href = '/login';
-      return response;
-    }
-    
   return response;
-  
 };
