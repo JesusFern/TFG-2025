@@ -62,6 +62,10 @@ import WorkerClientTrainingPlansList from '../pages/WorkerClientTrainingPlansLis
 import CrearPlanEntrenamientoPage from '../pages/CrearPlanEntrenamientoPage';
 import EditarPlanEntrenamientoPage from '../pages/EditarPlanEntrenamientoPage';
 import VerPlanEntrenamientoPage from '../pages/VerPlanEntrenamientoPage';
+import CrearRecetaPage from '../pages/CrearRecetaPage';
+import EditarRecetaPage from '../pages/EditarRecetaPage';
+import MisRecetasPage from '../pages/MisRecetasPage';
+import VerRecetaPage from '../pages/VerRecetaPage';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -176,6 +180,39 @@ const AppRoutes: React.FC = () => {
         <ProtectedRoute workerRoute={true}>
           <Layout>
             <VerPlanEntrenamientoPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+
+      {/* Rutas de recetas */}
+      <Route path="/recetas/crear" element={
+        <ProtectedRoute workerRoute={true}>
+          <Layout>
+            <CrearRecetaPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/mis-recetas" element={
+        <ProtectedRoute workerRoute={true}>
+          <Layout>
+            <MisRecetasPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/recetas/:id" element={
+        <ProtectedRoute workerRoute={true}>
+          <Layout>
+            <VerRecetaPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/recetas/editar/:id" element={
+        <ProtectedRoute workerRoute={true}>
+          <Layout>
+            <EditarRecetaPage />
           </Layout>
         </ProtectedRoute>
       } />

@@ -1,8 +1,17 @@
 import mongoose from 'mongoose';
-import { crearRecetaService, obtenerRecetasPublicasService, obtenerMisRecetasService, obtenerRecetasPublicasYPropiasService } from '../../src/service/diets/recetaService';
+import { 
+  crearRecetaService, 
+  obtenerRecetasPublicasService, 
+  obtenerMisRecetasService, 
+  obtenerRecetasPublicasYPropiasService,
+  actualizarRecetaService,
+  eliminarRecetaService,
+  limpiarImagenesHuerfanasService
+} from '../../src/service/diets/recetaService';
 import Receta from '../../src/models/diets/receta';
 
 // Mock del modelo Receta
+
 jest.mock('../../src/models/diets/receta', () => {
   return {
     __esModule: true,
@@ -30,7 +39,12 @@ jest.mock('../../src/models/diets/receta', () => {
         })
       };
       return receta;
-    })
+    }),
+    findById: jest.fn(),
+    findByIdAndUpdate: jest.fn(),
+    findByIdAndDelete: jest.fn(),
+    find: jest.fn(),
+    findOne: jest.fn()
   };
 });
 
@@ -324,6 +338,44 @@ describe('Receta Service - Unit Tests', () => {
 
       expect(resultado).toBeDefined();
       expect(resultado.tiempoPreparacion).toBe('');
+    });
+  });
+
+  describe('actualizarRecetaService', () => {
+    it('debería ser una función definida', () => {
+      expect(typeof actualizarRecetaService).toBe('function');
+    });
+  });
+
+  describe('eliminarRecetaService', () => {
+    it('debería ser una función definida', () => {
+      expect(typeof eliminarRecetaService).toBe('function');
+    });
+  });
+
+  describe('limpiarImagenesHuerfanasService', () => {
+    it('debería manejar directorio que no existe', async () => {
+      const resultado = await limpiarImagenesHuerfanasService();
+
+      expect(resultado).toBeDefined();
+      expect(resultado).toHaveProperty('mensaje');
+      expect(resultado).toHaveProperty('imagenesEncontradas');
+      expect(resultado).toHaveProperty('imagenesEliminadas');
+      if (resultado.imagenesHuerfanas !== undefined) {
+        expect(Array.isArray(resultado.imagenesHuerfanas)).toBe(true);
+      }
+    });
+
+    it('debería devolver estructura de respuesta correcta', async () => {
+      const resultado = await limpiarImagenesHuerfanasService();
+
+      expect(resultado).toBeDefined();
+      expect(typeof resultado.mensaje).toBe('string');
+      expect(typeof resultado.imagenesEncontradas).toBe('number');
+      expect(typeof resultado.imagenesEliminadas).toBe('number');
+      if (resultado.imagenesHuerfanas !== undefined) {
+        expect(Array.isArray(resultado.imagenesHuerfanas)).toBe(true);
+      }
     });
   });
 });

@@ -5,7 +5,10 @@ import {
   obtenerRecetas,
   obtenerRecetasPublicas,
   obtenerMisRecetas,
-  obtenerRecetasPublicasYPropias
+  obtenerRecetasPublicasYPropias,
+  actualizarReceta,
+  eliminarReceta,
+  limpiarImagenesHuerfanas
 } from '../../controllers/diets/recetaController';
 import { authenticateToken, authorizeNutricionista } from '../../middlewares/authMiddleware';
 import { handleUploadError } from '../../middlewares/uploadMiddleware';
@@ -19,6 +22,9 @@ router.get('/publicas', authenticateToken, obtenerRecetasPublicas);
 router.get('/publicas-y-propias', authenticateToken, obtenerRecetasPublicasYPropias);
 router.get('/', authenticateToken, obtenerRecetas);
 router.get('/:id', authenticateToken, obtenerReceta);
+router.put('/:id', authenticateToken, upload.array('imagenes', 5), actualizarReceta);
+router.delete('/:id', authenticateToken, eliminarReceta);
+router.post('/limpiar-imagenes-huerfanas', authenticateToken, limpiarImagenesHuerfanas);
 
 router.use(handleUploadError);
 

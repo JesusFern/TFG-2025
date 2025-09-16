@@ -20,12 +20,16 @@ import {
   IconUser,
   IconSettings,
   IconPlus,
-  IconMessage
+  IconMessage,
+  IconChefHat
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { WeeklyProgressChart } from '../components/molecules/WeeklyProgressChart';
 import { CurrentSubscription } from '../components/molecules/CurrentSubscription';
+import { limpiarImagenesHuerfanas } from '../services/recetaService';
+import { useState } from 'react';
+import { notifications } from '@mantine/notifications';
 
 interface DashboardCardProps {
   title: string;
@@ -96,6 +100,30 @@ const DashboardPage: React.FC = () => {
   const theme = useMantineTheme();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [limpiandoImagenes, setLimpiandoImagenes] = useState(false);
+
+  const handleLimpiarImagenesHuerfanas = async () => {
+    try {
+      setLimpiandoImagenes(true);
+      const resultado = await limpiarImagenesHuerfanas();
+      
+      notifications.show({
+        title: 'Limpieza completada',
+        message: resultado.message,
+        color: 'green',
+        autoClose: 5000,
+      });
+    } catch (error) {
+      notifications.show({
+        title: 'Error',
+        message: error instanceof Error ? error.message : 'Error al limpiar imágenes huérfanas',
+        color: 'red',
+        autoClose: 5000,
+      });
+    } finally {
+      setLimpiandoImagenes(false);
+    }
+  };
 
   // Datos de progreso simulados (en producción vendrían del backend)
   const weeklyProgress = {
@@ -120,6 +148,14 @@ const DashboardPage: React.FC = () => {
       color: 'orange',
       onClick: () => navigate('/diets'),
       badge: user?.role === 'worker' ? 'Crear' : 'Ver'
+    },
+    {
+      title: 'Recetas',
+      description: 'Crea y gestiona recetas nutritivas para tus clientes',
+      icon: <IconChefHat size={32} />,
+      color: 'nutroos-green',
+      onClick: () => navigate('/mis-recetas'),
+      badge: user?.role === 'worker' ? 'Gestionar' : 'Ver'
     },
     {
       title: 'Entrenamientos',
@@ -259,6 +295,17 @@ const DashboardPage: React.FC = () => {
               >
                 Establecer Objetivo
               </Button>
+              {user?.role === 'admin' && (
+                <Button
+                  leftSection={<IconChefHat size={16} />}
+                  color="orange"
+                  variant="light"
+                  onClick={handleLimpiarImagenesHuerfanas}
+                  loading={limpiandoImagenes}
+                >
+                  Limpiar Imágenes Huérfanas
+                </Button>
+              )}
             </Group>
           </Stack>
         </Paper>

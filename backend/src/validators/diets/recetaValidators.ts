@@ -181,6 +181,43 @@ export const verificarPermisosAccesoReceta = async (
   }
 };
 
+export const verificarPermisosEdicionEliminacion = async (
+  receta: typeof Receta.prototype,
+  userId: string,
+  res: Response,
+  operacion: string
+): Promise<boolean> => {
+  try {
+    // Si es admin, puede editar/eliminar cualquier receta
+    const user = await User.findById(userId);
+    if (user && user.role === 'admin') {
+      return true;
+    }
+
+    // Si es el creador de la receta, puede editar/eliminar
+    if (receta.creador && receta.creador.toString() === userId) {
+      return true;
+    }
+
+    // Si no cumple ninguna condición, no tiene permisos
+    logger.info(`Intento de ${operacion} sin permisos`, {
+      userId,
+      recetaId: receta._id,
+      creadorId: receta.creador
+    });
+    res.status(403).json({ message: `No tienes permiso para ${operacion} esta receta` });
+    return false;
+  } catch (error) {
+    logger.error(`Error al verificar permisos de ${operacion}`, {
+      userId,
+      recetaId: receta._id,
+      error: (error as Error).message
+    });
+    res.status(500).json({ message: 'Error interno del servidor' });
+    return false;
+  }
+};
+
 export const manejarErrorReceta = (
   error: Error,
   res: Response,
