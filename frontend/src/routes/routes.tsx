@@ -1,6 +1,5 @@
 import React from 'react';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import App from '../pages/App';
 import RegisterPage from '../pages/RegisterPage';
 import LandingPage from '../pages/LandingPage';
 import CrearDietaPage from '../pages/CrearDietaPage';
@@ -66,13 +65,14 @@ import CrearRecetaPage from '../pages/CrearRecetaPage';
 import EditarRecetaPage from '../pages/EditarRecetaPage';
 import MisRecetasPage from '../pages/MisRecetasPage';
 import VerRecetaPage from '../pages/VerRecetaPage';
+import AcercaDePage from '../pages/AcercaDePage';
 
 const AppRoutes: React.FC = () => {
   return (
     <Routes>
       {/* Rutas públicas */}
-      <Route path="/" element={<App />} />
-      <Route path="/landingPage" element={<LandingPage />} />
+      <Route path="/" element={<LandingPage />} />
+      <Route path="/acerca-de" element={<AcercaDePage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/worker/login" element={<WorkerLoginPage />} />
