@@ -63,7 +63,7 @@ const Header: React.FC = () => {
 
   const navItems = [
     { label: 'Inicio', path: '/' },
-    { label: 'Acerca de', path: '/landingPage' },
+    { label: 'Acerca de', path: '/acerca-de' },
     { label: 'Planes', path: '/planes-suscripcion' },
   ];
   
