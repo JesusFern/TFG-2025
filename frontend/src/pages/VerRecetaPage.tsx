@@ -1,16 +1,14 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState } from 'react';
 import { 
   Container, 
   Title, 
   Alert, 
   Group,
-  Avatar,
   Paper,
   Box,
   Grid,
   Card,
   Text,
-  Badge,
   Button,
   Stack,
   Center,
@@ -22,14 +20,14 @@ import {
   Modal
 } from '@mantine/core';
 import { useParams, useNavigate } from 'react-router-dom';
-import { obtenerReceta, eliminarReceta, RecetaResponse } from '../services/recetaService';
+import { eliminarReceta } from '../services/recetaService';
 import FormularioCrearReceta from '../components/forms/recetas/FormularioCrearReceta';
+import { useReceta } from '../hooks/useReceta';
+import RecetaHeader from '../components/molecules/RecetaHeader';
+import StatusMessage from '../components/molecules/StatusMessage';
 import { 
   IconAlertCircle, 
   IconChefHat, 
-  IconArrowLeft, 
-  IconClock, 
-  IconUsers, 
   IconEdit,
   IconPhoto,
   IconChevronLeft,
@@ -37,42 +35,18 @@ import {
   IconTrash,
   IconX as IconCancel
 } from '@tabler/icons-react';
-import { motion } from 'framer-motion';
 import { useDisclosure } from '@mantine/hooks';
 
 const VerRecetaPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const [receta, setReceta] = useState<RecetaResponse | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { receta, loading, error, cargarReceta } = useReceta(id);
   const [opened, { open, close }] = useDisclosure(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [deleteModalOpened, { open: openDeleteModal, close: closeDeleteModal }] = useDisclosure(false);
   const [deleting, setDeleting] = useState(false);
   const [modoEdicion, setModoEdicion] = useState(false);
   const [mensaje, setMensaje] = useState<{ tipo: 'error' | 'success', texto: string } | null>(null);
-
-  const cargarReceta = useCallback(async () => {
-    if (!id) return;
-    
-    try {
-      setLoading(true);
-      setError(null);
-      const recetaData = await obtenerReceta(id);
-      setReceta(recetaData);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al cargar la receta');
-    } finally {
-      setLoading(false);
-    }
-  }, [id]);
-
-  useEffect(() => {
-    if (id) {
-      cargarReceta();
-    }
-  }, [id, cargarReceta]);
 
   const handleVolver = () => {
     navigate('/mis-recetas');
@@ -116,7 +90,10 @@ const VerRecetaPage: React.FC = () => {
       closeDeleteModal();
       navigate('/mis-recetas');
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Error al eliminar la receta');
+      setMensaje({
+        tipo: 'error',
+        texto: err instanceof Error ? err.message : 'Error al eliminar la receta'
+      });
     } finally {
       setDeleting(false);
     }
@@ -127,13 +104,6 @@ const VerRecetaPage: React.FC = () => {
     open();
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
 
   const getImageUrl = (imagePath: string) => {
     return `${import.meta.env.VITE_BACKEND_HOST || 'http://localhost:5000'}${imagePath}`;
@@ -174,120 +144,50 @@ const VerRecetaPage: React.FC = () => {
   return (
     <Container size="xl" py="xl">
       {/* Header con navegación */}
-      <Paper 
-        p="lg" 
-        mb="xl" 
-        withBorder 
-        radius="md"
-        style={{ 
-          backgroundColor: 'var(--app-paper-bg)', 
-          borderColor: 'var(--app-border-color)' 
-        }}
+      <RecetaHeader 
+        receta={receta} 
+        onVolver={handleVolver}
       >
-        <Group justify="space-between" align="flex-start">
-          <Group gap="md">
-            <ActionIcon
-              variant="light"
+        {!modoEdicion ? (
+          <>
+            <Button
+              leftSection={<IconEdit size={16} />}
+              onClick={handleEditar}
               color="nutroos-green"
-              size="lg"
-              onClick={handleVolver}
+              variant="light"
+              size="md"
             >
-              <IconArrowLeft size={20} />
-            </ActionIcon>
+              Editar Receta
+            </Button>
             
-            <Avatar 
-              size="lg" 
-              color="nutroos-green" 
-              radius="xl"
+            <Button
+              leftSection={<IconTrash size={16} />}
+              onClick={openDeleteModal}
+              color="red"
+              variant="light"
+              size="md"
             >
-              <IconChefHat size="1.5rem" />
-            </Avatar>
-            
-            <Box>
-              <Title order={2} mb={5} c="nutroos-green.6">{receta.nombreReceta}</Title>
-              <Group gap="md">
-                <Badge 
-                  color={receta.publica ? "green" : "orange"} 
-                  variant="light"
-                  leftSection={<IconUsers size={12} />}
-                >
-                  {receta.publica ? "Pública" : "Privada"}
-                </Badge>
-                {receta.tiempoPreparacion && (
-                  <Badge 
-                    color="blue" 
-                    variant="light"
-                    leftSection={<IconClock size={12} />}
-                  >
-                    {receta.tiempoPreparacion}
-                  </Badge>
-                )}
-                {receta.createdAt && (
-                  <Text size="sm" c="dimmed">
-                    Creada: {formatDate(receta.createdAt)}
-                  </Text>
-                )}
-              </Group>
-            </Box>
-          </Group>
-
-          <Group gap="sm">
-            {!modoEdicion ? (
-              <>
-                <Button
-                  leftSection={<IconEdit size={16} />}
-                  onClick={handleEditar}
-                  color="nutroos-green"
-                  variant="light"
-                  size="md"
-                >
-                  Editar Receta
-                </Button>
-                
-                <Button
-                  leftSection={<IconTrash size={16} />}
-                  onClick={openDeleteModal}
-                  color="red"
-                  variant="light"
-                  size="md"
-                >
-                  Eliminar Receta
-                </Button>
-              </>
-            ) : (
-              <Button
-                leftSection={<IconCancel size={16} />}
-                onClick={handleCancelarEdicion}
-                color="gray"
-                variant="light"
-                size="md"
-              >
-                Cancelar Edición
-              </Button>
-            )}
-          </Group>
-        </Group>
-      </Paper>
-
-      {mensaje && (
-        <motion.div
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <Alert 
-            icon={<IconAlertCircle size={16} />}
-            title={mensaje.tipo === 'error' ? 'Error' : 'Éxito'}
-            color={mensaje.tipo === 'error' ? 'red' : 'green'}
-            variant="filled"
-            mb="md"
-            withCloseButton
-            onClose={() => setMensaje(null)}
+              Eliminar Receta
+            </Button>
+          </>
+        ) : (
+          <Button
+            leftSection={<IconCancel size={16} />}
+            onClick={handleCancelarEdicion}
+            color="gray"
+            variant="light"
+            size="md"
           >
-            {mensaje.texto}
-          </Alert>
-        </motion.div>
-      )}
+            Cancelar Edición
+          </Button>
+        )}
+      </RecetaHeader>
+
+      <StatusMessage 
+        mensaje={mensaje} 
+        onClose={() => setMensaje(null)}
+        showSpace={false}
+      />
 
       {modoEdicion ? (
         <FormularioCrearReceta 
