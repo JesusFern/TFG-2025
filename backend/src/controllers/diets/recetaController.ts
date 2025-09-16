@@ -5,18 +5,23 @@ import {
   obtenerRecetasService,
   obtenerRecetasPublicasService,
   obtenerMisRecetasService,
-  obtenerRecetasPublicasYPropiasService
+  obtenerRecetasPublicasYPropiasService,
+  actualizarRecetaService,
+  eliminarRecetaService,
+  limpiarImagenesHuerfanasService
 } from '../../service/diets/recetaService';
 import {
   validarDatosReceta,
   verificarCreadorNutricionista,
   verificarRecetaExiste,
   verificarPermisosAccesoReceta,
+  verificarPermisosEdicionEliminacion,
   manejarErrorReceta
 } from '../../validators/diets/recetaValidators';
 import { verificarAutenticacion } from '../../validators/commonValidators';
 import logger from '../../utils/logger';
 import path from 'path';
+import User from '../../models/users/user';
 
 export const crearReceta = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -161,5 +166,139 @@ export const obtenerRecetasPublicasYPropias = async (req: AuthenticatedRequest, 
     res.status(200).json({ recetas });
   } catch (error) {
     manejarErrorReceta(error as Error, res, 'obtener las recetas públicas y propias', { userId: req.user?.id });
+  }
+};
+
+export const actualizarReceta = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = verificarAutenticacion(req, res, 'actualizar receta');
+    if (!userId) return;
+    
+    const recetaId = req.params.id;
+    const receta = await verificarRecetaExiste(recetaId, res);
+    if (!receta) return;
+    
+    // Verificar permisos de edición
+    if (!await verificarPermisosEdicionEliminacion(receta, userId, res, 'editar')) {
+      return;
+    }
+    
+    const {
+      nombreReceta,
+      ingredientes,
+      pasosPreparacion,
+      tiempoPreparacion,
+      informacionNutricional,
+      publica,
+      imagenesAEliminar
+    } = req.body;
+
+    // Validar datos si se proporcionan
+    if (nombreReceta || ingredientes || publica !== undefined) {
+      if (!validarDatosReceta({ nombreReceta, ingredientes, pasosPreparacion, publica }, res)) {
+        return;
+      }
+    }
+
+    const files = req.files as Express.Multer.File[];
+    const imagenes: string[] = [];
+
+    if (files && files.length > 0) {
+      const uploadsPath = process.env.UPLOADS_PATH || './uploads';
+      files.forEach(file => {
+        const relativePath = path.relative(uploadsPath, file.path);
+        const normalizedPath = relativePath.replace(/\\/g, '/');
+        imagenes.push(`/uploads/${normalizedPath}`);
+      });
+    }
+
+    logger.debug('Procesando datos para actualizar receta', {
+      recetaId,
+      userId,
+      nombreReceta,
+      ingredientes: ingredientes?.length || 0,
+      publica,
+      imagesCount: imagenes.length
+    });
+
+    const recetaActualizada = await actualizarRecetaService(recetaId, {
+      nombreReceta,
+      ingredientes,
+      pasosPreparacion,
+      tiempoPreparacion,
+      informacionNutricional,
+      imagenes: imagenes.length > 0 ? imagenes : undefined,
+      imagenesAEliminar,
+      publica
+    });
+
+    logger.info('Receta actualizada correctamente', { recetaId, userId });
+    res.status(200).json({
+      message: 'Receta actualizada correctamente',
+      receta: recetaActualizada
+    });
+  } catch (error) {
+    manejarErrorReceta(error as Error, res, 'actualizar la receta', { recetaId: req.params.id });
+  }
+};
+
+export const eliminarReceta = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = verificarAutenticacion(req, res, 'eliminar receta');
+    if (!userId) return;
+    
+    const recetaId = req.params.id;
+    const receta = await verificarRecetaExiste(recetaId, res);
+    if (!receta) return;
+    
+    // Verificar permisos de eliminación
+    if (!await verificarPermisosEdicionEliminacion(receta, userId, res, 'eliminar')) {
+      return;
+    }
+
+    logger.debug('Eliminando receta', { recetaId, userId });
+
+    const recetaEliminada = await eliminarRecetaService(recetaId);
+
+    logger.info('Receta eliminada correctamente', { recetaId, userId });
+    res.status(200).json({
+      message: 'Receta eliminada correctamente',
+      receta: recetaEliminada
+    });
+  } catch (error) {
+    manejarErrorReceta(error as Error, res, 'eliminar la receta', { recetaId: req.params.id });
+  }
+};
+
+export const limpiarImagenesHuerfanas = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = verificarAutenticacion(req, res, 'limpiar imágenes huérfanas');
+    if (!userId) return;
+    
+    // Solo los administradores pueden limpiar imágenes huérfanas
+    const user = await User.findById(userId);
+    if (!user || user.role !== 'admin') {
+      res.status(403).json({ message: 'Solo los administradores pueden limpiar imágenes huérfanas' });
+      return;
+    }
+
+    logger.info('Iniciando limpieza de imágenes huérfanas', { userId });
+
+    const resultado = await limpiarImagenesHuerfanasService();
+
+    logger.info('Limpieza de imágenes huérfanas completada', { 
+      userId, 
+      imagenesEliminadas: resultado.imagenesEliminadas,
+      imagenesEncontradas: resultado.imagenesEncontradas
+    });
+
+    res.status(200).json({
+      message: resultado.mensaje,
+      imagenesEliminadas: resultado.imagenesEliminadas,
+      imagenesEncontradas: resultado.imagenesEncontradas,
+      imagenesHuerfanas: resultado.imagenesHuerfanas
+    });
+  } catch (error) {
+    manejarErrorReceta(error as Error, res, 'limpiar imágenes huérfanas');
   }
 };
