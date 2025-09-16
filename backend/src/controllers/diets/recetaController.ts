@@ -8,7 +8,8 @@ import {
   obtenerRecetasPublicasYPropiasService,
   actualizarRecetaService,
   eliminarRecetaService,
-  limpiarImagenesHuerfanasService
+  limpiarImagenesHuerfanasService,
+  procesarImagenesSubidas
 } from '../../service/diets/recetaService';
 import {
   validarDatosReceta,
@@ -20,7 +21,6 @@ import {
 } from '../../validators/diets/recetaValidators';
 import { verificarAutenticacion } from '../../validators/commonValidators';
 import logger from '../../utils/logger';
-import path from 'path';
 import User from '../../models/users/user';
 
 export const crearReceta = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
@@ -46,16 +46,7 @@ export const crearReceta = async (req: AuthenticatedRequest, res: Response): Pro
     }
 
     const files = req.files as Express.Multer.File[];
-    const imagenes: string[] = [];
-
-    if (files && files.length > 0) {
-      const uploadsPath = process.env.UPLOADS_PATH || './uploads';
-      files.forEach(file => {
-        const relativePath = path.relative(uploadsPath, file.path);
-        const normalizedPath = relativePath.replace(/\\/g, '/');
-        imagenes.push(`/uploads/${normalizedPath}`);
-      });
-    }
+    const imagenes = procesarImagenesSubidas(files);
 
     logger.debug('Procesando datos para crear receta', {
       creadorId: userId,
@@ -201,16 +192,7 @@ export const actualizarReceta = async (req: AuthenticatedRequest, res: Response)
     }
 
     const files = req.files as Express.Multer.File[];
-    const imagenes: string[] = [];
-
-    if (files && files.length > 0) {
-      const uploadsPath = process.env.UPLOADS_PATH || './uploads';
-      files.forEach(file => {
-        const relativePath = path.relative(uploadsPath, file.path);
-        const normalizedPath = relativePath.replace(/\\/g, '/');
-        imagenes.push(`/uploads/${normalizedPath}`);
-      });
-    }
+    const imagenes = procesarImagenesSubidas(files);
 
     logger.debug('Procesando datos para actualizar receta', {
       recetaId,

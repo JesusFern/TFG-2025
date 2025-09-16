@@ -32,43 +32,64 @@ export interface RecetasListResponse {
   recetas: RecetaResponse[];
 }
 
+// Función auxiliar para construir FormData
+const construirFormDataReceta = (
+  recetaData: CrearRecetaDTO, 
+  imagenes?: File[], 
+  imagenesAEliminar?: string[]
+): FormData => {
+  const formData = new FormData();
+  
+  if (recetaData.nombreReceta) {
+    formData.append('nombreReceta', recetaData.nombreReceta);
+  }
+  if (recetaData.publica !== undefined) {
+    formData.append('publica', recetaData.publica.toString());
+  }
+  
+  if (recetaData.ingredientes) {
+    recetaData.ingredientes.forEach((ingrediente, index) => {
+      formData.append(`ingredientes[${index}]`, ingrediente);
+    });
+  }
+  
+  // Agregar pasos de preparación si existen
+  if (recetaData.pasosPreparacion && recetaData.pasosPreparacion.length > 0) {
+    recetaData.pasosPreparacion.forEach((paso, index) => {
+      formData.append(`pasosPreparacion[${index}]`, paso);
+    });
+  }
+  
+  // Agregar campos opcionales
+  if (recetaData.tiempoPreparacion) {
+    formData.append('tiempoPreparacion', recetaData.tiempoPreparacion);
+  }
+  
+  if (recetaData.informacionNutricional) {
+    formData.append('informacionNutricional', recetaData.informacionNutricional);
+  }
+  
+  // Agregar imágenes si existen
+  if (imagenes && imagenes.length > 0) {
+    imagenes.forEach((imagen) => {
+      formData.append('imagenes', imagen);
+    });
+  }
+  
+  if (imagenesAEliminar && imagenesAEliminar.length > 0) {
+    imagenesAEliminar.forEach((imagen, index) => {
+      formData.append(`imagenesAEliminar[${index}]`, imagen);
+    });
+  }
+  
+  return formData;
+};
+
 export const crearReceta = async (recetaData: CrearRecetaDTO, imagenes?: File[]): Promise<ApiRecetaResponse> => {
   try {
     console.log('Enviando datos al backend:', JSON.stringify(recetaData, null, 2));
     
-    const formData = new FormData();
-    
-    // Agregar datos de la receta
-    formData.append('nombreReceta', recetaData.nombreReceta);
-    formData.append('publica', recetaData.publica.toString());
-    
-    // Agregar ingredientes
-    recetaData.ingredientes.forEach((ingrediente, index) => {
-      formData.append(`ingredientes[${index}]`, ingrediente);
-    });
-    
-    // Agregar pasos de preparación si existen
-    if (recetaData.pasosPreparacion && recetaData.pasosPreparacion.length > 0) {
-      recetaData.pasosPreparacion.forEach((paso, index) => {
-        formData.append(`pasosPreparacion[${index}]`, paso);
-      });
-    }
-    
-    // Agregar campos opcionales
-    if (recetaData.tiempoPreparacion) {
-      formData.append('tiempoPreparacion', recetaData.tiempoPreparacion);
-    }
-    
-    if (recetaData.informacionNutricional) {
-      formData.append('informacionNutricional', recetaData.informacionNutricional);
-    }
-    
-    // Agregar imágenes si existen
-    if (imagenes && imagenes.length > 0) {
-      imagenes.forEach((imagen) => {
-        formData.append('imagenes', imagen);
-      });
-    }
+    const formData = construirFormDataReceta(recetaData, imagenes);
     
     // Usar apiRequest que ahora maneja FormData correctamente
     const response = await apiRequest('/api/recetas', {
@@ -175,52 +196,7 @@ export const actualizarReceta = async (recetaId: string, recetaData: CrearReceta
   try {
     console.log('Enviando datos para actualizar receta:', JSON.stringify(recetaData, null, 2));
     
-    const formData = new FormData();
-    
-    // Agregar datos de la receta
-    if (recetaData.nombreReceta) {
-      formData.append('nombreReceta', recetaData.nombreReceta);
-    }
-    if (recetaData.publica !== undefined) {
-      formData.append('publica', recetaData.publica.toString());
-    }
-    
-    // Agregar ingredientes
-    if (recetaData.ingredientes) {
-      recetaData.ingredientes.forEach((ingrediente, index) => {
-        formData.append(`ingredientes[${index}]`, ingrediente);
-      });
-    }
-    
-    // Agregar pasos de preparación si existen
-    if (recetaData.pasosPreparacion && recetaData.pasosPreparacion.length > 0) {
-      recetaData.pasosPreparacion.forEach((paso, index) => {
-        formData.append(`pasosPreparacion[${index}]`, paso);
-      });
-    }
-    
-    // Agregar campos opcionales
-    if (recetaData.tiempoPreparacion) {
-      formData.append('tiempoPreparacion', recetaData.tiempoPreparacion);
-    }
-    
-    if (recetaData.informacionNutricional) {
-      formData.append('informacionNutricional', recetaData.informacionNutricional);
-    }
-    
-    // Agregar imágenes si existen
-    if (imagenes && imagenes.length > 0) {
-      imagenes.forEach((imagen) => {
-        formData.append('imagenes', imagen);
-      });
-    }
-    
-    // Agregar imágenes a eliminar si existen
-    if (imagenesAEliminar && imagenesAEliminar.length > 0) {
-      imagenesAEliminar.forEach((imagen, index) => {
-        formData.append(`imagenesAEliminar[${index}]`, imagen);
-      });
-    }
+    const formData = construirFormDataReceta(recetaData, imagenes, imagenesAEliminar);
     
     const response = await apiRequest(`/api/recetas/${recetaId}`, {
       method: 'PUT',

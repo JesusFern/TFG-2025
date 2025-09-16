@@ -199,29 +199,24 @@ export async function limpiarImagenesHuerfanasService() {
       };
     }
 
-    // Obtener todas las imágenes en el directorio
     const archivosEnDirectorio = fs.readdirSync(recetasPath, { withFileTypes: true })
       .filter(dirent => dirent.isFile())
       .map(dirent => dirent.name);
 
-    // Obtener todas las rutas de imágenes de las recetas en la base de datos
     const recetas = await Receta.find({}, 'imagenes');
     const imagenesEnUso = new Set<string>();
     
     recetas.forEach(receta => {
       receta.imagenes.forEach(imagen => {
-        // Extraer solo el nombre del archivo de la ruta
         const nombreArchivo = path.basename(imagen);
         imagenesEnUso.add(nombreArchivo);
       });
     });
 
-    // Encontrar imágenes huérfanas
     const imagenesHuerfanas = archivosEnDirectorio.filter(archivo => 
       !imagenesEnUso.has(archivo)
     );
 
-    // Eliminar imágenes huérfanas
     let imagenesEliminadas = 0;
     imagenesHuerfanas.forEach(archivo => {
       try {
@@ -243,4 +238,19 @@ export async function limpiarImagenesHuerfanasService() {
     console.error('Error en limpieza de imágenes huérfanas:', error);
     throw new Error('Error al limpiar imágenes huérfanas');
   }
+}
+
+export function procesarImagenesSubidas(files: Express.Multer.File[]): string[] {
+  const imagenes: string[] = [];
+  
+  if (files && files.length > 0) {
+    const uploadsPath = process.env.UPLOADS_PATH || './uploads';
+    files.forEach(file => {
+      const relativePath = path.relative(uploadsPath, file.path);
+      const normalizedPath = relativePath.replace(/\\/g, '/');
+      imagenes.push(`/uploads/${normalizedPath}`);
+    });
+  }
+  
+  return imagenes;
 }
