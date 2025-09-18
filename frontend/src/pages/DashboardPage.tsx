@@ -162,7 +162,7 @@ const DashboardPage: React.FC = () => {
       description: 'Accede a tus rutinas y planes de ejercicio',
       icon: <IconBarbell size={32} />,
       color: 'blue',
-      onClick: () => navigate('/training'),
+      onClick: () => navigate(user?.role === 'worker' ? '/training' : '/mis-entrenamientos'),
       badge: user?.role === 'worker' ? 'Crear' : 'Ver'
     },
     {

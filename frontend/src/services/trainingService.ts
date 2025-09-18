@@ -36,7 +36,8 @@ export const trainingService = {
   async obtenerEjercicioPorId(id: string): Promise<Ejercicio> {
     const res = await apiRequest(`${base}/ejercicios/${id}`);
     if (!res.ok) throw new Error((await res.json()).message || 'Error al obtener ejercicio');
-    return await res.json();
+    const data = await res.json();
+    return data.ejercicio;
   },
 
   async actualizarEjercicio(id: string, data: ActualizarEjercicioDTO): Promise<Ejercicio> {
@@ -66,9 +67,13 @@ export const trainingService = {
 
   async obtenerPlanes(params: Record<string, string | number | boolean> = {}): Promise<PlanEntrenamiento[]> {
     const query = new URLSearchParams(params as Record<string, string>).toString();
-    const res = await apiRequest(`${base}/planes${query ? `?${query}` : ''}`);
+    const url = `${base}/planes${query ? `?${query}` : ''}`;
+    
+    
+    const res = await apiRequest(url);
     if (!res.ok) throw new Error((await res.json()).message || 'Error al obtener planes');
     const data = await res.json();
+    
     return data.planes || data.items || data;
   },
 
@@ -135,7 +140,8 @@ export const trainingService = {
   async obtenerSesionPorId(id: string): Promise<SesionPlan> {
     const res = await apiRequest(`${base}/sesiones/${id}`);
     if (!res.ok) throw new Error((await res.json()).message || 'Error al obtener sesión');
-    return await res.json();
+    const data = await res.json();
+    return data.sesion;
   },
 
   async actualizarSesion(id: string, data: ActualizarSesionDTO): Promise<SesionPlan> {
