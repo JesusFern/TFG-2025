@@ -10,9 +10,11 @@ import {
   updateMyProfile,
   changeMyPassword,
   uploadProfilePhoto,
-  assignWorker
+  assignWorker,
+  getTrabajadoresRol,
+  getAllAvailableWorkers
 } from '../../controllers/users/userController';
-import { authenticateToken, authorizeUserOrAdmin } from '../../middlewares/authMiddleware';
+import { authenticateToken, authorizeUserOrAdmin, authorizeUserWithValidSubscription } from '../../middlewares/authMiddleware';
 import { validateRequest } from '../../middlewares/validationMiddleware';
 import { 
   loginValidator, 
@@ -46,6 +48,8 @@ router.post('/validate-step/4', step4Validator, validateRequest, (req: Request, 
 });
 router.post('/login', loginValidator, validateRequest, loginUser);
 
+router.get('/workers/available', validateRequest, getAllAvailableWorkers);
+
 // Rutas protegidas para el usuario autenticado
 router.get('/me', authenticateToken, getMyProfile);
 router.put('/me', authenticateToken, updateMyProfile);
@@ -54,6 +58,8 @@ router.patch('/me/photo', authenticateToken, uploadProfilePhoto);
 
 
 router.post('/assign-worker', authenticateToken, assignWorkerValidator, validateRequest, assignWorker);
+
+router.get('/available-workers-by-my-suscription', authenticateToken, authorizeUserWithValidSubscription, validateRequest, getTrabajadoresRol);
 
 // Rutas protegidas para administradores
 router.get('/', authenticateToken, getUsers);
