@@ -66,6 +66,10 @@ import EditarRecetaPage from '../pages/EditarRecetaPage';
 import MisRecetasPage from '../pages/MisRecetasPage';
 import VerRecetaPage from '../pages/VerRecetaPage';
 import AcercaDePage from '../pages/AcercaDePage';
+import ClientTrainingPlansPage from '../pages/ClientTrainingPlansPage';
+import ClientTrainingPlanDetailPage from '../pages/ClientTrainingPlanDetailPage';
+import ClientTrainingSessionPage from '../pages/ClientTrainingSessionPage';
+import ClientExerciseDetailPage from '../pages/ClientExerciseDetailPage';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -213,6 +217,39 @@ const AppRoutes: React.FC = () => {
         <ProtectedRoute workerRoute={true}>
           <Layout>
             <EditarRecetaPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+
+      {/* Rutas de entrenamiento para clientes */}
+      <Route path="/mis-entrenamientos" element={
+        <ProtectedRoute>
+          <Layout>
+            <ClientTrainingPlansPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/mis-entrenamientos/:planId" element={
+        <ProtectedRoute>
+          <Layout>
+            <ClientTrainingPlanDetailPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/mis-entrenamientos/:planId/sesion/:sesionId" element={
+        <ProtectedRoute>
+          <Layout>
+            <ClientTrainingSessionPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/ejercicio/:ejercicioId" element={
+        <ProtectedRoute>
+          <Layout>
+            <ClientExerciseDetailPage />
           </Layout>
         </ProtectedRoute>
       } />
