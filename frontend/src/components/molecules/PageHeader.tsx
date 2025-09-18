@@ -1,13 +1,11 @@
 import React from 'react';
 import {
-  Paper,
   Group,
   Title,
   Text,
   Badge
 } from '@mantine/core';
-import { useThemeDetection } from '../../hooks/useThemeDetection';
-import { useMantineTheme } from '@mantine/core';
+import GradientPaper from '../atoms/GradientPaper';
 
 interface PageHeaderProps {
   title: string;
@@ -24,23 +22,8 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   badgeIcon,
   badgeColor = "nutroos-green"
 }) => {
-  const isDark = useThemeDetection();
-  const theme = useMantineTheme();
-
   return (
-    <Paper 
-      p="lg" 
-      shadow="xs" 
-      radius="md" 
-      mb="xl" 
-      withBorder
-      bg={isDark ? "dark.6" : "gray.0"}
-      c={isDark ? "gray.0" : "dark.9"}
-      style={{ 
-        borderColor: isDark ? theme.colors.dark[4] : theme.colors.gray[3],
-        background: `linear-gradient(135deg, ${isDark ? theme.colors.dark[6] : theme.colors.gray[0]} 0%, ${isDark ? theme.colors.dark[7] : theme.colors.gray[1]} 100%)`
-      }}
-    >
+    <GradientPaper variant="header">
       <Group justify="space-between" align="flex-start">
         <div>
           <Title order={2} mb="xs" c="nutroos-green.6">
@@ -60,7 +43,7 @@ const PageHeader: React.FC<PageHeaderProps> = ({
           {badgeText}
         </Badge>
       </Group>
-    </Paper>
+    </GradientPaper>
   );
 };
 

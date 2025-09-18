@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-  Card,
   Group,
   Badge,
   Stack,
@@ -8,17 +7,18 @@ import {
   Title
 } from '@mantine/core';
 import {
-  IconCheck,
-  IconClock,
   IconCalendar,
   IconTarget,
   IconBarbell,
-  IconArrowRight
+  IconArrowRight,
+  IconClock
 } from '@tabler/icons-react';
 import { PlanEntrenamiento } from '../../types/training';
 import { formatDate } from '../../utils/trainingUtils';
 import { useThemeDetection } from '../../hooks/useThemeDetection';
 import { useMantineTheme } from '@mantine/core';
+import InteractiveCard from '../atoms/InteractiveCard';
+import StatusBadge from '../atoms/StatusBadge';
 
 interface PlanCardProps {
   plan: PlanEntrenamiento;
@@ -29,63 +29,24 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, onClick }) => {
   const isDark = useThemeDetection();
   const theme = useMantineTheme();
 
+  const handleClick = () => {
+    if (plan._id) {
+      onClick(plan._id);
+    }
+  };
+
+  const isActive = plan.draftMode === false;
+
   return (
-    <Card
-      withBorder
-      shadow="md"
-      p="lg"
-      radius="md"
-      bg={isDark ? theme.colors.dark[7] : 'white'}
-      c={isDark ? theme.colors.gray[0] : theme.colors.gray[9]}
-      style={{
-        borderColor: isDark ? theme.colors.dark[4] : theme.colors.gray[3],
-        transition: 'all 0.3s ease',
-        cursor: 'pointer',
-        borderLeftWidth: 4,
-        borderLeftStyle: 'solid',
-        borderLeftColor: plan.draftMode === false ? 
-          (isDark ? theme.colors["nutroos-green"][5] : theme.colors["nutroos-green"][6]) : 
-          (isDark ? theme.colors.dark[3] : theme.colors.gray[4]),
-        overflow: 'hidden',
-        boxShadow: isDark ? '0 4px 8px rgba(0, 0, 0, 0.4)' : '0 1px 3px rgba(0, 0, 0, 0.1)',
-      }}
-      onClick={() => onClick(plan._id!)}
-      onMouseOver={e => {
-        e.currentTarget.style.boxShadow = isDark ? '0 8px 16px rgba(0, 0, 0, 0.6)' : theme.shadows.xl;
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        if (plan.draftMode === false) {
-          e.currentTarget.style.borderLeftColor = isDark 
-            ? theme.colors["nutroos-green"][4]
-            : theme.colors["nutroos-green"][5];
-        }
-      }}
-      onMouseOut={e => {
-        e.currentTarget.style.boxShadow = isDark ? '0 4px 8px rgba(0, 0, 0, 0.4)' : theme.shadows.md;
-        e.currentTarget.style.transform = 'translateY(0)';
-        if (plan.draftMode === false) {
-          e.currentTarget.style.borderLeftColor = isDark 
-            ? theme.colors["nutroos-green"][5]
-            : theme.colors["nutroos-green"][6];
-        }
-      }}
+    <InteractiveCard
+      isActive={isActive}
+      variant="plan"
+      onClick={handleClick}
     >
       <Stack gap="md">
         {/* Header con estado */}
         <Group justify="space-between" align="flex-start">
-          <Badge
-            size="sm"
-            color={plan.draftMode === false ? 'nutroos-green' : (isDark ? 'gray.6' : 'gray')}
-            variant={plan.draftMode === false ? 'filled' : (isDark ? 'light' : 'outline')}
-            leftSection={
-              plan.draftMode === false 
-                ? <IconCheck size={14} stroke={1.5} /> 
-                : <IconClock size={14} stroke={1.5} />
-            }
-            fw={600}
-            tt="uppercase"
-          >
-            {plan.draftMode === false ? 'Activo' : 'Borrador'}
-          </Badge>
+          <StatusBadge isActive={isActive} />
         </Group>
 
         {/* Título y descripción */}
@@ -176,7 +137,7 @@ const PlanCard: React.FC<PlanCardProps> = ({ plan, onClick }) => {
           />
         </Group>
       </Stack>
-    </Card>
+    </InteractiveCard>
   );
 };
 

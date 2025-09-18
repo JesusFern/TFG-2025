@@ -1,13 +1,13 @@
 import React from 'react';
 import {
-  Paper,
   Group,
   Badge,
   Title,
   Text,
   SimpleGrid,
   Card,
-  Button
+  Button,
+  useMantineTheme
 } from '@mantine/core';
 import {
   IconTarget,
@@ -19,7 +19,7 @@ import {
 import { Ejercicio } from '../../types/training';
 import { getDifficultyColor, getIntensityColor } from '../../hooks/useEjercicioData';
 import { useThemeDetection } from '../../hooks/useThemeDetection';
-import { useMantineTheme } from '@mantine/core';
+import GradientPaper from '../atoms/GradientPaper';
 
 interface EjercicioHeaderProps {
   ejercicio: Ejercicio;
@@ -42,19 +42,7 @@ const EjercicioHeader: React.FC<EjercicioHeaderProps> = ({
   const theme = useMantineTheme();
 
   return (
-    <Paper 
-      p="lg" 
-      shadow="xs" 
-      radius="md" 
-      mb="xl" 
-      withBorder
-      bg={isDark ? "dark.6" : "gray.0"}
-      c={isDark ? "gray.0" : "dark.9"}
-      style={{ 
-        borderColor: isDark ? theme.colors.dark[4] : theme.colors.gray[3],
-        background: `linear-gradient(135deg, ${isDark ? theme.colors.dark[6] : theme.colors.gray[0]} 0%, ${isDark ? theme.colors.dark[7] : theme.colors.gray[1]} 100%)`
-      }}
-    >
+    <GradientPaper variant="header">
       <Group justify="space-between" align="flex-start" mb="md">
         {showBackButton && onBackClick ? (
           <Button
@@ -157,7 +145,7 @@ const EjercicioHeader: React.FC<EjercicioHeaderProps> = ({
           </Badge>
         </Card>
       </SimpleGrid>
-    </Paper>
+    </GradientPaper>
   );
 };
 
