@@ -83,8 +83,8 @@ const VerPlanEntrenamientoPage: React.FC = () => {
         <WeekSelector
           currentWeek={currentWeek}
           totalWeeks={sesionesRange.totalWeeks}
+          sessionsCount={sesionesRange.sesiones.length}
           onWeekChange={handleWeekChange}
-          isDark={isDark}
         />
         
         <TrainingSessionsTable

@@ -23,7 +23,7 @@ export const useCardStyles = ({ isActive = true, variant = 'plan' }: UseCardStyl
       return {
         ...baseStyles,
         borderLeftWidth: 4,
-        borderLeftStyle: 'solid',
+        borderLeftStyle: 'solid' as const,
         borderLeftColor: isActive 
           ? (isDark ? theme.colors["nutroos-green"][5] : theme.colors["nutroos-green"][6])
           : (isDark ? theme.colors.dark[3] : theme.colors.gray[4]),

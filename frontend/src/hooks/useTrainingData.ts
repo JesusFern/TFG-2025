@@ -34,7 +34,7 @@ export const useTrainingData = ({
   const [plan, setPlan] = useState<PlanEntrenamiento | null>(null);
   const [sesiones, setSesiones] = useState<SesionPlan[]>([]);
   const [ejercicios, setEjercicios] = useState<Ejercicio[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
 
