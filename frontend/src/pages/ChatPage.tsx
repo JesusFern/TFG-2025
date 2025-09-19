@@ -1,19 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Box, 
   Modal,
   Stack,
-  TextInput,
   Select,
   Button,
   Group,
-  Text
+  Text,
+  Loader,
+  Center
 } from '@mantine/core';
 import { ChatSidebar } from '../components/organisms/ChatSidebar';
 import { ChatMain } from '../components/organisms/ChatMain';
+import { VideoCallModal } from '../components/organisms/VideoCallModal';
+import { VideoCallRoom } from '../components/organisms/VideoCallRoom';
+import { useVideoCall } from '../hooks/useVideoCall';
 import { useChat } from '../hooks/useChat';
 import { useAuth } from '../hooks/useAuth';
 import { CrearMensajeDTO } from '../types/chat';
+import { chatService } from '../services/chatService';
 
 
 export const ChatPage: React.FC = () => {
@@ -48,33 +53,80 @@ export const ChatPage: React.FC = () => {
   const [nuevoParticipante, setNuevoParticipante] = useState('');
   const [nuevoTipo, setNuevoTipo] = useState<'general' | 'entrenamiento' | 'nutricion' | 'consulta'>('general');
   const [nuevaConvError, setNuevaConvError] = useState<string | null>(null);
+  const [usuarios, setUsuarios] = useState<Array<{ _id: string; fullName: string; email: string; role: string }>>([]);
+  const [cargandoUsuarios, setCargandoUsuarios] = useState(false);
+
+  // Estado para videollamadas
+  const [showVideoCall, setShowVideoCall] = useState(false);
+  const [videoCallType, setVideoCallType] = useState<'start' | 'join'>('start');
+  const [videoCallId, setVideoCallId] = useState<string | undefined>();
+  const [showVideoRoom, setShowVideoRoom] = useState(false);
+  const [cameraSettings, setCameraSettings] = useState<{ videoEnabled: boolean; audioEnabled: boolean } | undefined>();
+
+  // Hook para videollamadas
+  const {
+    call,
+    startCallWithSettings,
+    endCall,
+  } = useVideoCall({
+    conversation: conversacionActiva || undefined,
+    callType: videoCallType,
+    callId: videoCallId,
+    onCallEnded: () => {
+      setShowVideoRoom(false);
+      setCameraSettings(undefined);
+    },
+    onCallStarted: () => {
+      setShowVideoRoom(true);
+      setShowVideoCall(false);
+    },
+  });
 
   // Obtener la conversación activa
   const conversacionActivaId = conversacionActiva?._id || null;
 
+  // Cargar usuarios cuando se abre el modal
+  useEffect(() => {
+    if (showNuevaConversacion && usuarios.length === 0) {
+      cargarUsuarios();
+    }
+  }, [showNuevaConversacion, usuarios.length]);
+
+  const cargarUsuarios = async () => {
+    try {
+      setCargandoUsuarios(true);
+      const usuariosData = await chatService.users.getAllUsers();
+      setUsuarios(usuariosData);
+    } catch (error) {
+      console.error('Error al cargar usuarios:', error);
+      setNuevaConvError('Error al cargar la lista de usuarios');
+    } finally {
+      setCargandoUsuarios(false);
+    }
+  };
+
   // Manejar envío de mensaje
   const handleSendMessage = async (data: CrearMensajeDTO) => {
-    console.log('[ChatPage] handleSendMessage', data);
     await enviarMensaje(data);
   };
 
   // Manejar nueva conversación
   const handleNuevaConversacion = async () => {
-    if (!nuevoParticipante.trim()) return;
+    if (!nuevoParticipante.trim()) {
+      setNuevaConvError('Por favor selecciona un participante');
+      return;
+    }
+
+    if (!user?._id) {
+      setNuevaConvError('Error: Usuario no autenticado');
+      return;
+    }
 
     try {
-      // Validar que el ID del participante sea un ObjectId válido
-      const isValidObjectId = /^[0-9a-fA-F]{24}$/.test(nuevoParticipante.trim());
-      if (!isValidObjectId) {
-        setNuevaConvError('El ID del participante debe ser un ObjectId válido (24 caracteres hex).');
-        return;
-      }
-
-      console.log('[ChatPage] crearConversacion con', {
-        participantes: [nuevoParticipante, user?._id], tipo: nuevoTipo
-      });
+      setNuevaConvError(null); // Limpiar errores previos
+      
       await crearConversacion({
-        participantes: [nuevoParticipante, user?._id || ''],
+        participantes: [nuevoParticipante, user._id],
         metadata: { tipo: nuevoTipo }
       });
       
@@ -82,11 +134,13 @@ export const ChatPage: React.FC = () => {
       setNuevoParticipante('');
       setNuevoTipo('general');
       setNuevaConvError(null);
+      
       // Refrescar la lista para garantizar que aparezca
       await refreshConversaciones();
     } catch (err) {
       console.error('Error creating conversation:', err);
-      setNuevaConvError('No se pudo crear la conversación. Verifica el ID del participante y vuelve a intentar.');
+      const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
+      setNuevaConvError(`No se pudo crear la conversación: ${errorMessage}`);
     }
   };
 
@@ -95,6 +149,43 @@ export const ChatPage: React.FC = () => {
     await refreshConversaciones();
   };
 
+  // Manejar videollamada
+  const handleVideoCall = () => {
+    setVideoCallType('start');
+    setVideoCallId(undefined);
+    setShowVideoCall(true);
+  };
+
+  // Manejar cerrar videollamada
+  const handleCloseVideoCall = () => {
+    setShowVideoCall(false);
+    setVideoCallId(undefined);
+  };
+
+  // Manejar unirse a videollamada con configuración
+  const handleJoinVideoCall = async (settings: { videoEnabled: boolean; audioEnabled: boolean }) => {
+    setCameraSettings(settings);
+    await startCallWithSettings(settings);
+  };
+
+  // Manejar cerrar sala de videollamada
+  const handleCloseVideoRoom = async () => {
+    await endCall();
+    setShowVideoRoom(false);
+    setCameraSettings(undefined);
+  };
+
+  // Si hay una videollamada activa, mostrar la sala de video
+  if (showVideoRoom && call) {
+    return (
+      <VideoCallRoom
+        call={call}
+        onEndCall={handleCloseVideoRoom}
+        cameraSettings={cameraSettings}
+      />
+    );
+  }
+
   return (
     <Box style={{ height: '100vh', display: 'flex' }}>
       {/* Sidebar con conversaciones */}
@@ -102,7 +193,6 @@ export const ChatPage: React.FC = () => {
         conversaciones={conversaciones}
         conversacionActiva={conversacionActivaId}
         onSelectConversacion={(id) => {
-          console.log('[ChatPage] onSelectConversacion', id);
           seleccionarConversacion(id);
         }}
         onNuevaConversacion={() => setShowNuevaConversacion(true)}
@@ -131,7 +221,7 @@ export const ChatPage: React.FC = () => {
             onMute={() => console.log('Mute')}
             onPin={() => console.log('Pin')}
             onCall={() => console.log('Call')}
-            onVideoCall={() => console.log('Video Call')}
+            onVideoCall={handleVideoCall}
           />
         ) : (
           <Box style={{ 
@@ -164,13 +254,25 @@ export const ChatPage: React.FC = () => {
           {nuevaConvError && (
             <Text c="red" size="sm">{nuevaConvError}</Text>
           )}
-          <TextInput
-            label="Participante"
-            placeholder="ID de usuario (MongoId)"
-            value={nuevoParticipante}
-            onChange={(e) => setNuevoParticipante(e.target.value)}
-            required
-          />
+          {cargandoUsuarios ? (
+            <Center p="md">
+              <Loader size="sm" />
+            </Center>
+          ) : (
+            <Select
+              label="Participante"
+              placeholder="Selecciona un usuario"
+              value={nuevoParticipante}
+              onChange={(value) => setNuevoParticipante(value || '')}
+              data={usuarios.map(u => ({
+                value: u._id,
+                label: `${u.fullName} (${u.email}) - ${u.role}`
+              }))}
+              searchable
+              clearable
+              required
+            />
+          )}
           
           <Select
             label="Tipo de conversación"
@@ -195,6 +297,16 @@ export const ChatPage: React.FC = () => {
           </Group>
         </Stack>
       </Modal>
+
+      {/* Modal de videollamada */}
+      <VideoCallModal
+        isOpen={showVideoCall}
+        onClose={handleCloseVideoCall}
+        conversacion={conversacionActiva}
+        callType={videoCallType}
+        callId={videoCallId}
+        onJoinCall={handleJoinVideoCall}
+      />
     </Box>
   );
 };
