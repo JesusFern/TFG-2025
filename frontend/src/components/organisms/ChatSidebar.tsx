@@ -11,7 +11,6 @@ import {
   ScrollArea,
   Badge,
   Paper,
-  Modal,
   Select
 } from '@mantine/core';
 import {
@@ -47,23 +46,13 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   onPinConversacion,
   onMuteConversacion
 }) => {
-  console.log('[ChatSidebar] render', {
-    total: Array.isArray(conversaciones) ? conversaciones.length : 'NA',
-    activa: conversacionActiva
-  });
   const [searchTerm, setSearchTerm] = useState('');
   const [filterTipo, setFilterTipo] = useState<string>('todos');
-  const [showNuevaConversacion, setShowNuevaConversacion] = useState(false);
-  const [nuevoParticipante, setNuevoParticipante] = useState('');
-  const [nuevoTipo, setNuevoTipo] = useState<'general' | 'entrenamiento' | 'nutricion' | 'consulta'>('general');
 
   
 
   // Verificar que conversaciones sea un array válido
   const conversacionesSeguras = Array.isArray(conversaciones) ? conversaciones : [];
-  if (!Array.isArray(conversaciones)) {
-    console.log('[ChatSidebar] conversaciones no es array');
-  }
   
   // Validar y limpiar conversaciones para evitar errores
   const conversacionesValidadas = conversacionesSeguras.filter(conv => {
@@ -142,10 +131,9 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
   };
 
   const handleNuevaConversacion = () => {
-    // Aquí se implementaría la lógica para crear una nueva conversación
-    setShowNuevaConversacion(false);
-    setNuevoParticipante('');
-    setNuevoTipo('general');
+    if (onNuevaConversacion) {
+      onNuevaConversacion();
+    }
   };
 
   return (
@@ -187,7 +175,7 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
               <Button
                 size="sm"
                 leftSection={<IconPlus size={16} />}
-                onClick={() => setShowNuevaConversacion(true)}
+                onClick={handleNuevaConversacion}
               >
                 Nueva
               </Button>
@@ -323,45 +311,6 @@ export const ChatSidebar: React.FC<ChatSidebarProps> = ({
         </Stack>
       </ScrollArea>
 
-      {/* Modal para nueva conversación */}
-      <Modal
-        opened={showNuevaConversacion}
-        onClose={() => setShowNuevaConversacion(false)}
-        title="Nueva conversación"
-        size="md"
-      >
-        <Stack gap="md">
-          <TextInput
-            label="Participante"
-            placeholder="Email o ID del usuario"
-            value={nuevoParticipante}
-            onChange={(e) => setNuevoParticipante(e.target.value)}
-            required
-          />
-          
-          <Select
-            label="Tipo de conversación"
-            data={[
-              { value: 'general', label: 'General' },
-              { value: 'entrenamiento', label: 'Entrenamiento' },
-              { value: 'nutricion', label: 'Nutrición' },
-              { value: 'consulta', label: 'Consulta' }
-            ]}
-            value={nuevoTipo}
-            onChange={(value) => setNuevoTipo(value as 'general' | 'entrenamiento' | 'nutricion' | 'consulta')}
-            required
-          />
-          
-          <Group justify="flex-end" gap="sm">
-            <Button variant="light" onClick={() => setShowNuevaConversacion(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleNuevaConversacion}>
-              Crear conversación
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
     </Box>
   );
 };

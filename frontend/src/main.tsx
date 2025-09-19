@@ -7,10 +7,12 @@ import { Notifications } from '@mantine/notifications';
 import { DatesProvider } from '@mantine/dates';
 import { ColorSchemeProvider } from './styles/components/ColorSchemeProvider';
 import { AuthProvider } from './contexts/AuthContext';
+import { VideoProvider } from './contexts/VideoContext';
 import AppRoutes from './routes/routes';
 import '@mantine/core/styles.css';
 import '@mantine/dates/styles.css';
 import '@mantine/notifications/styles.css';
+import '@stream-io/video-react-sdk/dist/css/styles.css';
 import './styles/index.css';
 import theme from './styles/mantine/MantineTheme';
 import './utils/axiosInterceptor';
@@ -25,7 +27,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           <DatesProvider settings={{ locale: 'es', firstDayOfWeek: 1 }}>
             <ColorSchemeProvider>
               <AuthProvider>
-                <AppRoutes />
+                <VideoProvider>
+                  <AppRoutes />
+                </VideoProvider>
               </AuthProvider>
             </ColorSchemeProvider>
           </DatesProvider>

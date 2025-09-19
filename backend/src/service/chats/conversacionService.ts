@@ -52,7 +52,7 @@ export async function crearConversacionService(datos: CrearConversacionData): Pr
     }
 
     const conversacion = new Conversacion({
-             participantes: datos.participantes as unknown as mongoose.Types.ObjectId[],
+      participantes: datos.participantes as unknown as mongoose.Types.ObjectId[],
       mensajesNoLeidos: new Map(),
       activa: true,
       metadata: datos.metadata || { tipo: 'general' },
@@ -60,7 +60,9 @@ export async function crearConversacionService(datos: CrearConversacionData): Pr
     });
 
     const conversacionGuardada = await conversacion.save();
-    return conversacionGuardada.toObject() as unknown as IConversacion;
+    const resultado = conversacionGuardada.toObject() as unknown as IConversacion;
+    
+    return resultado;
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Error al crear conversación: ${error.message}`);
