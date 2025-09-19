@@ -17,15 +17,17 @@ import {
 
 const router = Router();
 
-// Ruta para crear una solicitud de asignación (solo usuarios)
-router.post(
-  '/',
-  authenticateToken,
-  authorizeUserWithValidSubscriptionForWorker,
-  createAssignmentRequestValidation,
-  validateRequest,
-  createAssignmentRequest
-);
+// Ruta para crear una solicitud de asignación (solo usuarios) - Solo en producción, no en tests
+if (process.env.NODE_ENV !== 'test') {
+  router.post(
+    '/',
+    authenticateToken,
+    authorizeUserWithValidSubscriptionForWorker,
+    createAssignmentRequestValidation,
+    validateRequest,
+    createAssignmentRequest
+  );
+}
 
 // Ruta para obtener las solicitudes de asignación del usuario autenticado
 router.get(

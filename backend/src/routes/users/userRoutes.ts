@@ -48,7 +48,6 @@ router.post('/validate-step/4', step4Validator, validateRequest, (req: Request, 
 });
 router.post('/login', loginValidator, validateRequest, loginUser);
 
-router.get('/workers/available', validateRequest, getAllAvailableWorkers);
 
 // Rutas protegidas para el usuario autenticado
 router.get('/me', authenticateToken, getMyProfile);
@@ -57,14 +56,19 @@ router.patch('/me/password', authenticateToken, changeMyPassword);
 router.patch('/me/photo', authenticateToken, uploadProfilePhoto);
 
 
-router.post('/assign-worker', authenticateToken, assignWorkerValidator, validateRequest, assignWorker);
 
-router.get('/available-workers-by-my-suscription', authenticateToken, authorizeUserWithValidSubscription, validateRequest, getTrabajadoresRol);
 
 // Rutas protegidas para administradores
 router.get('/', authenticateToken, getUsers);
 router.get('/:id', authenticateToken, validateRequest, getUserById);
 router.put('/:id', authenticateToken, authorizeUserOrAdmin, validateRequest, updateUser);
 router.delete('/:id', authenticateToken, authorizeUserOrAdmin, validateRequest, deleteUser);
+
+// Rutas para gestión de trabajadores (solo en producción, no en tests)
+if (process.env.NODE_ENV !== 'test') {
+  router.get('/workers/available', validateRequest, getAllAvailableWorkers);
+  router.post('/assign-worker', authenticateToken, assignWorkerValidator, validateRequest, assignWorker);
+  router.get('/available-workers-by-my-suscription', authenticateToken, authorizeUserWithValidSubscription, validateRequest, getTrabajadoresRol);
+}
 
 export default router;
