@@ -39,6 +39,8 @@
     "typescript-eslint": "^8.27.0"
   },
   "dependencies": {
+    "@stream-io/video-client": "^1.31.0",
+    "@stream-io/video-react-sdk": "^1.21.3",
     "@types/multer": "^2.0.0",
     "@types/socket.io": "^3.0.1",
     "bcrypt": "^5.1.1",
