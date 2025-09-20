@@ -23,13 +23,13 @@ const DietaHeader: React.FC<DietaHeaderProps> = ({
 }) => {
   const containerSize = isMobile ? "sm" : "xl";
   const headerPadding = isMobile ? "md" : "lg";
-  const buttonSize = isMobile ? "md" : "md";
+  const buttonSize = "md";
 
   return (
     <Container 
       size={containerSize} 
       py={isMobile ? "md" : "xl"} 
-      px={isMobile ? "sm" : "sm"}
+      px="sm"
       style={{ maxWidth: isMobile ? undefined : '1800px' }}
     >
       <Paper 
