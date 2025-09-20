@@ -35,8 +35,13 @@ export async function crearCitaService(datos: CrearCitaData): Promise<ICita> {
     }
 
     // Verificar que el cliente tiene asignado a este profesional
-    if (profesional.clientesAsignados && !profesional.clientesAsignados.includes(new mongoose.Types.ObjectId(datos.cliente))) {
-      throw new Error('Este profesional no está asignado a este cliente');
+    if (profesional.clientesAsignados && profesional.clientesAsignados.length > 0) {
+      const clienteAsignado = profesional.clientesAsignados.find(
+        cliente => cliente.clienteId.toString() === datos.cliente.toString()
+      );
+      if (!clienteAsignado) {
+        throw new Error('Este profesional no está asignado a este cliente');
+      }
     }
 
     // Crear la cita
