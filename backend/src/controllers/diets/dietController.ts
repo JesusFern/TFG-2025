@@ -383,3 +383,36 @@ export const obtenerDietasPorWorkerYCliente = async (req: AuthenticatedRequest, 
     manejarErrorDieta(error, res, 'obtener las dietas del cliente');
   }
 };
+
+export const getMyDiets = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = verificarAutenticacion(req, res, 'obtener mis dietas');
+    if (!userId) return;
+
+    // Verificar que el usuario es un cliente (role: 'user')
+    if (req.user?.role !== 'user') {
+      res.status(403).json({ message: 'Solo los clientes pueden acceder a sus dietas asignadas' });
+      return;
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      res.status(400).json({ message: 'ID de usuario inválido' });
+      return;
+    }
+
+    const dietas = await Dieta.find({
+      asignadaA: userId,
+      draftMode: false
+    })
+    .populate('creador', 'fullName email workerType')
+    .sort({ createdAt: -1 });
+
+    res.status(200).json({
+      message: `Se encontraron ${dietas.length} dietas asignadas`,
+      dietas,
+      count: dietas.length
+    });
+  } catch (error) {
+    manejarErrorDieta(error, res, 'obtener mis dietas');
+  }
+};

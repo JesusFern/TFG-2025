@@ -144,10 +144,12 @@ const DashboardPage: React.FC = () => {
     },
     {
       title: 'Mis Dietas',
-      description: 'Gestiona tus planes de alimentación personalizados',
+      description: user?.role === 'worker' 
+        ? 'Gestiona tus planes de alimentación personalizados'
+        : 'Ve las dietas que han creado para ti',
       icon: <IconSoup size={32} />,
       color: 'orange',
-      onClick: () => navigate('/diets'),
+      onClick: () => navigate(user?.role === 'worker' ? '/diets' : '/mis-dietas'),
       badge: user?.role === 'worker' ? 'Crear' : 'Ver'
     },
     {
