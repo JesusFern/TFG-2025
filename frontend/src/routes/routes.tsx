@@ -73,6 +73,9 @@ import ClientTrainingPlanDetailPage from '../pages/ClientTrainingPlanDetailPage'
 import ClientTrainingSessionPage from '../pages/ClientTrainingSessionPage';
 import ClientExerciseDetailPage from '../pages/ClientExerciseDetailPage';
 import MyDietsPage from '../pages/MyDietsPage';
+import CitasPage from '../pages/CitasPage';
+import CrearCitaPage from '../pages/CrearCitaPage';
+import EditarCitaPage from '../pages/EditarCitaPage';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -271,6 +274,31 @@ const AppRoutes: React.FC = () => {
         <ProtectedRoute>
           <Layout>
             <MyDietsPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+
+      {/* Rutas para citas */}
+      <Route path="/citas" element={
+        <ProtectedRoute>
+          <Layout>
+            <CitasPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/citas/crear" element={
+        <ProtectedRoute>
+          <Layout>
+            <CrearCitaPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/citas/editar/:id" element={
+        <ProtectedRoute>
+          <Layout>
+            <EditarCitaPage />
           </Layout>
         </ProtectedRoute>
       } />

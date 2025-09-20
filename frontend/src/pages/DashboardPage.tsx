@@ -22,7 +22,8 @@ import {
   IconPlus,
   IconMessage,
   IconChefHat,
-  IconClipboardList
+  IconClipboardList,
+  IconCalendarEvent
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -196,6 +197,16 @@ const DashboardPage: React.FC = () => {
       color: 'teal',
       onClick: () => navigate('/chat'),
       badge: 'En Vivo'
+    },
+    {
+      title: 'Mis Citas',
+      description: user?.role === 'worker' 
+        ? 'Gestiona las citas con tus clientes'
+        : 'Programa y gestiona tus citas virtuales',
+      icon: <IconCalendarEvent size={32} />,
+      color: 'pink',
+      onClick: () => navigate('/citas'),
+      badge: user?.role === 'worker' ? 'Gestionar' : 'Programar'
     },
     {
       title: 'Solicitudes',

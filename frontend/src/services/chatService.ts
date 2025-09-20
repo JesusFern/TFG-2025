@@ -349,7 +349,7 @@ export const chatService = {
         fullName: u.fullName,
         email: u.email,
         profilePicture: u.profilePicture,
-        role: u.role
+        role: u.role as 'admin' | 'worker' | 'user'
       }));
     }
   },
