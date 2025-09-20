@@ -131,8 +131,8 @@ export const validarMarcarComoLeido = [
 // Validators para conversaciones
 export const validarCrearConversacion = [
   body('participantes')
-    .isArray({ min: 2, max: 10 })
-    .withMessage('Debe haber entre 2 y 10 participantes'),
+    .isArray({ min: 1, max: 10 }) // Cambiado de 2 a 1 porque el usuario actual se agrega automáticamente
+    .withMessage('Debe haber entre 1 y 10 participantes'),
   
   body('participantes.*')
     .isMongoId()

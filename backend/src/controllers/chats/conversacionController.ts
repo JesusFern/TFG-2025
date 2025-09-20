@@ -149,7 +149,6 @@ export const archivarConversacion = async (req: AuthenticatedRequest, res: Respo
 
 // Obtener todas las conversaciones de un usuario específico
 export const obtenerConversacionesUsuario = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  
   try {
     const usuarioId = req.user?.id;
     if (!usuarioId) {
@@ -169,7 +168,7 @@ export const obtenerConversacionesUsuario = async (req: AuthenticatedRequest, re
     const conversaciones = await obtenerConversacionesUsuarioService(usuarioId, limit);
     res.json({ message: 'Conversaciones obtenidas exitosamente', conversaciones });
   } catch (error) {
-    console.error('❌ Error al obtener conversaciones del usuario:', error);
+    console.error('Error al obtener conversaciones del usuario:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };

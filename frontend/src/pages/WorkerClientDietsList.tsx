@@ -95,7 +95,14 @@ const WorkerClientDietsList: React.FC = () => {
         console.log('Intentando obtener información para el cliente:', clientId);
         const clientData = await getClientById(clientId);
         console.log('Información de cliente obtenida:', clientData);
-        setClientInfo(clientData);
+        if (clientData.id) {
+          setClientInfo({
+            id: clientData.id,
+            fullName: clientData.fullName,
+            email: clientData.email,
+            role: clientData.role
+          });
+        }
       } catch (err) {
         console.error("Error al obtener información del cliente:", err);
       } finally {

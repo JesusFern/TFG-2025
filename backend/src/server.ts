@@ -11,6 +11,7 @@ import trainingRoutes from './routes/training';
 import messagingRoutes from './routes/chats';
 import suscriptionPlanRoutes from './routes/suscriptionPlan/suscriptionPlanRoutes';
 import assignmentRequestRoutes from './routes/assignmentRequests/assignmentRequestRoutes';
+import videoRoutes from './routes/video';
 import { SocketServer } from './socket/socketServer';
 
 dotenv.config();
@@ -52,6 +53,7 @@ app.use('/api/training', trainingRoutes);
 app.use('/api/messaging', messagingRoutes);
 app.use('/api/suscription-plans', suscriptionPlanRoutes);
 app.use('/api/assignment-requests', assignmentRequestRoutes);
+app.use('/api', videoRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("API corriendo...");

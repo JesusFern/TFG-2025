@@ -99,6 +99,7 @@ export const obtenerPlanesEntrenamiento = async (req: AuthenticatedRequest, res:
     logger.info('Planes de entrenamiento obtenidos correctamente', { count: planes.length });
     res.status(200).json({ planes });
   } catch (error) {
+    console.error('Error al obtener planes de entrenamiento:', error);
     logger.error('Error al obtener planes de entrenamiento', {
       error: error instanceof Error ? error.message : String(error)
     });

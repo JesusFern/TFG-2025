@@ -6,6 +6,8 @@ process.env.NODE_ENV = 'test';
 
 // Configurar variables de entorno para tests
 process.env.STRIPE_SECRET_KEY = 'sk_test_mock_key_for_testing_only';
+process.env.STREAM_API_KEY = 'mmhfdzb5evj2';
+process.env.STREAM_API_SECRET = 'test-secret-key-for-development';
 
 dotenv.config({ path: '.env' });
 

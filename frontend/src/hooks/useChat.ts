@@ -352,11 +352,13 @@ export const useChat = (): UseChatReturn => {
   const crearConversacion = useCallback(async (data: CrearConversacionDTO) => {
     try {
       const conversacion = await chatService.conversaciones.crearConversacion(data);
+      
       setConversaciones(prev => [...prev, conversacion]);
       setConversacionActiva(conversacion);
     } catch (err) {
-      setError('Error al crear conversación');
       console.error('Error creating conversation:', err);
+      setError('Error al crear conversación');
+      throw err; // Re-lanzar el error para que pueda ser capturado en ChatPage
     }
   }, []);
 

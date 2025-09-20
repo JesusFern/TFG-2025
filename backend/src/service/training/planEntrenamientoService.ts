@@ -140,7 +140,15 @@ export async function obtenerPlanesEntrenamientoService(filtros: {
   publico?: boolean;
   activo?: boolean;
 }) {
-  const query: { entrenador?: string; clientes?: string; objetivo?: string; publico?: boolean; activo?: boolean } = {};
+  
+  const query: { 
+    entrenador?: string; 
+    clientes?: string; 
+    objetivo?: string; 
+    publico?: boolean; 
+    activo?: boolean;
+    draftMode?: boolean;
+  } = {};
 
   if (filtros.entrenador) {
     query.entrenador = filtros.entrenador;
@@ -153,6 +161,10 @@ export async function obtenerPlanesEntrenamientoService(filtros: {
   }
   if (filtros.publico !== undefined) {
     query.publico = filtros.publico;
+  }
+  // Para clientes, siempre filtrar por draftMode: false (solo planes publicados)
+  if (filtros.cliente) {
+    query.draftMode = false;
   }
   if (filtros.activo !== undefined) {
     query.activo = filtros.activo;

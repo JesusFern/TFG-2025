@@ -104,7 +104,18 @@ export const conversacionService = {
       method: 'POST',
       body: JSON.stringify(data)
     });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Error al crear conversación: ${response.status} ${response.statusText} - ${errorData.message || 'Error desconocido'}`);
+    }
+    
     const responseData = await response.json() as ApiConversacionResponse;
+    
+    if (!responseData.conversacion) {
+      throw new Error('El backend no devolvió la conversación creada');
+    }
+    
     return responseData.conversacion;
   },
 
@@ -321,7 +332,18 @@ export const chatService = {
   users: {
     async getAllUsers(): Promise<UsuarioResumido[]> {
       const response = await apiRequest('/api/users');
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(`Error al obtener usuarios: ${response.status} ${response.statusText} - ${errorData.message || 'Error desconocido'}`);
+      }
+      
       const responseData = await response.json();
+      
+      if (!Array.isArray(responseData)) {
+        throw new Error('El backend no devolvió una lista de usuarios válida');
+      }
+      
       return responseData.map((u: { _id: string; fullName: string; email: string; profilePicture?: string | null; role: string }) => ({
         _id: u._id,
         fullName: u.fullName,

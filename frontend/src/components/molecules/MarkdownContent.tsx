@@ -24,7 +24,7 @@ const MarkdownContent: React.FC<MarkdownContentProps> = ({
   const parseMarkdown = (text: string) => {
     // Dividir en líneas y procesar cada una
     const lines = text.split('\n').filter(line => line.trim() !== '');
-    const elements: JSX.Element[] = [];
+    const elements: React.ReactElement[] = [];
     
     lines.forEach((line, index) => {
       const trimmedLine = line.trim();
