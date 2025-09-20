@@ -213,11 +213,21 @@ const WorkerClientsDashboard: React.FC = () => {
 											<Text size="sm" c="dimmed">{cliente.email}</Text>
 										</div>
 									</Group>
-									{cliente.gender && (
-										<Badge color={getBadgeColor(cliente.gender)} size="sm">
-											{cliente.gender}
-										</Badge>
-									)}
+									<Group gap="xs">
+										{cliente.gender && (
+											<Badge color={getBadgeColor(cliente.gender)} size="sm">
+												{cliente.gender}
+											</Badge>
+										)}
+										{cliente.tipoAsignacion && (
+											<Badge 
+												color={cliente.tipoAsignacion === 'Nutricionista' ? 'nutroos-green' : 'blue'} 
+												size="sm"
+											>
+												{cliente.tipoAsignacion}
+											</Badge>
+										)}
+									</Group>
 								</Group>
                 
 								<Stack gap="xs" mb="md" style={{ flex: 1 }}>
@@ -289,32 +299,69 @@ const WorkerClientsDashboard: React.FC = () => {
 								</Stack>
                 
 												<Group grow mt="auto">
-													<Button 
-														color="nutroos-green"
-														onClick={() => handleCrearDieta(cliente._id)}
-													>
-														Crear dieta
-													</Button>
-													<Button 
-														variant="outline"
-														color="nutroos-green"
-														onClick={() => handleVerDietas(cliente._id)}
-													>
-														Ver dietas
-													</Button>
-													<Button 
-														color="blue"
-														onClick={() => handleCrearPlan(cliente._id)}
-													>
-														Crear plan
-													</Button>
-													<Button 
-														variant="outline"
-														color="blue"
-														onClick={() => handleVerPlanes(cliente._id)}
-													>
-														Ver planes
-													</Button>
+													{cliente.tipoAsignacion === 'Nutricionista' ? (
+														<>
+															<Button 
+																color="nutroos-green"
+																onClick={() => handleCrearDieta(cliente._id)}
+															>
+																Crear dieta
+															</Button>
+															<Button 
+																variant="outline"
+																color="nutroos-green"
+																onClick={() => handleVerDietas(cliente._id)}
+															>
+																Ver dietas
+															</Button>
+														</>
+													) : cliente.tipoAsignacion === 'Entrenador personal' ? (
+														<>
+															<Button 
+																color="blue"
+																onClick={() => handleCrearPlan(cliente._id)}
+															>
+																Crear plan
+															</Button>
+															<Button 
+																variant="outline"
+																color="blue"
+																onClick={() => handleVerPlanes(cliente._id)}
+															>
+																Ver planes
+															</Button>
+														</>
+													) : (
+														// Fallback: mostrar todos los botones si no hay tipo de asignación definido
+														<>
+															<Button 
+																color="nutroos-green"
+																onClick={() => handleCrearDieta(cliente._id)}
+															>
+																Crear dieta
+															</Button>
+															<Button 
+																variant="outline"
+																color="nutroos-green"
+																onClick={() => handleVerDietas(cliente._id)}
+															>
+																Ver dietas
+															</Button>
+															<Button 
+																color="blue"
+																onClick={() => handleCrearPlan(cliente._id)}
+															>
+																Crear plan
+															</Button>
+															<Button 
+																variant="outline"
+																color="blue"
+																onClick={() => handleVerPlanes(cliente._id)}
+															>
+																Ver planes
+															</Button>
+														</>
+													)}
 												</Group>
 							</Card>
 						</Grid.Col>

@@ -11,6 +11,7 @@ export interface ClienteAsignado {
   gender?: string;
   phoneNumber?: string;
   birthDate?: string;
+  tipoAsignacion?: 'Nutricionista' | 'Entrenador personal';
   datosSaludYNutricion?: {
     peso?: number;
     altura?: number;
