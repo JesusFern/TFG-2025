@@ -19,7 +19,7 @@ import {
   IconMail,
   IconX
 } from '@tabler/icons-react';
-import { ProfessionalResponse, checkWorkerCompatibility, createAssignmentRequest, getPendingAssignmentRequests, PendingAssignmentRequest, checkAssignmentAvailability, AssignmentAvailabilityResponse } from '../../services/userService';
+import { ProfessionalResponse, createAssignmentRequest, getPendingAssignmentRequests, PendingAssignmentRequest, checkAssignmentAvailability } from '../../services/userService';
 
 interface ProfessionalModalProps {
   opened: boolean;
@@ -36,7 +36,57 @@ const ProfessionalModal: React.FC<ProfessionalModalProps> = ({
   onContact,
   onRequestAssignment
 }) => {
-  if (!professional) return null;
+  const [canContact, setCanContact] = React.useState(false);
+  const [canRequestAssignment, setCanRequestAssignment] = React.useState(false);
+  const [loadingCompatibility, setLoadingCompatibility] = React.useState(false);
+  const [loadingNutritionRequest, setLoadingNutritionRequest] = React.useState(false);
+  const [loadingTrainingRequest, setLoadingTrainingRequest] = React.useState(false);
+  const [pendingRequests, setPendingRequests] = React.useState<PendingAssignmentRequest[]>([]);
+  const [errorModalOpened, setErrorModalOpened] = React.useState(false);
+  const [errorMessage, setErrorMessage] = React.useState('');
+  const [availableTypes, setAvailableTypes] = React.useState<string[]>([]);
+
+  React.useEffect(() => {
+    const checkCompatibility = async () => {
+      if (!professional) return;
+      
+      setLoadingCompatibility(true);
+      try {
+        // Verificar disponibilidad de asignación usando el nuevo endpoint
+        const availability = await checkAssignmentAvailability(professional._id);
+        setAvailableTypes(availability.availableTypes);
+        
+        // Verificar si puede contactar (siempre puede contactar si hay tipos disponibles)
+        setCanContact(availability.availableTypes.length > 0);
+        
+        // Verificar si puede solicitar asignación
+        setCanRequestAssignment(availability.availableTypes.length > 0);
+        
+      } catch (error) {
+        console.error('Error checking availability:', error);
+        setCanContact(false);
+        setCanRequestAssignment(false);
+        setAvailableTypes([]);
+      } finally {
+        setLoadingCompatibility(false);
+      }
+    };
+
+    const loadPendingRequests = async () => {
+      try {
+        const requests = await getPendingAssignmentRequests();
+        setPendingRequests(requests);
+      } catch (error) {
+        console.error('Error loading pending requests:', error);
+        setPendingRequests([]);
+      }
+    };
+
+    if (opened && professional) {
+      checkCompatibility();
+      loadPendingRequests();
+    }
+  }, [opened, professional]);
 
   const getWorkerTypeIcon = (workerType: string) => {
     switch (workerType) {
@@ -64,16 +114,7 @@ const ProfessionalModal: React.FC<ProfessionalModalProps> = ({
     }
   };
 
-  const [canContact, setCanContact] = React.useState(false);
-  const [canRequestAssignment, setCanRequestAssignment] = React.useState(false);
-  const [loadingCompatibility, setLoadingCompatibility] = React.useState(false);
-  const [loadingNutritionRequest, setLoadingNutritionRequest] = React.useState(false);
-  const [loadingTrainingRequest, setLoadingTrainingRequest] = React.useState(false);
-  const [pendingRequests, setPendingRequests] = React.useState<PendingAssignmentRequest[]>([]);
-  const [errorModalOpened, setErrorModalOpened] = React.useState(false);
-  const [errorMessage, setErrorMessage] = React.useState('');
-  const [availableTypes, setAvailableTypes] = React.useState<string[]>([]);
-  const [assignmentAvailability, setAssignmentAvailability] = React.useState<AssignmentAvailabilityResponse | null>(null);
+  if (!professional) return null;
 
   // Verificar si el trabajador puede realizar asignaciones como nutricionista
   const canRequestAsNutritionist = () => {
@@ -103,52 +144,6 @@ const ProfessionalModal: React.FC<ProfessionalModalProps> = ({
     );
   };
 
-  React.useEffect(() => {
-    const checkCompatibility = async () => {
-      if (!professional) return;
-      
-      setLoadingCompatibility(true);
-      try {
-        // Verificar disponibilidad de asignación usando el nuevo endpoint
-        const availability = await checkAssignmentAvailability(professional._id);
-        setAssignmentAvailability(availability);
-        setAvailableTypes(availability.availableTypes);
-        
-        // Verificar si puede contactar (siempre puede contactar si hay tipos disponibles)
-        setCanContact(availability.availableTypes.length > 0);
-        
-        // Verificar si puede solicitar asignación
-        setCanRequestAssignment(availability.availableTypes.length > 0);
-        
-      } catch (error) {
-        console.error('Error checking availability:', error);
-        setCanContact(false);
-        setCanRequestAssignment(false);
-        setAvailableTypes([]);
-        setAssignmentAvailability(null);
-      } finally {
-        setLoadingCompatibility(false);
-      }
-    };
-
-    const loadPendingRequests = async () => {
-      try {
-        const requests = await getPendingAssignmentRequests();
-        setPendingRequests(requests);
-      } catch (error) {
-        console.error('Error loading pending requests:', error);
-        setPendingRequests([]);
-      }
-    };
-
-    if (opened && professional) {
-      checkCompatibility();
-      loadPendingRequests();
-      // Resetear los estados de carga cuando se abre el modal
-      setLoadingNutritionRequest(false);
-      setLoadingTrainingRequest(false);
-    }
-  }, [opened, professional]);
 
   const handleContact = () => {
     if (onContact && professional) {

@@ -13,12 +13,10 @@ jest.mock('../../src/models/suscriptionPlans/suscriptionPlan');
 
 import AssignmentRequest from '../../src/models/assignmentRequest/assignmentRequest';
 import User from '../../src/models/users/user';
-import UserSuscription from '../../src/models/suscriptionPlans/userSuscription';
 
 // Test data setup
 const USER_ID = new Types.ObjectId();
 const WORKER_ID = new Types.ObjectId();
-const PLAN_ID = new Types.ObjectId();
 const ASSIGNMENT_REQUEST_ID = new Types.ObjectId();
 
 describe('AssignmentRequest Service Tests', () => {
