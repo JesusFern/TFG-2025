@@ -23,7 +23,7 @@ import {
   IconLogout, 
   IconSettings,
   IconSun, 
-  IconMoon 
+  IconMoon
 } from '@tabler/icons-react';
 import logo from '../../assets/images/Logo-Nutroos.svg';
 import { useAuth } from '../../hooks/useAuth';
@@ -64,6 +64,7 @@ const Header: React.FC = () => {
   const navItems = [
     { label: 'Inicio', path: '/' },
     { label: 'Acerca de', path: '/acerca-de' },
+    { label: 'Profesionales', path: '/profesionales' },
     { label: 'Planes', path: '/planes-suscripcion' },
   ];
   

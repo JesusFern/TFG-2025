@@ -3,34 +3,47 @@ import { isValidUrl, isValidPhoneNumber } from '../../utils/mongoValidators';
 import { PasswordService } from '../../utils/passwordService';
 
 interface UserDocument extends mongoose.Document {
+  // ===== CAMPOS BÁSICOS (TODOS LOS ROLES) =====
   fullName: string;
   email: string;
   password: string;
   phoneNumber: string;
   role: 'admin' | 'worker' | 'user';
+  
+  // ===== CAMPOS COMPARTIDOS (USER Y WORKER) =====
   gender?: string;
   birthDate?: Date;
   profilePicture?: string | null;
+  
+  // ===== CAMPOS ESPECÍFICOS DE TRABAJADOR (role: 'worker') =====
   workerType?: string;
   biography?: string;
   availability?: string;
   isWorkerAvailable?: boolean;
   satisfactionRating?: number;
-  clientesAsignados?: mongoose.Types.ObjectId[];
+  clientesAsignados?: Array<{
+    clienteId: mongoose.Types.ObjectId;
+    tipoAsignacion: 'Nutricionista' | 'Entrenador personal';
+  }>;
+  
+  // ===== CAMPOS ESPECÍFICOS DE USUARIO (role: 'user') =====
   datosSaludYNutricion?: mongoose.Types.ObjectId;
   datosActividadFisica?: mongoose.Types.ObjectId;
   suscripcion?: mongoose.Types.ObjectId;
+  
+  // ===== CAMPOS DEL SISTEMA =====
   isNew: boolean;
 }
 
 const UserSchema = new mongoose.Schema({
+  // ===== CAMPOS BÁSICOS (TODOS LOS ROLES) =====
   fullName: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   phoneNumber: { type: String, required: true, validate: { validator: isValidPhoneNumber, message: 'Número de teléfono no válido' }},
   role: { type: String, enum: ['admin', 'worker', 'user'], default: 'user' },
   
-  // Campos que pueden variar según el rol
+  // ===== CAMPOS COMPARTIDOS (USER Y WORKER) =====
   gender: { 
     type: String, 
     enum: ['Masculino', 'Femenino', 'Otro']
@@ -62,7 +75,7 @@ const UserSchema = new mongoose.Schema({
     }
   },
   
-  // Campos específicos de Trabajador
+  // ===== CAMPOS ESPECÍFICOS DE TRABAJADOR (role: 'worker') =====
   workerType: {
     type: String,
     enum: ['Entrenador personal', 'Nutricionista', 'Nutricionista y Entrenador personal']
@@ -83,11 +96,19 @@ const UserSchema = new mongoose.Schema({
     max: 5
   },
   clientesAsignados: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    clienteId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    tipoAsignacion: {
+      type: String,
+      enum: ['Nutricionista', 'Entrenador personal'],
+      required: true
+    }
   }],
   
-  // Datos de usuarios normales
+  // ===== CAMPOS ESPECÍFICOS DE USUARIO (role: 'user') =====
   datosSaludYNutricion: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'DatosSaludYNutricion'
@@ -116,11 +137,12 @@ UserSchema.pre('save', async function (next) {
   }
 });
 
-// Validaciones según el rol usando pre validate
+// ===== VALIDACIONES SEGÚN EL ROL =====
 UserSchema.pre('validate', function (next) {
   const doc = this as UserDocument;
   
-  // Validaciones para usuarios normales (role: 'user')
+  // Validaciones para USUARIOS NORMALES (role: 'user')
+  // Campos obligatorios: gender, birthDate
   if (doc.role === 'user') {
     if (!doc.gender) {
       this.invalidate('gender', 'El género es obligatorio para usuarios');
@@ -130,7 +152,8 @@ UserSchema.pre('validate', function (next) {
     }
   }
   
-  // Validaciones para trabajadores (role: 'worker')
+  // Validaciones para TRABAJADORES (role: 'worker')
+  // Campos obligatorios: workerType, biography, availability, birthDate
   if (doc.role === 'worker') {
     if (!doc.workerType) {
       this.invalidate('workerType', 'El tipo de trabajador es obligatorio');
@@ -149,6 +172,7 @@ UserSchema.pre('validate', function (next) {
   next();
 });
 
+// ===== INICIALIZACIÓN DE CAMPOS POR ROL =====
 // Inicializar valor de satisfacción para trabajadores nuevos
 UserSchema.pre('save', function (next) {
   const doc = this as UserDocument;
@@ -160,11 +184,11 @@ UserSchema.pre('save', function (next) {
   next();
 });
 
-// Validación de consistencia de datos según el rol
+// ===== VALIDACIÓN DE CONSISTENCIA DE DATOS SEGÚN EL ROL =====
 UserSchema.pre('save', async function (next) {
   const doc = this as UserDocument;
   
-  // Establecer campos de worker a undefined si el rol es admin o user
+  // Limpiar campos de TRABAJADOR si el rol es admin o user
   if (doc.role === 'admin' || doc.role === 'user') {
     doc.clientesAsignados = undefined;
     doc.workerType = undefined;
@@ -173,12 +197,12 @@ UserSchema.pre('save', async function (next) {
     doc.isWorkerAvailable = undefined;
   }
 
-  // Solo usuarios pueden tener datos de salud, actividad física o suscripciones
+  // Solo USUARIOS pueden tener datos de salud, actividad física o suscripciones
   if (doc.role !== 'user' && (doc.datosSaludYNutricion || doc.datosActividadFisica || doc.suscripcion)) {
     return next(new Error('Solo los usuarios normales pueden tener datos de salud, actividad física o suscripciones'));
   }
   
-  // Solo workers pueden tener campos específicos de trabajador
+  // Solo TRABAJADORES pueden tener campos específicos de trabajador
   if (doc.role !== 'worker' && (doc.workerType || doc.biography || doc.availability || doc.isWorkerAvailable !== undefined)) {
     return next(new Error('Solo los trabajadores pueden tener campos de trabajador'));
   }
@@ -187,7 +211,7 @@ UserSchema.pre('save', async function (next) {
   if (doc.clientesAsignados && doc.clientesAsignados.length > 0) {
     try {
       const User = mongoose.model('User');
-      const clientesIds = doc.clientesAsignados;
+      const clientesIds = doc.clientesAsignados.map(cliente => cliente.clienteId);
       const clientes = await User.find({ _id: { $in: clientesIds } });
       
       // Verificar que todos los IDs encontrados corresponden a usuarios con rol 'user'

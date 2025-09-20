@@ -21,7 +21,8 @@ import {
   IconSettings,
   IconPlus,
   IconMessage,
-  IconChefHat
+  IconChefHat,
+  IconClipboardList
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -193,6 +194,16 @@ const DashboardPage: React.FC = () => {
       color: 'teal',
       onClick: () => navigate('/chat'),
       badge: 'En Vivo'
+    },
+    {
+      title: 'Solicitudes',
+      description: user?.role === 'worker' 
+        ? 'Gestiona las solicitudes de asignación que has recibido'
+        : 'Revisa el estado de tus solicitudes de asignación',
+      icon: <IconClipboardList size={32} />,
+      color: 'pink',
+      onClick: () => navigate('/solicitudes'),
+      badge: user?.role === 'worker' ? 'Recibidas' : 'Enviadas'
     }
   ];
 

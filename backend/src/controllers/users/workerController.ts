@@ -96,17 +96,32 @@ export const getAssignedClients = async (req: AuthenticatedRequest, res: Respons
       return;
     }
 
+    // Extraer los IDs de los clientes asignados
+    const clienteIds = worker.clientesAsignados?.map(assignment => assignment.clienteId) || [];
+    
     const clientes = await User.find(
-      { _id: { $in: worker.clientesAsignados } },
+      { _id: { $in: clienteIds } },
       { 
         password: 0, 
         __v: 0,
       }
     ).populate('datosSaludYNutricion datosActividadFisica');
 
+    // Mapear los clientes con su tipo de asignación correspondiente
+    const clientesConTipoAsignacion = clientes.map(cliente => {
+      const assignment = worker.clientesAsignados?.find(
+        assignment => assignment.clienteId.toString() === (cliente._id as unknown as string).toString()
+      );
+      
+      return {
+        ...(cliente.toObject ? cliente.toObject() : cliente),
+        tipoAsignacion: assignment?.tipoAsignacion
+      };
+    });
+
     res.status(200).json({
-      message: `Se encontraron ${clientes.length} clientes asignados`,
-      clientes
+      message: `Se encontraron ${clientesConTipoAsignacion.length} clientes asignados`,
+      clientes: clientesConTipoAsignacion
     });
   } catch (error: unknown) {
     const err = error as Error;

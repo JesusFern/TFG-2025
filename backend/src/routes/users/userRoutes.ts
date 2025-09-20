@@ -10,9 +10,11 @@ import {
   updateMyProfile,
   changeMyPassword,
   uploadProfilePhoto,
-  assignWorker
+  getTrabajadoresRol,
+  getAllAvailableWorkers,
+  checkUserSubscriptionStatus
 } from '../../controllers/users/userController';
-import { authenticateToken, authorizeUserOrAdmin } from '../../middlewares/authMiddleware';
+import { authenticateToken, authorizeUserOrAdmin, authorizeUserWithValidSubscription } from '../../middlewares/authMiddleware';
 import { validateRequest } from '../../middlewares/validationMiddleware';
 import { 
   loginValidator, 
@@ -21,8 +23,7 @@ import {
   step1Validator,
   step2Validator,
   step3Validator,
-  step4Validator,
-  assignWorkerValidator
+  step4Validator
 } from '../../validators/userValidators';
 
 const router = Router();
@@ -46,14 +47,19 @@ router.post('/validate-step/4', step4Validator, validateRequest, (req: Request, 
 });
 router.post('/login', loginValidator, validateRequest, loginUser);
 
+
 // Rutas protegidas para el usuario autenticado
 router.get('/me', authenticateToken, getMyProfile);
 router.put('/me', authenticateToken, updateMyProfile);
 router.patch('/me/password', authenticateToken, changeMyPassword);
 router.patch('/me/photo', authenticateToken, uploadProfilePhoto);
 
-
-router.post('/assign-worker', authenticateToken, assignWorkerValidator, validateRequest, assignWorker);
+// Rutas para gestión de trabajadores (disponibles en desarrollo y producción, no en tests)
+if (process.env.NODE_ENV !== 'test') {
+  router.get('/workers/available', getAllAvailableWorkers);
+  router.get('/available-workers-by-my-suscription', authenticateToken, authorizeUserWithValidSubscription, validateRequest, getTrabajadoresRol);
+  router.get('/subscription-status', authenticateToken, checkUserSubscriptionStatus);
+}
 
 // Rutas protegidas para administradores
 router.get('/', authenticateToken, getUsers);

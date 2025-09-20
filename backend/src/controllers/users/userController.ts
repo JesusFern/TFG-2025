@@ -6,6 +6,7 @@ import DatosActividadFisica from '../../models/users/datosActividadFisica';
 import { MongoError, AuthenticatedRequest } from '../../types';
 import { PasswordService } from '../../utils/passwordService';
 import { TokenService } from '../../utils/tokenService';
+import { UserService } from '../../service/users/userService';
 
 interface ValidationRequest extends Request {
   validationErrors?: Array<{
@@ -441,23 +442,67 @@ export const uploadProfilePhoto = async (req: AuthenticatedRequest, res: Respons
   }
 };
 
-export const assignWorker = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+
+export const getTrabajadoresRol = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
+    
     if (!userId) {
       res.status(401).json({ message: 'No autenticado' });
       return;
     }
 
-    const { workerId } = req.body;
+    const result = await UserService.getTrabajadoresRol(userId);
 
-    if (!workerId) {
-      res.status(400).json({ message: 'Es necesario proporcionar un ID de trabajador' });
-      return;
+    res.status(200).json({
+      success: true,
+      message: `Trabajadores disponibles para tu plan ${result.planType}`,
+      data: result
+    });
+
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Error al obtener trabajadores por rol:', err);
+    
+    // Determinar el código de estado según el tipo de error
+    let statusCode = 500;
+    if (err.message.includes('No tienes una suscripción activa') || 
+        err.message.includes('plan gratuito') || 
+        err.message.includes('expirado')) {
+      statusCode = 403;
+    } else if (err.message.includes('Tipo de plan no válido')) {
+      statusCode = 400;
     }
+    
+    res.status(statusCode).json({ 
+      message: err.message 
+    });
+  }
+};
 
-    if (!Types.ObjectId.isValid(workerId)) {
-      res.status(400).json({ message: 'ID de trabajador no válido' });
+export const getAllAvailableWorkers = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const workers = await UserService.getAllAvailableWorkers();
+
+    res.status(200).json(workers);
+
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Error al obtener trabajadores disponibles:', err);
+    res.status(500).json({ 
+      message: 'Error interno del servidor al obtener trabajadores',
+      error: err.message 
+    });
+  }
+};
+
+
+export const checkUserSubscriptionStatus = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      res.status(401).json({ message: 'No autenticado' });
       return;
     }
 
@@ -468,52 +513,19 @@ export const assignWorker = async (req: AuthenticatedRequest, res: Response): Pr
     }
 
     if (user.role !== 'user') {
-      res.status(403).json({ message: 'Solo los usuarios pueden asignarse a un trabajador' });
+      res.status(403).json({ message: 'Solo los usuarios pueden acceder a esta información' });
       return;
     }
 
-    const worker = await User.findById(workerId);
-    if (!worker) {
-      res.status(404).json({ message: 'Trabajador no encontrado' });
-      return;
-    }
+    const result = await UserService.checkUserSubscriptionStatus(userId);
 
-    if (worker.role !== 'worker') {
-      res.status(400).json({ message: 'El ID proporcionado no corresponde a un trabajador' });
-      return;
-    }
+    res.status(200).json(result);
 
-    if (!worker.isWorkerAvailable) {
-      res.status(400).json({ message: 'El trabajador seleccionado no está disponible actualmente' });
-      return;
-    }
-
-    if (worker.clientesAsignados && worker.clientesAsignados.some(clienteId => clienteId.toString() === userId)) {
-      res.status(400).json({ message: 'Ya estás asignado a este trabajador' });
-      return;
-    }
-
-    if (!worker.clientesAsignados) {
-      worker.clientesAsignados = [];
-    }
-    
-    worker.clientesAsignados.push(new Types.ObjectId(userId));
-    await worker.save();
-
-    res.status(200).json({ 
-      message: 'Te has asignado correctamente al trabajador',
-      worker: {
-        _id: worker._id,
-        fullName: worker.fullName,
-        email: worker.email,
-        workerType: worker.workerType,
-        profilePicture: worker.profilePicture
-      }
-    });
   } catch (error: unknown) {
     const err = error as Error;
+    console.error('Error al verificar estado de suscripción:', err);
     res.status(500).json({ 
-      message: 'Error interno del servidor al asignar el trabajador',
+      message: 'Error interno del servidor al verificar suscripción',
       error: err.message 
     });
   }

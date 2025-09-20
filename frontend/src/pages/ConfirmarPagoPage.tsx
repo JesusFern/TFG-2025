@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Container, Title, Text, Button, Group, Paper, Loader, Stack, ThemeIcon, Alert } from '@mantine/core';
-import { IconCheck, IconAlertCircle, IconInfoCircle } from '@tabler/icons-react';
+import { IconCheck, IconAlertCircle, IconInfoCircle, IconUsers } from '@tabler/icons-react';
 import Layout from '../components/layout/Layout';
 import { checkPaymentStatus, confirmPayment } from '../services/paymentService';
 import { notifications } from '@mantine/notifications';
@@ -126,8 +126,13 @@ const PaymentConfirmationPage: React.FC = () => {
                 <Button color="nutroos-green" onClick={() => navigate('/dashboard')}>
                   Ir a mi dashboard
                 </Button>
-                <Button variant="outline" color="nutroos-green" onClick={() => navigate('/perfil')}>
-                  Ver mi suscripción
+                <Button 
+                  variant="outline" 
+                  color="nutroos-green" 
+                  leftSection={<IconUsers size={16} />}
+                  onClick={() => navigate('/profesionales')}
+                >
+                  Ver profesionales disponibles
                 </Button>
               </Group>
             </Stack>

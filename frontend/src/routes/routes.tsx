@@ -66,6 +66,8 @@ import EditarRecetaPage from '../pages/EditarRecetaPage';
 import MisRecetasPage from '../pages/MisRecetasPage';
 import VerRecetaPage from '../pages/VerRecetaPage';
 import AcercaDePage from '../pages/AcercaDePage';
+import ProfessionalsPage from '../pages/ProfessionalsPage';
+import RequestsPage from '../pages/RequestsPage';
 import ClientTrainingPlansPage from '../pages/ClientTrainingPlansPage';
 import ClientTrainingPlanDetailPage from '../pages/ClientTrainingPlanDetailPage';
 import ClientTrainingSessionPage from '../pages/ClientTrainingSessionPage';
@@ -77,6 +79,7 @@ const AppRoutes: React.FC = () => {
       {/* Rutas públicas */}
       <Route path="/" element={<LandingPage />} />
       <Route path="/acerca-de" element={<AcercaDePage />} />
+      <Route path="/profesionales" element={<ProfessionalsPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/worker/login" element={<WorkerLoginPage />} />
@@ -130,6 +133,14 @@ const AppRoutes: React.FC = () => {
         <ProtectedRoute>
           <Layout>
             <ProfilePage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/solicitudes" element={
+        <ProtectedRoute>
+          <Layout>
+            <RequestsPage />
           </Layout>
         </ProtectedRoute>
       } />

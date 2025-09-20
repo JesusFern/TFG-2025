@@ -188,8 +188,14 @@ jest.mock('../../src/models/users/user', () => {
       role: 'worker',
       workerType: 'Nutricionista',
       clientesAsignados: [
-        new mongoose.Types.ObjectId('61681c5d5e349c001c1f5432'),
-        new mongoose.Types.ObjectId('61681c5d5e349c001c1f5433')
+        {
+          clienteId: new mongoose.Types.ObjectId('61681c5d5e349c001c1f5432'),
+          tipoAsignacion: 'Nutricionista'
+        },
+        {
+          clienteId: new mongoose.Types.ObjectId('61681c5d5e349c001c1f5433'),
+          tipoAsignacion: 'Nutricionista'
+        }
       ]
     })),
     find: jest.fn().mockImplementation(() => ({

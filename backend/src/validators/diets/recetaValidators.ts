@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import logger from '../../utils/logger';
 import Receta from '../../models/diets/receta';
 import User from '../../models/users/user';
@@ -153,7 +154,8 @@ export const verificarPermisosAccesoReceta = async (
       const creador = await User.findById(receta.creador);
       if (creador && creador.clientesAsignados) {
         const esClienteAsignado = creador.clientesAsignados.some(
-          clienteId => clienteId.toString() === userId
+          (assignment: { clienteId: mongoose.Types.ObjectId; tipoAsignacion: string }) => 
+            assignment.clienteId.toString() === userId
         );
         if (esClienteAsignado) {
           return true;
