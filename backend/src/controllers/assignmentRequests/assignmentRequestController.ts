@@ -18,18 +18,34 @@ export const createAssignmentRequest = async (req: AuthenticatedRequest, res: Re
       return;
     }
 
+    // Validar y sanitizar trabajadorSolicitado
     if (!trabajadorSolicitado) {
       res.status(400).json({ message: 'El ID del trabajador es requerido' });
       return;
     }
 
-    if (!tipoAsignacion || !['Nutricionista', 'Entrenador personal'].includes(tipoAsignacion)) {
-      res.status(400).json({ message: 'El tipo de asignación es requerido y debe ser "Nutricionista" o "Entrenador personal"' });
+    // Asegurar que trabajadorSolicitado es un string válido
+    const sanitizedTrabajadorSolicitado = String(trabajadorSolicitado).trim();
+    if (!sanitizedTrabajadorSolicitado || sanitizedTrabajadorSolicitado.length === 0) {
+      res.status(400).json({ message: 'El ID del trabajador no es válido' });
+      return;
+    }
+
+    // Validar y sanitizar tipoAsignacion
+    if (!tipoAsignacion) {
+      res.status(400).json({ message: 'El tipo de asignación es requerido' });
+      return;
+    }
+
+    // Asegurar que tipoAsignacion es un string válido
+    const sanitizedTipoAsignacion = String(tipoAsignacion).trim();
+    if (!['Nutricionista', 'Entrenador personal'].includes(sanitizedTipoAsignacion)) {
+      res.status(400).json({ message: 'El tipo de asignación debe ser "Nutricionista" o "Entrenador personal"' });
       return;
     }
 
     // Verificar que el trabajador existe y es válido
-    const worker = await User.findById(trabajadorSolicitado);
+    const worker = await User.findById(sanitizedTrabajadorSolicitado);
     if (!worker || worker.role !== 'worker') {
       res.status(404).json({ message: 'Trabajador no encontrado' });
       return;
@@ -43,12 +59,12 @@ export const createAssignmentRequest = async (req: AuthenticatedRequest, res: Re
 
     // Verificar que el trabajador puede realizar el tipo de asignación solicitada
     const workerType = worker.workerType;
-    if (tipoAsignacion === 'Nutricionista' && workerType !== 'Nutricionista' && workerType !== 'Nutricionista y Entrenador personal') {
+    if (sanitizedTipoAsignacion === 'Nutricionista' && workerType !== 'Nutricionista' && workerType !== 'Nutricionista y Entrenador personal') {
       res.status(400).json({ message: 'El trabajador no puede realizar asignaciones como nutricionista' });
       return;
     }
     
-    if (tipoAsignacion === 'Entrenador personal' && workerType !== 'Entrenador personal' && workerType !== 'Nutricionista y Entrenador personal') {
+    if (sanitizedTipoAsignacion === 'Entrenador personal' && workerType !== 'Entrenador personal' && workerType !== 'Nutricionista y Entrenador personal') {
       res.status(400).json({ message: 'El trabajador no puede realizar asignaciones como entrenador personal' });
       return;
     }
@@ -86,15 +102,15 @@ export const createAssignmentRequest = async (req: AuthenticatedRequest, res: Re
     const planType = plan.tipoPlan;
     let isCompatible = false;
 
-    if (tipoAsignacion === 'Nutricionista') {
+    if (sanitizedTipoAsignacion === 'Nutricionista') {
       isCompatible = planType === 'Nutricion' || planType === 'Nutrición y entrenamiento personal';
-    } else if (tipoAsignacion === 'Entrenador personal') {
+    } else if (sanitizedTipoAsignacion === 'Entrenador personal') {
       isCompatible = planType === 'Entrenamiento personal' || planType === 'Nutrición y entrenamiento personal';
     }
 
     if (!isCompatible) {
       res.status(400).json({ 
-        message: `Tu plan de suscripción (${planType}) no incluye asignaciones como ${tipoAsignacion}` 
+        message: `Tu plan de suscripción (${planType}) no incluye asignaciones como ${sanitizedTipoAsignacion}` 
       });
       return;
     }
@@ -102,14 +118,14 @@ export const createAssignmentRequest = async (req: AuthenticatedRequest, res: Re
     // Verificar que el usuario no esté ya asignado a este trabajador para este tipo de asignación
     // Buscar en el trabajador si ya tiene este cliente asignado para este tipo
     const existingAssignment = await User.findOne({
-      _id: trabajadorSolicitado,
+      _id: sanitizedTrabajadorSolicitado,
       'clientesAsignados.clienteId': usuarioSolicitante,
-      'clientesAsignados.tipoAsignacion': tipoAsignacion
+      'clientesAsignados.tipoAsignacion': sanitizedTipoAsignacion
     });
 
     if (existingAssignment) {
       res.status(400).json({ 
-        message: `Ya estás asignado a este trabajador como ${tipoAsignacion}` 
+        message: `Ya estás asignado a este trabajador como ${sanitizedTipoAsignacion}` 
       });
       return;
     }
@@ -117,13 +133,13 @@ export const createAssignmentRequest = async (req: AuthenticatedRequest, res: Re
     // Verificar que no existe una solicitud previa para este tipo
     const existingRequest = await AssignmentRequest.findOne({
       usuarioSolicitante,
-      trabajadorSolicitado,
-      tipoAsignacion
+      trabajadorSolicitado: sanitizedTrabajadorSolicitado,
+      tipoAsignacion: sanitizedTipoAsignacion
     });
 
     if (existingRequest) {
       res.status(400).json({ 
-        message: `Ya tienes una solicitud para este trabajador como ${tipoAsignacion}` 
+        message: `Ya tienes una solicitud para este trabajador como ${sanitizedTipoAsignacion}` 
       });
       return;
     }
@@ -142,12 +158,12 @@ export const createAssignmentRequest = async (req: AuthenticatedRequest, res: Re
       if (plan.tipoPlan !== 'Nutrición y entrenamiento personal') {
         const existingRequestSameType = await AssignmentRequest.findOne({
           usuarioSolicitante,
-          tipoAsignacion
+          tipoAsignacion: sanitizedTipoAsignacion
         });
 
         if (existingRequestSameType) {
           res.status(400).json({ 
-            message: `Ya tienes una solicitud como ${tipoAsignacion} a otro trabajador` 
+            message: `Ya tienes una solicitud como ${sanitizedTipoAsignacion} a otro trabajador` 
           });
           return;
         }
@@ -156,12 +172,12 @@ export const createAssignmentRequest = async (req: AuthenticatedRequest, res: Re
       // Si no tiene suscripción, aplicar la restricción normal
       const existingRequestSameType = await AssignmentRequest.findOne({
         usuarioSolicitante,
-        tipoAsignacion
+        tipoAsignacion: sanitizedTipoAsignacion
       });
 
       if (existingRequestSameType) {
         res.status(400).json({ 
-          message: `Ya tienes una solicitud como ${tipoAsignacion} a otro trabajador` 
+          message: `Ya tienes una solicitud como ${sanitizedTipoAsignacion} a otro trabajador` 
         });
         return;
       }
@@ -170,8 +186,8 @@ export const createAssignmentRequest = async (req: AuthenticatedRequest, res: Re
     // Crear la nueva solicitud
     const assignmentRequest = new AssignmentRequest({
       usuarioSolicitante,
-      trabajadorSolicitado,
-      tipoAsignacion
+      trabajadorSolicitado: sanitizedTrabajadorSolicitado,
+      tipoAsignacion: sanitizedTipoAsignacion
     });
 
     await assignmentRequest.save();
@@ -361,8 +377,15 @@ export const checkAssignmentAvailability = async (req: AuthenticatedRequest, res
       return;
     }
 
+    // Sanitizar workerId
+    const sanitizedWorkerId = String(workerId).trim();
+    if (!sanitizedWorkerId || sanitizedWorkerId.length === 0) {
+      res.status(400).json({ message: 'ID de trabajador no es válido' });
+      return;
+    }
+
     // Verificar que el usuario no se está solicitando a sí mismo
-    if (userId === workerId) {
+    if (userId === sanitizedWorkerId) {
       res.status(400).json({ message: 'No puedes solicitarte a ti mismo' });
       return;
     }
@@ -388,7 +411,7 @@ export const checkAssignmentAvailability = async (req: AuthenticatedRequest, res
     }
 
     // Verificar que el trabajador existe
-    const worker = await User.findById(workerId);
+    const worker = await User.findById(sanitizedWorkerId);
     if (!worker || worker.role !== 'worker') {
       res.status(404).json({ message: 'Trabajador no encontrado' });
       return;
@@ -434,7 +457,7 @@ export const checkAssignmentAvailability = async (req: AuthenticatedRequest, res
         
         // Verificar si tiene solicitud pendiente como Nutricionista a ESTE trabajador específico
         const hasPendingNutritionistRequestToThisWorker = pendingRequests.some(
-          request => request.tipoAsignacion === 'Nutricionista' && request.trabajadorSolicitado.toString() === workerId
+          request => request.tipoAsignacion === 'Nutricionista' && request.trabajadorSolicitado.toString() === sanitizedWorkerId
         );
 
 
@@ -449,7 +472,7 @@ export const checkAssignmentAvailability = async (req: AuthenticatedRequest, res
         
         // Verificar si tiene solicitud pendiente como Entrenador personal a ESTE trabajador específico
         const hasPendingTrainerRequestToThisWorker = pendingRequests.some(
-          request => request.tipoAsignacion === 'Entrenador personal' && request.trabajadorSolicitado.toString() === workerId
+          request => request.tipoAsignacion === 'Entrenador personal' && request.trabajadorSolicitado.toString() === sanitizedWorkerId
         );
 
 
@@ -463,7 +486,7 @@ export const checkAssignmentAvailability = async (req: AuthenticatedRequest, res
         const isGloballyAssignedAsNutritionist = globalNutritionistAssignments.length > 0;
 
         const hasPendingNutritionistRequest = pendingRequests.some(
-          request => request.tipoAsignacion === 'Nutricionista' && request.trabajadorSolicitado.toString() === workerId
+          request => request.tipoAsignacion === 'Nutricionista' && request.trabajadorSolicitado.toString() === sanitizedWorkerId
         );
 
         if (!isGloballyAssignedAsNutritionist && !hasPendingNutritionistRequest) {
@@ -476,7 +499,7 @@ export const checkAssignmentAvailability = async (req: AuthenticatedRequest, res
         const isGloballyAssignedAsTrainer = globalTrainerAssignments.length > 0;
 
         const hasPendingTrainerRequest = pendingRequests.some(
-          request => request.tipoAsignacion === 'Entrenador personal' && request.trabajadorSolicitado.toString() === workerId
+          request => request.tipoAsignacion === 'Entrenador personal' && request.trabajadorSolicitado.toString() === sanitizedWorkerId
         );
 
         if (!isGloballyAssignedAsTrainer && !hasPendingTrainerRequest) {
