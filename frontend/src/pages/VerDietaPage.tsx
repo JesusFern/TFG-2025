@@ -28,7 +28,8 @@ import {
   IconClock,
   IconTarget,
   IconLeaf,
-  IconInfoCircle
+  IconExternalLink,
+  IconChefHat
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -69,6 +70,16 @@ const VerDietaPage: React.FC = () => {
   const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
   const [isMobileState, setIsMobileState] = useState(false);
   const [currentDayIndex, setCurrentDayIndex] = useState(0); // Para navegación de días en móvil
+
+  // Función para navegar a los detalles de una receta
+  const handleVerReceta = (recetaId: string) => {
+    navigate(`/recetas/${recetaId}`, {
+      state: {
+        fromDieta: true,
+        dietaId: dietaId
+      }
+    });
+  };
 
   // Efecto para detectar cambios de tamaño de pantalla
   useEffect(() => {
@@ -314,38 +325,77 @@ const VerDietaPage: React.FC = () => {
                           align="center"
                           p="sm"
                           style={{
-                            backgroundColor: isDark ? 'rgba(148, 163, 184, 0.05)' : 'rgba(148, 163, 184, 0.02)',
+                            backgroundColor: plato.receta 
+                              ? (isDark ? 'rgba(76, 175, 80, 0.06)' : 'rgba(76, 175, 80, 0.04)')
+                              : (isDark ? 'rgba(148, 163, 184, 0.05)' : 'rgba(148, 163, 184, 0.02)'),
                             borderRadius: '8px',
-                            border: '1px solid rgba(148, 163, 184, 0.1)'
+                            border: plato.receta 
+                              ? '1px solid rgba(76, 175, 80, 0.15)' 
+                              : '1px solid rgba(148, 163, 184, 0.1)',
+                            cursor: plato.receta ? 'pointer' : 'default',
+                            transition: plato.receta ? 'all 0.2s ease' : 'none',
+                            boxShadow: plato.receta ? '0 2px 4px rgba(76, 175, 80, 0.08)' : 'none'
+                          }}
+                          onClick={() => plato.receta && handleVerReceta(plato.receta)}
+                          onMouseEnter={(e) => {
+                            if (plato.receta) {
+                              e.currentTarget.style.backgroundColor = isDark ? 'rgba(76, 175, 80, 0.12)' : 'rgba(76, 175, 80, 0.06)';
+                              e.currentTarget.style.borderColor = 'rgba(76, 175, 80, 0.25)';
+                              e.currentTarget.style.boxShadow = '0 4px 8px rgba(76, 175, 80, 0.15)';
+                              e.currentTarget.style.transform = 'translateY(-1px)';
+                            }
+                          }}
+                          onMouseLeave={(e) => {
+                            if (plato.receta) {
+                              e.currentTarget.style.backgroundColor = isDark ? 'rgba(76, 175, 80, 0.06)' : 'rgba(76, 175, 80, 0.04)';
+                              e.currentTarget.style.borderColor = 'rgba(76, 175, 80, 0.15)';
+                              e.currentTarget.style.boxShadow = '0 2px 4px rgba(76, 175, 80, 0.08)';
+                              e.currentTarget.style.transform = 'translateY(0)';
+                            }
                           }}
                         >
                           <ThemeIcon 
                             size="sm" 
-                            color="gray" 
-                            variant="light"
+                            color={plato.receta ? "nutroos-green" : "gray"}
+                            variant={plato.receta ? "filled" : "light"}
                             radius="xl"
                           >
-                            <IconLeaf size={14} />
+                            {plato.receta ? <IconChefHat size={14} /> : <IconLeaf size={14} />}
                           </ThemeIcon>
                           <Text 
                             size="sm" 
                             fw={500}
                             style={{ 
                               flex: 1,
-                              color: isDark ? 'var(--mantine-color-gray-2)' : 'var(--mantine-color-gray-7)'
+                              color: plato.receta 
+                                ? 'rgba(76, 175, 80, 0.9)' 
+                                : (isDark ? 'var(--mantine-color-gray-2)' : 'var(--mantine-color-gray-7)'),
+                              textDecoration: plato.receta ? 'underline' : 'none',
+                              textDecorationStyle: 'dotted' as const
                             }}
                           >
                             {plato.nombre || 'Plato sin nombre'}
+                            {plato.receta && (
+                              <Text component="span" size="xs" ml="xs" style={{ color: 'rgba(76, 175, 80, 0.8)' }}>
+                                (Receta disponible)
+                              </Text>
+                            )}
                           </Text>
                           {plato.receta && (
-                            <ThemeIcon 
-                              size="sm" 
-                              color="gray" 
-                              variant="light"
-                              radius="xl"
-                            >
-                              <IconInfoCircle size={12} />
-                            </ThemeIcon>
+                            <Tooltip label="Ver detalles de la receta">
+                              <ThemeIcon 
+                                size="sm" 
+                                color="green" 
+                                variant="light"
+                                radius="xl"
+                                style={{ 
+                                  backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                                  border: '1px solid rgba(76, 175, 80, 0.2)'
+                                }}
+                              >
+                                <IconExternalLink size={12} />
+                              </ThemeIcon>
+                            </Tooltip>
                           )}
                         </Group>
                       ))}
@@ -810,15 +860,43 @@ const VerDietaPage: React.FC = () => {
                                   gap="xs"
                                   align="center"
                                   p="xs"
-                                  style={styles.plateCard(isDark)}
+                                  style={{
+                                    ...styles.plateCard(isDark),
+                                    backgroundColor: plato.receta 
+                                      ? (isDark ? 'rgba(76, 175, 80, 0.06)' : 'rgba(76, 175, 80, 0.04)')
+                                      : undefined,
+                                    border: plato.receta 
+                                      ? '1px solid rgba(76, 175, 80, 0.15)' 
+                                      : undefined,
+                                    cursor: plato.receta ? 'pointer' : 'default',
+                                    transition: plato.receta ? 'all 0.2s ease' : 'none',
+                                    boxShadow: plato.receta ? '0 1px 3px rgba(76, 175, 80, 0.08)' : 'none'
+                                  }}
+                                  onClick={() => plato.receta && handleVerReceta(plato.receta)}
+                                  onMouseEnter={(e) => {
+                                    if (plato.receta) {
+                                      e.currentTarget.style.backgroundColor = isDark ? 'rgba(76, 175, 80, 0.12)' : 'rgba(76, 175, 80, 0.06)';
+                                      e.currentTarget.style.borderColor = 'rgba(76, 175, 80, 0.25)';
+                                      e.currentTarget.style.boxShadow = '0 2px 6px rgba(76, 175, 80, 0.15)';
+                                      e.currentTarget.style.transform = 'translateY(-1px)';
+                                    }
+                                  }}
+                                  onMouseLeave={(e) => {
+                                    if (plato.receta) {
+                                      e.currentTarget.style.backgroundColor = isDark ? 'rgba(76, 175, 80, 0.06)' : 'rgba(76, 175, 80, 0.04)';
+                                      e.currentTarget.style.borderColor = 'rgba(76, 175, 80, 0.15)';
+                                      e.currentTarget.style.boxShadow = '0 1px 3px rgba(76, 175, 80, 0.08)';
+                                      e.currentTarget.style.transform = 'translateY(0)';
+                                    }
+                                  }}
                                 >
                                   <ThemeIcon 
                                     size="xs" 
-                                    color="gray" 
-                                    variant="light"
+                                    color={plato.receta ? "nutroos-green" : "gray"}
+                                    variant={plato.receta ? "filled" : "light"}
                                     radius="xl"
                                   >
-                                    <IconLeaf size={10} />
+                                    {plato.receta ? <IconChefHat size={10} /> : <IconLeaf size={10} />}
                                   </ThemeIcon>
                                   <Text 
                                     size="xs" 
@@ -826,20 +904,30 @@ const VerDietaPage: React.FC = () => {
                                     lineClamp={1} 
                                     style={{ 
                                       flex: 1,
-                                      color: isDark ? 'var(--mantine-color-gray-2)' : 'var(--mantine-color-gray-7)'
+                                      color: plato.receta 
+                                        ? 'rgba(76, 175, 80, 0.9)' 
+                                        : (isDark ? 'var(--mantine-color-gray-2)' : 'var(--mantine-color-gray-7)'),
+                                      textDecoration: plato.receta ? 'underline' : 'none',
+                                      textDecorationStyle: 'dotted' as const
                                     }}
                                   >
                                     {plato.nombre || 'Plato sin nombre'}
                                   </Text>
                                   {plato.receta && (
-                                    <ThemeIcon 
-                                      size="xs" 
-                                      color="gray" 
-                                      variant="light"
-                                      radius="xl"
-                                    >
-                                      <IconInfoCircle size={8} />
-                                    </ThemeIcon>
+                                    <Tooltip label="Ver detalles de la receta">
+                                      <ThemeIcon 
+                                        size="xs" 
+                                        color="green" 
+                                        variant="light"
+                                        radius="xl"
+                                        style={{ 
+                                          backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                                          border: '1px solid rgba(76, 175, 80, 0.2)'
+                                        }}
+                                      >
+                                        <IconExternalLink size={8} />
+                                      </ThemeIcon>
+                                    </Tooltip>
                                   )}
                                 </Group>
                               ))}
