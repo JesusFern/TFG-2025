@@ -744,7 +744,7 @@ const VerDietaPage: React.FC = () => {
                     <Text fw={700} c={isDark ? "gray.2" : "gray.7"} size={isMobileState ? "xs" : "sm"} ta="center">
                       {dayInfo.weekDayName}
                     </Text>
-                    <Text size={isMobileState ? "xs" : "xs"} c="dimmed" ta="center">
+                    <Text size={isMobileState ? "xs" : "sm"} c="dimmed" ta="center">
                       {dayInfo.fechaFormateada}
                     </Text>
                   </th>
