@@ -34,15 +34,6 @@ export async function crearCitaService(datos: CrearCitaData): Promise<ICita> {
       throw new Error('El usuario seleccionado no es un profesional');
     }
 
-    // Verificar que el cliente tiene asignado a este profesional
-    if (profesional.clientesAsignados && profesional.clientesAsignados.length > 0) {
-      const clienteAsignado = profesional.clientesAsignados.find(
-        cliente => cliente.clienteId.toString() === datos.cliente.toString()
-      );
-      if (!clienteAsignado) {
-        throw new Error('Este profesional no está asignado a este cliente');
-      }
-    }
 
     // Crear la cita
     const cita = new Cita({
@@ -169,13 +160,14 @@ export async function actualizarCitaService(
       throw new Error('Cita no encontrada');
     }
 
-    // Verificar que la cita puede ser editada
-    if (cita.estado === 'completada') {
-      throw new Error('No se puede editar una cita completada');
+    // Verificar que la cita puede ser editada (solo citas pendientes)
+    if (cita.estado !== 'pendiente') {
+      throw new Error('Solo se pueden editar citas en estado pendiente');
     }
 
-    // Actualizar campos
+    // Actualizar campos (siempre establecer estado como pendiente al editar)
     Object.assign(cita, datos);
+    cita.estado = 'pendiente';
     
     if (datos.fecha) {
       cita.fecha = new Date(datos.fecha);
@@ -265,7 +257,7 @@ export async function reagendarCitaService(
     fechaCita.setHours(hora, minutos, 0, 0);
     const ahora = new Date();
     
-    if (fechaCita < ahora || ['completada', 'cancelada'].includes(cita.estado)) {
+    if (fechaCita < ahora || ['completada', 'cancelada', 'reagendada'].includes(cita.estado)) {
       throw new Error('Esta cita no puede ser reagendada');
     }
 

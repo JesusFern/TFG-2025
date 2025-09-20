@@ -496,6 +496,41 @@ export const getAllAvailableWorkers = async (req: Request, res: Response): Promi
   }
 };
 
+export const getWorkersAssignedToClient = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { clienteId } = req.params;
+
+    if (!Types.ObjectId.isValid(clienteId)) {
+      res.status(400).json({ message: 'ID de cliente inválido' });
+      return;
+    }
+
+    // Buscar trabajadores que tengan este cliente asignado
+    const workers = await User.find({
+      role: 'worker',
+      'clientesAsignados.clienteId': new Types.ObjectId(clienteId)
+    }).select('_id fullName email workerType');
+
+    // Mapear a formato ProfesionalCita
+    const profesionalesAsignados = workers.map(worker => ({
+      _id: (worker._id as Types.ObjectId).toString(),
+      fullName: worker.fullName,
+      email: worker.email,
+      workerType: worker.workerType
+    }));
+
+    res.status(200).json(profesionalesAsignados);
+
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Error al obtener trabajadores asignados:', err);
+    res.status(500).json({ 
+      message: 'Error interno del servidor al obtener trabajadores asignados',
+      error: err.message 
+    });
+  }
+};
+
 
 export const checkUserSubscriptionStatus = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {

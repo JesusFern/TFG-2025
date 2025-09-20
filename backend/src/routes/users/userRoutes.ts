@@ -12,6 +12,7 @@ import {
   uploadProfilePhoto,
   getTrabajadoresRol,
   getAllAvailableWorkers,
+  getWorkersAssignedToClient,
   checkUserSubscriptionStatus
 } from '../../controllers/users/userController';
 import { authenticateToken, authorizeUserOrAdmin, authorizeUserWithValidSubscription } from '../../middlewares/authMiddleware';
@@ -57,6 +58,7 @@ router.patch('/me/photo', authenticateToken, uploadProfilePhoto);
 // Rutas para gestión de trabajadores (disponibles en desarrollo y producción, no en tests)
 if (process.env.NODE_ENV !== 'test') {
   router.get('/workers/available', getAllAvailableWorkers);
+  router.get('/workers/assigned/:clienteId', authenticateToken, getWorkersAssignedToClient);
   router.get('/available-workers-by-my-suscription', authenticateToken, authorizeUserWithValidSubscription, validateRequest, getTrabajadoresRol);
   router.get('/subscription-status', authenticateToken, checkUserSubscriptionStatus);
 }
