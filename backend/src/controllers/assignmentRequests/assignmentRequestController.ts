@@ -1,6 +1,7 @@
 import { Response } from 'express';
-import AssignmentRequest from '../../models/users/assignmentRequest';
+import AssignmentRequest from '../../models/assignmentRequest/assignmentRequest';
 import User from '../../models/users/user';
+import UserSuscription from '../../models/suscriptionPlans/userSuscription';
 import { AuthenticatedRequest } from '../../types';
 
 interface MongoError extends Error {
@@ -9,7 +10,7 @@ interface MongoError extends Error {
 
 export const createAssignmentRequest = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
-    const { trabajadorSolicitado } = req.body;
+    const { trabajadorSolicitado, tipoAsignacion } = req.body;
     const usuarioSolicitante = req.user?.id;
 
     if (!usuarioSolicitante) {
@@ -19,6 +20,11 @@ export const createAssignmentRequest = async (req: AuthenticatedRequest, res: Re
 
     if (!trabajadorSolicitado) {
       res.status(400).json({ message: 'El ID del trabajador es requerido' });
+      return;
+    }
+
+    if (!tipoAsignacion || !['Nutricionista', 'Entrenador personal'].includes(tipoAsignacion)) {
+      res.status(400).json({ message: 'El tipo de asignación es requerido y debe ser "Nutricionista" o "Entrenador personal"' });
       return;
     }
 
@@ -35,34 +41,137 @@ export const createAssignmentRequest = async (req: AuthenticatedRequest, res: Re
       return;
     }
 
-    // Verificar que el usuario no esté ya asignado a este trabajador
-    const existingAssignment = await User.findOne({
-      _id: usuarioSolicitante,
-      clientesAsignados: trabajadorSolicitado
-    });
-
-    if (existingAssignment) {
-      res.status(400).json({ message: 'Ya estás asignado a este trabajador' });
+    // Verificar que el trabajador puede realizar el tipo de asignación solicitada
+    const workerType = worker.workerType;
+    if (tipoAsignacion === 'Nutricionista' && workerType !== 'Nutricionista' && workerType !== 'Nutricionista y Entrenador personal') {
+      res.status(400).json({ message: 'El trabajador no puede realizar asignaciones como nutricionista' });
+      return;
+    }
+    
+    if (tipoAsignacion === 'Entrenador personal' && workerType !== 'Entrenador personal' && workerType !== 'Nutricionista y Entrenador personal') {
+      res.status(400).json({ message: 'El trabajador no puede realizar asignaciones como entrenador personal' });
       return;
     }
 
-    // Verificar que no existe una solicitud pendiente previa
+    // Verificar que el usuario tiene un plan de suscripción compatible con el tipo de asignación
+    const userSuscription = await UserSuscription.findOne({ userId: usuarioSolicitante })
+      .populate('planId');
+    
+    if (!userSuscription) {
+      res.status(400).json({ message: 'No tienes una suscripción activa' });
+      return;
+    }
+
+    const plan = userSuscription.planId as unknown as {
+      tipoPrecio: string;
+      tipoPlan: string;
+    };
+    
+    // Verificar si la suscripción está activa (no expirada)
+    const now = new Date();
+    const isExpired = userSuscription.fechaFin < now;
+
+    if (isExpired) {
+      res.status(400).json({ message: 'Tu suscripción ha expirado' });
+      return;
+    }
+
+    // Verificar si tiene un plan de pago (no gratuito)
+    if (plan.tipoPrecio === 'Gratuito') {
+      res.status(400).json({ message: 'Necesitas una suscripción de pago para solicitar asignaciones' });
+      return;
+    }
+
+    // Verificar compatibilidad del tipo de asignación con el plan
+    const planType = plan.tipoPlan;
+    let isCompatible = false;
+
+    if (tipoAsignacion === 'Nutricionista') {
+      isCompatible = planType === 'Nutricion' || planType === 'Nutrición y entrenamiento personal';
+    } else if (tipoAsignacion === 'Entrenador personal') {
+      isCompatible = planType === 'Entrenamiento personal' || planType === 'Nutrición y entrenamiento personal';
+    }
+
+    if (!isCompatible) {
+      res.status(400).json({ 
+        message: `Tu plan de suscripción (${planType}) no incluye asignaciones como ${tipoAsignacion}` 
+      });
+      return;
+    }
+
+    // Verificar que el usuario no esté ya asignado a este trabajador para este tipo de asignación
+    // Buscar en el trabajador si ya tiene este cliente asignado para este tipo
+    const existingAssignment = await User.findOne({
+      _id: trabajadorSolicitado,
+      'clientesAsignados.clienteId': usuarioSolicitante,
+      'clientesAsignados.tipoAsignacion': tipoAsignacion
+    });
+
+    if (existingAssignment) {
+      res.status(400).json({ 
+        message: `Ya estás asignado a este trabajador como ${tipoAsignacion}` 
+      });
+      return;
+    }
+
+    // Verificar que no existe una solicitud previa para este tipo
     const existingRequest = await AssignmentRequest.findOne({
       usuarioSolicitante,
       trabajadorSolicitado,
-      estado: 'pendiente'
+      tipoAsignacion
     });
 
     if (existingRequest) {
-      res.status(400).json({ message: 'Ya tienes una solicitud pendiente para este trabajador' });
+      res.status(400).json({ 
+        message: `Ya tienes una solicitud para este trabajador como ${tipoAsignacion}` 
+      });
       return;
+    }
+
+    // Verificación adicional: buscar cualquier solicitud del mismo tipo (incluso a otros trabajadores)
+    // Solo aplicar esta restricción si el usuario NO tiene suscripción completa
+    const userSuscriptionForRestriction = await UserSuscription.findOne({ userId: usuarioSolicitante })
+      .populate('planId');
+    
+    if (userSuscriptionForRestriction) {
+      const plan = userSuscriptionForRestriction.planId as unknown as {
+        tipoPlan: string;
+      };
+      
+      // Si el usuario tiene suscripción completa, puede tener múltiples asignaciones
+      if (plan.tipoPlan !== 'Nutrición y entrenamiento personal') {
+        const existingRequestSameType = await AssignmentRequest.findOne({
+          usuarioSolicitante,
+          tipoAsignacion
+        });
+
+        if (existingRequestSameType) {
+          res.status(400).json({ 
+            message: `Ya tienes una solicitud como ${tipoAsignacion} a otro trabajador` 
+          });
+          return;
+        }
+      }
+    } else {
+      // Si no tiene suscripción, aplicar la restricción normal
+      const existingRequestSameType = await AssignmentRequest.findOne({
+        usuarioSolicitante,
+        tipoAsignacion
+      });
+
+      if (existingRequestSameType) {
+        res.status(400).json({ 
+          message: `Ya tienes una solicitud como ${tipoAsignacion} a otro trabajador` 
+        });
+        return;
+      }
     }
 
     // Crear la nueva solicitud
     const assignmentRequest = new AssignmentRequest({
       usuarioSolicitante,
       trabajadorSolicitado,
-      estado: 'pendiente'
+      tipoAsignacion
     });
 
     await assignmentRequest.save();
@@ -82,64 +191,10 @@ export const createAssignmentRequest = async (req: AuthenticatedRequest, res: Re
     console.error('Error al crear solicitud de asignación:', error);
     
     if ((error as MongoError).code === 11000) {
-      res.status(400).json({ message: 'Ya tienes una solicitud pendiente para este trabajador' });
+      res.status(400).json({ message: 'Ya tienes una solicitud pendiente de este tipo para este trabajador' });
       return;
     }
     
-    res.status(500).json({ message: 'Error interno del servidor' });
-  }
-};
-
-export const getAssignmentRequestsByUser = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  try {
-    const userId = req.user?.id;
-
-    if (!userId) {
-      res.status(401).json({ message: 'Usuario no autenticado' });
-      return;
-    }
-
-    const assignmentRequests = await AssignmentRequest.find({
-      usuarioSolicitante: userId
-    }).populate([
-      { path: 'usuarioSolicitante', select: 'fullName email' },
-      { path: 'trabajadorSolicitado', select: 'fullName email workerType biography' }
-    ]).sort({ createdAt: -1 });
-
-    res.json({
-      message: 'Solicitudes de asignación obtenidas exitosamente',
-      assignmentRequests
-    });
-
-  } catch (error) {
-    console.error('Error al obtener solicitudes de asignación:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
-  }
-};
-
-export const getAssignmentRequestsByWorker = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  try {
-    const workerId = req.user?.id;
-
-    if (!workerId) {
-      res.status(401).json({ message: 'Usuario no autenticado' });
-      return;
-    }
-
-    const assignmentRequests = await AssignmentRequest.find({
-      trabajadorSolicitado: workerId
-    }).populate([
-      { path: 'usuarioSolicitante', select: 'fullName email' },
-      { path: 'trabajadorSolicitado', select: 'fullName email workerType' }
-    ]).sort({ createdAt: -1 });
-
-    res.json({
-      message: 'Solicitudes de asignación obtenidas exitosamente',
-      assignmentRequests
-    });
-
-  } catch (error) {
-    console.error('Error al obtener solicitudes de asignación:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
@@ -173,69 +228,41 @@ export const updateAssignmentRequestStatus = async (req: AuthenticatedRequest, r
       return;
     }
 
-    // Verificar que la solicitud está pendiente
-    if (assignmentRequest.estado !== 'pendiente') {
-      res.status(400).json({ message: 'Esta solicitud ya ha sido procesada' });
-      return;
-    }
-
-    // Actualizar el estado
-    assignmentRequest.estado = estado;
-    await assignmentRequest.save();
-
-    // Si se acepta la solicitud, asignar el usuario al trabajador
     if (estado === 'aceptada') {
+      // Si se acepta la solicitud, asignar el usuario al trabajador
       await User.findByIdAndUpdate(
         assignmentRequest.trabajadorSolicitado,
-        { $addToSet: { clientesAsignados: assignmentRequest.usuarioSolicitante } }
+        { 
+          $addToSet: { 
+            clientesAsignados: {
+              clienteId: assignmentRequest.usuarioSolicitante,
+              tipoAsignacion: assignmentRequest.tipoAsignacion
+            }
+          } 
+        }
       );
+
+      // Eliminar la solicitud ya que se ha procesado
+      await AssignmentRequest.findByIdAndDelete(requestId);
+
+      res.json({
+        message: 'Solicitud de asignación aceptada exitosamente'
+      });
+    } else {
+      // Si se rechaza, simplemente eliminar la solicitud
+      await AssignmentRequest.findByIdAndDelete(requestId);
+
+      res.json({
+        message: 'Solicitud de asignación rechazada exitosamente'
+      });
     }
 
-    // Poblar los datos para la respuesta
-    await assignmentRequest.populate([
-      { path: 'usuarioSolicitante', select: 'fullName email' },
-      { path: 'trabajadorSolicitado', select: 'fullName email workerType' }
-    ]);
-
-    res.json({
-      message: `Solicitud de asignación ${estado} exitosamente`,
-      assignmentRequest
-    });
-
   } catch (error) {
-    console.error('Error al actualizar estado de solicitud:', error);
+    console.error('Error al procesar solicitud:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };
 
-export const getPendingAssignmentRequestsByWorker = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
-  try {
-    const workerId = req.user?.id;
-
-    if (!workerId) {
-      res.status(401).json({ message: 'Usuario no autenticado' });
-      return;
-    }
-
-    const assignmentRequests = await AssignmentRequest.find({
-      trabajadorSolicitado: workerId,
-      estado: 'pendiente'
-    }).populate([
-      { path: 'usuarioSolicitante', select: 'fullName email' },
-      { path: 'trabajadorSolicitado', select: 'fullName email workerType' }
-    ]).sort({ createdAt: -1 });
-
-    res.json({
-      message: 'Solicitudes pendientes obtenidas exitosamente',
-      assignmentRequests,
-      count: assignmentRequests.length
-    });
-
-  } catch (error) {
-    console.error('Error al obtener solicitudes pendientes:', error);
-    res.status(500).json({ message: 'Error interno del servidor' });
-  }
-};
 
 export const cancelAssignmentRequest = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -260,11 +287,6 @@ export const cancelAssignmentRequest = async (req: AuthenticatedRequest, res: Re
       return;
     }
 
-    // Verificar que la solicitud está pendiente
-    if (assignmentRequest.estado !== 'pendiente') {
-      res.status(400).json({ message: 'Solo se pueden cancelar solicitudes pendientes' });
-      return;
-    }
 
     // Eliminar la solicitud
     await AssignmentRequest.findByIdAndDelete(requestId);
@@ -275,6 +297,203 @@ export const cancelAssignmentRequest = async (req: AuthenticatedRequest, res: Re
 
   } catch (error) {
     console.error('Error al cancelar solicitud de asignación:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
+export const getRequestsByRole = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const userRole = req.user?.role;
+
+    if (!userId) {
+      res.status(401).json({ message: 'Usuario no autenticado' });
+      return;
+    }
+
+    let requests;
+
+    if (userRole === 'worker') {
+      // Para trabajadores: obtener solicitudes dirigidas a ellos
+      requests = await AssignmentRequest.find({
+        trabajadorSolicitado: userId
+      }).populate([
+        { path: 'usuarioSolicitante', select: 'fullName email profilePicture' },
+        { path: 'trabajadorSolicitado', select: 'fullName email workerType' }
+      ]).sort({ createdAt: -1 });
+    } else if (userRole === 'user') {
+      // Para usuarios: obtener sus propias solicitudes
+      requests = await AssignmentRequest.find({
+        usuarioSolicitante: userId
+      }).populate([
+        { path: 'usuarioSolicitante', select: 'fullName email profilePicture' },
+        { path: 'trabajadorSolicitado', select: 'fullName email workerType profilePicture' }
+      ]).sort({ createdAt: -1 });
+    } else {
+      res.status(403).json({ message: 'Acceso denegado' });
+      return;
+    }
+
+    res.json({
+      message: 'Solicitudes obtenidas exitosamente',
+      requests,
+      count: requests.length
+    });
+
+  } catch (error) {
+    console.error('Error al obtener solicitudes por rol:', error);
+    res.status(500).json({ message: 'Error interno del servidor' });
+  }
+};
+
+export const checkAssignmentAvailability = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    const { workerId } = req.params;
+
+    if (!userId) {
+      res.status(401).json({ message: 'Usuario no autenticado' });
+      return;
+    }
+
+    if (!workerId) {
+      res.status(400).json({ message: 'ID de trabajador es requerido' });
+      return;
+    }
+
+    // Verificar que el usuario no se está solicitando a sí mismo
+    if (userId === workerId) {
+      res.status(400).json({ message: 'No puedes solicitarte a ti mismo' });
+      return;
+    }
+
+    // Verificar que el usuario tiene una suscripción activa
+    const userSuscription = await UserSuscription.findOne({ userId })
+      .populate('planId');
+    
+    if (!userSuscription) {
+      res.status(400).json({ message: 'No tienes una suscripción activa' });
+      return;
+    }
+
+    const plan = userSuscription.planId as unknown as {
+      tipoPlan: string;
+    };
+
+    // Verificar que la suscripción está activa
+    const now = new Date();
+    if (userSuscription.fechaFin < now) {
+      res.status(400).json({ message: 'Tu suscripción ha expirado' });
+      return;
+    }
+
+    // Verificar que el trabajador existe
+    const worker = await User.findById(workerId);
+    if (!worker || worker.role !== 'worker') {
+      res.status(404).json({ message: 'Trabajador no encontrado' });
+      return;
+    }
+
+    // Verificar que el trabajador está disponible
+    if (worker.isWorkerAvailable === false) {
+      res.status(400).json({ message: 'El trabajador no está disponible' });
+      return;
+    }
+
+
+    // Obtener todas las asignaciones del usuario como nutricionista (global)
+    const globalNutritionistAssignments = await User.find({
+      'clientesAsignados.clienteId': userId,
+      'clientesAsignados.tipoAsignacion': 'Nutricionista'
+    });
+
+    // Obtener todas las asignaciones del usuario como entrenador (global)
+    const globalTrainerAssignments = await User.find({
+      'clientesAsignados.clienteId': userId,
+      'clientesAsignados.tipoAsignacion': 'Entrenador personal'
+    });
+
+
+    // Obtener solicitudes pendientes del usuario
+    const pendingRequests = await AssignmentRequest.find({
+      usuarioSolicitante: userId,
+      estado: 'pendiente'
+    });
+
+
+    // Determinar qué tipos de asignación puede solicitar
+    const availableTypes: string[] = [];
+    const workerType = worker.workerType;
+
+    // Verificar compatibilidad con el plan
+    if (plan.tipoPlan === 'Nutrición y entrenamiento personal') {
+      // Puede solicitar ambos tipos si el trabajador los soporta
+      if (workerType === 'Nutricionista' || workerType === 'Nutricionista y Entrenador personal') {
+        // Verificar si ya está asignado como Nutricionista GLOBALMENTE (a cualquier trabajador)
+        const isGloballyAssignedAsNutritionist = globalNutritionistAssignments.length > 0;
+        
+        // Verificar si tiene solicitud pendiente como Nutricionista a ESTE trabajador específico
+        const hasPendingNutritionistRequestToThisWorker = pendingRequests.some(
+          request => request.tipoAsignacion === 'Nutricionista' && request.trabajadorSolicitado.toString() === workerId
+        );
+
+
+        if (!isGloballyAssignedAsNutritionist && !hasPendingNutritionistRequestToThisWorker) {
+          availableTypes.push('Nutricionista');
+        }
+      }
+
+      if (workerType === 'Entrenador personal' || workerType === 'Nutricionista y Entrenador personal') {
+        // Verificar si ya está asignado como Entrenador personal GLOBALMENTE (a cualquier trabajador)
+        const isGloballyAssignedAsTrainer = globalTrainerAssignments.length > 0;
+        
+        // Verificar si tiene solicitud pendiente como Entrenador personal a ESTE trabajador específico
+        const hasPendingTrainerRequestToThisWorker = pendingRequests.some(
+          request => request.tipoAsignacion === 'Entrenador personal' && request.trabajadorSolicitado.toString() === workerId
+        );
+
+
+        if (!isGloballyAssignedAsTrainer && !hasPendingTrainerRequestToThisWorker) {
+          availableTypes.push('Entrenador personal');
+        }
+      }
+    } else if (plan.tipoPlan === 'Nutricion') {
+      if (workerType === 'Nutricionista' || workerType === 'Nutricionista y Entrenador personal') {
+        // Verificar si ya está asignado como Nutricionista GLOBALMENTE
+        const isGloballyAssignedAsNutritionist = globalNutritionistAssignments.length > 0;
+
+        const hasPendingNutritionistRequest = pendingRequests.some(
+          request => request.tipoAsignacion === 'Nutricionista' && request.trabajadorSolicitado.toString() === workerId
+        );
+
+        if (!isGloballyAssignedAsNutritionist && !hasPendingNutritionistRequest) {
+          availableTypes.push('Nutricionista');
+        }
+      }
+    } else if (plan.tipoPlan === 'Entrenamiento personal') {
+      if (workerType === 'Entrenador personal' || workerType === 'Nutricionista y Entrenador personal') {
+        // Verificar si ya está asignado como Entrenador personal GLOBALMENTE
+        const isGloballyAssignedAsTrainer = globalTrainerAssignments.length > 0;
+
+        const hasPendingTrainerRequest = pendingRequests.some(
+          request => request.tipoAsignacion === 'Entrenador personal' && request.trabajadorSolicitado.toString() === workerId
+        );
+
+        if (!isGloballyAssignedAsTrainer && !hasPendingTrainerRequest) {
+          availableTypes.push('Entrenador personal');
+        }
+      }
+    }
+
+    res.json({
+      message: 'Disponibilidad de asignación verificada',
+      availableTypes,
+      workerType,
+      userPlan: plan.tipoPlan
+    });
+
+  } catch (error) {
+    console.error('Error al verificar disponibilidad de asignación:', error);
     res.status(500).json({ message: 'Error interno del servidor' });
   }
 };

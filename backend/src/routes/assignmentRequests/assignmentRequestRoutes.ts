@@ -8,11 +8,10 @@ import {
 } from '../../validators/assignmentRequestValidators';
 import {
   createAssignmentRequest,
-  getAssignmentRequestsByUser,
-  getAssignmentRequestsByWorker,
-  getPendingAssignmentRequestsByWorker,
   updateAssignmentRequestStatus,
-  cancelAssignmentRequest
+  cancelAssignmentRequest,
+  getRequestsByRole,
+  checkAssignmentAvailability
 } from '../../controllers/assignmentRequests/assignmentRequestController';
 
 const router = Router();
@@ -29,27 +28,17 @@ if (process.env.NODE_ENV !== 'test') {
   );
 }
 
-// Ruta para obtener las solicitudes de asignación del usuario autenticado
 router.get(
-  '/my-requests',
+  '/requests',
   authenticateToken,
-  getAssignmentRequestsByUser
+  getRequestsByRole
 );
 
-// Ruta para obtener las solicitudes de asignación dirigidas al trabajador autenticado
+// Ruta para verificar disponibilidad de asignación para un trabajador específico
 router.get(
-  '/worker-requests',
+  '/check-availability/:workerId',
   authenticateToken,
-  authorizeWorker,
-  getAssignmentRequestsByWorker
-);
-
-// Ruta para obtener solo las solicitudes pendientes del trabajador autenticado
-router.get(
-  '/worker-requests/pending',
-  authenticateToken,
-  authorizeWorker,
-  getPendingAssignmentRequestsByWorker
+  checkAssignmentAvailability
 );
 
 // Ruta para que un trabajador actualice el estado de una solicitud (aceptar/rechazar)

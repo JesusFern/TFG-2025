@@ -10,9 +10,9 @@ import {
   updateMyProfile,
   changeMyPassword,
   uploadProfilePhoto,
-  assignWorker,
   getTrabajadoresRol,
-  getAllAvailableWorkers
+  getAllAvailableWorkers,
+  checkUserSubscriptionStatus
 } from '../../controllers/users/userController';
 import { authenticateToken, authorizeUserOrAdmin, authorizeUserWithValidSubscription } from '../../middlewares/authMiddleware';
 import { validateRequest } from '../../middlewares/validationMiddleware';
@@ -23,8 +23,7 @@ import {
   step1Validator,
   step2Validator,
   step3Validator,
-  step4Validator,
-  assignWorkerValidator
+  step4Validator
 } from '../../validators/userValidators';
 
 const router = Router();
@@ -55,20 +54,17 @@ router.put('/me', authenticateToken, updateMyProfile);
 router.patch('/me/password', authenticateToken, changeMyPassword);
 router.patch('/me/photo', authenticateToken, uploadProfilePhoto);
 
-
-
+// Rutas para gestión de trabajadores (disponibles en desarrollo y producción, no en tests)
+if (process.env.NODE_ENV !== 'test') {
+  router.get('/workers/available', getAllAvailableWorkers);
+  router.get('/available-workers-by-my-suscription', authenticateToken, authorizeUserWithValidSubscription, validateRequest, getTrabajadoresRol);
+  router.get('/subscription-status', authenticateToken, checkUserSubscriptionStatus);
+}
 
 // Rutas protegidas para administradores
 router.get('/', authenticateToken, getUsers);
 router.get('/:id', authenticateToken, validateRequest, getUserById);
 router.put('/:id', authenticateToken, authorizeUserOrAdmin, validateRequest, updateUser);
 router.delete('/:id', authenticateToken, authorizeUserOrAdmin, validateRequest, deleteUser);
-
-// Rutas para gestión de trabajadores (solo en producción, no en tests)
-if (process.env.NODE_ENV !== 'test') {
-  router.get('/workers/available', validateRequest, getAllAvailableWorkers);
-  router.post('/assign-worker', authenticateToken, assignWorkerValidator, validateRequest, assignWorker);
-  router.get('/available-workers-by-my-suscription', authenticateToken, authorizeUserWithValidSubscription, validateRequest, getTrabajadoresRol);
-}
 
 export default router;

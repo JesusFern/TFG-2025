@@ -21,7 +21,10 @@ interface UserDocument extends mongoose.Document {
   availability?: string;
   isWorkerAvailable?: boolean;
   satisfactionRating?: number;
-  clientesAsignados?: mongoose.Types.ObjectId[];
+  clientesAsignados?: Array<{
+    clienteId: mongoose.Types.ObjectId;
+    tipoAsignacion: 'Nutricionista' | 'Entrenador personal';
+  }>;
   
   // ===== CAMPOS ESPECÍFICOS DE USUARIO (role: 'user') =====
   datosSaludYNutricion?: mongoose.Types.ObjectId;
@@ -93,8 +96,16 @@ const UserSchema = new mongoose.Schema({
     max: 5
   },
   clientesAsignados: [{
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
+    clienteId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User',
+      required: true
+    },
+    tipoAsignacion: {
+      type: String,
+      enum: ['Nutricionista', 'Entrenador personal'],
+      required: true
+    }
   }],
   
   // ===== CAMPOS ESPECÍFICOS DE USUARIO (role: 'user') =====
@@ -200,7 +211,7 @@ UserSchema.pre('save', async function (next) {
   if (doc.clientesAsignados && doc.clientesAsignados.length > 0) {
     try {
       const User = mongoose.model('User');
-      const clientesIds = doc.clientesAsignados;
+      const clientesIds = doc.clientesAsignados.map(cliente => cliente.clienteId);
       const clientes = await User.find({ _id: { $in: clientesIds } });
       
       // Verificar que todos los IDs encontrados corresponden a usuarios con rol 'user'
