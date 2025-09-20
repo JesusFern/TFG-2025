@@ -232,7 +232,7 @@ export const createAssignmentRequest = async (data: CreateAssignmentRequestData)
   } catch (error: unknown) {
     if (axios.isAxiosError(error)) {
       const axiosError = error as AxiosError<ApiError>;
-      throw new Error(axiosError.response?.data.message || 'Error al crear solicitud de asignación');
+      throw new Error(axiosError.response?.data.message || 'Error al procesar la solicitud de asignación');
     }
     throw new Error('Error de conexión al servidor');
   }

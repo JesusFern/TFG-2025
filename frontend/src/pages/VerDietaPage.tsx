@@ -32,8 +32,10 @@ import {
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { obtenerDieta } from '../services/dietService';
 import { Dieta, DayInfo } from '../types';
+import { useAuth } from '../hooks/useAuth';
 import { 
   DIAS_SEMANA, 
   parseFecha, 
@@ -50,7 +52,13 @@ const VerDietaPage: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { colorScheme } = useMantineColorScheme();
+  const { user } = useAuth();
   const isDark = colorScheme === 'dark';
+  
+  // Detectar si es móvil basado en el ancho de pantalla
+  const checkIsMobile = useCallback(() => {
+    return typeof window !== 'undefined' && window.innerWidth < 768; // 768px es el breakpoint md estándar
+  }, []);
   
   const [dieta, setDieta] = useState<Dieta | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -59,6 +67,29 @@ const VerDietaPage: React.FC = () => {
   const [currentWeek, setCurrentWeek] = useState(1);
   const [startDayOfWeek, setStartDayOfWeek] = useState<number>(0); // 0 = Lunes, 6 = Domingo
   const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
+  const [isMobileState, setIsMobileState] = useState(false);
+  const [currentDayIndex, setCurrentDayIndex] = useState(0); // Para navegación de días en móvil
+
+  // Efecto para detectar cambios de tamaño de pantalla
+  useEffect(() => {
+    const handleResize = () => {
+      const isMobile = checkIsMobile();
+      console.log('Resize detected - isMobile:', isMobile, 'width:', window.innerWidth);
+      setIsMobileState(isMobile);
+    };
+
+    // Establecer el estado inicial
+    const initialIsMobile = checkIsMobile();
+    console.log('Initial load - isMobile:', initialIsMobile, 'width:', window.innerWidth);
+    setIsMobileState(initialIsMobile);
+
+    // Agregar listener para resize
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [checkIsMobile]);
 
   // Procesar parámetros de URL (día seleccionado)
   const procesarParametrosURL = useCallback((data: Dieta) => {
@@ -96,10 +127,23 @@ const VerDietaPage: React.FC = () => {
 
   useEffect(() => {
     const cargarDieta = async () => {
-      if (!dietaId) return;
+      if (!dietaId) {
+        setError('ID de dieta no proporcionado');
+        setLoading(false);
+        return;
+      }
+      
+      // Validar formato de ObjectId de MongoDB (24 caracteres hexadecimales)
+      const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+      if (!objectIdRegex.test(dietaId)) {
+        setError('El ID de dieta proporcionado no es válido');
+        setLoading(false);
+        return;
+      }
       
       try {
         setLoading(true);
+        setError(null);
         const data = await obtenerDieta(dietaId);
         
         if (data.draftMode) {
@@ -135,6 +179,263 @@ const VerDietaPage: React.FC = () => {
 
   const handleWeekChange = (newWeek: number) => {
     setCurrentWeek(newWeek);
+  };
+
+  const handleDayChange = (newDayIndex: number) => {
+    setCurrentDayIndex(newDayIndex);
+  };
+
+  // Función para manejar la navegación del botón de volver
+  const handleBackNavigation = () => {
+    if (user?.role === 'user') {
+      // Si es cliente, volver a mis dietas
+      navigate('/mis-dietas');
+    } else {
+      // Si es worker, volver a dietas del cliente
+      try {
+        let clientId = null;
+        
+        if (dieta?.asignadaA && Array.isArray(dieta.asignadaA) && dieta.asignadaA.length > 0) {
+          const clientData = dieta.asignadaA[0];
+          
+          if (typeof clientData === 'string') {
+            clientId = clientData;
+          } 
+          else if (typeof clientData === 'object' && clientData !== null) {
+            type ClientObject = { _id?: string; id?: string; };
+            const clientObj = clientData as unknown as ClientObject;
+            
+            if (clientObj._id) {
+              clientId = clientObj._id;
+            } else if (clientObj.id) {
+              clientId = clientObj.id;
+            } else {
+              clientId = String(clientData);
+            }
+          }
+          else if (clientData) {
+            clientId = String(clientData);
+          }
+        }
+        
+        if (clientId) {
+          navigate(`/worker/dashboard-clients/${clientId}/diets`);
+        } else {
+          navigate(-1);
+        }
+      } catch (err) {
+        console.error("Error al navegar:", err);
+        navigate(-1);
+      }
+    }
+  };
+
+  // Función para renderizar la vista móvil (un día a la vez)
+  const renderMobileView = () => {
+    if (!dieta || !fechaInicio) return null;
+
+    const totalDays = dieta.dias.length;
+    const currentDay = dieta.dias[currentDayIndex];
+    const currentDate = new Date(fechaInicio);
+    currentDate.setDate(currentDate.getDate() + currentDayIndex);
+    
+    const dayName = DIAS_SEMANA[currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1];
+    const formattedDate = format(currentDate, "d 'de' MMMM", { locale: es });
+
+    return (
+      <Container size="sm" py="md" px="sm">
+        {/* Navegación de días */}
+        <Paper p="md" mb="md" withBorder>
+          <Group justify="space-between" align="center">
+            <Button 
+              size="sm" 
+              variant="subtle" 
+              color="gray" 
+              leftSection={<IconChevronLeft size={16} />} 
+              disabled={currentDayIndex <= 0}
+              onClick={() => handleDayChange(currentDayIndex - 1)}
+            >
+              Anterior
+            </Button>
+            
+            <Stack gap="xs" align="center">
+              <Text fw={700} size="lg" c={isDark ? "gray.1" : "gray.8"}>
+                {dayName}
+              </Text>
+              <Text size="sm" c="dimmed">
+                {formattedDate}
+              </Text>
+              <Text size="xs" c="dimmed">
+                Día {currentDayIndex + 1} de {totalDays}
+              </Text>
+            </Stack>
+            
+            <Button 
+              size="sm" 
+              variant="subtle" 
+              color="gray" 
+              rightSection={<IconChevronRight size={16} />} 
+              disabled={currentDayIndex >= totalDays - 1}
+              onClick={() => handleDayChange(currentDayIndex + 1)}
+            >
+              Siguiente
+            </Button>
+          </Group>
+        </Paper>
+
+        {/* Lista de comidas del día */}
+        <Stack gap="md">
+          {Array.from({ length: dieta.comidasDiarias }).map((_, comidaIndex) => {
+            const comida = currentDay.comidas[comidaIndex];
+            const mealNames = ['Desayuno', 'Media mañana', 'Almuerzo', 'Merienda', 'Cena'];
+            const mealTimes = ['08:00', '11:00', '14:00', '17:00', '20:00'];
+            
+            return (
+              <Paper key={comidaIndex} p="md" withBorder>
+                <Stack gap="sm">
+                  <Group justify="space-between" align="center">
+                    <Text fw={600} size="md" c={isDark ? "gray.1" : "gray.8"}>
+                      {mealNames[comidaIndex] || `Comida ${comidaIndex + 1}`}
+                    </Text>
+                    <Text size="sm" c="dimmed">
+                      {mealTimes[comidaIndex]}
+                    </Text>
+                  </Group>
+                  
+                  {comida && comida.platos && comida.platos.length > 0 && 
+                   comida.platos.some(plato => plato.nombre !== null || plato.receta !== null) ? (
+                    <Stack gap="xs">
+                      {comida.platos
+                        .filter(plato => plato.nombre !== null || plato.receta !== null)
+                        .map((plato, platoIndex) => (
+                        <Group 
+                          key={platoIndex}
+                          gap="sm"
+                          align="center"
+                          p="sm"
+                          style={{
+                            backgroundColor: isDark ? 'rgba(148, 163, 184, 0.05)' : 'rgba(148, 163, 184, 0.02)',
+                            borderRadius: '8px',
+                            border: '1px solid rgba(148, 163, 184, 0.1)'
+                          }}
+                        >
+                          <ThemeIcon 
+                            size="sm" 
+                            color="gray" 
+                            variant="light"
+                            radius="xl"
+                          >
+                            <IconLeaf size={14} />
+                          </ThemeIcon>
+                          <Text 
+                            size="sm" 
+                            fw={500}
+                            style={{ 
+                              flex: 1,
+                              color: isDark ? 'var(--mantine-color-gray-2)' : 'var(--mantine-color-gray-7)'
+                            }}
+                          >
+                            {plato.nombre || 'Plato sin nombre'}
+                          </Text>
+                          {plato.receta && (
+                            <ThemeIcon 
+                              size="sm" 
+                              color="gray" 
+                              variant="light"
+                              radius="xl"
+                            >
+                              <IconInfoCircle size={12} />
+                            </ThemeIcon>
+                          )}
+                        </Group>
+                      ))}
+                    </Stack>
+                  ) : (
+                    <Box 
+                      p="md" 
+                      style={{
+                        backgroundColor: isDark ? 'rgba(148, 163, 184, 0.02)' : 'rgba(148, 163, 184, 0.01)',
+                        borderRadius: '8px',
+                        border: '1px dashed rgba(148, 163, 184, 0.15)',
+                        textAlign: 'center',
+                        minHeight: '60px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center'
+                      }}
+                    >
+                      <Text 
+                        size="sm" 
+                        c="dimmed" 
+                        fs="italic"
+                        opacity={0.5}
+                      >
+                        —
+                      </Text>
+                    </Box>
+                  )}
+                </Stack>
+              </Paper>
+            );
+          })}
+        </Stack>
+
+        {/* Información adicional del día */}
+        {(currentDay.caloriasTotales || currentDay.macronutrientes || currentDay.micronutrientes || currentDay.requerimientosHidratacion) && (
+          <Paper p="md" mt="md" withBorder>
+            <Stack gap="sm">
+              <Text fw={600} size="md" c={isDark ? "gray.1" : "gray.8"}>
+                Información nutricional
+              </Text>
+              
+              {currentDay.caloriasTotales && (
+                <Group gap="sm">
+                  <Text size="sm" fw={500} c={isDark ? "gray.3" : "gray.6"}>
+                    Calorías totales:
+                  </Text>
+                  <Text size="sm" fw={700}>
+                    {currentDay.caloriasTotales} kcal
+                  </Text>
+                </Group>
+              )}
+              
+              {currentDay.macronutrientes && (
+                <Group gap="sm">
+                  <Text size="sm" fw={500} c={isDark ? "gray.3" : "gray.6"}>
+                    Macronutrientes:
+                  </Text>
+                  <Text size="sm">
+                    {currentDay.macronutrientes}
+                  </Text>
+                </Group>
+              )}
+              
+              {currentDay.micronutrientes && (
+                <Group gap="sm">
+                  <Text size="sm" fw={500} c={isDark ? "gray.3" : "gray.6"}>
+                    Micronutrientes:
+                  </Text>
+                  <Text size="sm">
+                    {currentDay.micronutrientes}
+                  </Text>
+                </Group>
+              )}
+              
+              {currentDay.requerimientosHidratacion && (
+                <Group gap="sm">
+                  <Text size="sm" fw={500} c={isDark ? "gray.3" : "gray.6"}>
+                    Hidratación:
+                  </Text>
+                  <Text size="sm">
+                    {currentDay.requerimientosHidratacion}
+                  </Text>
+                </Group>
+              )}
+            </Stack>
+          </Paper>
+        )}
+      </Container>
+    );
   };
 
   // Formatear fecha de inicio de dieta
@@ -176,8 +477,97 @@ const VerDietaPage: React.FC = () => {
     );
   }
 
+  // Debug: Log del estado actual
+  console.log('Render - isMobileState:', isMobileState, 'dieta exists:', !!dieta);
+
+  // Si es móvil, renderizar la vista móvil
+  if (isMobileState && dieta) {
+    console.log('Rendering mobile view');
+    return (
+      <>
+        {/* Header para móvil */}
+        <Container size="sm" py="md" px="sm">
+          <Paper 
+            p="lg" 
+            mb="md" 
+            withBorder 
+            radius="md"
+            style={{ 
+              ...styles.paperBg,
+              ...styles.paperBorder
+            }}
+          >
+            <Group justify="space-between" mb="lg" wrap="wrap">
+              <Box>
+                <Group gap="md" align="center" mb="sm">
+                  <Title order={2} c={isDark ? "gray.1" : "gray.8"} fw={700}>
+                    {dieta.nombre}
+                  </Title>
+                  <Badge 
+                    color="gray" 
+                    variant="light" 
+                    size="lg"
+                    leftSection={<IconLeaf size={14} />}
+                    style={styles.statusBadge(isDark)}
+                  >
+                    Publicada
+                  </Badge>
+                </Group>
+                <Text size="md" c="dimmed" mb="md" style={{ maxWidth: '600px' }}>
+                  {dieta.descripcion || "Esta dieta no tiene descripción disponible."}
+                </Text>
+                
+                {/* Información básica con iconos */}
+                <Group gap="lg" mb="md">
+                  <Group gap="xs">
+                    <ThemeIcon size="sm" color="gray" variant="light">
+                      <IconCalendarEvent size={16} />
+                    </ThemeIcon>
+                    <Text size="sm" fw={500} c={isDark ? "gray.3" : "gray.6"}>
+                      {dieta.duracion} días
+                    </Text>
+                  </Group>
+                  <Group gap="xs">
+                    <ThemeIcon size="sm" color="gray" variant="light">
+                      <IconClock size={16} />
+                    </ThemeIcon>
+                    <Text size="sm" fw={500} c={isDark ? "gray.3" : "gray.6"}>
+                      {dieta.comidasDiarias} comidas diarias
+                    </Text>
+                  </Group>
+                  <Group gap="xs">
+                    <ThemeIcon size="sm" color="gray" variant="light">
+                      <IconTarget size={16} />
+                    </ThemeIcon>
+                    <Text size="sm" fw={500} c={isDark ? "gray.3" : "gray.6"}>
+                      Inicio: {fechaInicioFormateada}
+                    </Text>
+                  </Group>
+                </Group>
+              </Box>
+              
+              <Button
+                variant="outline"
+                color="gray"
+                leftSection={<IconArrowLeft size={18} />}
+                size="md"
+                onClick={handleBackNavigation}
+              >
+                {user?.role === 'user' ? 'Volver a mis dietas' : 'Volver a dietas del cliente'}
+              </Button>
+            </Group>
+          </Paper>
+        </Container>
+        
+        {/* Vista móvil */}
+        {renderMobileView()}
+      </>
+    );
+  }
+
+  console.log('Rendering desktop view');
   return (
-    <Container size="xl" py="xl" px="md">
+    <Container size="xl" py="xl" px="sm" style={{ maxWidth: '1800px' }}>
       <Paper 
         p="lg" 
         mb="md" 
@@ -192,11 +582,11 @@ const VerDietaPage: React.FC = () => {
         <Group justify="space-between" mb="lg" wrap="wrap">
           <Box>
             <Group gap="md" align="center" mb="sm">
-              <Title order={2} c="green.6" fw={700}>
+              <Title order={2} c={isDark ? "gray.1" : "gray.8"} fw={700}>
                 {dieta.nombre}
               </Title>
               <Badge 
-                color="green" 
+                color="gray" 
                 variant="light" 
                 size="lg"
                 leftSection={<IconLeaf size={14} />}
@@ -212,26 +602,26 @@ const VerDietaPage: React.FC = () => {
             {/* Información básica con iconos */}
             <Group gap="lg" mb="md">
               <Group gap="xs">
-                <ThemeIcon size="sm" color="green" variant="light">
+                <ThemeIcon size="sm" color="gray" variant="light">
                   <IconCalendarEvent size={16} />
                 </ThemeIcon>
-                <Text size="sm" fw={500} c="green.7">
+                <Text size="sm" fw={500} c={isDark ? "gray.3" : "gray.6"}>
                   {dieta.duracion} días
                 </Text>
               </Group>
               <Group gap="xs">
-                <ThemeIcon size="sm" color="green" variant="light">
+                <ThemeIcon size="sm" color="gray" variant="light">
                   <IconClock size={16} />
                 </ThemeIcon>
-                <Text size="sm" fw={500} c="green.7">
+                <Text size="sm" fw={500} c={isDark ? "gray.3" : "gray.6"}>
                   {dieta.comidasDiarias} comidas diarias
                 </Text>
               </Group>
               <Group gap="xs">
-                <ThemeIcon size="sm" color="green" variant="light">
+                <ThemeIcon size="sm" color="gray" variant="light">
                   <IconTarget size={16} />
                 </ThemeIcon>
-                <Text size="sm" fw={500} c="green.7">
+                <Text size="sm" fw={500} c={isDark ? "gray.3" : "gray.6"}>
                   Inicio: {fechaInicioFormateada}
                 </Text>
               </Group>
@@ -240,48 +630,12 @@ const VerDietaPage: React.FC = () => {
           
           <Button
             variant="outline"
-            color="green"
+            color="gray"
             leftSection={<IconArrowLeft size={18} />}
             size="md"
-            onClick={() => {
-              try {
-                let clientId = null;
-                
-                if (dieta.asignadaA && Array.isArray(dieta.asignadaA) && dieta.asignadaA.length > 0) {
-                  const clientData = dieta.asignadaA[0];
-                  
-                  if (typeof clientData === 'string') {
-                    clientId = clientData;
-                  } 
-                  else if (typeof clientData === 'object' && clientData !== null) {
-                    type ClientObject = { _id?: string; id?: string; };
-                    const clientObj = clientData as unknown as ClientObject;
-                    
-                    if (clientObj._id) {
-                      clientId = clientObj._id;
-                    } else if (clientObj.id) {
-                      clientId = clientObj.id;
-                    } else {
-                      clientId = String(clientData);
-                    }
-                  }
-                  else if (clientData) {
-                    clientId = String(clientData);
-                  }
-                }
-                
-                if (clientId) {
-                  navigate(`/worker/dashboard-clients/${clientId}/diets`);
-                } else {
-                  navigate(-1);
-                }
-              } catch (err) {
-                console.error("Error al navegar:", err);
-                navigate(-1);
-              }
-            }}
+            onClick={handleBackNavigation}
           >
-            Volver a dietas del cliente
+            {user?.role === 'user' ? 'Volver a mis dietas' : 'Volver a dietas del cliente'}
           </Button>
         </Group>
         
@@ -329,7 +683,7 @@ const VerDietaPage: React.FC = () => {
               <Button 
                 size="sm" 
                 variant="subtle" 
-                color="green" 
+                color="gray" 
                 leftSection={<IconChevronLeft size={16} />} 
                 disabled={currentWeek <= 1}
                 onClick={() => handleWeekChange(currentWeek - 1)}
@@ -349,7 +703,7 @@ const VerDietaPage: React.FC = () => {
               <Button 
                 size="sm" 
                 variant="subtle" 
-                color="green" 
+                color="gray" 
                 rightSection={<IconChevronRight size={16} />} 
                 disabled={currentWeek >= daysRange.totalWeeks}
                 onClick={() => handleWeekChange(currentWeek + 1)}
@@ -358,38 +712,39 @@ const VerDietaPage: React.FC = () => {
               </Button>
             </Group>
             
-            <Text size="md" fw={600} c="green.7">
+            <Text size="md" fw={600} c={isDark ? "gray.3" : "gray.6"}>
               {currentWeek} de {daysRange.totalWeeks} semanas
             </Text>
           </Group>
         </Box>
         
         <Box 
-          px={{ base: 'md', md: 'xl' }} 
+          px={{ base: 'xs', md: 'lg' }} 
           py="md" 
           mx="auto" 
           style={{ 
-            overflowX: 'auto',
+            overflowX: isMobileState ? 'auto' : 'visible',
             borderRadius: '12px',
             background: isDark 
-              ? 'linear-gradient(135deg, rgba(34, 197, 94, 0.02) 0%, rgba(34, 197, 94, 0.01) 100%)'
-              : 'linear-gradient(135deg, rgba(34, 197, 94, 0.01) 0%, rgba(34, 197, 94, 0.005) 100%)',
-            padding: '16px',
-            border: '1px solid rgba(34, 197, 94, 0.12)'
+              ? 'linear-gradient(135deg, rgba(148, 163, 184, 0.02) 0%, rgba(148, 163, 184, 0.01) 100%)'
+              : 'linear-gradient(135deg, rgba(148, 163, 184, 0.01) 0%, rgba(148, 163, 184, 0.005) 100%)',
+            padding: isMobileState ? '12px' : '20px',
+            border: '1px solid rgba(148, 163, 184, 0.12)',
+            maxWidth: isMobileState ? '100%' : '1700px' // Limitar el ancho en desktop
           }}
         >
-          <table style={styles.tableStyles}>
+          <table style={styles.tableStyles(isMobileState)}>
             <thead>
               <tr>
                 {daysRange.days.map((dayInfo: DayInfo) => (
                   <th
                     key={`header-${dayInfo.dietDayIndex}`}
-                    style={styles.tableHeader(isDark)}
+                    style={styles.tableHeader(isDark, isMobileState)}
                   >
-                    <Text fw={700} c="green.7" size="sm" ta="center">
+                    <Text fw={700} c={isDark ? "gray.2" : "gray.7"} size={isMobileState ? "xs" : "sm"} ta="center">
                       {dayInfo.weekDayName}
                     </Text>
-                    <Text size="xs" c="dimmed" ta="center">
+                    <Text size={isMobileState ? "xs" : "sm"} c="dimmed" ta="center">
                       {dayInfo.fechaFormateada}
                     </Text>
                   </th>
@@ -408,7 +763,7 @@ const VerDietaPage: React.FC = () => {
                       if (!comida) return (
                         <td 
                           key={`empty-${dayInfo.dietDayIndex}-${comidaIndex}`}
-                          style={styles.emptyCell}
+                          style={styles.emptyCell(isMobileState)}
                         />
                       );
 
@@ -416,7 +771,8 @@ const VerDietaPage: React.FC = () => {
                         <td 
                           key={`day-${dayInfo.dietDayIndex}-comida-${comidaIndex}`}
                           style={{ 
-                            padding: '6px 4px', 
+                            padding: isMobileState ? '8px 6px' : '14px 12px', // Menos padding en móvil
+                            minWidth: isMobileState ? '120px' : '220px', // Mucho más estrecho en móvil
                             ...styles.cellBorders,
                             verticalAlign: 'top',
                             ...styles.rowBg(isDark, comidaIndex % 2 === 0)
@@ -429,10 +785,10 @@ const VerDietaPage: React.FC = () => {
                           >
                             <Text 
                               fw={600} 
-                              size="sm" 
-                              c="green.7" 
+                              size={isMobileState ? "xs" : "sm"} 
+                              c={isDark ? "gray.2" : "gray.7"} 
                               mb="4px"
-                              p="6px 8px"
+                              p={isMobileState ? "4px 6px" : "6px 8px"}
                               style={styles.mealTitle(isDark)}
                             >
                               {comida.nombreComida || `Comida ${comidaIndex + 1}`} 
@@ -458,7 +814,7 @@ const VerDietaPage: React.FC = () => {
                                 >
                                   <ThemeIcon 
                                     size="xs" 
-                                    color="green" 
+                                    color="gray" 
                                     variant="light"
                                     radius="xl"
                                   >
@@ -478,7 +834,7 @@ const VerDietaPage: React.FC = () => {
                                   {plato.receta && (
                                     <ThemeIcon 
                                       size="xs" 
-                                      color="green" 
+                                      color="gray" 
                                       variant="light"
                                       radius="xl"
                                     >
@@ -493,18 +849,23 @@ const VerDietaPage: React.FC = () => {
                               p="sm" 
                               mt="sm"
                               style={{
-                                backgroundColor: isDark ? 'rgba(75, 192, 120, 0.02)' : 'rgba(75, 192, 120, 0.01)',
+                                backgroundColor: isDark ? 'rgba(148, 163, 184, 0.02)' : 'rgba(148, 163, 184, 0.01)',
                                 borderRadius: '6px',
-                                border: '1px dashed rgba(75, 192, 120, 0.2)',
-                                textAlign: 'center'
+                                border: '1px dashed rgba(148, 163, 184, 0.15)',
+                                textAlign: 'center',
+                                minHeight: '40px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center'
                               }}
                             >
                               <Text 
                                 size="xs" 
                                 c="dimmed" 
                                 fs="italic"
+                                opacity={0.5}
                               >
-                                Sin platos asignados
+                                —
                               </Text>
                             </Box>
                           )}
@@ -518,7 +879,10 @@ const VerDietaPage: React.FC = () => {
                 {daysRange.days.map((dayInfo: DayInfo) => (
                   <td 
                     key={`calories-${dayInfo.dietDayIndex}`}
-                    style={styles.calorieCellStyle(isDark)}
+                    style={{
+                      ...styles.calorieCellStyle(isDark),
+                      minWidth: isMobileState ? '120px' : '220px' // Responsive: 120px en móvil, 220px en desktop
+                    }}
                   >
                     <Stack gap="xs" align="flex-end">
                       {(dayInfo.data.caloriasTotales && dayInfo.data.caloriasTotales > 0) && (
@@ -546,7 +910,8 @@ const VerDietaPage: React.FC = () => {
                     <td 
                       key={`details-${dayInfo.dietDayIndex}`}
                       style={{
-                        padding: '8px 12px',
+                        padding: isMobileState ? '8px 10px' : '14px 18px', // Menos padding en móvil
+                        minWidth: isMobileState ? '120px' : '220px', // Mucho más estrecho en móvil
                         borderLeft: '1px solid rgba(148, 163, 184, 0.15)',
                         borderRight: '1px solid rgba(148, 163, 184, 0.15)',
                         borderBottom: '1px solid rgba(148, 163, 184, 0.15)',
@@ -556,7 +921,7 @@ const VerDietaPage: React.FC = () => {
                       <Stack gap="xs">
                         {dayInfo.data.micronutrientes && (
                           <Box>
-                            <Text size="xs" fw={600} c="green.6" mb="xs">
+                            <Text size="xs" fw={600} c={isDark ? "gray.3" : "gray.6"} mb="xs">
                               Micronutrientes:
                             </Text>
                             <Text size="xs" c="dimmed" style={{ lineHeight: 1.3 }}>
@@ -566,7 +931,7 @@ const VerDietaPage: React.FC = () => {
                         )}
                         {dayInfo.data.requerimientosHidratacion && (
                           <Box>
-                            <Text size="xs" fw={600} c="green.6" mb="xs">
+                            <Text size="xs" fw={600} c={isDark ? "gray.3" : "gray.6"} mb="xs">
                               Hidratación:
                             </Text>
                             <Text size="xs" c="dimmed" style={{ lineHeight: 1.3 }}>
@@ -589,7 +954,7 @@ const VerDietaPage: React.FC = () => {
               value={currentWeek}
               onChange={handleWeekChange}
               total={daysRange.totalWeeks}
-              color="green"
+              color="gray"
               withEdges
               size="sm"
               radius="xs"

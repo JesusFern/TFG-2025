@@ -224,7 +224,7 @@ const WorkerClientsDashboard: React.FC = () => {
 												color={cliente.tipoAsignacion === 'Nutricionista' ? 'nutroos-green' : 'blue'} 
 												size="sm"
 											>
-												{cliente.tipoAsignacion}
+												{cliente.tipoAsignacion === 'Nutricionista' ? 'Cliente de nutrición' : 'Cliente de entrenamiento'}
 											</Badge>
 										)}
 									</Group>

@@ -72,6 +72,7 @@ import ClientTrainingPlansPage from '../pages/ClientTrainingPlansPage';
 import ClientTrainingPlanDetailPage from '../pages/ClientTrainingPlanDetailPage';
 import ClientTrainingSessionPage from '../pages/ClientTrainingSessionPage';
 import ClientExerciseDetailPage from '../pages/ClientExerciseDetailPage';
+import MyDietsPage from '../pages/MyDietsPage';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -170,7 +171,7 @@ const AppRoutes: React.FC = () => {
       } />
       
       <Route path="/ver-dieta/:dietaId" element={
-        <ProtectedRoute workerRoute={true}>
+        <ProtectedRoute>
           <Layout>
             <VerDietaPage />
           </Layout>
@@ -261,6 +262,15 @@ const AppRoutes: React.FC = () => {
         <ProtectedRoute>
           <Layout>
             <ClientExerciseDetailPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+
+      {/* Ruta para dietas del cliente */}
+      <Route path="/mis-dietas" element={
+        <ProtectedRoute>
+          <Layout>
+            <MyDietsPage />
           </Layout>
         </ProtectedRoute>
       } />

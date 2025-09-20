@@ -9,6 +9,8 @@ interface MongoError extends Error {
 }
 
 export const createAssignmentRequest = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  let sanitizedTipoAsignacion = '';
+  
   try {
     const { trabajadorSolicitado, tipoAsignacion } = req.body;
     const usuarioSolicitante = req.user?.id;
@@ -38,7 +40,7 @@ export const createAssignmentRequest = async (req: AuthenticatedRequest, res: Re
     }
 
     // Asegurar que tipoAsignacion es un string válido
-    const sanitizedTipoAsignacion = String(tipoAsignacion).trim();
+    sanitizedTipoAsignacion = String(tipoAsignacion).trim();
     if (!['Nutricionista', 'Entrenador personal'].includes(sanitizedTipoAsignacion)) {
       res.status(400).json({ message: 'El tipo de asignación debe ser "Nutricionista" o "Entrenador personal"' });
       return;
@@ -207,7 +209,7 @@ export const createAssignmentRequest = async (req: AuthenticatedRequest, res: Re
     console.error('Error al crear solicitud de asignación:', error);
     
     if ((error as MongoError).code === 11000) {
-      res.status(400).json({ message: 'Ya tienes una solicitud pendiente de este tipo para este trabajador' });
+      res.status(400).json({ message: `Ya tienes una solicitud como ${sanitizedTipoAsignacion} a otro trabajador` });
       return;
     }
     

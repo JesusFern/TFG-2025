@@ -26,7 +26,11 @@ export const crearDieta = async (dietaData: CrearDietaDTO): Promise<ApiDietaResp
 };
 
 export const obtenerDieta = async (dietaId: string): Promise<Dieta> => {
-  console.log(`Intentando obtener dieta con ID: ${dietaId}`);
+  // Validar formato de ObjectId antes de hacer la petición
+  const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+  if (!objectIdRegex.test(dietaId)) {
+    throw new Error('El ID de dieta proporcionado no es válido');
+  }
   
   try {
     const response = await apiRequest(`/api/diets/${dietaId}`, {
@@ -186,6 +190,25 @@ export const getDietsByWorkerAndClient = async (workerId: string, clientId: stri
     return data;
   } catch (error) {
     console.error('Error al obtener dietas por worker y cliente:', error);
+    throw error;
+  }
+};
+
+export const getMyDiets = async (): Promise<{ dietas: DietaResponse[], count: number, message: string }> => {
+  try {
+    const response = await apiRequest('/api/diets/my-diets', {
+      method: 'GET'
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al obtener mis dietas');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error al obtener mis dietas:', error);
     throw error;
   }
 };
