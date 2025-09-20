@@ -19,10 +19,11 @@ import {
   ThemeIcon,
   Modal
 } from '@mantine/core';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { eliminarReceta } from '../services/recetaService';
 import FormularioCrearReceta from '../components/forms/recetas/FormularioCrearReceta';
 import { useReceta } from '../hooks/useReceta';
+import { useAuth } from '../hooks/useAuth';
 import RecetaHeader from '../components/molecules/RecetaHeader';
 import StatusMessage from '../components/molecules/StatusMessage';
 import { 
@@ -33,13 +34,16 @@ import {
   IconChevronLeft,
   IconChevronRight,
   IconTrash,
-  IconX as IconCancel
+  IconX as IconCancel,
+  IconArrowLeft
 } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 
 const VerRecetaPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const location = useLocation();
+  const { user } = useAuth();
   const { receta, loading, error, cargarReceta } = useReceta(id);
   const [opened, { open, close }] = useDisclosure(false);
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -48,12 +52,31 @@ const VerRecetaPage: React.FC = () => {
   const [modoEdicion, setModoEdicion] = useState(false);
   const [mensaje, setMensaje] = useState<{ tipo: 'error' | 'success', texto: string } | null>(null);
 
+  // Determinar si se viene de una dieta y el texto apropiado
+  const fromDieta = location.state?.fromDieta;
+  const dietaId = location.state?.dietaId;
+
+  // Verificar permisos de edición/eliminación
+  const canEdit = user && (
+    user.role === 'admin' || 
+    (user.role === 'worker' && receta?.creador === user._id)
+  );
+  const canDelete = canEdit; // Mismos permisos para editar y eliminar
+
   const handleVolver = () => {
-    navigate('/mis-recetas');
+    if (fromDieta && dietaId) {
+      // Si se viene de una dieta, volver a esa dieta
+      navigate(`/ver-dieta/${dietaId}`);
+    } else {
+      // Si no, volver a mis recetas como comportamiento por defecto
+      navigate('/mis-recetas');
+    }
   };
 
   const handleEditar = () => {
-    setModoEdicion(true);
+    if (canEdit) {
+      setModoEdicion(true);
+    }
   };
 
   const handleCancelarEdicion = () => {
@@ -147,39 +170,56 @@ const VerRecetaPage: React.FC = () => {
       <RecetaHeader 
         receta={receta} 
         onVolver={handleVolver}
+        showBackButton={false}
       >
+        {/* Botón de volver personalizado */}
+        <Button
+          variant="light"
+          color="nutroos-green"
+          leftSection={<IconArrowLeft size={16} />}
+          onClick={handleVolver}
+          size="md"
+        >
+          {fromDieta ? 'Volver a la dieta' : 'Volver a mis recetas'}
+        </Button>
         {!modoEdicion ? (
           <>
-            <Button
-              leftSection={<IconEdit size={16} />}
-              onClick={handleEditar}
-              color="nutroos-green"
-              variant="light"
-              size="md"
-            >
-              Editar Receta
-            </Button>
+            {canEdit && (
+              <Button
+                leftSection={<IconEdit size={16} />}
+                onClick={handleEditar}
+                color="nutroos-green"
+                variant="light"
+                size="md"
+              >
+                Editar Receta
+              </Button>
+            )}
             
-            <Button
-              leftSection={<IconTrash size={16} />}
-              onClick={openDeleteModal}
-              color="red"
-              variant="light"
-              size="md"
-            >
-              Eliminar Receta
-            </Button>
+            {canDelete && (
+              <Button
+                leftSection={<IconTrash size={16} />}
+                onClick={openDeleteModal}
+                color="red"
+                variant="light"
+                size="md"
+              >
+                Eliminar Receta
+              </Button>
+            )}
           </>
         ) : (
-          <Button
-            leftSection={<IconCancel size={16} />}
-            onClick={handleCancelarEdicion}
-            color="gray"
-            variant="light"
-            size="md"
-          >
-            Cancelar Edición
-          </Button>
+          canEdit && (
+            <Button
+              leftSection={<IconCancel size={16} />}
+              onClick={handleCancelarEdicion}
+              color="gray"
+              variant="light"
+              size="md"
+            >
+              Cancelar Edición
+            </Button>
+          )
         )}
       </RecetaHeader>
 
@@ -240,9 +280,10 @@ const VerRecetaPage: React.FC = () => {
                       <Card.Section>
                         <Image
                           src={getImageUrl(imagen)}
-                          height={120}
+                          height={250}
                           alt={`Imagen ${index + 1} de ${receta.nombreReceta}`}
                           style={{ borderRadius: 'var(--mantine-radius-md)' }}
+                          fit="contain"
                         />
                       </Card.Section>
                     </Card>
@@ -250,7 +291,7 @@ const VerRecetaPage: React.FC = () => {
                 ))}
               </Grid>
             ) : (
-              <Center style={{ height: 200 }}>
+              <Center style={{ height: 300 }}>
                 <Stack align="center" gap="md">
                   <IconPhoto size={48} color="var(--mantine-color-dimmed)" />
                   <Text c="dimmed">No hay imágenes disponibles</Text>

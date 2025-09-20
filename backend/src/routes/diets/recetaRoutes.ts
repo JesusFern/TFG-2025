@@ -6,6 +6,7 @@ import {
   obtenerRecetasPublicas,
   obtenerMisRecetas,
   obtenerRecetasPublicasYPropias,
+  buscarRecetas,
   actualizarReceta,
   eliminarReceta,
   limpiarImagenesHuerfanas
@@ -17,6 +18,7 @@ import upload from '../../config/multer';
 const router = Router();
 
 router.post('/', authenticateToken, authorizeNutricionista, upload.array('imagenes', 5), crearReceta);
+router.get('/buscar', authenticateToken, authorizeNutricionista, buscarRecetas);
 router.get('/mis-recetas', authenticateToken, obtenerMisRecetas);
 router.get('/publicas', authenticateToken, obtenerRecetasPublicas);
 router.get('/publicas-y-propias', authenticateToken, obtenerRecetasPublicasYPropias);

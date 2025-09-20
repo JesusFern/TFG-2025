@@ -6,6 +6,7 @@ import {
   obtenerRecetasPublicasService,
   obtenerMisRecetasService,
   obtenerRecetasPublicasYPropiasService,
+  buscarRecetasService,
   actualizarRecetaService,
   eliminarRecetaService,
   limpiarImagenesHuerfanasService,
@@ -157,6 +158,26 @@ export const obtenerRecetasPublicasYPropias = async (req: AuthenticatedRequest, 
     res.status(200).json({ recetas });
   } catch (error) {
     manejarErrorReceta(error as Error, res, 'obtener las recetas públicas y propias', { userId: req.user?.id });
+  }
+};
+
+export const buscarRecetas = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = verificarAutenticacion(req, res, 'buscar recetas');
+    if (!userId) return;
+    
+    const termino = req.query.q as string;
+    
+    const recetas = await buscarRecetasService(termino || '', userId);
+    
+    logger.info('Búsqueda de recetas realizada correctamente', { 
+      userId, 
+      termino: termino || 'vacío',
+      cantidad: recetas.length 
+    });
+    res.status(200).json({ recetas });
+  } catch (error) {
+    manejarErrorReceta(error as Error, res, 'buscar recetas', { userId: req.user?.id });
   }
 };
 

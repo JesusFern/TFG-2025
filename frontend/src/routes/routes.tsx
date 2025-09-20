@@ -218,7 +218,7 @@ const AppRoutes: React.FC = () => {
       } />
       
       <Route path="/recetas/:id" element={
-        <ProtectedRoute workerRoute={true}>
+        <ProtectedRoute>
           <Layout>
             <VerRecetaPage />
           </Layout>
