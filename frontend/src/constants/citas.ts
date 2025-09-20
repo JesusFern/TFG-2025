@@ -201,3 +201,11 @@ export const esHoraValida = (hora: string): boolean => {
 export const esDuracionValida = (duracion: number): boolean => {
   return duracion >= HORARIOS_CONFIG.DURACION_MIN && duracion <= HORARIOS_CONFIG.DURACION_MAX;
 };
+
+// Validar fecha
+export const isFechaValida = (fecha: Date | null): boolean => {
+  if (!fecha) return false;
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  return fecha >= hoy;
+};

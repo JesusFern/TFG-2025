@@ -7,7 +7,6 @@ import {
   Group,
   Textarea,
   NumberInput,
-  Grid,
   Alert,
   LoadingOverlay,
   Text,
@@ -16,19 +15,17 @@ import {
   Badge
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
-import DatePickerInput from '../../atoms/DatePickerInput';
 import GlobalNotificationOverlay from '../../atoms/GlobalNotificationOverlay';
+import CamposFechaHoraCita from '../../atoms/CamposFechaHoraCita';
 import { useThemeDetection } from '../../../hooks/useThemeDetection';
 import { CitaService } from '../../../services/citaService';
+import { TIPOS_CITA } from '../../../constants/citas';
 import {
   Cita,
   ActualizarCitaDTO,
-  TipoCita,
-  TipoCitaOption
+  TipoCita
 } from '../../../types/citas';
 import {
-  IconCalendar,
-  IconClock,
   IconUser,
   IconStethoscope,
   IconFileText,
@@ -58,38 +55,6 @@ const FormularioEditarCita: React.FC<FormularioEditarCitaProps> = ({
   } | null>(null);
   const isDark = useThemeDetection();
 
-  const tiposCita: TipoCitaOption[] = [
-    {
-      value: 'seguimiento',
-      label: 'Seguimiento',
-      description: 'Seguimiento del progreso y ajustes',
-      icon: '📊'
-    },
-    {
-      value: 'consulta_nutricion',
-      label: 'Consulta Nutricional',
-      description: 'Evaluación y plan nutricional',
-      icon: '🥗'
-    },
-    {
-      value: 'consulta_entrenamiento',
-      label: 'Consulta de Entrenamiento',
-      description: 'Plan de ejercicios y rutinas',
-      icon: '💪'
-    },
-    {
-      value: 'evaluacion',
-      label: 'Evaluación',
-      description: 'Evaluación inicial o de progreso',
-      icon: '📋'
-    },
-    {
-      value: 'revision',
-      label: 'Revisión',
-      description: 'Revisión de planes y ajustes',
-      icon: '🔍'
-    }
-  ];
 
   const form = useForm({
     initialValues: {
@@ -187,15 +152,9 @@ const FormularioEditarCita: React.FC<FormularioEditarCitaProps> = ({
   };
 
   const getTipoCitaInfo = (tipo: TipoCita) => {
-    return tiposCita.find(t => t.value === tipo);
+    return TIPOS_CITA.find(t => t.value === tipo);
   };
 
-    const isFechaValida = (fecha: Date | null): boolean => {
-    if (!fecha) return true;
-    const hoy = new Date();
-    hoy.setHours(0, 0, 0, 0);
-    return fecha >= hoy;
-  };
 
   const puedeEditar = CitaService.puedeEditarCita(cita);
 
@@ -269,7 +228,7 @@ const FormularioEditarCita: React.FC<FormularioEditarCitaProps> = ({
               </Text>
               <Select
                 placeholder="Selecciona el tipo de cita"
-                data={tiposCita.map(t => ({
+                data={TIPOS_CITA.map(t => ({
                   value: t.value,
                   label: `${t.icon} ${t.label}`
                 }))}
@@ -285,52 +244,15 @@ const FormularioEditarCita: React.FC<FormularioEditarCitaProps> = ({
             </div>
 
             {/* Fecha y hora */}
-            <Grid>
-              <Grid.Col span={6}>
-                <div>
-                  <Text size="sm" fw={500} mb="xs">
-                    Fecha *
-                  </Text>
-                  <DatePickerInput
-                    placeholder="Selecciona una fecha"
-                    value={form.values.fecha ? new Date(form.values.fecha) : null}
-                    onChange={(date) => form.setFieldValue('fecha', date || new Date())}
-                    minDate={new Date()}
-                    maxDate={new Date(Date.now() + 90 * 24 * 60 * 60 * 1000)} // 3 meses
-                    leftSection={<IconCalendar size={16} />}
-                    disabled={!puedeEditar}
-                  />
-                  {form.values.fecha && !isFechaValida(form.values.fecha) && (
-                    <Alert icon={<IconAlertCircle size={16} />} color="red" mt="xs">
-                      No se pueden programar citas en fechas pasadas
-                    </Alert>
-                  )}
-                </div>
-              </Grid.Col>
-              
-              <Grid.Col span={6}>
-                <div>
-                  <Text size="sm" fw={500} mb="xs">
-                    Hora *
-                  </Text>
-                  <Select
-                    placeholder="Selecciona una hora"
-                    data={horariosDisponibles.map(h => ({
-                      value: h,
-                      label: h
-                    }))}
-                    leftSection={<IconClock size={16} />}
-                    disabled={!puedeEditar || !form.values.fecha || loadingHorarios}
-                    {...form.getInputProps('hora')}
-                  />
-                  {loadingHorarios && (
-                    <Text size="xs" c="dimmed" mt={4}>
-                      Cargando horarios disponibles...
-                    </Text>
-                  )}
-                </div>
-              </Grid.Col>
-            </Grid>
+            <CamposFechaHoraCita
+              fecha={form.values.fecha ? new Date(form.values.fecha) : null}
+              hora={form.values.hora}
+              horariosDisponibles={horariosDisponibles}
+              loadingHorarios={loadingHorarios}
+              disabled={!puedeEditar}
+              onFechaChange={(date) => form.setFieldValue('fecha', date || new Date())}
+              onHoraChange={(hora) => form.setFieldValue('hora', hora)}
+            />
 
             {/* Duración */}
             <div>
