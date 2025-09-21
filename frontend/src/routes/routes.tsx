@@ -16,6 +16,11 @@ import LoginPage from '../pages/LoginPage';
 import SuscriptionPlansPage from '../pages/SuscriptionPlansPage';
 import PaymentConfirmationPage from '../pages/ConfirmarPagoPage';
 import PaymentCancellationPage from '../pages/CancelarPagoPage';
+import RegisterWorkerPage from '../pages/RegisterWorkerPage';
+import UserManagementPage from '../pages/UserManagementPage';
+import UserDetailPage from '../pages/UserDetailPage';
+import WorkerManagementPage from '../pages/WorkerManagementPage';
+import WorkerDetailPage from '../pages/WorkerDetailPage';
 
 // Componente para proteger rutas
 const ProtectedRoute: React.FC<{ children: React.ReactNode, workerRoute?: boolean }> = ({ children, workerRoute = false }) => {
@@ -52,6 +57,37 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, workerRoute?: boolea
   
   // Eliminamos esta restricción para permitir que los trabajadores accedan a todas las rutas
   // Los trabajadores/admin deben poder acceder a crear dietas, ver dietas, etc.
+  
+  return <>{children}</>;
+};
+
+// Componente para proteger rutas solo para admin
+const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  
+  // Mostrar loading mientras se verifica la autenticación
+  if (isLoading) {
+    return (
+      <div style={{ 
+        display: 'flex', 
+        justifyContent: 'center', 
+        alignItems: 'center', 
+        height: '100vh',
+        fontSize: '18px'
+      }}>
+        Verificando autenticación...
+      </div>
+    );
+  }
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  
+  // Solo admin puede acceder
+  if (user && user.role !== 'admin') {
+    return <Navigate to="/dashboard" replace />;
+  }
   
   return <>{children}</>;
 };
@@ -273,6 +309,49 @@ const AppRoutes: React.FC = () => {
             <MyDietsPage />
           </Layout>
         </ProtectedRoute>
+      } />
+
+      {/* Ruta para registro de trabajadores (solo admin) */}
+      <Route path="/admin/registrar-trabajador" element={
+        <AdminProtectedRoute>
+          <Layout>
+            <RegisterWorkerPage />
+          </Layout>
+        </AdminProtectedRoute>
+      } />
+
+      {/* Rutas para gestión de usuarios (solo admin) */}
+      <Route path="/admin/users" element={
+        <AdminProtectedRoute>
+          <Layout>
+            <UserManagementPage />
+          </Layout>
+        </AdminProtectedRoute>
+      } />
+      
+      <Route path="/admin/users/:userId" element={
+        <AdminProtectedRoute>
+          <Layout>
+            <UserDetailPage />
+          </Layout>
+        </AdminProtectedRoute>
+      } />
+
+      {/* Rutas para gestión de trabajadores (solo admin) */}
+      <Route path="/admin/workers" element={
+        <AdminProtectedRoute>
+          <Layout>
+            <WorkerManagementPage />
+          </Layout>
+        </AdminProtectedRoute>
+      } />
+      
+      <Route path="/admin/workers/:workerId" element={
+        <AdminProtectedRoute>
+          <Layout>
+            <WorkerDetailPage />
+          </Layout>
+        </AdminProtectedRoute>
       } />
       
       {/* Redirigir rutas no encontradas */}

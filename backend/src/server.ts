@@ -4,7 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 import { createServer } from "http";
 import userRoutes from "./routes/users/userRoutes";
-import workerRoutes from './routes/users/workerRoutes';
+import adminRoutes from './routes/users/adminRoutes';
 import dietRoutes from './routes/diets/dietRoutes';
 import recetaRoutes from './routes/diets/recetaRoutes';
 import trainingRoutes from './routes/training';
@@ -47,7 +47,7 @@ mongoose
 app.use('/uploads', express.static('uploads'));
 
 app.use("/api/users", userRoutes);
-app.use('/api/workers', workerRoutes);
+app.use("/api/admin", adminRoutes);
 app.use('/api/diets', dietRoutes);
 app.use('/api/recetas', recetaRoutes);
 app.use('/api/training', trainingRoutes);

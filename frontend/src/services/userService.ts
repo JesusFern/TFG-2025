@@ -421,3 +421,70 @@ export const checkAssignmentAvailability = async (workerId: string): Promise<Ass
     throw new Error('Error de conexión al servidor');
   }
 };
+
+// Interfaces para registro de trabajadores
+export interface WorkerRegistrationData {
+  fullName: string;
+  email: string;
+  password: string;
+  phoneNumber: string;
+  birthDate: string; // Formato YYYY-MM-DD
+  gender: 'Masculino' | 'Femenino' | 'Otro';
+  workerType: 'Entrenador personal' | 'Nutricionista' | 'Nutricionista y Entrenador personal';
+  biography: string;
+  availability: string;
+  profilePicture?: string; // Base64 string
+}
+
+export interface WorkerRegistrationResponse {
+  success: boolean;
+  message: string;
+  data: {
+    _id: string;
+    fullName: string;
+    email: string;
+    phoneNumber: string;
+    role: string;
+    workerType: string;
+    biography: string;
+    availability: string;
+    gender: string;
+    birthDate: string;
+    profilePicture?: string;
+    isWorkerAvailable: boolean;
+    satisfactionRating: number;
+    clientesAsignados: Array<{
+      clienteId: {
+        _id: string;
+        fullName: string;
+        email: string;
+      };
+      tipoAsignacion: string;
+    }>;
+    createdAt: string;
+    updatedAt: string;
+  };
+}
+
+export const registerWorker = async (workerData: WorkerRegistrationData): Promise<WorkerRegistrationResponse> => {
+  try {
+    const { apiRequest } = await import('./api');
+    
+    const response = await apiRequest('/api/admin/workers/register', {
+      method: 'POST',
+      body: JSON.stringify(workerData)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al registrar trabajador');
+    }
+    
+    return await response.json();
+  } catch (error: unknown) {
+    if (error instanceof Error) {
+      throw error;
+    }
+    throw new Error('Error de conexión al servidor');
+  }
+};

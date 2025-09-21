@@ -36,6 +36,20 @@ export const getSuscriptionPlans = async (): Promise<SuscriptionPlan[]> => {
   }
 };
 
+export const getSuscriptionPlanById = async (planId: string): Promise<SuscriptionPlan | null> => {
+  try {
+    const url = `${API_BASE_URL}/suscription-plans/${planId}`;
+    
+    const response = await axios.get<{success: boolean; data: SuscriptionPlan}>(url);
+    
+    return response.data.data;
+  } catch (error) {
+    console.error('Error al obtener el plan de suscripción:', error);
+    
+    return null;
+  }
+};
+
 export const getPlansWithUserStatus = async (): Promise<SuscriptionPlansResponse | null> => {
   try {
     const token = localStorage.getItem('authToken');
