@@ -7,10 +7,8 @@ import UserSuscription from '../../src/models/suscriptionPlans/userSuscription';
 
 describe('Admin Management Endpoints', () => {
   let adminToken: string;
-  let adminUser: any;
-  let testUser: any;
-  let testWorker: any;
-  let testPlan: any;
+  let testUser: mongoose.Document;
+  let testWorker: mongoose.Document;
 
   beforeAll(async () => {
     // Limpiar la base de datos antes de todas las pruebas
@@ -19,7 +17,7 @@ describe('Admin Management Endpoints', () => {
     await UserSuscription.deleteMany({});
 
     // Crear usuario admin directamente
-    adminUser = await User.create({
+    await User.create({
       fullName: "Admin User",
       email: "admin@example.com",
       password: "Admin1234",
@@ -40,7 +38,7 @@ describe('Admin Management Endpoints', () => {
     adminToken = loginResponse.body.token;
 
     // Crear un plan de suscripción de prueba
-    testPlan = await SuscriptionPlan.create({
+    await SuscriptionPlan.create({
       nombre: "Plan Básico",
       descripcion: "Plan básico de prueba",
       tipoPrecio: "Básico",
@@ -122,7 +120,7 @@ describe('Admin Management Endpoints', () => {
     });
 
     it('should return 401 without admin authentication', async () => {
-      const response = await request(app)
+      await request(app)
         .get('/api/admin/users')
         .expect(401);
     });
@@ -134,14 +132,14 @@ describe('Admin Management Endpoints', () => {
 
     it('should return 404 for non-existent user', async () => {
       const fakeId = new mongoose.Types.ObjectId();
-      const response = await request(app)
+      await request(app)
         .get(`/api/admin/users/${fakeId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(404);
     });
 
     it('should return 401 without admin authentication', async () => {
-      const response = await request(app)
+      await request(app)
         .get(`/api/admin/users/${testUser._id}`)
         .expect(401);
     });
@@ -192,7 +190,7 @@ describe('Admin Management Endpoints', () => {
     });
 
     it('should return 401 without admin authentication', async () => {
-      const response = await request(app)
+      await request(app)
         .get('/api/admin/workers')
         .expect(401);
     });
@@ -204,14 +202,14 @@ describe('Admin Management Endpoints', () => {
 
     it('should return 404 for non-existent worker', async () => {
       const fakeId = new mongoose.Types.ObjectId();
-      const response = await request(app)
+      await request(app)
         .get(`/api/admin/workers/${fakeId}`)
         .set('Authorization', `Bearer ${adminToken}`)
         .expect(404);
     });
 
     it('should return 401 without admin authentication', async () => {
-      const response = await request(app)
+      await request(app)
         .get(`/api/admin/workers/${testWorker._id}`)
         .expect(401);
     });
@@ -260,7 +258,7 @@ describe('Admin Management Endpoints', () => {
         availability: "Disponible"
       };
 
-      const response = await request(app)
+      await request(app)
         .post('/api/admin/workers/register')
         .send(newWorkerData)
         .expect(401);
