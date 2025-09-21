@@ -740,15 +740,28 @@ interface WorkerRegistrationData {
 
 export async function registerWorkerService(workerData: WorkerRegistrationData) {
   try {
+    // Validar y sanitizar el email antes de usarlo en la query
+    const sanitizedEmail = validateAndSanitizeString(workerData.email, 'email');
+    if (!sanitizedEmail) {
+      throw new Error('Email es requerido');
+    }
+    
+    // Validar formato de email
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(sanitizedEmail)) {
+      throw new Error('Formato de email inválido');
+    }
+    
     // Verificar que el email no esté ya registrado
-    const existingUser = await User.findOne({ email: workerData.email });
+    const existingUser = await User.findOne({ email: sanitizedEmail });
     if (existingUser) {
       throw new Error('Ya existe un usuario registrado con este email');
     }
 
-    // Crear el nuevo trabajador
+    // Crear el nuevo trabajador con datos sanitizados
     const newWorker = new User({
       ...workerData,
+      email: sanitizedEmail, // Usar el email sanitizado
       role: 'worker',
       isNew: true,
       isWorkerAvailable: workerData.isWorkerAvailable ?? true,
