@@ -4,6 +4,7 @@ import { ProfilePage as ProfilePageComponent } from '../components/organisms/Pro
 import { DatosSaludYNutricion, DatosActividadFisica, ProfileFormData, UserProfile } from '../types/profile';
 import { Container, Text, Stack, Alert, Loader, Center } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
+import { apiRequest } from '../services/api';
 
 const ProfilePage: React.FC = () => {
   const { user, token, updateUser } = useAuth();
@@ -20,12 +21,7 @@ const ProfilePage: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch('/api/users/me', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await apiRequest('/api/users/me');
 
       if (response.ok) {
         const data = await response.json();
@@ -106,12 +102,8 @@ const ProfilePage: React.FC = () => {
       const compressionSettings = getCompressionSettings(file.size);
       const compressedImage = await compressImage(file, compressionSettings);
       
-      const response = await fetch('/api/users/me/photo', {
+      const response = await apiRequest('/api/users/me/photo', {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
         body: JSON.stringify({ profilePicture: compressedImage }),
       });
 

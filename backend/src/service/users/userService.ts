@@ -1,4 +1,4 @@
-import mongoose from 'mongoose';
+import mongoose, { Types } from 'mongoose';
 import User from '../../models/users/user';
 import UserSuscription from '../../models/suscriptionPlans/userSuscription';
 
@@ -280,5 +280,24 @@ export class UserService {
       default:
         return false;
     }
+  }
+
+  static async getUserById(userId: string) {
+    const user = await User.findById(userId).select('-password');
+    
+    if (!user) {
+      throw new Error('Usuario no encontrado');
+    }
+
+    return {
+      _id: (user._id as Types.ObjectId).toString(),
+      fullName: user.fullName,
+      email: user.email,
+      profilePicture: user.profilePicture,
+      role: user.role,
+      phoneNumber: user.phoneNumber,
+      gender: user.gender,
+      birthDate: user.birthDate
+    };
   }
 }

@@ -591,3 +591,30 @@ export const getClientsAssignedToWorker = async (req: AuthenticatedRequest, res:
     });
   }
 };
+
+export const getUserById = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { id } = req.params;
+
+    if (!Types.ObjectId.isValid(id)) {
+      res.status(400).json({ message: 'ID de usuario inválido' });
+      return;
+    }
+
+    const user = await UserService.getUserById(id);
+    res.status(200).json(user);
+
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Error al obtener usuario por ID:', err);
+    
+    if (err.message === 'Usuario no encontrado') {
+      res.status(404).json({ message: err.message });
+    } else {
+      res.status(500).json({ 
+        message: 'Error interno del servidor al obtener usuario',
+        error: err.message 
+      });
+    }
+  }
+};

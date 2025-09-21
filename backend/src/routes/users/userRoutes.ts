@@ -12,7 +12,8 @@ import {
   getAllAvailableWorkers,
   getWorkersAssignedToClient,
   getClientsAssignedToWorker,
-  checkUserSubscriptionStatus
+  checkUserSubscriptionStatus,
+  getUserById
 } from '../../controllers/users/userController';
 import { authenticateToken, authorizeUserOrAdmin, authorizeUserWithValidSubscription } from '../../middlewares/authMiddleware';
 import { validateRequest } from '../../middlewares/validationMiddleware';
@@ -64,6 +65,7 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // Rutas protegidas para usuarios
+router.get('/:id', authenticateToken, getUserById);
 router.put('/:id', authenticateToken, authorizeUserOrAdmin, validateRequest, updateUser);
 router.delete('/:id', authenticateToken, authorizeUserOrAdmin, validateRequest, deleteUser);
 

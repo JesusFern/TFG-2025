@@ -27,6 +27,7 @@ import {
   IconTrash,
   IconMessage
 } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { 
   getAssignmentRequests, 
@@ -34,15 +35,19 @@ import {
   cancelAssignmentRequest,
   AssignmentRequestFull 
 } from '../services/userService';
+import { conversacionService } from '../services/chatService';
+import { notifications } from '@mantine/notifications';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 const RequestsPage: React.FC = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [requests, setRequests] = useState<AssignmentRequestFull[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
+  const [contactLoading, setContactLoading] = useState<string | null>(null);
   const [confirmModal, setConfirmModal] = useState<{
     opened: boolean;
     requestId: string;
@@ -111,6 +116,67 @@ const RequestsPage: React.FC = () => {
       setError(err instanceof Error ? err.message : 'Error al procesar la acción');
     } finally {
       setActionLoading(null);
+    }
+  };
+
+  const handleContact = async (request: AssignmentRequestFull) => {
+    if (!user) return;
+    
+    // Determinar el ID del otro participante según el rol del usuario
+    const otherParticipantId = user.role === 'user' 
+      ? request.trabajadorSolicitado._id 
+      : request.usuarioSolicitante._id;
+    
+    const otherParticipantName = user.role === 'user' 
+      ? request.trabajadorSolicitado.fullName 
+      : request.usuarioSolicitante.fullName;
+    
+    setContactLoading(request._id);
+    
+    try {
+      // Buscar si ya existe una conversación entre el usuario y el otro participante
+      const conversaciones = await conversacionService.obtenerConversacionesUsuario(user._id);
+      
+      // Buscar conversación existente con este participante
+      const conversacionExistente = conversaciones.find(conv => 
+        conv.participantes.some(p => p._id === otherParticipantId)
+      );
+      
+      if (conversacionExistente) {
+        // Si existe, navegar a esa conversación
+        navigate(`/chat?conversacion=${conversacionExistente._id}`);
+        notifications.show({
+          title: 'Conversación encontrada',
+          message: `Te has unido a la conversación con ${otherParticipantName}`,
+          color: 'green',
+        });
+      } else {
+        // Si no existe, crear una nueva conversación
+        const nuevaConversacion = await conversacionService.crearConversacion({
+          participantes: [user._id, otherParticipantId],
+          metadata: {
+            tipo: 'consulta',
+            tags: ['solicitud', 'asignacion']
+          }
+        });
+        
+        // Navegar a la nueva conversación
+        navigate(`/chat?conversacion=${nuevaConversacion._id}`);
+        notifications.show({
+          title: 'Conversación creada',
+          message: `Se ha creado una nueva conversación con ${otherParticipantName}`,
+          color: 'green',
+        });
+      }
+    } catch (error) {
+      console.error('Error al contactar:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'No se pudo establecer la conversación. Inténtalo de nuevo.',
+        color: 'red',
+      });
+    } finally {
+      setContactLoading(null);
     }
   };
 
@@ -282,9 +348,8 @@ const RequestsPage: React.FC = () => {
                           color="nutroos-green"
                           variant="light"
                           leftSection={<IconMessage size={16} />}
-                          onClick={() => {
-                            // Por el momento no tiene funcionalidad
-                          }}
+                          onClick={() => handleContact(request)}
+                          loading={contactLoading === request._id}
                         >
                           Contactar
                         </Button>

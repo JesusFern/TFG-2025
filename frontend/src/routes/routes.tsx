@@ -337,6 +337,7 @@ const AppRoutes: React.FC = () => {
             <EditarCitaPage />
           </Layout>
         </ProtectedRoute>
+      } />
 
       {/* Ruta para registro de trabajadores (solo admin) */}
       <Route path="/admin/registrar-trabajador" element={
