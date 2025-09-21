@@ -2,9 +2,16 @@ import User from '../../models/users/user';
 import mongoose from 'mongoose';
 import { MongoError } from '../../types';
 
-// Función para escapar caracteres especiales de regex de forma segura
-function escapeRegexString(str: string): string {
-  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+// Función para crear filtros de búsqueda seguros sin usar RegExp
+function createSafeSearchFilter(searchTerm: string): { $or: Array<{ [key: string]: { $regex: string; $options: string } }> } {
+  const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  
+  return {
+    $or: [
+      { fullName: { $regex: escapedTerm, $options: 'i' } },
+      { email: { $regex: escapedTerm, $options: 'i' } }
+    ]
+  };
 }
 
 // Interfaces para tipos de datos
@@ -96,13 +103,8 @@ function buildUserQuery(filters: UserFilters): BaseQuery {
   
   // Aplicar filtros de búsqueda de forma segura
   if (filters.search) {
-    // Escapar caracteres especiales de regex para prevenir ReDoS
-    const escapedSearch = escapeRegexString(filters.search);
-    const searchRegex = new RegExp(escapedSearch, 'i');
-    baseQuery.$or = [
-      { fullName: searchRegex },
-      { email: searchRegex }
-    ];
+    const searchFilter = createSafeSearchFilter(filters.search);
+    baseQuery.$or = searchFilter.$or;
   }
   
   if (filters.gender) {
@@ -498,13 +500,8 @@ function buildWorkerQuery(filters: WorkerFilters): BaseQuery {
   
   // Aplicar filtros de búsqueda de forma segura
   if (filters.search) {
-    // Escapar caracteres especiales de regex para prevenir ReDoS
-    const escapedSearch = escapeRegexString(filters.search);
-    const searchRegex = new RegExp(escapedSearch, 'i');
-    baseQuery.$or = [
-      { fullName: searchRegex },
-      { email: searchRegex }
-    ];
+    const searchFilter = createSafeSearchFilter(filters.search);
+    baseQuery.$or = searchFilter.$or;
   }
   
   if (filters.workerType) {
