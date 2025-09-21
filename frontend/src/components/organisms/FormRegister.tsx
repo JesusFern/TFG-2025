@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Stepper, Paper, ScrollArea, LoadingOverlay, Box } from '@mantine/core';
-import classes from '../../styles/RegisterForm.module.css';
+import { Stepper, Paper, ScrollArea, LoadingOverlay, Box, Container, Center } from '@mantine/core';
 import FormSectionTitle from '../atoms/FormSectionTitle';
 import GlobalErrorOverlay from '../atoms/GlobalErrorOverlay';
 import GlobalSuccessOverlay from '../atoms/GlobalSuccessOverlay';
@@ -332,20 +331,20 @@ const RegisterForm = () => {
   };
 
   return (
-    <div className={classes.wrapper}>
+    <Container size="lg" py="xl">
       <GlobalErrorOverlay message={submitError} withCloseButton onClose={() => setSubmitError(null)} />
       <GlobalSuccessOverlay message={submitSuccess} withCloseButton onClose={() => setSubmitSuccess(null)} />
-      <Box pos="relative">
-        <LoadingOverlay 
-          visible={isSubmitting} 
-          zIndex={1000} 
-          overlayProps={{ radius: "sm", blur: 2 }} 
-        />
-        <Paper className={classes.form}>
-          <div style={{ position: 'absolute', top: 32, left: 0, width: '100%', display: 'flex', justifyContent: 'center', zIndex: 2 }}>
-            <FormSectionTitle className={classes.title}>Crea tu cuenta</FormSectionTitle>
-          </div>
-          <div style={{ height: 60 }} />
+      <Center>
+        <Box pos="relative" w="100%" maw={960}>
+          <LoadingOverlay 
+            visible={isSubmitting} 
+            zIndex={1000} 
+            overlayProps={{ radius: "sm", blur: 2 }} 
+          />
+          <Paper shadow="sm" p="xl" radius="md" withBorder>
+            <Center mb="xl">
+              <FormSectionTitle>Crea tu cuenta</FormSectionTitle>
+            </Center>
 
           <ScrollArea h={400} type="auto" offsetScrollbars>
             <Stepper active={active}>
@@ -421,17 +420,18 @@ const RegisterForm = () => {
             </Stepper>
           </ScrollArea>
 
-          <StepNavigation
-            isFirstStep={active === 0}
-            isLastStep={active >= 4}
-            isSubmitting={isSubmitting}
-            onBack={() => setActive((current) => Math.max(current - 1, 0))}
-            onNext={handleNext}
-            onSubmit={handleSubmit}
-          />
-        </Paper>
-      </Box>
-    </div>
+            <StepNavigation
+              isFirstStep={active === 0}
+              isLastStep={active >= 4}
+              isSubmitting={isSubmitting}
+              onBack={() => setActive((current) => Math.max(current - 1, 0))}
+              onNext={handleNext}
+              onSubmit={handleSubmit}
+            />
+          </Paper>
+        </Box>
+      </Center>
+    </Container>
   );
 };
 
