@@ -1,6 +1,7 @@
 import User from '../../models/users/user';
 import mongoose from 'mongoose';
 import { MongoError } from '../../types';
+import { createGratuitoPlanPipeline, createNoSubscriptionPipeline, createSubscriptionLookupPipeline } from '../../utils/mongoPipelineUtils';
 
 // Función para validar y sanitizar strings de entrada
 function validateAndSanitizeString(input: unknown, fieldName: string): string | undefined {
@@ -273,41 +274,7 @@ export async function getUsersService(
         // Construir el pipeline de facet dinámicamente
         const facetPipeline: FacetPipeline = {
           usuariosConPlanGratuito: [
-            { $match: { suscripcion: { $exists: true } } },
-            {
-              $lookup: {
-                from: 'usersuscriptions',
-                localField: 'suscripcion',
-                foreignField: '_id',
-                as: 'userSuscription'
-              }
-            },
-            {
-              $unwind: {
-                path: '$userSuscription',
-                preserveNullAndEmptyArrays: false
-              }
-            },
-            {
-              $lookup: {
-                from: 'suscriptionplans',
-                localField: 'userSuscription.planId',
-                foreignField: '_id',
-                as: 'planInfo'
-              }
-            },
-            {
-              $unwind: {
-                path: '$planInfo',
-                preserveNullAndEmptyArrays: false
-              }
-            },
-            {
-              $match: { 
-                'planInfo.tipoPrecio': 'Gratuito',
-                ...(planTypeStr ? { 'planInfo.tipoPlan': planTypeStr } : {})
-              }
-            },
+            ...createGratuitoPlanPipeline(planTypeStr),
             { $sort: { createdAt: -1 } },
             { $skip: skip },
             { $limit: limit },
@@ -324,7 +291,7 @@ export async function getUsersService(
         // Solo incluir usuarios sin suscripción si no se especifica tipo de plan
         if (!planTypeStr) {
           facetPipeline.usuariosSinSuscripcion = [
-            { $match: { suscripcion: { $exists: false } } },
+            ...createNoSubscriptionPipeline(),
             { $sort: { createdAt: -1 } },
             { $skip: skip },
             { $limit: limit }
@@ -351,41 +318,7 @@ export async function getUsersService(
         // Construir el pipeline de conteo dinámicamente
         const countFacetPipeline: FacetPipeline = {
           usuariosConPlanGratuito: [
-            { $match: { suscripcion: { $exists: true } } },
-            {
-              $lookup: {
-                from: 'usersuscriptions',
-                localField: 'suscripcion',
-                foreignField: '_id',
-                as: 'userSuscription'
-              }
-            },
-            {
-              $unwind: {
-                path: '$userSuscription',
-                preserveNullAndEmptyArrays: false
-              }
-            },
-            {
-              $lookup: {
-                from: 'suscriptionplans',
-                localField: 'userSuscription.planId',
-                foreignField: '_id',
-                as: 'planInfo'
-              }
-            },
-            {
-              $unwind: {
-                path: '$planInfo',
-                preserveNullAndEmptyArrays: false
-              }
-            },
-            {
-              $match: { 
-                'planInfo.tipoPrecio': 'Gratuito',
-                ...(planTypeStr ? { 'planInfo.tipoPlan': planTypeStr } : {})
-              }
-            },
+            ...createGratuitoPlanPipeline(planTypeStr),
             { $count: 'total' }
           ]
         };
@@ -393,7 +326,7 @@ export async function getUsersService(
         // Solo incluir usuarios sin suscripción si no se especifica tipo de plan
         if (!planTypeStr) {
           countFacetPipeline.usuariosSinSuscripcion = [
-            { $match: { suscripcion: { $exists: false } } },
+            ...createNoSubscriptionPipeline(),
             { $count: 'total' }
           ];
         }
@@ -443,34 +376,7 @@ export async function getUsersService(
         
         const pipeline = [
         { $match: baseQuery },
-        {
-          $lookup: {
-            from: 'usersuscriptions',
-            localField: 'suscripcion',
-            foreignField: '_id',
-            as: 'userSuscription'
-          }
-        },
-        {
-          $unwind: {
-            path: '$userSuscription',
-            preserveNullAndEmptyArrays: false
-          }
-        },
-        {
-          $lookup: {
-            from: 'suscriptionplans',
-            localField: 'userSuscription.planId',
-            foreignField: '_id',
-            as: 'planInfo'
-          }
-        },
-        {
-          $unwind: {
-            path: '$planInfo',
-            preserveNullAndEmptyArrays: false
-          }
-        },
+        ...createSubscriptionLookupPipeline(),
         {
           $match: planMatchFilter
         },
@@ -488,34 +394,7 @@ export async function getUsersService(
       
       const countPipeline = [
         { $match: baseQuery },
-        {
-          $lookup: {
-            from: 'usersuscriptions',
-            localField: 'suscripcion',
-            foreignField: '_id',
-            as: 'userSuscription'
-          }
-        },
-        {
-          $unwind: {
-            path: '$userSuscription',
-            preserveNullAndEmptyArrays: false
-          }
-        },
-        {
-          $lookup: {
-            from: 'suscriptionplans',
-            localField: 'userSuscription.planId',
-            foreignField: '_id',
-            as: 'planInfo'
-          }
-        },
-        {
-          $unwind: {
-            path: '$planInfo',
-            preserveNullAndEmptyArrays: false
-          }
-        },
+        ...createSubscriptionLookupPipeline(),
         {
           $match: planMatchFilter
         },

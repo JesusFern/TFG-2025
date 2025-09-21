@@ -2,9 +2,10 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Title, Paper, Button, Group, Text, Stack, Grid, Card, Badge, Avatar, Loader, Center, Alert, Divider } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IconArrowLeft, IconUser, IconMail, IconCalendar, IconPhone, IconCrown, IconAlertCircle } from '@tabler/icons-react';
-import { useAuth } from '../hooks/useAuth';
 import { apiRequest } from '../services/api';
 import { getSuscriptionPlanById, SuscriptionPlan } from '../services/suscriptionPlanService';
+import { formatDateTime, calculateAge } from '../utils/dateUtils';
+import AdminAccessGuard from '../components/common/AdminAccessGuard';
 
 interface User {
   _id: string;
@@ -33,7 +34,6 @@ interface User {
 const UserDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { userId } = useParams<{ userId: string }>();
-  const { user } = useAuth();
   const [userData, setUserData] = useState<User | null>(null);
   const [subscriptionPlan, setSubscriptionPlan] = useState<SuscriptionPlan | null>(null);
   const [loading, setLoading] = useState(true);
@@ -82,50 +82,6 @@ const UserDetailPage: React.FC = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-  };
-
-  const calculateAge = (birthDate: string) => {
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    
-    return age;
-  };
-
-
-  // Verificar si el usuario es admin
-  if (user && user.role !== 'admin') {
-    return (
-      <Container size="md" py="xl">
-        <Paper shadow="sm" p="xl" radius="md">
-          <Title order={2} mb="lg" ta="center" c="red">
-            Acceso Denegado
-          </Title>
-          <Text ta="center" mb="lg">
-            Solo los administradores pueden acceder a los detalles de usuarios.
-          </Text>
-          <Group justify="center">
-            <Button onClick={() => navigate('/dashboard')} color="red">
-              Ir al Dashboard
-            </Button>
-          </Group>
-        </Paper>
-      </Container>
-    );
-  }
 
   if (loading) {
     return (
@@ -156,18 +112,19 @@ const UserDetailPage: React.FC = () => {
   }
 
   return (
-    <Container size="lg" py="xl">
-      <Group mb="lg">
-        <Button 
-          leftSection={<IconArrowLeft size={16} />}
-          onClick={() => navigate(-1)}
-          variant="outline"
-          size="sm"
-          color="nutroos-green"
-        >
-          Volver
-        </Button>
-      </Group>
+    <AdminAccessGuard fallbackText="Solo los administradores pueden acceder a los detalles de usuarios.">
+      <Container size="lg" py="xl">
+        <Group mb="lg">
+          <Button 
+            leftSection={<IconArrowLeft size={16} />}
+            onClick={() => navigate(-1)}
+            variant="outline"
+            size="sm"
+            color="nutroos-green"
+          >
+            Volver
+          </Button>
+        </Group>
 
       <Paper shadow="sm" p="xl" radius="md" mb="xl">
         <Group mb="lg">
@@ -318,14 +275,14 @@ const UserDetailPage: React.FC = () => {
                   <Grid.Col span={{ base: 12, sm: 6 }}>
                     <div>
                       <Text size="sm" c="dimmed">Fecha de Registro</Text>
-                      <Text fw={500}>{formatDate(userData.createdAt)}</Text>
+                      <Text fw={500}>{formatDateTime(userData.createdAt)}</Text>
                     </div>
                   </Grid.Col>
                   
                   <Grid.Col span={{ base: 12, sm: 6 }}>
                     <div>
                       <Text size="sm" c="dimmed">Última Actualización</Text>
-                      <Text fw={500}>{formatDate(userData.updatedAt)}</Text>
+                      <Text fw={500}>{formatDateTime(userData.updatedAt)}</Text>
                     </div>
                   </Grid.Col>
                   
@@ -343,7 +300,8 @@ const UserDetailPage: React.FC = () => {
           </Grid.Col>
         </Grid>
       </Paper>
-    </Container>
+      </Container>
+    </AdminAccessGuard>
   );
 };
 

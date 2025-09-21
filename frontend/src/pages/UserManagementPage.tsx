@@ -1,10 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Container, Title, Paper, Button, Group, Text, Stack, Card, Badge, Avatar, Loader, Center, Alert, Pagination, Box, TextInput, Select, Grid, useMantineColorScheme } from '@mantine/core';
+import { Container, Title, Paper, Button, Group, Text, Stack, Badge, Loader, Center, Alert, Pagination, TextInput, Select, Grid, useMantineColorScheme } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 import { IconArrowLeft, IconUser, IconCalendar, IconCrown, IconAlertCircle, IconSearch, IconFilter } from '@tabler/icons-react';
-import { useAuth } from '../hooks/useAuth';
 import { apiRequest } from '../services/api';
 import { getSuscriptionPlanById } from '../services/suscriptionPlanService';
+import { formatDate, calculateAge } from '../utils/dateUtils';
+import AdminAccessGuard from '../components/common/AdminAccessGuard';
+import UserCard from '../components/common/UserCard';
 
 interface User {
   _id: string;
@@ -45,7 +47,6 @@ interface UsersResponse {
 
 const UserManagementPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
   const [users, setUsers] = useState<User[]>([]);
@@ -183,47 +184,6 @@ const UserManagementPage: React.FC = () => {
     navigate(`/admin/users/${userId}`);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  const calculateAge = (birthDate: string) => {
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    
-    return age;
-  };
-
-  // Verificar si el usuario es admin
-  if (user && user.role !== 'admin') {
-    return (
-      <Container size="md" py="xl">
-        <Paper shadow="sm" p="xl" radius="md">
-          <Title order={2} mb="lg" ta="center" c="red">
-            Acceso Denegado
-          </Title>
-          <Text ta="center" mb="lg">
-            Solo los administradores pueden acceder a la gestión de usuarios.
-          </Text>
-          <Group justify="center">
-            <Button onClick={() => navigate('/dashboard')} color="red">
-              Ir al Dashboard
-            </Button>
-          </Group>
-        </Paper>
-      </Container>
-    );
-  }
 
   if (loading) {
     return (
@@ -254,18 +214,19 @@ const UserManagementPage: React.FC = () => {
   }
 
   return (
-    <Container size="lg" py="xl">
-      <Group mb="lg">
-        <Button 
-          leftSection={<IconArrowLeft size={16} />}
-          onClick={() => navigate(-1)}
-          variant="outline"
-          size="sm"
-          color="nutroos-green"
-        >
-          Volver
-        </Button>
-      </Group>
+    <AdminAccessGuard fallbackText="Solo los administradores pueden acceder a la gestión de usuarios.">
+      <Container size="lg" py="xl">
+        <Group mb="lg">
+          <Button 
+            leftSection={<IconArrowLeft size={16} />}
+            onClick={() => navigate(-1)}
+            variant="outline"
+            size="sm"
+            color="nutroos-green"
+          >
+            Volver
+          </Button>
+        </Group>
 
       <Paper shadow="sm" p="md" radius="md" mb="md">
         <Group justify="space-between" align="center">
@@ -426,24 +387,8 @@ const UserManagementPage: React.FC = () => {
       ) : (
         <Stack gap="md">
           {users.map((user) => (
-            <Card key={user._id} shadow="sm" padding="md" radius="md" withBorder>
-              <Group justify="space-between" align="center">
-                <Group gap="md">
-                  <Avatar size="md" radius="xl" color="nutroos-green">
-                    {user.fullName.charAt(0).toUpperCase()}
-                  </Avatar>
-                  
-                  <Box>
-                    <Text fw={500} size="md">
-                      {user.fullName}
-                    </Text>
-                    <Text size="sm" c="dimmed">
-                      {user.email}
-                    </Text>
-                  </Box>
-                </Group>
-
-                <Group gap="lg" align="center">
+            <UserCard key={user._id} user={user}>
+              <Group gap="lg" align="center">
                   <Group gap="xs">
                     <IconCalendar size={16} color="var(--mantine-color-gray-6)" />
                     <Text size="sm">
@@ -498,17 +443,16 @@ const UserManagementPage: React.FC = () => {
                     Registrado: {formatDate(user.createdAt)}
                   </Text>
 
-                  <Button
-                    size="sm"
-                    variant="light"
-                    color="nutroos-green"
-                    onClick={() => handleViewUser(user._id)}
-                  >
-                    Ver Detalles
-                  </Button>
-                </Group>
+                <Button
+                  size="sm"
+                  variant="light"
+                  color="nutroos-green"
+                  onClick={() => handleViewUser(user._id)}
+                >
+                  Ver Detalles
+                </Button>
               </Group>
-            </Card>
+            </UserCard>
           ))}
 
           {pagination && pagination.totalPages > 1 && (
@@ -530,7 +474,8 @@ const UserManagementPage: React.FC = () => {
           )}
         </Stack>
       )}
-    </Container>
+      </Container>
+    </AdminAccessGuard>
   );
 };
 

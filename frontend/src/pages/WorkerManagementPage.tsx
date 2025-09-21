@@ -2,10 +2,11 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Title, Paper, Button, Group, Text, Stack, Loader, Center, Alert, Grid, Badge, Select } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 import { IconArrowLeft, IconAlertCircle } from '@tabler/icons-react';
-import { useAuth } from '../hooks/useAuth';
 import { apiRequest } from '../services/api';
 import UserFilters from '../components/organisms/UserFilters';
 import UserList from '../components/organisms/UserList';
+import { formatDate, calculateAge } from '../utils/dateUtils';
+import AdminAccessGuard from '../components/common/AdminAccessGuard';
 
 interface Worker {
   _id: string;
@@ -55,7 +56,6 @@ interface WorkersResponse {
 
 const WorkerManagementPage: React.FC = () => {
   const navigate = useNavigate();
-  const { user } = useAuth();
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [pagination, setPagination] = useState<PaginationInfo | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
@@ -156,47 +156,6 @@ const WorkerManagementPage: React.FC = () => {
     navigate(`/admin/workers/${workerId}`);
   };
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  const calculateAge = (birthDate: string) => {
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    
-    return age;
-  };
-
-  // Verificar si el usuario es admin
-  if (user && user.role !== 'admin') {
-    return (
-      <Container size="md" py="xl">
-        <Paper shadow="sm" p="xl" radius="md">
-          <Title order={2} mb="lg" ta="center" c="red">
-            Acceso Denegado
-          </Title>
-          <Text ta="center" mb="lg">
-            Solo los administradores pueden acceder a la gestión de trabajadores.
-          </Text>
-          <Group justify="center">
-            <Button onClick={() => navigate('/dashboard')} color="red">
-              Ir al Dashboard
-            </Button>
-          </Group>
-        </Paper>
-      </Container>
-    );
-  }
 
   if (loading) {
     return (
@@ -274,18 +233,19 @@ const WorkerManagementPage: React.FC = () => {
   };
 
   return (
-    <Container size="lg" py="xl">
-      <Group mb="lg">
-        <Button 
-          leftSection={<IconArrowLeft size={16} />}
-          onClick={() => navigate(-1)}
-          variant="outline"
-          size="sm"
-          color="nutroos-green"
-        >
-          Volver
-        </Button>
-      </Group>
+    <AdminAccessGuard fallbackText="Solo los administradores pueden acceder a la gestión de trabajadores.">
+      <Container size="lg" py="xl">
+        <Group mb="lg">
+          <Button 
+            leftSection={<IconArrowLeft size={16} />}
+            onClick={() => navigate(-1)}
+            variant="outline"
+            size="sm"
+            color="nutroos-green"
+          >
+            Volver
+          </Button>
+        </Group>
 
       <Paper shadow="sm" p="md" radius="md" mb="md">
         <Group justify="space-between" align="center">
@@ -365,7 +325,8 @@ const WorkerManagementPage: React.FC = () => {
           emptyMessage="No hay trabajadores registrados"
         />
       </Paper>
-    </Container>
+      </Container>
+    </AdminAccessGuard>
   );
 };
 

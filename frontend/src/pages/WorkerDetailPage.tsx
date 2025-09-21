@@ -1,9 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Container, Title, Paper, Button, Group, Text, Stack, Card, Badge, Avatar, Loader, Center, Alert, Box, Divider, Grid } from '@mantine/core';
 import { useNavigate, useParams } from 'react-router-dom';
 import { IconArrowLeft, IconUser, IconCalendar, IconUsers, IconMail, IconPhone, IconAlertCircle } from '@tabler/icons-react';
-import { useAuth } from '../hooks/useAuth';
 import { apiRequest } from '../services/api';
+import { formatDate, calculateAge } from '../utils/dateUtils';
+import AdminAccessGuard from '../components/common/AdminAccessGuard';
 
 interface Worker {
   _id: string;
@@ -33,12 +34,11 @@ interface Worker {
 const WorkerDetailPage: React.FC = () => {
   const navigate = useNavigate();
   const { workerId } = useParams<{ workerId: string }>();
-  const { user } = useAuth();
   const [worker, setWorker] = useState<Worker | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const fetchWorker = async () => {
+  const fetchWorker = useCallback(async () => {
     if (!workerId) return;
     
     try {
@@ -61,53 +61,12 @@ const WorkerDetailPage: React.FC = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [workerId]);
 
   useEffect(() => {
     fetchWorker();
-  }, [workerId]);
+  }, [workerId, fetchWorker]);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('es-ES', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
-
-  const calculateAge = (birthDate: string) => {
-    const today = new Date();
-    const birth = new Date(birthDate);
-    let age = today.getFullYear() - birth.getFullYear();
-    const monthDiff = today.getMonth() - birth.getMonth();
-    
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
-      age--;
-    }
-    
-    return age;
-  };
-
-  // Verificar si el usuario es admin
-  if (user && user.role !== 'admin') {
-    return (
-      <Container size="md" py="xl">
-        <Paper shadow="sm" p="xl" radius="md">
-          <Title order={2} mb="lg" ta="center" c="red">
-            Acceso Denegado
-          </Title>
-          <Text ta="center" mb="lg">
-            Solo los administradores pueden acceder a los detalles del trabajador.
-          </Text>
-          <Group justify="center">
-            <Button onClick={() => navigate('/dashboard')} color="red">
-              Ir al Dashboard
-            </Button>
-          </Group>
-        </Paper>
-      </Container>
-    );
-  }
 
   if (loading) {
     return (
@@ -153,18 +112,19 @@ const WorkerDetailPage: React.FC = () => {
   }
 
   return (
-    <Container size="lg" py="xl">
-      <Group mb="lg">
-        <Button 
-          leftSection={<IconArrowLeft size={16} />}
-          onClick={() => navigate('/admin/workers')}
-          variant="outline"
-          size="sm"
-          color="nutroos-green"
-        >
-          Volver a Trabajadores
-        </Button>
-      </Group>
+    <AdminAccessGuard fallbackText="Solo los administradores pueden acceder a los detalles del trabajador.">
+      <Container size="lg" py="xl">
+        <Group mb="lg">
+          <Button 
+            leftSection={<IconArrowLeft size={16} />}
+            onClick={() => navigate('/admin/workers')}
+            variant="outline"
+            size="sm"
+            color="nutroos-green"
+          >
+            Volver a Trabajadores
+          </Button>
+        </Group>
 
       <Paper shadow="sm" p="xl" radius="md">
         <Group mb="xl" align="flex-start">
@@ -328,7 +288,8 @@ const WorkerDetailPage: React.FC = () => {
           </Paper>
         </Stack>
       </Paper>
-    </Container>
+      </Container>
+    </AdminAccessGuard>
   );
 };
 
