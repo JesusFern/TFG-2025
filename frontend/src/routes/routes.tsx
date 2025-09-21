@@ -8,7 +8,6 @@ import VerDietaPage from '../pages/VerDietaPage';
 import ProfilePage from '../pages/ProfilePage';
 import DashboardPage from '../pages/DashboardPage';
 import { ChatPage } from '../pages/ChatPage';
-import WorkerLoginPage from '../pages/WorkerLoginPage';
 import WorkerClientsDashboard from '../pages/WorkerClientsDashboard';
 import Layout from '../components/layout/Layout';
 import { useAuth } from '../hooks/useAuth';
@@ -42,11 +41,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode, workerRoute?: boolea
   }
   
   if (!isAuthenticated) {
-    // Si es una ruta de trabajador, redirigir a la página de login de trabajador
-    if (workerRoute) {
-      return <Navigate to="/worker/login" replace />;
-    }
-    // Para otras rutas, redirigir al login normal
     return <Navigate to="/" replace />;
   }
   
@@ -81,7 +75,7 @@ const AdminProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children
   }
   
   if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/login" replace />;
   }
   
   // Solo admin puede acceder
@@ -119,7 +113,6 @@ const AppRoutes: React.FC = () => {
       <Route path="/profesionales" element={<ProfessionalsPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
-      <Route path="/worker/login" element={<WorkerLoginPage />} />
       <Route path="/planes-suscripcion" element={<SuscriptionPlansPage />} />
       <Route path="/payment/confirm" element={<PaymentConfirmationPage />} />
       <Route path="/payment/cancel" element={<PaymentCancellationPage />} />
