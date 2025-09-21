@@ -1,21 +1,23 @@
 import { Request, Response } from 'express';
-import { getUsersService, getUserByIdService, UserFilters, getWorkersService, getWorkerByIdService, WorkerFilters, registerWorkerService } from '../../service/users/adminService';
+import { 
+  getUsersService, 
+  getUserByIdService, 
+  getWorkersService, 
+  getWorkerByIdService, 
+  registerWorkerService,
+  buildUserFiltersFromQuery,
+  buildWorkerFiltersFromQuery,
+  buildPaginationParams
+} from '../../service/users/adminService';
 import { AuthenticatedRequest } from '../../types';
 
 export const getUsers = async (req: Request, res: Response): Promise<void> => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const skip = (page - 1) * limit;
-    
-    const filters: UserFilters = {
-      search: req.query.search as string,
-      gender: req.query.gender as string,
-      planType: req.query.planType as string,
-      planPrecio: req.query.planPrecio as string
-    };
+    // Construir filtros y paginación de forma segura
+    const filters = buildUserFiltersFromQuery(req.query);
+    const pagination = buildPaginationParams(req.query);
 
-    const result = await getUsersService(filters, { page, limit, skip });
+    const result = await getUsersService(filters, pagination);
     
     res.status(200).json({
       success: true,
@@ -50,20 +52,11 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
 
 export const getWorkers = async (req: Request, res: Response): Promise<void> => {
   try {
-    const page = parseInt(req.query.page as string) || 1;
-    const limit = parseInt(req.query.limit as string) || 10;
-    const skip = (page - 1) * limit;
-    
-    const filters: WorkerFilters = {
-      search: req.query.search as string,
-      workerType: req.query.workerType as string,
-      isWorkerAvailable: req.query.isWorkerAvailable as string,
-      gender: req.query.gender as string,
-      sortBy: req.query.sortBy as string,
-      sortOrder: req.query.sortOrder as string
-    };
+    // Construir filtros y paginación de forma segura
+    const filters = buildWorkerFiltersFromQuery(req.query);
+    const pagination = buildPaginationParams(req.query);
 
-    const result = await getWorkersService(filters, { page, limit, skip });
+    const result = await getWorkersService(filters, pagination);
     
     res.status(200).json({
       success: true,

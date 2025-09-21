@@ -2,10 +2,46 @@ import User from '../../models/users/user';
 import mongoose from 'mongoose';
 import { MongoError } from '../../types';
 
+// Función para escapar caracteres especiales de regex de forma segura
+function escapeRegexString(str: string): string {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 // Interfaces para tipos de datos
 
 interface BaseQuery {
   [key: string]: unknown;
+}
+
+// Función auxiliar para construir filtros de usuario desde query parameters
+export function buildUserFiltersFromQuery(query: Record<string, unknown>): UserFilters {
+  return {
+    search: typeof query.search === 'string' ? query.search : undefined,
+    gender: typeof query.gender === 'string' ? query.gender : undefined,
+    planType: typeof query.planType === 'string' ? query.planType : undefined,
+    planPrecio: typeof query.planPrecio === 'string' ? query.planPrecio : undefined
+  };
+}
+
+// Función auxiliar para construir filtros de trabajador desde query parameters
+export function buildWorkerFiltersFromQuery(query: Record<string, unknown>): WorkerFilters {
+  return {
+    search: typeof query.search === 'string' ? query.search : undefined,
+    workerType: typeof query.workerType === 'string' ? query.workerType : undefined,
+    isWorkerAvailable: typeof query.isWorkerAvailable === 'string' ? query.isWorkerAvailable : undefined,
+    gender: typeof query.gender === 'string' ? query.gender : undefined,
+    sortBy: typeof query.sortBy === 'string' ? query.sortBy : undefined,
+    sortOrder: typeof query.sortOrder === 'string' ? query.sortOrder : undefined
+  };
+}
+
+// Función auxiliar para construir parámetros de paginación
+export function buildPaginationParams(query: Record<string, unknown>): PaginationParams {
+  const page = parseInt(typeof query.page === 'string' ? query.page : '1') || 1;
+  const limit = parseInt(typeof query.limit === 'string' ? query.limit : '10') || 10;
+  const skip = (page - 1) * limit;
+  
+  return { page, limit, skip };
 }
 
 interface SortOptions {
@@ -54,6 +90,28 @@ export interface UsersResult {
   };
 }
 
+// Función auxiliar para construir la query base con filtros seguros
+function buildUserQuery(filters: UserFilters): BaseQuery {
+  const baseQuery: BaseQuery = { role: 'user' };
+  
+  // Aplicar filtros de búsqueda de forma segura
+  if (filters.search) {
+    // Escapar caracteres especiales de regex para prevenir ReDoS
+    const escapedSearch = escapeRegexString(filters.search);
+    const searchRegex = new RegExp(escapedSearch, 'i');
+    baseQuery.$or = [
+      { fullName: searchRegex },
+      { email: searchRegex }
+    ];
+  }
+  
+  if (filters.gender) {
+    baseQuery.gender = filters.gender;
+  }
+  
+  return baseQuery;
+}
+
 export async function getUsersService(
   filters: UserFilters,
   pagination: PaginationParams
@@ -61,22 +119,8 @@ export async function getUsersService(
   try {
     const { page, limit, skip } = pagination;
     
-    // Construir query base
-    const baseQuery: BaseQuery = { role: 'user' };
-    
-    // Aplicar filtros
-    if (filters.search) {
-      const searchRegex = new RegExp(filters.search, 'i');
-      baseQuery.$or = [
-        { fullName: searchRegex },
-        { email: searchRegex }
-      ];
-    }
-    
-
-    if (filters.gender) {
-      baseQuery.gender = filters.gender;
-    }
+    // Construir query base de forma segura
+    const baseQuery = buildUserQuery(filters);
 
     // Filtros por tipo de plan y precio (requieren join con SuscriptionPlan)
     if (filters.planType || filters.planPrecio) {
@@ -448,6 +492,36 @@ export interface WorkersResult {
   };
 }
 
+// Función auxiliar para construir la query base de trabajadores con filtros seguros
+function buildWorkerQuery(filters: WorkerFilters): BaseQuery {
+  const baseQuery: BaseQuery = { role: 'worker' };
+  
+  // Aplicar filtros de búsqueda de forma segura
+  if (filters.search) {
+    // Escapar caracteres especiales de regex para prevenir ReDoS
+    const escapedSearch = escapeRegexString(filters.search);
+    const searchRegex = new RegExp(escapedSearch, 'i');
+    baseQuery.$or = [
+      { fullName: searchRegex },
+      { email: searchRegex }
+    ];
+  }
+  
+  if (filters.workerType) {
+    baseQuery.workerType = filters.workerType;
+  }
+
+  if (filters.isWorkerAvailable !== undefined && filters.isWorkerAvailable !== '') {
+    baseQuery.isWorkerAvailable = filters.isWorkerAvailable === 'true';
+  }
+
+  if (filters.gender) {
+    baseQuery.gender = filters.gender;
+  }
+  
+  return baseQuery;
+}
+
 export async function getWorkersService(
   filters: WorkerFilters,
   pagination: PaginationParams
@@ -455,29 +529,8 @@ export async function getWorkersService(
   try {
     const { page, limit, skip } = pagination;
     
-    // Construir query base
-    const baseQuery: BaseQuery = { role: 'worker' };
-    
-    // Aplicar filtros
-    if (filters.search) {
-      const searchRegex = new RegExp(filters.search, 'i');
-      baseQuery.$or = [
-        { fullName: searchRegex },
-        { email: searchRegex }
-      ];
-    }
-    
-    if (filters.workerType) {
-      baseQuery.workerType = filters.workerType;
-    }
-
-    if (filters.isWorkerAvailable !== undefined && filters.isWorkerAvailable !== '') {
-      baseQuery.isWorkerAvailable = filters.isWorkerAvailable === 'true';
-    }
-
-    if (filters.gender) {
-      baseQuery.gender = filters.gender;
-    }
+    // Construir query base de forma segura
+    const baseQuery = buildWorkerQuery(filters);
 
     // Obtener el total de trabajadores en la aplicación
     const totalWorkersInApp = await User.countDocuments({ role: 'worker' });
