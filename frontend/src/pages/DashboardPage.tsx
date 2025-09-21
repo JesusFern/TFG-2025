@@ -8,6 +8,7 @@ import {
   Group,
   Badge,
   useMantineTheme,
+  useMantineColorScheme,
   Stack,
   Button
 } from '@mantine/core';
@@ -29,9 +30,6 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { WeeklyProgressChart } from '../components/molecules/WeeklyProgressChart';
 import { CurrentSubscription } from '../components/molecules/CurrentSubscription';
-import { limpiarImagenesHuerfanas } from '../services/recetaService';
-import { useState } from 'react';
-import { notifications } from '@mantine/notifications';
 
 interface DashboardCardProps {
   title: string;
@@ -100,32 +98,9 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
 
 const DashboardPage: React.FC = () => {
   const theme = useMantineTheme();
+  const { colorScheme } = useMantineColorScheme();
   const navigate = useNavigate();
   const { user } = useAuth();
-  const [limpiandoImagenes, setLimpiandoImagenes] = useState(false);
-
-  const handleLimpiarImagenesHuerfanas = async () => {
-    try {
-      setLimpiandoImagenes(true);
-      const resultado = await limpiarImagenesHuerfanas();
-      
-      notifications.show({
-        title: 'Limpieza completada',
-        message: resultado.message,
-        color: 'green',
-        autoClose: 5000,
-      });
-    } catch (error) {
-      notifications.show({
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Error al limpiar imágenes huérfanas',
-        color: 'red',
-        autoClose: 5000,
-      });
-    } finally {
-      setLimpiandoImagenes(false);
-    }
-  };
 
   // Datos de progreso simulados (en producción vendrían del backend)
   const weeklyProgress = {
@@ -237,21 +212,66 @@ const DashboardPage: React.FC = () => {
     <Container size="xl" py="xl">
       <Stack gap="xl">
         {/* Header del Dashboard */}
-        <Paper p="xl" radius="lg" withBorder bg={theme.colors.gray[0]}>
+        <Paper 
+          p="xl" 
+          radius="lg" 
+          withBorder 
+          style={{
+            background: colorScheme === 'dark' 
+              ? `linear-gradient(135deg, ${theme.colors.dark[7]} 0%, ${theme.colors.dark[6]} 100%)`
+              : `linear-gradient(135deg, ${theme.colors.gray[0]} 0%, ${theme.colors.gray[1]} 100%)`,
+            borderColor: colorScheme === 'dark' ? theme.colors.dark[4] : theme.colors.gray[3]
+          }}
+        >
           <Stack gap="md">
-            <Title order={1} c={theme.colors.gray[8]}>
+            <Title 
+              order={1} 
+              style={{
+                color: colorScheme === 'dark' ? theme.colors.gray[0] : theme.colors.gray[8],
+                textShadow: colorScheme === 'dark' ? '0 2px 4px rgba(0,0,0,0.3)' : '0 1px 2px rgba(0,0,0,0.1)'
+              }}
+            >
               ¡Bienvenido de vuelta, {user?.fullName}! 👋
             </Title>
-            <Text size="lg" c="dimmed">
+            <Text 
+              size="lg" 
+              style={{
+                color: colorScheme === 'dark' ? theme.colors.gray[2] : theme.colors.gray[6]
+              }}
+            >
               Tu centro de control para nutrición y entrenamiento personal
             </Text>
             <Group>
-              <Badge color="nutroos-green" variant="light" size="lg">
+              <Badge 
+                color="nutroos-green" 
+                variant={colorScheme === 'dark' ? 'filled' : 'light'} 
+                size="lg"
+                style={{
+                  backgroundColor: colorScheme === 'dark' 
+                    ? theme.colors['nutroos-green'][6] 
+                    : undefined,
+                  color: colorScheme === 'dark' 
+                    ? theme.white 
+                    : undefined
+                }}
+              >
                 {user?.role === 'admin' ? 'Administrador' : 
                  user?.role === 'worker' ? user.workerType || 'Trabajador' : 'Usuario'}
               </Badge>
               {user?.role === 'user' && (
-                <Badge color="blue" variant="light" size="lg">
+                <Badge 
+                  color="blue" 
+                  variant={colorScheme === 'dark' ? 'filled' : 'light'} 
+                  size="lg"
+                  style={{
+                    backgroundColor: colorScheme === 'dark' 
+                      ? theme.colors.blue[6] 
+                      : undefined,
+                    color: colorScheme === 'dark' 
+                      ? theme.white 
+                      : undefined
+                  }}
+                >
                   Cliente Activo
                 </Badge>
               )}
@@ -344,15 +364,6 @@ const DashboardPage: React.FC = () => {
                     onClick={() => navigate('/admin/registrar-trabajador')}
                   >
                     Registrar Trabajador
-                  </Button>
-                  <Button
-                    leftSection={<IconChefHat size={16} />}
-                    color="orange"
-                    variant="light"
-                    onClick={handleLimpiarImagenesHuerfanas}
-                    loading={limpiandoImagenes}
-                  >
-                    Limpiar Imágenes Huérfanas
                   </Button>
                 </Group>
               )}
