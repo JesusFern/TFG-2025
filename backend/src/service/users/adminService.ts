@@ -2,6 +2,101 @@ import User from '../../models/users/user';
 import mongoose from 'mongoose';
 import { MongoError } from '../../types';
 
+// Función para validar y sanitizar strings de entrada
+function validateAndSanitizeString(input: unknown, fieldName: string): string | undefined {
+  if (input === undefined || input === null || input === '') {
+    return undefined;
+  }
+  
+  if (typeof input !== 'string') {
+    throw new Error(`Invalid ${fieldName}: must be a string`);
+  }
+  
+  // Sanitizar: eliminar caracteres peligrosos y limitar longitud
+  const sanitized = input.trim().slice(0, 100);
+  
+  // Validar que no contenga caracteres de control o operadores MongoDB
+  for (let i = 0; i < sanitized.length; i++) {
+    const charCode = sanitized.charCodeAt(i);
+    if (charCode < 32 || charCode === 127) {
+      throw new Error(`Invalid ${fieldName}: contains control characters`);
+    }
+  }
+  
+  return sanitized;
+}
+
+// Función para validar valores de género
+function validateGender(input: unknown): string | undefined {
+  const sanitized = validateAndSanitizeString(input, 'gender');
+  if (!sanitized) return undefined;
+  
+  const validGenders = ['Masculino', 'Femenino', 'Otro'];
+  if (!validGenders.includes(sanitized)) {
+    throw new Error('Invalid gender: must be Masculino, Femenino, or Otro');
+  }
+  
+  return sanitized;
+}
+
+// Función para validar tipos de trabajador
+function validateWorkerType(input: unknown): string | undefined {
+  const sanitized = validateAndSanitizeString(input, 'workerType');
+  if (!sanitized) return undefined;
+  
+  const validTypes = ['Entrenador personal', 'Nutricionista', 'Nutricionista y Entrenador personal'];
+  if (!validTypes.includes(sanitized)) {
+    throw new Error('Invalid workerType: must be a valid worker type');
+  }
+  
+  return sanitized;
+}
+
+// Función para validar disponibilidad de trabajador
+function validateWorkerAvailability(input: unknown): boolean | undefined {
+  if (input === undefined || input === null || input === '') {
+    return undefined;
+  }
+  
+  if (typeof input === 'boolean') {
+    return input;
+  }
+  
+  if (typeof input === 'string') {
+    const sanitized = input.trim().toLowerCase();
+    if (sanitized === 'true') return true;
+    if (sanitized === 'false') return false;
+  }
+  
+  throw new Error('Invalid isWorkerAvailable: must be true or false');
+}
+
+// Función para validar tipos de plan
+function validatePlanType(input: unknown): string | undefined {
+  const sanitized = validateAndSanitizeString(input, 'planType');
+  if (!sanitized) return undefined;
+  
+  const validTypes = ['Nutricion', 'Entrenamiento', 'Completo'];
+  if (!validTypes.includes(sanitized)) {
+    throw new Error('Invalid planType: must be Nutricion, Entrenamiento, or Completo');
+  }
+  
+  return sanitized;
+}
+
+// Función para validar tipos de precio
+function validatePlanPrecio(input: unknown): string | undefined {
+  const sanitized = validateAndSanitizeString(input, 'planPrecio');
+  if (!sanitized) return undefined;
+  
+  const validPrices = ['Gratuito', 'Básico', 'Premium'];
+  if (!validPrices.includes(sanitized)) {
+    throw new Error('Invalid planPrecio: must be Gratuito, Básico, or Premium');
+  }
+  
+  return sanitized;
+}
+
 // Función para crear filtros de búsqueda seguros sin usar RegExp
 function createSafeSearchFilter(searchTerm: string): { $or: Array<{ [key: string]: { $regex: string; $options: string } }> } {
   const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
@@ -22,33 +117,58 @@ interface BaseQuery {
 
 // Función auxiliar para construir filtros de usuario desde query parameters
 export function buildUserFiltersFromQuery(query: Record<string, unknown>): UserFilters {
-  return {
-    search: typeof query.search === 'string' ? query.search : undefined,
-    gender: typeof query.gender === 'string' ? query.gender : undefined,
-    planType: typeof query.planType === 'string' ? query.planType : undefined,
-    planPrecio: typeof query.planPrecio === 'string' ? query.planPrecio : undefined
-  };
+  try {
+    return {
+      search: validateAndSanitizeString(query.search, 'search'),
+      gender: validateGender(query.gender),
+      planType: validatePlanType(query.planType),
+      planPrecio: validatePlanPrecio(query.planPrecio)
+    };
+  } catch (error) {
+    throw new Error(`Invalid filter parameters: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 // Función auxiliar para construir filtros de trabajador desde query parameters
 export function buildWorkerFiltersFromQuery(query: Record<string, unknown>): WorkerFilters {
-  return {
-    search: typeof query.search === 'string' ? query.search : undefined,
-    workerType: typeof query.workerType === 'string' ? query.workerType : undefined,
-    isWorkerAvailable: typeof query.isWorkerAvailable === 'string' ? query.isWorkerAvailable : undefined,
-    gender: typeof query.gender === 'string' ? query.gender : undefined,
-    sortBy: typeof query.sortBy === 'string' ? query.sortBy : undefined,
-    sortOrder: typeof query.sortOrder === 'string' ? query.sortOrder : undefined
-  };
+  try {
+    return {
+      search: validateAndSanitizeString(query.search, 'search'),
+      workerType: validateWorkerType(query.workerType),
+      isWorkerAvailable: validateWorkerAvailability(query.isWorkerAvailable)?.toString(),
+      gender: validateGender(query.gender),
+      sortBy: validateAndSanitizeString(query.sortBy, 'sortBy'),
+      sortOrder: validateAndSanitizeString(query.sortOrder, 'sortOrder')
+    };
+  } catch (error) {
+    throw new Error(`Invalid filter parameters: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 // Función auxiliar para construir parámetros de paginación
 export function buildPaginationParams(query: Record<string, unknown>): PaginationParams {
-  const page = parseInt(typeof query.page === 'string' ? query.page : '1') || 1;
-  const limit = parseInt(typeof query.limit === 'string' ? query.limit : '10') || 10;
-  const skip = (page - 1) * limit;
-  
-  return { page, limit, skip };
+  try {
+    const pageStr = validateAndSanitizeString(query.page, 'page') || '1';
+    const limitStr = validateAndSanitizeString(query.limit, 'limit') || '10';
+    
+    const page = parseInt(pageStr, 10);
+    const limit = parseInt(limitStr, 10);
+    
+    // Validar rangos
+    if (isNaN(page) || page < 1 || page > 1000) {
+      throw new Error('Invalid page: must be between 1 and 1000');
+    }
+    
+    if (isNaN(limit) || limit < 1 || limit > 100) {
+      throw new Error('Invalid limit: must be between 1 and 100');
+    }
+    
+    const skip = (page - 1) * limit;
+    
+    return { page, limit, skip };
+  } catch (error) {
+    throw new Error(`Invalid pagination parameters: ${error instanceof Error ? error.message : 'Unknown error'}`);
+  }
 }
 
 interface SortOptions {
@@ -107,8 +227,9 @@ function buildUserQuery(filters: UserFilters): BaseQuery {
     baseQuery.$or = searchFilter.$or;
   }
   
+  // Aplicar filtro de género de forma segura (ya validado)
   if (filters.gender) {
-    baseQuery.gender = filters.gender;
+    baseQuery.gender = filters.gender; // Ya está validado y sanitizado
   }
   
   return baseQuery;
@@ -504,16 +625,17 @@ function buildWorkerQuery(filters: WorkerFilters): BaseQuery {
     baseQuery.$or = searchFilter.$or;
   }
   
+  // Aplicar filtros de forma segura (ya validados)
   if (filters.workerType) {
-    baseQuery.workerType = filters.workerType;
+    baseQuery.workerType = filters.workerType; // Ya está validado y sanitizado
   }
 
   if (filters.isWorkerAvailable !== undefined && filters.isWorkerAvailable !== '') {
-    baseQuery.isWorkerAvailable = filters.isWorkerAvailable === 'true';
+    baseQuery.isWorkerAvailable = filters.isWorkerAvailable === 'true'; // Ya está validado
   }
 
   if (filters.gender) {
-    baseQuery.gender = filters.gender;
+    baseQuery.gender = filters.gender; // Ya está validado y sanitizado
   }
   
   return baseQuery;
