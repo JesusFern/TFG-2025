@@ -10,7 +10,8 @@ import {
   LoadingOverlay,
   Text,
   Tabs,
-  Paper
+  Paper,
+  Loader
 } from '@mantine/core';
 import { useAuth } from '../hooks/useAuth';
 import { useThemeDetection } from '../hooks/useThemeDetection';
@@ -23,7 +24,10 @@ import ModalCancelarCita from '../components/molecules/ModalCancelarCita';
 import ModalReagendarCita from '../components/molecules/ModalReagendarCita';
 import ModalConfirmarAccionCita from '../components/molecules/ModalConfirmarAccionCita';
 import GlobalNotificationOverlay from '../components/atoms/GlobalNotificationOverlay';
-import {
+import { VideoCallModalCitas } from '../components/organisms/VideoCallModalCitas';
+import { VideoCallRoom } from '../components/organisms/VideoCallRoom';
+import { useVideoCallCitas } from '../hooks/useVideoCallCitas';
+import {  
   IconPlus,
   IconCalendar,
   IconChartBar,
@@ -74,11 +78,60 @@ const CitasPage: React.FC = () => {
   // Estados de loading para acciones
   const [loadingAccion, setLoadingAccion] = useState(false);
 
+  // Estados para videollamadas
+  const [showVideoCall, setShowVideoCall] = useState(false);
+  const [showVideoRoom, setShowVideoRoom] = useState(false);
+  const [videoCallCita, setVideoCallCita] = useState<Cita | null>(null);
+  const [cameraSettings, setCameraSettings] = useState<{ videoEnabled: boolean; audioEnabled: boolean }>({
+    videoEnabled: true,
+    audioEnabled: true
+  });
+
+  // Estado para controlar si estamos recuperando una videollamada
+  const [isRecoveringVideoCall, setIsRecoveringVideoCall] = useState(false);
+
   // Tab activo
   const [activeTab, setActiveTab] = useState<string | null>('lista');
 
   // Determinar si es profesional
   const esProfesional = user?.role === 'worker';
+
+  // Hook para videollamadas
+  const {
+    call: videoCall,
+    startCallWithSettings,
+    endCall,
+    participants,
+    localParticipant,
+  } = useVideoCallCitas({
+    cita: videoCallCita || undefined,
+    onCallEnded: () => {
+      setShowVideoRoom(false);
+      setShowVideoCall(false);
+      setVideoCallCita(null);
+      // Limpiar videollamada guardada cuando termine
+      localStorage.removeItem('activeVideoCall');
+    },
+    onCallStarted: () => {
+      // Guardar videollamada activa en localStorage
+      if (videoCallCita) {
+        localStorage.setItem('activeVideoCall', JSON.stringify({
+          citaId: videoCallCita._id,
+          timestamp: Date.now()
+        }));
+      }
+      
+      // Pequeño delay para asegurar que el estado se establezca correctamente
+      setTimeout(() => {
+        setShowVideoRoom(true);
+        setShowVideoCall(false);
+      }, 100);
+    },
+  });
+
+  // Debug: Log cuando cambien los estados de videollamada
+  useEffect(() => {
+  }, [showVideoRoom, showVideoCall, videoCallCita, videoCall]);
 
   // Cargar citas
   const cargarCitas = useCallback(async () => {
@@ -131,6 +184,45 @@ const CitasPage: React.FC = () => {
       cargarEstadisticas();
     }
   }, [activeTab]);
+
+  // Efecto para recuperar videollamada después de recargar la página
+  useEffect(() => {
+    const recoverVideoCall = async () => {
+      try {
+        // Verificar si hay una videollamada guardada en localStorage
+        const savedVideoCall = localStorage.getItem('activeVideoCall');
+        if (savedVideoCall) {
+          const { citaId, timestamp } = JSON.parse(savedVideoCall);
+          
+          // Verificar que no sea muy antiguo (máximo 1 hora)
+          const oneHourAgo = Date.now() - (60 * 60 * 1000);
+          if (timestamp > oneHourAgo) {
+            setIsRecoveringVideoCall(true);
+            
+            // Buscar la cita por ID
+            const citaEncontrada = await CitaService.obtenerCitaPorId(citaId);
+            if (citaEncontrada) {
+              setVideoCallCita(citaEncontrada);
+              setShowVideoRoom(true);
+            } else {
+              // Si no se encuentra la cita, limpiar localStorage
+              localStorage.removeItem('activeVideoCall');
+            }
+          } else {
+            // Videollamada muy antigua, limpiar
+            localStorage.removeItem('activeVideoCall');
+          }
+        }
+      } catch (error) {
+        console.error('❌ Error al recuperar videollamada:', error);
+        localStorage.removeItem('activeVideoCall');
+      } finally {
+        setIsRecoveringVideoCall(false);
+      }
+    };
+
+    recoverVideoCall();
+  }, []); // Solo se ejecuta una vez al montar el componente
 
   // Handlers de filtros
   const handleFiltrosChange = (nuevosFiltros: FiltrosCitasType) => {
@@ -226,11 +318,14 @@ const CitasPage: React.FC = () => {
   };
 
   const handleUnirseVideollamada = async () => {
-    // Aquí se implementaría la lógica para unirse a la videollamada
-    setNotification({
-      type: 'info',
-      message: 'Funcionalidad de videollamada en desarrollo'
-    });
+    if (!modalConfirmar.cita) return;
+    
+    // Configurar la cita para la videollamada
+    setVideoCallCita(modalConfirmar.cita);
+    setShowVideoCall(true);
+    
+    // Cerrar el modal de confirmación
+    setModalConfirmar({ opened: false, cita: null, accion: 'confirmar' });
   };
 
   // Handlers de modales
@@ -251,6 +346,86 @@ const CitasPage: React.FC = () => {
     setModalReagendar({ opened: false, cita: null });
     setModalConfirmar({ opened: false, cita: null, accion: 'confirmar' });
   };
+
+  // Handlers para videollamadas
+  const handleJoinVideoCall = (cita: Cita) => {
+    setVideoCallCita(cita);
+    setShowVideoCall(true);
+  };
+
+  const handleCloseVideoCall = () => {
+    setShowVideoCall(false);
+    setVideoCallCita(null);
+  };
+
+  const handleCloseVideoRoom = async () => {
+    if (videoCall) {
+      await endCall();
+    }
+    setShowVideoRoom(false);
+    setVideoCallCita(null);
+    // Limpiar videollamada guardada cuando se cierre manualmente
+    localStorage.removeItem('activeVideoCall');
+  };
+
+  const handleJoinCallWithSettings = async (settings: { videoEnabled: boolean; audioEnabled: boolean }) => {
+    
+    setCameraSettings(settings);
+    try {
+      await startCallWithSettings(settings);
+      
+      // El onCallStarted callback se encargará de cambiar el estado
+      // No necesitamos hacer nada más aquí
+    } catch (error) {
+      console.error('Error al unirse a la videollamada:', error);
+      setNotification({
+        type: 'error',
+        message: 'Error al unirse a la videollamada'
+      });
+    }
+  };
+
+  // Si se está recuperando una videollamada, mostrar loading
+  if (isRecoveringVideoCall) {
+    return (
+      <Container size="xl" py="md">
+        <Stack gap="lg" align="center" justify="center" style={{ minHeight: '400px' }}>
+          <Loader size="lg" />
+          <Text size="lg" c="dimmed">
+            Recuperando videollamada...
+          </Text>
+        </Stack>
+      </Container>
+    );
+  }
+
+  // Si hay una videollamada activa, mostrar la sala de video
+  if (showVideoRoom && (videoCall || videoCallCita)) {
+    
+    // Si no hay videoCall pero sí hay videoCallCita (recuperando), mostrar loading
+    if (!videoCall && videoCallCita) {
+      return (
+        <Container size="xl" py="md">
+          <Stack gap="lg" align="center" justify="center" style={{ minHeight: '400px' }}>
+            <Loader size="lg" />
+            <Text size="lg" c="dimmed">
+              Reconectando a la videollamada...
+            </Text>
+          </Stack>
+        </Container>
+      );
+    }
+    
+    return (
+      <VideoCallRoom
+        call={videoCall!}
+        onEndCall={handleCloseVideoRoom}
+        cameraSettings={cameraSettings}
+        participants={participants}
+        localParticipant={localParticipant}
+      />
+    );
+  }
 
   return (
     <Container size="xl" py="md">
@@ -351,7 +526,7 @@ const CitasPage: React.FC = () => {
                         onEdit={(cita) => window.location.href = `/citas/editar/${cita._id}`}
                         onCancel={abrirModalCancelar}
                         onReschedule={abrirModalReagendar}
-                        onJoin={(cita) => abrirModalConfirmar(cita, 'unirse')}
+                        onJoin={handleJoinVideoCall}
                         onConfirm={(cita) => abrirModalConfirmar(cita, 'confirmar')}
                         onComplete={(cita) => abrirModalConfirmar(cita, 'completar')}
                         isProfessional={esProfesional}
@@ -410,6 +585,14 @@ const CitasPage: React.FC = () => {
             handleUnirseVideollamada
           }
           loading={loadingAccion}
+        />
+
+        {/* Modal de videollamada */}
+        <VideoCallModalCitas
+          isOpen={showVideoCall}
+          onClose={handleCloseVideoCall}
+          cita={videoCallCita}
+          onJoinCall={handleJoinCallWithSettings}
         />
       </Stack>
     </Container>

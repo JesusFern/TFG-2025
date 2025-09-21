@@ -325,7 +325,7 @@ const CitaCard: React.FC<CitaCardProps> = ({
                   color="blue"
                   onClick={() => onJoin?.(cita)}
                 >
-                  Unirse
+                  Unirse a videollamada
                 </Button>
               )}
             </Group>

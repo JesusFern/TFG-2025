@@ -141,12 +141,18 @@ export const ChatMain: React.FC<ChatMainProps> = ({
           <Stack gap="md">
             {/* Mensaje de bienvenida */}
             {mensajes.length === 0 && (
-              <Center p="xl" ta="center" c="dimmed">
-                <IconMessage size={48} style={{ margin: '0 auto 1rem' }} />
-                <Text size="lg">Inicia la conversación</Text>
-                <Text size="sm">
-                  Envía el primer mensaje para comenzar a chatear
-                </Text>
+              <Center p="xl">
+                <Stack align="center" gap="md">
+                  <IconMessage size={48} color="var(--mantine-color-gray-4)" />
+                  <Stack align="center" gap="xs">
+                    <Text size="lg" c="dimmed" fw={500}>
+                      Inicia la conversación
+                    </Text>
+                    <Text size="sm" c="dimmed" ta="center">
+                      Envía el primer mensaje para comenzar a chatear
+                    </Text>
+                  </Stack>
+                </Stack>
               </Center>
             )}
 

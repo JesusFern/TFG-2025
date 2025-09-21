@@ -565,3 +565,51 @@ export const checkUserSubscriptionStatus = async (req: AuthenticatedRequest, res
     });
   }
 };
+
+// Obtener clientes asignados a un trabajador
+export const getClientsAssignedToWorker = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const { workerId } = req.params;
+
+    if (!Types.ObjectId.isValid(workerId)) {
+      res.status(400).json({ message: 'ID de trabajador inválido' });
+      return;
+    }
+
+    // Buscar el trabajador y obtener sus clientes asignados
+    const worker = await User.findById(workerId).select('clientesAsignados');
+    
+    if (!worker) {
+      res.status(404).json({ message: 'Trabajador no encontrado' });
+      return;
+    }
+
+    // Extraer los IDs de los clientes asignados
+    const clientesIds = worker.clientesAsignados?.map(cliente => cliente.clienteId) || [];
+
+    // Buscar los clientes
+    const clientes = await User.find({
+      _id: { $in: clientesIds },
+      role: 'user'
+    }).select('_id fullName email profilePicture role');
+
+    // Mapear a formato UsuarioResumido
+    const clientesAsignados = clientes.map(cliente => ({
+      _id: (cliente._id as Types.ObjectId).toString(),
+      fullName: cliente.fullName,
+      email: cliente.email,
+      profilePicture: cliente.profilePicture,
+      role: cliente.role
+    }));
+
+    res.status(200).json(clientesAsignados);
+
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Error al obtener clientes asignados:', err);
+    res.status(500).json({ 
+      message: 'Error interno del servidor al obtener clientes asignados',
+      error: err.message 
+    });
+  }
+};
