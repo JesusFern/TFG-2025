@@ -51,6 +51,7 @@ export interface Receta {
   tiempoPreparacion?: string;
   informacionNutricional?: string;
   imagen?: string;
+  publica?: boolean;
 }
 
 export interface DietaActualizacionDTO {

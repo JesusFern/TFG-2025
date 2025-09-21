@@ -71,6 +71,42 @@ export async function obtenerRecetasPublicasYPropiasService(creadorId: string) {
   return recetas;
 }
 
+export async function buscarRecetasService(termino: string, creadorId: string) {
+  // Si no hay término, devolver recetas públicas y privadas del nutricionista
+  if (!termino || termino.trim().length === 0) {
+    const recetas = await Receta.find({
+      $or: [
+        { publica: true },
+        { creador: creadorId }
+      ]
+    }).sort({ nombreReceta: 1 }).limit(10);
+    
+    return recetas;
+  }
+
+  const terminoBusqueda = termino.trim();
+  
+  // Buscar en recetas públicas y privadas del nutricionista
+  const recetas = await Receta.find({
+    $and: [
+      {
+        $or: [
+          { publica: true },
+          { creador: creadorId }
+        ]
+      },
+      {
+        $or: [
+          { nombreReceta: { $regex: terminoBusqueda, $options: 'i' } },
+          { ingredientes: { $regex: terminoBusqueda, $options: 'i' } }
+        ]
+      }
+    ]
+  }).sort({ nombreReceta: 1 }).limit(10);
+
+  return recetas;
+}
+
 export interface ActualizarRecetaData {
   nombreReceta?: string;
   ingredientes?: string[];

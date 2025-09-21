@@ -2,8 +2,6 @@ import { Router, Request, Response } from 'express';
 import { 
   registerUser, 
   loginUser, 
-  getUsers, 
-  getUserById, 
   updateUser, 
   deleteUser,
   getMyProfile,
@@ -65,10 +63,9 @@ if (process.env.NODE_ENV !== 'test') {
   router.get('/subscription-status', authenticateToken, checkUserSubscriptionStatus);
 }
 
-// Rutas protegidas para administradores
-router.get('/', authenticateToken, getUsers);
-router.get('/:id', authenticateToken, validateRequest, getUserById);
+// Rutas protegidas para usuarios
 router.put('/:id', authenticateToken, authorizeUserOrAdmin, validateRequest, updateUser);
 router.delete('/:id', authenticateToken, authorizeUserOrAdmin, validateRequest, deleteUser);
+
 
 export default router;

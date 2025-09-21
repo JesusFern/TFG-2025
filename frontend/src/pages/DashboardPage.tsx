@@ -320,15 +320,41 @@ const DashboardPage: React.FC = () => {
                 Establecer Objetivo
               </Button>
               {user?.role === 'admin' && (
-                <Button
-                  leftSection={<IconChefHat size={16} />}
-                  color="orange"
-                  variant="light"
-                  onClick={handleLimpiarImagenesHuerfanas}
-                  loading={limpiandoImagenes}
-                >
-                  Limpiar Imágenes Huérfanas
-                </Button>
+                <Group gap="md">
+                  <Button
+                    leftSection={<IconUser size={16} />}
+                    color="nutroos-green"
+                    variant="light"
+                    onClick={() => navigate('/admin/users')}
+                  >
+                    Gestión de Usuarios
+                  </Button>
+                  <Button
+                    leftSection={<IconUser size={16} />}
+                    color="blue"
+                    variant="light"
+                    onClick={() => navigate('/admin/workers')}
+                  >
+                    Gestión de Trabajadores
+                  </Button>
+                  <Button
+                    leftSection={<IconUser size={16} />}
+                    color="purple"
+                    variant="light"
+                    onClick={() => navigate('/admin/registrar-trabajador')}
+                  >
+                    Registrar Trabajador
+                  </Button>
+                  <Button
+                    leftSection={<IconChefHat size={16} />}
+                    color="orange"
+                    variant="light"
+                    onClick={handleLimpiarImagenesHuerfanas}
+                    loading={limpiandoImagenes}
+                  >
+                    Limpiar Imágenes Huérfanas
+                  </Button>
+                </Group>
               )}
             </Group>
           </Stack>

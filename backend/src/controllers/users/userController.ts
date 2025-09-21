@@ -205,29 +205,7 @@ export const loginUser = async (req: Request, res: Response): Promise<void> => {
   }
 };
 
-export const getUsers = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const users = await User.find();
-    res.status(200).json(users);
-  } catch (error: unknown) {
-    const err = error as Error;
-    res.status(500).json({ message: err.message });
-  }
-};
 
-export const getUserById = async (req: Request, res: Response): Promise<void> => {
-  try {
-    const user = await User.findById(req.params.id);
-    if (!user) {
-      res.status(404).json({ message: 'Usuario no encontrado' });
-      return;
-    }
-    res.status(200).json(user);
-  } catch (error: unknown) {
-    const err = error as Error;
-    res.status(500).json({ message: err.message });
-  }
-};
 
 export const updateUser = async (req: Request, res: Response): Promise<void> => {
   try {
