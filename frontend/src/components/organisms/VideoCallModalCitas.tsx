@@ -12,81 +12,72 @@ import {
   IconAlertCircle,
   IconVideo,
   IconCheck,
-  IconMessage,
+  IconCalendar,
   IconUser,
 } from '@tabler/icons-react';
 import { useVideo } from '../../hooks/useVideo';
 import { useCameraPreview } from '../../hooks/useCameraPreview';
 import { CameraPreview } from '../atoms/CameraPreview';
 import { VideoCallInitialView } from '../atoms/VideoCallInitialView';
-import { Conversacion } from '../../types/chat';
+import { Cita } from '../../types/citas';
 
-interface VideoCallModalProps {
+interface VideoCallModalCitasProps {
   isOpen: boolean;
   onClose: () => void;
-  conversacion: Conversacion | null;
-  callType?: 'start' | 'join';
+  cita: Cita | null;
   callId?: string;
   onJoinCall: (settings: { videoEnabled: boolean; audioEnabled: boolean }) => Promise<void>;
 }
 
-export const VideoCallModal: React.FC<VideoCallModalProps> = ({
+export const VideoCallModalCitas: React.FC<VideoCallModalCitasProps> = ({
   isOpen,
   onClose,
-  conversacion,
-  callType = 'start',
+  cita,
   onJoinCall,
 }) => {
   const { client, isConnected, error: videoError } = useVideo();
   const cameraPreview = useCameraPreview(onClose);
 
-  // Componente para mostrar información de la conversación
-  const ConversacionInfo = () => {
-    if (!conversacion) return null;
+  // Función para formatear fecha y hora
+  const formatFechaHora = (fecha: string, hora: string) => {
+    const fechaObj = new Date(fecha);
+    const fechaFormateada = fechaObj.toLocaleDateString('es-ES', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
+    return `${fechaFormateada} a las ${hora}`;
+  };
+
+  // Componente para mostrar información de la cita
+  const CitaInfo = () => {
+    if (!cita) return null;
 
     return (
       <Paper p="md" radius="md" withBorder>
         <Stack gap="sm">
           <Group gap="sm">
-            <IconMessage size={20} color="var(--mantine-color-blue-6)" />
+            <IconCalendar size={20} color="var(--mantine-color-blue-6)" />
             <Text fw={600} size="md">
-              Conversación
+              {cita.tipo.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
             </Text>
           </Group>
           
           <Group gap="sm">
             <IconUser size={16} color="var(--mantine-color-gray-6)" />
             <Text size="sm" c="dimmed">
-              {conversacion.participantes?.map(p => p.fullName).join(', ') || 'Sin participantes'}
+              {cita.profesional?.fullName || 'Profesional no disponible'}
             </Text>
           </Group>
           
           <Text size="sm" c="dimmed">
-            {conversacion.ultimoMensaje || 'Sin mensajes'}
+            {formatFechaHora(cita.fecha, cita.hora)}
           </Text>
         </Stack>
       </Paper>
     );
   };
-
-  // Determinar el título y subtítulo según el tipo de llamada
-  const getCallInfo = () => {
-    if (callType === 'join') {
-      return {
-        title: "Unirse a Videollamada",
-        subtitle: "Configura tu cámara y micrófono antes de unirte a la videollamada existente",
-        buttonText: "Unirse a Videollamada"
-      };
-    }
-    
-    return {
-      title: "Iniciar Videollamada",
-      subtitle: "Configura tu cámara y micrófono antes de iniciar la videollamada",
-      buttonText: "Iniciar Videollamada"
-    };
-  };
-
-  const callInfo = getCallInfo();
 
   if (!client || !isConnected || videoError) {
     return (
@@ -116,7 +107,7 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
         <Group gap="sm">
           <IconVideo size={20} color="#4CAF50" />
           <Text size="lg" fw={600}>
-            {callInfo.title}
+            Iniciar Videollamada de Cita
           </Text>
         </Group>
       }
@@ -144,8 +135,8 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
       {cameraPreview.showCameraPreview ? (
         <Box p="xl">
           <Stack gap="xl">
-            {/* Información de la conversación */}
-            <ConversacionInfo />
+            {/* Información de la cita */}
+            <CitaInfo />
 
             {/* Previsualización de cámara */}
             <CameraPreview
@@ -160,7 +151,7 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
               onToggleAudio={cameraPreview.toggleAudio}
               onJoinWithSettings={() => cameraPreview.handleJoinWithSettings(onJoinCall)}
               onCancelPreview={cameraPreview.handleCancelPreview}
-              joinButtonText={callInfo.buttonText}
+              joinButtonText="Iniciar Videollamada"
               joinButtonIcon={<IconCheck size={16} />}
             />
           </Stack>
@@ -168,14 +159,14 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
       ) : (
         <Box p="xl">
           <Stack gap="xl" align="center">
-            {/* Información de la conversación */}
-            <ConversacionInfo />
+            {/* Información de la cita */}
+            <CitaInfo />
 
             <VideoCallInitialView
               onStartCall={cameraPreview.handleStartCall}
               onCloseModal={onClose}
-              title={callInfo.title}
-              subtitle={callInfo.subtitle}
+              title="Iniciar Videollamada de Cita"
+              subtitle="Configura tu cámara y micrófono antes de unirte para asegurar la mejor experiencia"
             />
           </Stack>
         </Box>

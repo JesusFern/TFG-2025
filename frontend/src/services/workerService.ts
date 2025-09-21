@@ -32,7 +32,7 @@ export interface ClientesResponse {
   clientes: ClienteAsignado[];
 }
 
-export const getClientesAsignados = async (): Promise<ClientesResponse> => {
+export const getClientesAsignados = async (workerId: string): Promise<ClienteAsignado[]> => {
   try {
     const token = localStorage.getItem('authToken');
     
@@ -40,7 +40,7 @@ export const getClientesAsignados = async (): Promise<ClientesResponse> => {
       throw new Error('No hay token de autenticación');
     }
     
-    const response = await axios.get<ClientesResponse>(`${API_URL}/workers/clients`, {
+    const response = await axios.get<ClienteAsignado[]>(`${API_URL}/users/clients/assigned/${workerId}`, {
       headers: {
         Authorization: `Bearer ${token}`
       }

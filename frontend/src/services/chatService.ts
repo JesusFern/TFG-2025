@@ -18,6 +18,28 @@ import {
   UsuarioResumido
 } from '../types/chat';
 
+// Helper function para manejar respuestas de usuarios
+const handleUserResponse = async (response: Response, errorContext: string): Promise<UsuarioResumido[]> => {
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(`Error al obtener usuarios ${errorContext}: ${response.status} ${response.statusText} - ${errorData.message || 'Error desconocido'}`);
+  }
+  
+  const responseData = await response.json();
+  
+  if (!Array.isArray(responseData)) {
+    throw new Error(`El backend no devolvió una lista de usuarios ${errorContext} válida`);
+  }
+  
+  return responseData.map((u: { _id: string; fullName: string; email: string; profilePicture?: string | null; role: string }) => ({
+    _id: u._id,
+    fullName: u.fullName,
+    email: u.email,
+    profilePicture: u.profilePicture,
+    role: u.role as 'admin' | 'worker' | 'user'
+  }));
+};
+
 // Servicio para mensajes
 export const mensajeService = {
   // Crear un nuevo mensaje
@@ -332,25 +354,17 @@ export const chatService = {
   users: {
     async getAllUsers(): Promise<UsuarioResumido[]> {
       const response = await apiRequest('/api/users');
-      
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(`Error al obtener usuarios: ${response.status} ${response.statusText} - ${errorData.message || 'Error desconocido'}`);
-      }
-      
-      const responseData = await response.json();
-      
-      if (!Array.isArray(responseData)) {
-        throw new Error('El backend no devolvió una lista de usuarios válida');
-      }
-      
-      return responseData.map((u: { _id: string; fullName: string; email: string; profilePicture?: string | null; role: string }) => ({
-        _id: u._id,
-        fullName: u.fullName,
-        email: u.email,
-        profilePicture: u.profilePicture,
-        role: u.role
-      }));
+      return handleUserResponse(response, '');
+    },
+
+    async getAssignedUsers(userId: string, userRole: string): Promise<UsuarioResumido[]> {
+      // Determinar el endpoint según el rol del usuario
+      const endpoint = userRole === 'worker' 
+        ? `/api/users/clients/assigned/${userId}`  // Para workers: obtener sus clientes asignados
+        : `/api/users/workers/assigned/${userId}`; // Para users: obtener sus workers asignados
+
+      const response = await apiRequest(endpoint);
+      return handleUserResponse(response, 'asignados');
     }
   },
 

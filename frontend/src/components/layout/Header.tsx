@@ -23,7 +23,8 @@ import {
   IconLogout, 
   IconSettings,
   IconSun, 
-  IconMoon
+  IconMoon,
+  IconCalendarEvent
 } from '@tabler/icons-react';
 import logo from '../../assets/images/Logo-Nutroos.svg';
 import { useAuth } from '../../hooks/useAuth';
@@ -187,6 +188,16 @@ const Header: React.FC = () => {
                       Mis Clientes
                     </Menu.Item>
                   )}
+
+                  <Menu.Item
+                    leftSection={<IconCalendarEvent size={14} />}
+                    onClick={() => {
+                      navigate('/citas');
+                      closeMobileMenu();
+                    }}
+                  >
+                    Mis Citas
+                  </Menu.Item>
 
                   <Menu.Item
                     leftSection={<IconSettings size={14} />}

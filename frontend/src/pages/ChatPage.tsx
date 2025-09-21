@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Box, 
   Modal,
@@ -85,25 +85,49 @@ export const ChatPage: React.FC = () => {
   // Obtener la conversación activa
   const conversacionActivaId = conversacionActiva?._id || null;
 
-  // Cargar usuarios cuando se abre el modal
-  useEffect(() => {
-    if (showNuevaConversacion && usuarios.length === 0) {
-      cargarUsuarios();
-    }
-  }, [showNuevaConversacion, usuarios.length]);
-
-  const cargarUsuarios = async () => {
+  const cargarUsuarios = useCallback(async () => {
     try {
       setCargandoUsuarios(true);
-      const usuariosData = await chatService.users.getAllUsers();
+      
+      if (!user?._id || !user?.role) {
+        setNuevaConvError('Usuario no autenticado');
+        return;
+      }
+
+      // Cargar usuarios según el rol
+      let usuariosData;
+      if (user.role === 'admin') {
+        // Los administradores ven todos los usuarios
+        usuariosData = await chatService.users.getAllUsers();
+      } else {
+        // Los usuarios y workers solo ven sus asignaciones
+        usuariosData = await chatService.users.getAssignedUsers(user._id, user.role);
+      }
+      
       setUsuarios(usuariosData);
+      
+      // Si no hay usuarios asignados, mostrar mensaje
+      if (usuariosData.length === 0) {
+        setNuevaConvError(
+          user.role === 'worker' 
+            ? 'No tienes clientes asignados' 
+            : 'No tienes profesionales asignados'
+        );
+      }
     } catch (error) {
       console.error('Error al cargar usuarios:', error);
       setNuevaConvError('Error al cargar la lista de usuarios');
     } finally {
       setCargandoUsuarios(false);
     }
-  };
+  }, [user?._id, user?.role]);
+
+  // Cargar usuarios cuando se abre el modal
+  useEffect(() => {
+    if (showNuevaConversacion && usuarios.length === 0) {
+      cargarUsuarios();
+    }
+  }, [showNuevaConversacion, usuarios.length, cargarUsuarios]);
 
   // Manejar envío de mensaje
   const handleSendMessage = async (data: CrearMensajeDTO) => {
@@ -260,8 +284,20 @@ export const ChatPage: React.FC = () => {
             </Center>
           ) : (
             <Select
-              label="Participante"
-              placeholder="Selecciona un usuario"
+              label={
+                user?.role === 'worker' 
+                  ? "Cliente asignado" 
+                  : user?.role === 'admin' 
+                    ? "Participante" 
+                    : "Profesional asignado"
+              }
+              placeholder={
+                user?.role === 'worker' 
+                  ? "Selecciona un cliente" 
+                  : user?.role === 'admin' 
+                    ? "Selecciona un usuario" 
+                    : "Selecciona un profesional"
+              }
               value={nuevoParticipante}
               onChange={(value) => setNuevoParticipante(value || '')}
               data={usuarios.map(u => ({

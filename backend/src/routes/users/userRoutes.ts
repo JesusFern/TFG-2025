@@ -10,7 +10,10 @@ import {
   uploadProfilePhoto,
   getTrabajadoresRol,
   getAllAvailableWorkers,
-  checkUserSubscriptionStatus
+  getWorkersAssignedToClient,
+  getClientsAssignedToWorker,
+  checkUserSubscriptionStatus,
+  getUserById
 } from '../../controllers/users/userController';
 import { authenticateToken, authorizeUserOrAdmin, authorizeUserWithValidSubscription } from '../../middlewares/authMiddleware';
 import { validateRequest } from '../../middlewares/validationMiddleware';
@@ -55,11 +58,14 @@ router.patch('/me/photo', authenticateToken, uploadProfilePhoto);
 // Rutas para gestión de trabajadores (disponibles en desarrollo y producción, no en tests)
 if (process.env.NODE_ENV !== 'test') {
   router.get('/workers/available', getAllAvailableWorkers);
+  router.get('/workers/assigned/:clienteId', authenticateToken, getWorkersAssignedToClient);
+  router.get('/clients/assigned/:workerId', authenticateToken, getClientsAssignedToWorker);
   router.get('/available-workers-by-my-suscription', authenticateToken, authorizeUserWithValidSubscription, validateRequest, getTrabajadoresRol);
   router.get('/subscription-status', authenticateToken, checkUserSubscriptionStatus);
 }
 
 // Rutas protegidas para usuarios
+router.get('/:id', authenticateToken, getUserById);
 router.put('/:id', authenticateToken, authorizeUserOrAdmin, validateRequest, updateUser);
 router.delete('/:id', authenticateToken, authorizeUserOrAdmin, validateRequest, deleteUser);
 

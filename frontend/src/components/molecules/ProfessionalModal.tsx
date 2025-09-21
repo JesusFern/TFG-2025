@@ -19,13 +19,16 @@ import {
   IconMail,
   IconX
 } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
 import { ProfessionalResponse, createAssignmentRequest, getPendingAssignmentRequests, PendingAssignmentRequest, checkAssignmentAvailability } from '../../services/userService';
+import { conversacionService } from '../../services/chatService';
+import { useAuth } from '../../contexts/useAuth';
+import { notifications } from '@mantine/notifications';
 
 interface ProfessionalModalProps {
   opened: boolean;
   onClose: () => void;
   professional: ProfessionalResponse | null;
-  onContact?: (professional: ProfessionalResponse) => void;
   onRequestAssignment?: (professional: ProfessionalResponse) => void;
 }
 
@@ -33,14 +36,16 @@ const ProfessionalModal: React.FC<ProfessionalModalProps> = ({
   opened,
   onClose,
   professional,
-  onContact,
   onRequestAssignment
 }) => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [canContact, setCanContact] = React.useState(false);
   const [canRequestAssignment, setCanRequestAssignment] = React.useState(false);
   const [loadingCompatibility, setLoadingCompatibility] = React.useState(false);
   const [loadingNutritionRequest, setLoadingNutritionRequest] = React.useState(false);
   const [loadingTrainingRequest, setLoadingTrainingRequest] = React.useState(false);
+  const [loadingContact, setLoadingContact] = React.useState(false);
   const [pendingRequests, setPendingRequests] = React.useState<PendingAssignmentRequest[]>([]);
   const [errorModalOpened, setErrorModalOpened] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState('');
@@ -145,9 +150,57 @@ const ProfessionalModal: React.FC<ProfessionalModalProps> = ({
   };
 
 
-  const handleContact = () => {
-    if (onContact && professional) {
-      onContact(professional);
+  const handleContact = async () => {
+    if (!professional || !user) return;
+    
+    setLoadingContact(true);
+    
+    try {
+      // Buscar si ya existe una conversación entre el usuario y el profesional
+      const conversaciones = await conversacionService.obtenerConversacionesUsuario(user._id);
+      
+      // Buscar conversación existente con este profesional
+      const conversacionExistente = conversaciones.find(conv => 
+        conv.participantes.some(p => p._id === professional._id)
+      );
+      
+      if (conversacionExistente) {
+        // Si existe, navegar a esa conversación
+        navigate(`/chat?conversacion=${conversacionExistente._id}`);
+        onClose();
+        notifications.show({
+          title: 'Conversación encontrada',
+          message: `Te has unido a la conversación con ${professional.fullName}`,
+          color: 'green',
+        });
+      } else {
+        // Si no existe, crear una nueva conversación
+        const nuevaConversacion = await conversacionService.crearConversacion({
+          participantes: [user._id, professional._id],
+          metadata: {
+            tipo: 'consulta',
+            tags: ['profesional', 'consulta']
+          }
+        });
+        
+        // Navegar a la nueva conversación
+        navigate(`/chat?conversacion=${nuevaConversacion._id}`);
+        onClose();
+        notifications.show({
+          title: 'Conversación creada',
+          message: `Se ha creado una nueva conversación con ${professional.fullName}`,
+          color: 'green',
+        });
+      }
+    } catch (error) {
+      console.error('Error al contactar profesional:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'No se pudo establecer la conversación. Inténtalo de nuevo.',
+        color: 'red',
+      });
+    } finally {
+      setLoadingContact(false);
     }
   };
 
@@ -291,6 +344,7 @@ const ProfessionalModal: React.FC<ProfessionalModalProps> = ({
                   onClick={handleContact}
                   color="nutroos-green"
                   variant="light"
+                  loading={loadingContact}
                 >
                   Contactar
                 </Button>

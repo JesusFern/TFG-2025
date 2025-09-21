@@ -24,8 +24,8 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
   const defaultOptions: RequestInit = {
     headers: {
       ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-      ...(token && { 'Authorization': `Bearer ${token}` }),
       ...options.headers,
+      ...(token && { 'Authorization': `Bearer ${token}` }),
     },
     ...options,
   };
@@ -35,8 +35,10 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
   // Si la respuesta es 401, el token puede haber expirado
   if (response.status === 401) {
     localStorage.removeItem('authToken');
-    window.location.href = '/login';
-    return response;
+    localStorage.removeItem('userData');
+    // No redirigir automáticamente, dejar que el componente maneje el error
+    const errorData = await response.json().catch(() => ({ message: 'Token expirado' }));
+    throw new Error(errorData.message || 'Token expirado');
   }
   
   return response;

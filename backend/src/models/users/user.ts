@@ -212,7 +212,8 @@ UserSchema.pre('save', async function (next) {
     try {
       const User = mongoose.model('User');
       const clientesIds = doc.clientesAsignados.map(cliente => cliente.clienteId);
-      const clientes = await User.find({ _id: { $in: clientesIds } });
+      const clientesIdsUnicos = [...new Set(clientesIds)]; // Eliminar duplicados
+      const clientes = await User.find({ _id: { $in: clientesIdsUnicos } });
       
       // Verificar que todos los IDs encontrados corresponden a usuarios con rol 'user'
       const clientesInvalidos = clientes.filter(cliente => cliente.role !== 'user');
@@ -221,9 +222,19 @@ UserSchema.pre('save', async function (next) {
         return next(new Error('Solo se pueden asignar usuarios con rol "user" como clientes'));
       }
       
-      // Verificar que todos los IDs de clientesAsignados existen
-      if (clientes.length !== clientesIds.length) {
-        return next(new Error('Algunos de los usuarios asignados como clientes no existen'));
+      // Limpiar automáticamente los IDs de clientes que no existen
+      const clientesEncontrados = clientes.map(c => c._id.toString());
+      const clientesNoEncontrados = clientesIdsUnicos.filter(id => !clientesEncontrados.includes(id));
+      
+      if (clientesNoEncontrados.length > 0) {
+        console.warn('Limpiando IDs de clientes que no existen:', clientesNoEncontrados);
+        
+        // Filtrar clientesAsignados para mantener solo los que existen
+        doc.clientesAsignados = doc.clientesAsignados.filter(cliente => 
+          clientesEncontrados.includes(cliente.clienteId)
+        );
+        
+        console.log(`Se eliminaron ${clientesNoEncontrados.length} referencias de clientes inexistentes`);
       }
     } catch (error) {
       return next(error as mongoose.CallbackError);

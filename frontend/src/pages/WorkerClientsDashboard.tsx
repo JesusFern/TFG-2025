@@ -32,11 +32,13 @@ const WorkerClientsDashboard: React.FC = () => {
 	const user = getUserData();
 
 	useEffect(() => {
+		if (!user?._id) return;
+		
 		const fetchClientes = async () => {
 			try {
 				setLoading(true);
-				const data = await getClientesAsignados();
-				setClientes(data.clientes);
+				const clientes = await getClientesAsignados(user._id);
+				setClientes(clientes);
 				setError(null);
 			} catch (err) {
 				setError(err instanceof Error ? err.message : 'Error al obtener los clientes');
@@ -46,7 +48,7 @@ const WorkerClientsDashboard: React.FC = () => {
 		};
 
 		fetchClientes();
-	}, []);
+	}, [user?._id]);
 
 
 	const handleCrearDieta = (clienteId: string) => {

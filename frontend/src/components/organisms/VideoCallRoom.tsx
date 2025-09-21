@@ -25,7 +25,7 @@ import {
   ParticipantView,
 } from '@stream-io/video-react-sdk';
 import '@stream-io/video-react-sdk/dist/css/styles.css';
-import { Call } from '@stream-io/video-react-sdk';
+import { Call, StreamVideoParticipant } from '@stream-io/video-react-sdk';
 
 interface VideoCallRoomProps {
   call: Call;
@@ -34,26 +34,32 @@ interface VideoCallRoomProps {
     videoEnabled: boolean;
     audioEnabled: boolean;
   };
+  participants?: StreamVideoParticipant[];
+  localParticipant?: StreamVideoParticipant | null;
 }
 
 // Componente interno para manejar la UI de la llamada con diseño similar a GetStream
 const CallUILayout: React.FC<{ 
   onEndCall: () => void;
   cameraSettings?: { videoEnabled: boolean; audioEnabled: boolean };
-}> = ({ onEndCall, cameraSettings }) => {
+  participants?: StreamVideoParticipant[];
+  localParticipant?: StreamVideoParticipant | null;
+}> = ({ onEndCall, cameraSettings, participants, localParticipant: customLocalParticipant }) => {
   const { 
     useCallCallingState, 
     useLocalParticipant, 
     useRemoteParticipants,
     useCallState,
-    useCallMembers,
   } = useCallStateHooks();
   
   const callingState = useCallCallingState();
-  const localParticipant = useLocalParticipant();
-  const remoteParticipants = useRemoteParticipants();
+  const streamLocalParticipant = useLocalParticipant();
+  const streamRemoteParticipants = useRemoteParticipants();
   const callState = useCallState();
-  const callMembers = useCallMembers();
+  
+  // Usar los participantes del hook personalizado si están disponibles, sino usar los de Stream.io
+  const finalParticipants = participants || streamRemoteParticipants;
+  const finalLocalParticipant = customLocalParticipant || streamLocalParticipant;
   
   const [showParticipants, setShowParticipants] = useState(false);
   const [showChat, setShowChat] = useState(false);
@@ -73,9 +79,10 @@ const CallUILayout: React.FC<{
     applyInitialSettings();
   }, [callingState, cameraSettings, callState]);
 
-  // Verificar si es el último participante
-  const totalParticipants = callMembers.length;
+  // Calcular el número total de participantes
+  const totalParticipants = finalParticipants.length + (finalLocalParticipant ? 1 : 0);
   const isLastParticipant = totalParticipants <= 1;
+  
 
   // Función para manejar salir de la llamada
   const handleEndCall = async () => {
@@ -223,7 +230,7 @@ const CallUILayout: React.FC<{
             >
               <Stack gap="sm">
                 {/* Participante local */}
-                {localParticipant && (
+                {finalLocalParticipant && (
                   <Box
                     style={{
                       padding: '8px',
@@ -234,15 +241,15 @@ const CallUILayout: React.FC<{
                   >
                     <Group gap="sm">
                       <Box style={{ width: 40, height: 40, borderRadius: '50%', overflow: 'hidden' }}>
-                        <ParticipantView participant={localParticipant} />
+                        <ParticipantView participant={finalLocalParticipant} />
                       </Box>
                       <Box>
                         <Text c="white" size="sm" fw={500}>
                           Tú
                         </Text>
                         <Text c="white" size="xs" opacity={0.7}>
-                          {localParticipant.publishedTracks && localParticipant.publishedTracks.length > 0 ? 'Video' : 'Sin video'} • 
-                          {localParticipant.publishedTracks && localParticipant.publishedTracks.length > 0 ? 'Audio' : 'Sin audio'}
+                          {finalLocalParticipant.publishedTracks && finalLocalParticipant.publishedTracks.length > 0 ? 'Video' : 'Sin video'} • 
+                          {finalLocalParticipant.publishedTracks && finalLocalParticipant.publishedTracks.length > 0 ? 'Audio' : 'Sin audio'}
                         </Text>
                       </Box>
                     </Group>
@@ -250,7 +257,7 @@ const CallUILayout: React.FC<{
                 )}
 
                 {/* Participantes remotos */}
-                {remoteParticipants.map((participant) => (
+                {finalParticipants.map((participant) => (
                   <Box
                     key={participant.sessionId}
                     style={{
@@ -365,10 +372,17 @@ export const VideoCallRoom: React.FC<VideoCallRoomProps> = ({
   call,
   onEndCall,
   cameraSettings,
+  participants,
+  localParticipant,
 }) => {
   return (
     <StreamCall call={call}>
-      <CallUILayout onEndCall={onEndCall} cameraSettings={cameraSettings} />
+      <CallUILayout 
+        onEndCall={onEndCall} 
+        cameraSettings={cameraSettings}
+        participants={participants}
+        localParticipant={localParticipant}
+      />
     </StreamCall>
   );
 };

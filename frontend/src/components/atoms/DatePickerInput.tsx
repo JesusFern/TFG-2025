@@ -11,6 +11,11 @@ interface DatePickerInputProps {
   leftSection?: React.ReactNode;
   leftSectionPointerEvents?: "none" | "auto";
   zIndex?: number;
+  placeholder?: string;
+  disabled?: boolean;
+  clearable?: boolean;
+  minDate?: Date;
+  maxDate?: Date;
 }
 
 const DatePickerInput: React.FC<DatePickerInputProps> = ({
@@ -23,6 +28,11 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
   leftSection,
   leftSectionPointerEvents,
   zIndex = 1000,
+  placeholder,
+  disabled,
+  clearable,
+  minDate,
+  maxDate,
 }) => (
   <MantineDatePickerInput
     label={label}
@@ -31,13 +41,17 @@ const DatePickerInput: React.FC<DatePickerInputProps> = ({
     error={error}
     required={required}
     name={name}
-    placeholder="Selecciona una fecha"
+    placeholder={placeholder || "Selecciona una fecha"}
     popoverProps={{ withinPortal: true, zIndex: zIndex + 100 }}
     dropdownType="modal"
     modalProps={{ zIndex: zIndex + 200 }}
     valueFormat="DD/MM/YYYY"
     leftSection={leftSection}
     leftSectionPointerEvents={leftSectionPointerEvents}
+    disabled={disabled}
+    clearable={clearable}
+    minDate={minDate}
+    maxDate={maxDate}
   />
 );
 

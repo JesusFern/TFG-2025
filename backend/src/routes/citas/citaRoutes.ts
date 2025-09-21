@@ -21,6 +21,7 @@ import {
   validarObtenerDisponibilidad
 } from '../../validators/citaValidators';
 import { validateRequest } from '../../middlewares/validationMiddleware';
+import { param } from 'express-validator';
 import { authenticateToken } from '../../middlewares/authMiddleware';
 
 const router = Router();
@@ -57,6 +58,7 @@ router.get(
 
 router.put(
   '/:id',
+  param('id').isMongoId().withMessage('ID de cita inválido'),
   validarActualizarCita(),
   validateRequest,
   actualizarCita
@@ -64,6 +66,7 @@ router.put(
 
 router.post(
   '/:id/cancelar',
+  param('id').isMongoId().withMessage('ID de cita inválido'),
   validarCancelarCita(),
   validateRequest,
   cancelarCita
@@ -71,6 +74,7 @@ router.post(
 
 router.post(
   '/:id/reagendar',
+  param('id').isMongoId().withMessage('ID de cita inválido'),
   validarReagendarCita(),
   validateRequest,
   reagendarCita
@@ -78,11 +82,15 @@ router.post(
 
 router.post(
   '/:id/confirmar',
+  param('id').isMongoId().withMessage('ID de cita inválido'),
+  validateRequest,
   confirmarCita
 );
 
 router.post(
   '/:id/completar',
+  param('id').isMongoId().withMessage('ID de cita inválido'),
+  validateRequest,
   completarCita
 );
 
