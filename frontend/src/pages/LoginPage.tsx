@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Form from '../components/organisms/FormLogin';
 import { useAuth } from '../hooks/useAuth';
+import Layout from '../components/layout/Layout';
 
 const LoginPage: React.FC = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -34,7 +35,11 @@ const LoginPage: React.FC = () => {
     return null;
   }
 
-  return <Form />;
+  return (
+    <Layout>
+      <Form />
+    </Layout>
+  );
 };
 
 export default LoginPage;
