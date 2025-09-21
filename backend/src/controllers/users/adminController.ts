@@ -40,7 +40,8 @@ export const getUserById = async (req: Request, res: Response): Promise<void> =>
     res.status(200).json(user);
   } catch (error: unknown) {
     const err = error as Error;
-    res.status(500).json({ 
+    const statusCode = err.message.includes('no encontrado') ? 404 : 500;
+    res.status(statusCode).json({ 
       success: false,
       message: err.message 
     });
@@ -90,7 +91,8 @@ export const getWorkerById = async (req: Request, res: Response): Promise<void> 
     });
   } catch (error: unknown) {
     const err = error as Error;
-    res.status(500).json({ 
+    const statusCode = err.message.includes('no encontrado') ? 404 : 500;
+    res.status(statusCode).json({ 
       success: false,
       message: err.message 
     });
