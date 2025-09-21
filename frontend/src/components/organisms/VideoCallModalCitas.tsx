@@ -151,7 +151,6 @@ export const VideoCallModalCitas: React.FC<VideoCallModalCitasProps> = ({
               onToggleAudio={cameraPreview.toggleAudio}
               onJoinWithSettings={() => cameraPreview.handleJoinWithSettings(onJoinCall)}
               onCancelPreview={cameraPreview.handleCancelPreview}
-              onCloseModal={cameraPreview.handleCloseModal}
               joinButtonText="Iniciar Videollamada"
               joinButtonIcon={<IconCheck size={16} />}
             />
@@ -165,7 +164,7 @@ export const VideoCallModalCitas: React.FC<VideoCallModalCitasProps> = ({
 
             <VideoCallInitialView
               onStartCall={cameraPreview.handleStartCall}
-              onCloseModal={cameraPreview.handleCloseModal}
+              onCloseModal={onClose}
               title="Iniciar Videollamada de Cita"
               subtitle="Configura tu cámara y micrófono antes de unirte para asegurar la mejor experiencia"
             />

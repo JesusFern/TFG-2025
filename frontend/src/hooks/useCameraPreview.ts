@@ -51,7 +51,7 @@ export const useCameraPreview = (onClose: () => void): CameraPreviewState => {
             audio: true,
           });
           streamRef.current = mediaStream;
-        } catch (err) {
+        } catch {
           setCameraError('No se pudo acceder a la cámara o micrófono. Verifica los permisos.');
         } finally {
           setIsLoading(false);

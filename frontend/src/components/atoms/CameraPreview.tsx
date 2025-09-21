@@ -32,7 +32,6 @@ interface CameraPreviewProps {
   onToggleAudio: () => void;
   onJoinWithSettings: () => Promise<void>;
   onCancelPreview: () => void;
-  onCloseModal: () => void;
   joinButtonText?: string;
   joinButtonIcon?: React.ReactNode;
 }
@@ -49,7 +48,6 @@ export const CameraPreview: React.FC<CameraPreviewProps> = ({
   onToggleAudio,
   onJoinWithSettings,
   onCancelPreview,
-  onCloseModal,
   joinButtonText = "Unirse a Videollamada",
   joinButtonIcon = <IconCheck size={16} />,
 }) => {

@@ -160,7 +160,6 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
               onToggleAudio={cameraPreview.toggleAudio}
               onJoinWithSettings={() => cameraPreview.handleJoinWithSettings(onJoinCall)}
               onCancelPreview={cameraPreview.handleCancelPreview}
-              onCloseModal={cameraPreview.handleCloseModal}
               joinButtonText={callInfo.buttonText}
               joinButtonIcon={<IconCheck size={16} />}
             />
@@ -174,7 +173,7 @@ export const VideoCallModal: React.FC<VideoCallModalProps> = ({
 
             <VideoCallInitialView
               onStartCall={cameraPreview.handleStartCall}
-              onCloseModal={cameraPreview.handleCloseModal}
+              onCloseModal={onClose}
               title={callInfo.title}
               subtitle={callInfo.subtitle}
             />
