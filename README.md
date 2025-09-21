@@ -76,7 +76,7 @@ Para preparar la base de datos para pruebas o desarrollo, puedes lanzar los seed
 
 ```bash
 cd backend
-npx ts-node src/seeders/seeders.ts
+npm run seed
 ```
 
 Esto eliminará los usuarios existentes y creará los usuarios definidos en el archivo de seeders.
