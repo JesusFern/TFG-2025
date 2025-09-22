@@ -10,23 +10,9 @@ import {
 import { IconBarbell } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { Ejercicio } from '../../types/training';
+import { EjercicioSesion } from '../../types/trainingCommon';
 import SeleccionEjercicio from './SeleccionEjercicio';
 import CrearEjercicioForm from './CrearEjercicioForm';
-
-interface EjercicioSesion {
-  ejercicio: string;
-  orden: number;
-  series: number;
-  repeticiones: number;
-  peso?: number;
-  tiempoDescanso: number;
-  ejerciciosAlternativos?: string[];
-  opcionesProgresion?: {
-    aumentarPeso: boolean;
-    masRepeticiones: boolean;
-    mayorIntensidad: boolean;
-  };
-}
 
 interface ModalGestionarEjerciciosProps {
   opened: boolean;
@@ -62,8 +48,8 @@ const ModalGestionarEjercicios: React.FC<ModalGestionarEjerciciosProps> = ({
   return (
     <Modal
       opened={opened}
-      zIndex={1000}
       onClose={onClose}
+      zIndex={1000}
       title={
         <Group gap="xs" align="center">
           <IconBarbell size={20} color="var(--mantine-color-nutroos-green-6)" />

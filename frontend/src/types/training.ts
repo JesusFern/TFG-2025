@@ -4,11 +4,7 @@ export interface Ejercicio {
   descripcion: string;
   grupoMuscular: string;
   equipamiento: string;
-  series: number;
-  repeticiones: number;
-  tiempoDescanso: number;
   nivelDificultad: string;
-  nivelIntensidad: string;
   videoDemostrativo?: string;
   creador?: string;
   publico?: boolean;
@@ -50,6 +46,7 @@ export interface SesionPlan {
     repeticiones: number;
     peso?: number;
     tiempoDescanso: number;
+    nivelIntensidad: string;
     ejerciciosAlternativos?: string[];
     opcionesProgresion?: {
       aumentarPeso: boolean;
@@ -88,6 +85,7 @@ export type CrearSesionAPIDTO = {
     repeticiones: number;
     peso?: number;
     tiempoDescanso: number;
+    nivelIntensidad: string;
     ejerciciosAlternativos?: string[];
     opcionesProgresion?: {
       aumentarPeso: boolean;

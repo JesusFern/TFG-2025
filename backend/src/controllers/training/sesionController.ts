@@ -67,6 +67,7 @@ export const crearSesion = async (req: AuthenticatedRequest, res: Response) => {
         repeticiones: number;
         peso?: number;
         tiempoDescanso: number;
+        nivelIntensidad: string;
         ejerciciosAlternativos?: string[];
         opcionesProgresion?: {
           aumentarPeso: boolean;
@@ -172,6 +173,7 @@ export const actualizarSesion = async (req: AuthenticatedRequest, res: Response)
         repeticiones: number;
         peso?: number;
         tiempoDescanso: number;
+        nivelIntensidad: string;
         ejerciciosAlternativos?: string[];
         opcionesProgresion?: {
           aumentarPeso: boolean;

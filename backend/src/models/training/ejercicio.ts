@@ -13,18 +13,10 @@ const EjercicioSchema = new mongoose.Schema({
     required: true,
     enum: ['Mancuernas', 'Barra', 'Cuerda para saltar', 'Ninguno', 'Máquina', 'Peso corporal', 'Pelota medicinal', 'Bandas de resistencia']
   },
-  series: { type: Number, required: true, min: 1 },
-  repeticiones: { type: Number, required: true, min: 1 },
-  tiempoDescanso: { type: Number, required: true, min: 0 },
   nivelDificultad: { 
     type: String, 
     required: true,
     enum: ['Principiante', 'Intermedio', 'Avanzado']
-  },
-  nivelIntensidad: { 
-    type: String, 
-    required: true,
-    enum: ['Baja', 'Media', 'Alta']
   },
   videoDemostrativo: { type: String },
   creador: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },

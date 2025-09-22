@@ -28,6 +28,7 @@ export async function crearSesionService({
     repeticiones: number;
     peso?: number;
     tiempoDescanso: number;
+    nivelIntensidad: string;
     ejerciciosAlternativos?: string[];
     opcionesProgresion?: {
       aumentarPeso: boolean;
@@ -180,6 +181,7 @@ export async function actualizarSesionService(
       repeticiones: number;
       peso?: number;
       tiempoDescanso: number;
+      nivelIntensidad: string;
       ejerciciosAlternativos?: string[];
       opcionesProgresion?: {
         aumentarPeso: boolean;

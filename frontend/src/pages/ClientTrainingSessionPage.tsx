@@ -360,6 +360,16 @@ const ClientTrainingSessionPage: React.FC = () => {
                           <Text fw={600}>{ejercicioSesion.tiempoDescanso}s</Text>
                         </Group>
                       </Box>
+
+                      <Box>
+                        <Text size="xs" fw={600} c="dimmed" mb="xs">
+                          INTENSIDAD
+                        </Text>
+                        <Group gap="xs">
+                          <IconTarget size={16} color={theme.colors.grape[6]} />
+                          <Text fw={600}>{ejercicioSesion.nivelIntensidad}</Text>
+                        </Group>
+                      </Box>
                     </SimpleGrid>
 
                     {/* Ejercicios alternativos */}

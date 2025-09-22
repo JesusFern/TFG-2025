@@ -8,10 +8,10 @@ import {
   Box
 } from '@mantine/core';
 import {
-  IconRepeat,
   IconTarget,
-  IconClock,
-  IconWeight
+  IconWeight,
+  IconBarbell,
+  IconUser
 } from '@tabler/icons-react';
 import { Ejercicio } from '../../types/training';
 import { useThemeDetection } from '../../hooks/useThemeDetection';
@@ -49,41 +49,41 @@ const EjercicioParametros: React.FC<EjercicioParametrosProps> = ({
       <SimpleGrid cols={2} spacing="md">
         <Box>
           <Group gap="xs" mb="xs">
-            <IconRepeat size={16} color={theme.colors.blue[6]} />
-            <Text fw={600} size="sm">Series</Text>
+            <IconTarget size={16} color={theme.colors.blue[6]} />
+            <Text fw={600} size="sm">Grupo Muscular</Text>
           </Group>
           <Text size="lg" fw={700} c="nutroos-green.6">
-            {ejercicio.series || 'N/A'}
+            {ejercicio.grupoMuscular}
           </Text>
         </Box>
 
         <Box>
           <Group gap="xs" mb="xs">
-            <IconTarget size={16} color={theme.colors.teal[6]} />
-            <Text fw={600} size="sm">Repeticiones</Text>
+            <IconBarbell size={16} color={theme.colors.teal[6]} />
+            <Text fw={600} size="sm">Equipamiento</Text>
           </Group>
           <Text size="lg" fw={700} c="nutroos-green.6">
-            {ejercicio.repeticiones || 'N/A'}
+            {ejercicio.equipamiento}
           </Text>
         </Box>
 
         <Box>
           <Group gap="xs" mb="xs">
-            <IconClock size={16} color={theme.colors.cyan[6]} />
-            <Text fw={600} size="sm">Descanso</Text>
+            <IconUser size={16} color={theme.colors.cyan[6]} />
+            <Text fw={600} size="sm">Nivel de Dificultad</Text>
           </Group>
           <Text size="lg" fw={700} c="nutroos-green.6">
-            {ejercicio.tiempoDescanso ? `${ejercicio.tiempoDescanso}s` : 'N/A'}
+            {ejercicio.nivelDificultad}
           </Text>
         </Box>
 
         <Box>
           <Group gap="xs" mb="xs">
             <IconWeight size={16} color={theme.colors.orange[6]} />
-            <Text fw={600} size="sm">Peso Sugerido</Text>
+            <Text fw={600} size="sm">Visibilidad</Text>
           </Group>
           <Text size="lg" fw={700} c="nutroos-green.6">
-            Variable
+            {ejercicio.publico ? 'Público' : 'Privado'}
           </Text>
         </Box>
       </SimpleGrid>

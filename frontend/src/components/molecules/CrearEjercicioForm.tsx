@@ -37,27 +37,41 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
     descripcion: '',
     grupoMuscular: 'Pecho',
     equipamiento: 'Mancuernas',
-    series: 3,
-    repeticiones: 10,
-    tiempoDescanso: 60,
     nivelDificultad: 'Intermedio',
-    nivelIntensidad: 'Media',
+    videoDemostrativo: '',
     publico: false
   });
   const [creandoEjercicio, setCreandoEjercicio] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // Estados adicionales para la sesión
+  const [series, setSeries] = useState<number>(3);
+  const [repeticiones, setRepeticiones] = useState<number>(10);
   const [peso, setPeso] = useState<number | undefined>(undefined);
   const [tiempoDescanso, setTiempoDescanso] = useState<number>(60);
+  const [nivelIntensidad, setNivelIntensidad] = useState<string>('Media');
   const [opcionesProgresion, setOpcionesProgresion] = useState<OpcionesProgresion>(OPCIONES_PROGRESION_DEFAULT);
 
   // Usar el hook para las opciones de los Selects
   const { gruposMusculares, equipamientos, nivelesDificultad, nivelesIntensidad } = useExerciseOptions();
 
+  // Función para determinar si el equipamiento requiere peso obligatorio
+  const equipamientoRequierePeso = (equipamiento: string): boolean => {
+    const equipamientosConPeso = ['Mancuernas', 'Barra', 'Máquina', 'Pelota medicinal', 'Bandas de resistencia'];
+    return equipamientosConPeso.includes(equipamiento);
+  };
+
+  const pesoEsObligatorio = equipamientoRequierePeso(nuevoEjercicio.equipamiento);
+
   const handleCrearEjercicio = async () => {
     if (!nuevoEjercicio.nombre.trim()) {
       setError('El nombre del ejercicio es obligatorio');
+      return;
+    }
+
+    // Validar que el peso esté presente si es obligatorio
+    if (pesoEsObligatorio && (peso === undefined || peso === null || peso <= 0)) {
+      setError(`Este ejercicio requiere especificar un peso válido (${nuevoEjercicio.equipamiento}).`);
       return;
     }
 
@@ -72,10 +86,11 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
       const ejercicioSesion: EjercicioSesion = {
         ejercicio: ejercicioCreado._id || '',
         orden: siguienteOrden,
-        series: nuevoEjercicio.series,
-        repeticiones: nuevoEjercicio.repeticiones,
+        series,
+        repeticiones,
         peso,
         tiempoDescanso,
+        nivelIntensidad,
         ejerciciosAlternativos: [],
         opcionesProgresion
       };
@@ -88,15 +103,15 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
         descripcion: '',
         grupoMuscular: 'Pecho',
         equipamiento: 'Mancuernas',
-        series: 3,
-        repeticiones: 10,
-        tiempoDescanso: 60,
         nivelDificultad: 'Intermedio',
-        nivelIntensidad: 'Media',
+        videoDemostrativo: '',
         publico: false
       });
+      setSeries(3);
+      setRepeticiones(10);
       setPeso(undefined);
       setTiempoDescanso(60);
+      setNivelIntensidad('Media');
       setOpcionesProgresion(OPCIONES_PROGRESION_DEFAULT);
     } catch (error) {
       setError('Error al crear el ejercicio: ' + (error as Error).message);
@@ -166,34 +181,7 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
             }}
           />
         </Grid.Col>
-        <Grid.Col span={4}>
-          <NumberInput
-            label="Series"
-            value={nuevoEjercicio.series}
-            onChange={(value) => setNuevoEjercicio(prev => ({ ...prev, series: Number(value) || 3 }))}
-            min={1}
-            max={20}
-          />
-        </Grid.Col>
-        <Grid.Col span={4}>
-          <NumberInput
-            label="Repeticiones"
-            value={nuevoEjercicio.repeticiones}
-            onChange={(value) => setNuevoEjercicio(prev => ({ ...prev, repeticiones: Number(value) || 10 }))}
-            min={1}
-            max={100}
-          />
-        </Grid.Col>
-        <Grid.Col span={4}>
-          <NumberInput
-            label="Descanso (seg)"
-            value={nuevoEjercicio.tiempoDescanso}
-            onChange={(value) => setNuevoEjercicio(prev => ({ ...prev, tiempoDescanso: Number(value) || 60 }))}
-            min={0}
-            max={600}
-          />
-        </Grid.Col>
-        <Grid.Col span={6}>
+        <Grid.Col span={12}>
           <Select
             label="Nivel de Dificultad"
             data={nivelesDificultad}
@@ -206,19 +194,17 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
             }}
           />
         </Grid.Col>
-        <Grid.Col span={6}>
-          <Select
-            label="Nivel de Intensidad"
-            data={nivelesIntensidad}
-            value={nuevoEjercicio.nivelIntensidad}
-            onChange={(value) => setNuevoEjercicio(prev => ({ ...prev, nivelIntensidad: value || 'Media' }))}
-            styles={{
-              dropdown: {
-                zIndex: 2000
-              }
-            }}
-          />
-        </Grid.Col>
+      </Grid>
+
+      <TextInput
+        label="Video Demostrativo (URL)"
+        placeholder="https://example.com/video.mp4"
+        value={nuevoEjercicio.videoDemostrativo}
+        onChange={(e) => setNuevoEjercicio(prev => ({ ...prev, videoDemostrativo: e.target.value }))}
+        description="Opcional: URL del video demostrativo del ejercicio"
+      />
+
+      <Grid>
       </Grid>
 
       <Switch
@@ -232,6 +218,33 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
       <Divider label="Configuración de la Sesión" labelPosition="center" />
 
       <Grid>
+        <Grid.Col span={4}>
+          <NumberInput
+            label="Series"
+            value={series}
+            onChange={(value) => setSeries(Number(value) || 3)}
+            min={1}
+            max={20}
+          />
+        </Grid.Col>
+        <Grid.Col span={4}>
+          <NumberInput
+            label="Repeticiones"
+            value={repeticiones}
+            onChange={(value) => setRepeticiones(Number(value) || 10)}
+            min={1}
+            max={100}
+          />
+        </Grid.Col>
+        <Grid.Col span={4}>
+          <NumberInput
+            label="Descanso (seg)"
+            value={tiempoDescanso}
+            onChange={(value) => setTiempoDescanso(Number(value) || 60)}
+            min={0}
+            max={600}
+          />
+        </Grid.Col>
         <Grid.Col span={6}>
           <NumberInput
             label="Peso (kg)"
@@ -239,16 +252,25 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
             onChange={(value) => setPeso(Number(value) || undefined)}
             min={0}
             decimalScale={1}
-            placeholder="Opcional"
+            placeholder={pesoEsObligatorio ? "Requerido" : "Opcional"}
+            required={pesoEsObligatorio}
+            description={pesoEsObligatorio ? 
+              `Este ejercicio requiere especificar el peso (${nuevoEjercicio.equipamiento})` : 
+              undefined
+            }
           />
         </Grid.Col>
         <Grid.Col span={6}>
-          <NumberInput
-            label="Descanso (seg)"
-            value={tiempoDescanso}
-            onChange={(value) => setTiempoDescanso(Number(value) || 60)}
-            min={0}
-            max={600}
+          <Select
+            label="Nivel de Intensidad"
+            data={nivelesIntensidad}
+            value={nivelIntensidad}
+            onChange={(value) => setNivelIntensidad(value || 'Media')}
+            styles={{
+              dropdown: {
+                zIndex: 2000
+              }
+            }}
           />
         </Grid.Col>
       </Grid>

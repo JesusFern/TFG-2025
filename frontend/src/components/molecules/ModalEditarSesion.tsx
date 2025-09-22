@@ -32,11 +32,11 @@ const tiposEntrenamiento = [
   { value: 'Fuerza', label: 'Fuerza' },
   { value: 'Cardio', label: 'Cardio' },
   { value: 'Flexibilidad', label: 'Flexibilidad' },
-  { value: 'Funcional', label: 'Funcional' },
-  { value: 'Hipertrofia', label: 'Hipertrofia' },
+  { value: 'HIIT', label: 'HIIT' },
   { value: 'Resistencia', label: 'Resistencia' },
   { value: 'Potencia', label: 'Potencia' },
-  { value: 'Mixto', label: 'Mixto' }
+  { value: 'Estabilidad', label: 'Estabilidad' },
+  { value: 'Movilidad', label: 'Movilidad' }
 ];
 
 const ModalEditarSesion: React.FC<ModalEditarSesionProps> = ({

@@ -194,11 +194,7 @@ describe('Training Module Integration Tests', () => {
         descripcion: "Ejercicio para desarrollar el pecho",
         grupoMuscular: "Pecho",
         equipamiento: "Barra",
-        series: 3,
-        repeticiones: 10,
-        tiempoDescanso: 60,
-        nivelDificultad: "Intermedio",
-        nivelIntensidad: "Media"
+        nivelDificultad: "Intermedio"
       };
 
       const ejercicioRes = await request(app)
@@ -249,7 +245,8 @@ describe('Training Module Integration Tests', () => {
           series: 3,
           repeticiones: 10,
           peso: 80,
-          tiempoDescanso: 60
+          tiempoDescanso: 60,
+          nivelIntensidad: "Media"
         }]
       };
 
@@ -386,7 +383,8 @@ describe('Training Module Integration Tests', () => {
           orden: 1,
           series: 3,
           repeticiones: 10,
-          tiempoDescanso: 60
+          tiempoDescanso: 60,
+          nivelIntensidad: "Media"
         }]
       };
 
