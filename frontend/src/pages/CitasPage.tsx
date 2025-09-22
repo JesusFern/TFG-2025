@@ -202,8 +202,10 @@ const CitasPage: React.FC = () => {
             // Buscar la cita por ID
             const citaEncontrada = await CitaService.obtenerCitaPorId(citaId);
             if (citaEncontrada) {
+              // Solo establecer la cita, pero no mostrar la sala automáticamente
+              // El usuario debe hacer clic en "Unirse" para conectarse
               setVideoCallCita(citaEncontrada);
-              setShowVideoRoom(true);
+              // NO establecer showVideoRoom = true aquí para evitar el bucle
             } else {
               // Si no se encuentra la cita, limpiar localStorage
               localStorage.removeItem('activeVideoCall');
@@ -400,25 +402,10 @@ const CitasPage: React.FC = () => {
   }
 
   // Si hay una videollamada activa, mostrar la sala de video
-  if (showVideoRoom && (videoCall || videoCallCita)) {
-    
-    // Si no hay videoCall pero sí hay videoCallCita (recuperando), mostrar loading
-    if (!videoCall && videoCallCita) {
-      return (
-        <Container size="xl" py="md">
-          <Stack gap="lg" align="center" justify="center" style={{ minHeight: '400px' }}>
-            <Loader size="lg" />
-            <Text size="lg" c="dimmed">
-              Reconectando a la videollamada...
-            </Text>
-          </Stack>
-        </Container>
-      );
-    }
-    
+  if (showVideoRoom && videoCall) {
     return (
       <VideoCallRoom
-        call={videoCall!}
+        call={videoCall}
         onEndCall={handleCloseVideoRoom}
         cameraSettings={cameraSettings}
         participants={participants}

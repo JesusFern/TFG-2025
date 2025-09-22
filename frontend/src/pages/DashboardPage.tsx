@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Container,
   Grid,
@@ -16,7 +16,6 @@ import {
   IconChartLine,
   IconSoup,
   IconBarbell,
-  IconTarget,
   IconCalendar,
   IconUser,
   IconSettings,
@@ -30,6 +29,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { WeeklyProgressChart } from '../components/molecules/WeeklyProgressChart';
 import { CurrentSubscription } from '../components/molecules/CurrentSubscription';
+import { ComingSoonBadge } from '../components/atoms/ComingSoonBadge';
+import { ComingSoonModal } from '../components/atoms/ComingSoonModal';
 
 interface DashboardCardProps {
   title: string;
@@ -39,6 +40,8 @@ interface DashboardCardProps {
   onClick: () => void;
   badge?: string;
   badgeColor?: string;
+  comingSoon?: boolean;
+  disabled?: boolean;
 }
 
 const DashboardCard: React.FC<DashboardCardProps> = ({
@@ -48,9 +51,18 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
   color,
   onClick,
   badge,
-  badgeColor = 'blue'
+  badgeColor = 'blue',
+  comingSoon = false,
+  disabled = false
 }) => {
   const theme = useMantineTheme();
+
+  const handleClick = () => {
+    if (comingSoon || disabled) {
+      return; // No hacer nada si está deshabilitado o es próximamente
+    }
+    onClick();
+  };
 
   return (
     <Paper
@@ -58,14 +70,17 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
       radius="lg"
       withBorder
       style={{
-        cursor: 'pointer',
+        cursor: comingSoon || disabled ? 'not-allowed' : 'pointer',
         transition: 'all 0.2s ease',
-        borderLeft: `4px solid ${theme.colors[color][6]}`
+        borderLeft: `4px solid ${theme.colors[color][6]}`,
+        opacity: comingSoon || disabled ? 0.6 : 1
       }}
-      onClick={onClick}
+      onClick={handleClick}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-2px)';
-        e.currentTarget.style.boxShadow = theme.shadows.md;
+        if (!comingSoon && !disabled) {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = theme.shadows.md;
+        }
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'translateY(0)';
@@ -77,11 +92,14 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
           <div style={{ color: theme.colors[color][6] }}>
             {icon}
           </div>
-          {badge && (
-            <Badge color={badgeColor} variant="light" size="sm">
-              {badge}
-            </Badge>
-          )}
+          <Group gap="xs">
+            {comingSoon && <ComingSoonBadge />}
+            {badge && !comingSoon && (
+              <Badge color={badgeColor} variant="light" size="sm">
+                {badge}
+              </Badge>
+            )}
+          </Group>
         </Group>
         <div>
           <Title order={4} mb="xs" c={theme.colors.gray[8]}>
@@ -101,6 +119,24 @@ const DashboardPage: React.FC = () => {
   const { colorScheme } = useMantineColorScheme();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const [comingSoonModal, setComingSoonModal] = useState<{
+    opened: boolean;
+    title: string;
+    description: string;
+  }>({
+    opened: false,
+    title: '',
+    description: ''
+  });
+
+  // Función para mostrar modal de próximamente
+  const showComingSoon = (title: string, description: string) => {
+    setComingSoonModal({
+      opened: true,
+      title,
+      description
+    });
+  };
 
   // Datos de progreso simulados (en producción vendrían del backend)
   const weeklyProgress = {
@@ -109,91 +145,113 @@ const DashboardPage: React.FC = () => {
     goal: 78
   };
 
-  const dashboardItems = [
-    {
-      title: 'Progreso Semanal',
-      description: 'Visualiza tu progreso en nutrición y entrenamiento de esta semana',
-      icon: <IconChartLine size={32} />,
-      color: 'green',
-      onClick: () => navigate('/progress'),
-      badge: 'Nuevo'
-    },
-    {
-      title: 'Mis Dietas',
-      description: user?.role === 'worker' 
-        ? 'Gestiona tus planes de alimentación personalizados'
-        : 'Ve las dietas que han creado para ti',
-      icon: <IconSoup size={32} />,
-      color: 'orange',
-      onClick: () => navigate(user?.role === 'worker' ? '/diets' : '/mis-dietas'),
-      badge: user?.role === 'worker' ? 'Crear' : 'Ver'
-    },
-    {
-      title: 'Recetas',
-      description: 'Crea y gestiona recetas nutritivas para tus clientes',
-      icon: <IconChefHat size={32} />,
-      color: 'nutroos-green',
-      onClick: () => navigate('/mis-recetas'),
-      badge: user?.role === 'worker' ? 'Gestionar' : 'Ver'
-    },
-    {
-      title: 'Entrenamientos',
-      description: 'Accede a tus rutinas y planes de ejercicio',
-      icon: <IconBarbell size={32} />,
-      color: 'blue',
-      onClick: () => navigate(user?.role === 'worker' ? '/training' : '/mis-entrenamientos'),
-      badge: user?.role === 'worker' ? 'Crear' : 'Ver'
-    },
-    {
-      title: 'Objetivos',
-      description: 'Establece y monitorea tus metas de fitness',
-      icon: <IconTarget size={32} />,
-      color: 'violet',
-      onClick: () => navigate('/goals')
-    },
-    {
-      title: 'Calendario',
-      description: 'Organiza tus sesiones y comidas programadas',
-      icon: <IconCalendar size={32} />,
-      color: 'cyan',
-      onClick: () => navigate('/calendar')
-    },
-    {
-      title: 'Mi Perfil',
-      description: 'Actualiza tu información personal y preferencias',
-      icon: <IconUser size={32} />,
-      color: 'grape',
-      onClick: () => navigate('/profile')
-    },
-    {
-      title: 'Chat',
-      description: 'Comunícate en tiempo real con tu entrenador o nutricionista',
-      icon: <IconMessage size={32} />,
-      color: 'teal',
-      onClick: () => navigate('/chat'),
-      badge: 'En Vivo'
-    },
-    {
-      title: 'Mis Citas',
-      description: user?.role === 'worker' 
-        ? 'Gestiona las citas con tus clientes'
-        : 'Programa y gestiona tus citas virtuales',
-      icon: <IconCalendarEvent size={32} />,
-      color: 'pink',
-      onClick: () => navigate('/citas'),
-      badge: user?.role === 'worker' ? 'Gestionar' : 'Programar'
-    },
-    {
-      title: 'Solicitudes',
-      description: user?.role === 'worker' 
-        ? 'Gestiona las solicitudes de asignación que has recibido'
-        : 'Revisa el estado de tus solicitudes de asignación',
-      icon: <IconClipboardList size={32} />,
-      color: 'pink',
-      onClick: () => navigate('/solicitudes'),
-      badge: user?.role === 'worker' ? 'Recibidas' : 'Enviadas'
+  // Configuración de tarjetas del dashboard según el rol del usuario
+  const getDashboardItems = () => {
+    const baseItems = [
+      {
+        title: 'Progreso Semanal',
+        description: 'Visualiza tu progreso en nutrición y entrenamiento de esta semana',
+        icon: <IconChartLine size={32} />,
+        color: 'green',
+        onClick: () => showComingSoon('Progreso Semanal', 'Esta funcionalidad te permitirá ver gráficos detallados de tu progreso semanal en nutrición y entrenamiento.'),
+        comingSoon: true
+      },
+      {
+        title: 'Calendario',
+        description: 'Organiza tus sesiones y comidas programadas',
+        icon: <IconCalendar size={32} />,
+        color: 'cyan',
+        onClick: () => showComingSoon('Calendario', 'Pronto podrás organizar todas tus sesiones de entrenamiento y comidas programadas en un calendario interactivo.'),
+        comingSoon: true
+      },
+      {
+        title: 'Mi Perfil',
+        description: 'Actualiza tu información personal y preferencias',
+        icon: <IconUser size={32} />,
+        color: 'grape',
+        onClick: () => navigate('/profile')
+      },
+      {
+        title: 'Chat',
+        description: 'Comunícate en tiempo real con tu entrenador o nutricionista',
+        icon: <IconMessage size={32} />,
+        color: 'teal',
+        onClick: () => navigate('/chat'),
+        badge: 'En Vivo'
+      },
+      {
+        title: 'Mis Citas',
+        description: user?.role === 'worker' 
+          ? 'Gestiona las citas con tus clientes'
+          : 'Programa y gestiona tus citas virtuales',
+        icon: <IconCalendarEvent size={32} />,
+        color: 'pink',
+        onClick: () => navigate('/citas'),
+        badge: user?.role === 'worker' ? 'Gestionar' : 'Programar'
+      },
+      {
+        title: 'Solicitudes',
+        description: user?.role === 'worker' 
+          ? 'Gestiona las solicitudes de asignación que has recibido'
+          : 'Revisa el estado de tus solicitudes de asignación',
+        icon: <IconClipboardList size={32} />,
+        color: 'pink',
+        onClick: () => navigate('/solicitudes'),
+        badge: user?.role === 'worker' ? 'Recibidas' : 'Enviadas'
+      }
+    ];
+
+    // Agregar tarjetas específicas según el rol
+    if (user?.role === 'user') {
+      // Solo para clientes: dietas y entrenamientos
+      baseItems.splice(1, 0, 
+        {
+          title: 'Mis Dietas',
+          description: 'Ve las dietas que han creado para ti',
+          icon: <IconSoup size={32} />,
+          color: 'orange',
+          onClick: () => navigate('/mis-dietas'),
+          badge: 'Ver'
+        },
+        {
+          title: 'Mis Entrenamientos',
+          description: 'Accede a tus rutinas y planes de ejercicio',
+          icon: <IconBarbell size={32} />,
+          color: 'blue',
+          onClick: () => navigate('/mis-entrenamientos'),
+          badge: 'Ver'
+        }
+      );
+    } else if (user?.role === 'worker') {
+      // Solo para trabajadores: recetas
+      baseItems.splice(1, 0, 
+        {
+          title: 'Recetas',
+          description: 'Crea y gestiona recetas nutritivas para tus clientes',
+          icon: <IconChefHat size={32} />,
+          color: 'nutroos-green',
+          onClick: () => navigate('/mis-recetas'),
+          badge: 'Gestionar'
+        }
+      );
+    } else {
+      // Para otros roles (admin): mostrar recetas como próximamente
+      baseItems.splice(1, 0, 
+        {
+          title: 'Recetas',
+          description: 'Crea y gestiona recetas nutritivas',
+          icon: <IconChefHat size={32} />,
+          color: 'nutroos-green',
+          onClick: () => showComingSoon('Recetas', 'Esta funcionalidad estará disponible próximamente para administradores.'),
+          comingSoon: true
+        }
+      );
     }
-  ];
+
+    return baseItems;
+  };
+
+  const dashboardItems = getDashboardItems();
 
   // Agregar funcionalidades específicas para trabajadores
   if (user?.role === 'worker') {
@@ -331,14 +389,6 @@ const DashboardPage: React.FC = () => {
               >
                 Nueva Sesión
               </Button>
-              <Button
-                leftSection={<IconTarget size={16} />}
-                color="violet"
-                variant="light"
-                onClick={() => navigate('/goals/new')}
-              >
-                Establecer Objetivo
-              </Button>
               {user?.role === 'admin' && (
                 <Group gap="md">
                   <Button
@@ -371,6 +421,14 @@ const DashboardPage: React.FC = () => {
           </Stack>
         </Paper>
       </Stack>
+
+      {/* Modal de Próximamente */}
+      <ComingSoonModal
+        opened={comingSoonModal.opened}
+        onClose={() => setComingSoonModal(prev => ({ ...prev, opened: false }))}
+        title={comingSoonModal.title}
+        description={comingSoonModal.description}
+      />
     </Container>
   );
 };

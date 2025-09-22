@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from 'react';
+import { useCallback } from 'react';
 import { useVideoCallBase } from './useVideoCallBase';
 import { Call } from '@stream-io/video-react-sdk';
 import { Cita } from '../types/citas';
@@ -18,40 +18,8 @@ export const useVideoCallCitas = ({
 }: UseVideoCallCitasProps) => {
   const baseVideoCall = useVideoCallBase({ onCallEnded, onCallStarted });
 
-  // Auto-recuperar videollamada cuando se establece una cita
-  useEffect(() => {
-    const autoRecoverCall = async () => {
-      if (cita && baseVideoCall.client && baseVideoCall.isConnected && baseVideoCall.currentUser && !baseVideoCall.call && !baseVideoCall.isStarting) {
-        try {
-          baseVideoCall.setIsStarting(true);
-          baseVideoCall.setError(null);
-          
-          const customCallId = callId || `cita-${cita._id}`;
-          
-          // Crear la llamada
-          const currentCall = baseVideoCall.client.call('default', customCallId);
-          baseVideoCall.setCall(currentCall);
-          baseVideoCall.setCallingState('joining');
-          
-          // Unirse a la llamada existente
-          await currentCall.join({ create: true });
-          
-          // Configurar participantes
-          baseVideoCall.setupParticipants(currentCall);
-          
-          baseVideoCall.setCallingState('joined');
-          onCallStarted?.(currentCall);
-          
-        } catch (error) {
-          baseVideoCall.handleCallError(error, 'al recuperar videollamada');
-        } finally {
-          baseVideoCall.setIsStarting(false);
-        }
-      }
-    };
-
-    autoRecoverCall();
-  }, [cita, baseVideoCall.client, baseVideoCall.isConnected, baseVideoCall.currentUser, baseVideoCall.call, baseVideoCall.isStarting, callId, onCallStarted, baseVideoCall]);
+  // NOTA: Se eliminó la conexión automática a videollamadas
+  // Ahora el usuario debe hacer clic explícitamente en "Unirse" para conectarse
 
   // Función para iniciar llamada
   const startCall = useCallback(async () => {
