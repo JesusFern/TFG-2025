@@ -34,11 +34,18 @@ const SeleccionEjercicio: React.FC<SeleccionEjercicioProps> = ({
   const [repeticiones, setRepeticiones] = useState<number>(10);
   const [peso, setPeso] = useState<number | undefined>(undefined);
   const [tiempoDescanso, setTiempoDescanso] = useState<number>(60);
+  const [nivelIntensidad, setNivelIntensidad] = useState<string>('Media');
   const [ejerciciosAlternativos] = useState<string[]>([]);
   const [opcionesProgresion, setOpcionesProgresion] = useState<OpcionesProgresion>(OPCIONES_PROGRESION_DEFAULT);
 
   const handleSeleccionarEjercicio = () => {
     if (!ejercicioSeleccionado) {
+      return;
+    }
+
+    // Validar que el peso esté presente si es obligatorio
+    if (pesoEsObligatorio && (peso === undefined || peso === null || peso <= 0)) {
+      alert('Este ejercicio requiere especificar un peso válido.');
       return;
     }
 
@@ -49,6 +56,7 @@ const SeleccionEjercicio: React.FC<SeleccionEjercicioProps> = ({
       repeticiones,
       peso,
       tiempoDescanso,
+      nivelIntensidad,
       ejerciciosAlternativos,
       opcionesProgresion
     };
@@ -64,6 +72,15 @@ const SeleccionEjercicio: React.FC<SeleccionEjercicioProps> = ({
   };
 
   const ejercicioSeleccionadoData = ejerciciosExistentes.find(ej => ej._id === ejercicioSeleccionado);
+  
+  // Función para determinar si el equipamiento requiere peso obligatorio
+  const equipamientoRequierePeso = (equipamiento: string): boolean => {
+    const equipamientosConPeso = ['Mancuernas', 'Barra', 'Máquina', 'Pelota medicinal', 'Bandas de resistencia'];
+    return equipamientosConPeso.includes(equipamiento);
+  };
+
+  const pesoEsObligatorio = ejercicioSeleccionadoData ? 
+    equipamientoRequierePeso(ejercicioSeleccionadoData.equipamiento) : false;
 
   return (
     <Stack gap="md">
@@ -145,7 +162,12 @@ const SeleccionEjercicio: React.FC<SeleccionEjercicioProps> = ({
             onChange={(value) => setPeso(Number(value) || undefined)}
             min={0}
             decimalScale={1}
-            placeholder="Opcional"
+            placeholder={pesoEsObligatorio ? "Requerido" : "Opcional"}
+            required={pesoEsObligatorio}
+            description={pesoEsObligatorio ? 
+              `Este ejercicio requiere especificar el peso (${ejercicioSeleccionadoData?.equipamiento})` : 
+              undefined
+            }
           />
         </Grid.Col>
         <Grid.Col span={6}>
@@ -155,6 +177,23 @@ const SeleccionEjercicio: React.FC<SeleccionEjercicioProps> = ({
             onChange={(value) => setTiempoDescanso(Number(value) || 60)}
             min={0}
             max={600}
+          />
+        </Grid.Col>
+        <Grid.Col span={12}>
+          <Select
+            label="Nivel de Intensidad"
+            data={[
+              { value: 'Baja', label: 'Baja' },
+              { value: 'Media', label: 'Media' },
+              { value: 'Alta', label: 'Alta' }
+            ]}
+            value={nivelIntensidad}
+            onChange={(value) => setNivelIntensidad(value || 'Media')}
+            styles={{
+              dropdown: {
+                zIndex: 2000
+              }
+            }}
           />
         </Grid.Col>
       </Grid>

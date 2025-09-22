@@ -8,23 +8,10 @@ import {
   TextInput,
   Divider,
   Checkbox,
+  Select,
 } from '@mantine/core';
 import { motion } from 'framer-motion';
-
-interface EjercicioSesion {
-  ejercicio: string;
-  orden: number;
-  series: number;
-  repeticiones: number;
-  peso?: number;
-  tiempoDescanso: number;
-  ejerciciosAlternativos?: string[];
-  opcionesProgresion?: {
-    aumentarPeso: boolean;
-    masRepeticiones: boolean;
-    mayorIntensidad: boolean;
-  };
-}
+import type { EjercicioSesion } from '../../types/trainingCommon';
 
 interface ModalEditarEjercicioSesionProps {
   opened: boolean;
@@ -127,6 +114,24 @@ const ModalEditarEjercicioSesion: React.FC<ModalEditarEjercicioSesionProps> = ({
               setEjercicioEditando(prev => prev ? { ...prev, tiempoDescanso: parseInt(e.target.value) || 0 } : null)
             }
             min={0}
+          />
+          
+          <Select
+            label="Nivel de Intensidad"
+            data={[
+              { value: 'Baja', label: 'Baja' },
+              { value: 'Media', label: 'Media' },
+              { value: 'Alta', label: 'Alta' }
+            ]}
+            value={ejercicioEditando.nivelIntensidad}
+            onChange={(value) => 
+              setEjercicioEditando(prev => prev ? { ...prev, nivelIntensidad: value || 'Media' } : null)
+            }
+            styles={{
+              dropdown: {
+                zIndex: 2000
+              }
+            }}
           />
           
           <Divider />

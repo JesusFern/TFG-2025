@@ -23,11 +23,7 @@ export const crearEjercicio = async (req: AuthenticatedRequest, res: Response) =
       descripcion,
       grupoMuscular,
       equipamiento,
-      series,
-      repeticiones,
-      tiempoDescanso,
       nivelDificultad,
-      nivelIntensidad,
       videoDemostrativo,
       publico
     } = matchedData(req, { locations: ['body'], includeOptionals: true }) as {
@@ -35,11 +31,7 @@ export const crearEjercicio = async (req: AuthenticatedRequest, res: Response) =
       descripcion: string;
       grupoMuscular: string;
       equipamiento: string;
-      series: number;
-      repeticiones: number;
-      tiempoDescanso: number;
       nivelDificultad: string;
-      nivelIntensidad: string;
       videoDemostrativo?: string;
       publico?: boolean;
     };
@@ -57,11 +49,7 @@ export const crearEjercicio = async (req: AuthenticatedRequest, res: Response) =
       descripcion,
       grupoMuscular,
       equipamiento,
-      series,
-      repeticiones,
-      tiempoDescanso,
       nivelDificultad,
-      nivelIntensidad,
       videoDemostrativo,
       publico
     });
@@ -135,11 +123,7 @@ export const actualizarEjercicio = async (req: AuthenticatedRequest, res: Respon
       descripcion: string;
       grupoMuscular: string;
       equipamiento: string;
-      series: number;
-      repeticiones: number;
-      tiempoDescanso: number;
       nivelDificultad: string;
-      nivelIntensidad: string;
       videoDemostrativo: string;
       publico: boolean;
     }>;

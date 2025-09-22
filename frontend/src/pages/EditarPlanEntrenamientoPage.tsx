@@ -182,6 +182,22 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     setActiveTab(newTabValue);
     setCurrentSesionLocal(null);
     setEjerciciosSesionActual([]);
+    
+    // Si se selecciona un día que ya tiene una sesión creada pero sin ejercicios, abrir automáticamente el modal de editar sesión
+    if (newTabValue) {
+      const sesionIndex = parseInt(newTabValue);
+      const sesionInfo = sesionesRange.sesiones.find(sesion => sesion.weekDayIndex === sesionIndex);
+      
+      if (sesionInfo?.data && (sesionInfo.data as { _id?: string })?._id) {
+        const sesionData = sesionInfo.data as { _id: string; ejercicios?: unknown[] };
+        
+        // Solo abrir el modal si la sesión existe pero no tiene ejercicios (sesión recién creada)
+        if (!sesionData.ejercicios || sesionData.ejercicios.length === 0) {
+          const sesionId = sesionData._id;
+          handleEditarSesion(sesionId);
+        }
+      }
+    }
   };
 
   const handleWeekChange = (newWeek: number) => {
@@ -282,12 +298,17 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     try {
       setPublishLoading(true);
       
+      // Obtener la sesión actual para preservar los ejercicios existentes
+      const sesionActual = sesiones.find(s => s._id === sesionAEditar);
+      
       const datosActualizacion = {
         fecha: sesionEditada.fecha,
         hora: sesionEditada.hora,
         tipoEntrenamiento: sesionEditada.tipoEntrenamiento,
         duracion: sesionEditada.duracion,
-        notas: sesionEditada.notas
+        notas: sesionEditada.notas,
+        // Preservar los ejercicios existentes
+        ejercicios: sesionActual?.ejercicios || []
       };
 
       await trainingService.actualizarSesion(sesionAEditar, datosActualizacion);
@@ -720,9 +741,6 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                                   <Badge size="sm" color="orange" variant="light">
                                     {ejercicioData.nivelDificultad}
                                   </Badge>
-                                  <Badge size="sm" color="purple" variant="light">
-                                    {ejercicioData.nivelIntensidad}
-                                  </Badge>
                                 </Group>
                               )}
                               
@@ -779,11 +797,27 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                   <Text size="sm" c="dimmed" mb="md">
                     Esta sesión aún no ha sido configurada.
                   </Text>
-                  {/* Solo mostrar el botón si el día actual está en los días de la semana del plan */}
+                  {/* Solo mostrar el botón si el día está en los días de la semana del plan Y dentro del rango de fechas */}
                   {currentSesionInfo?.fecha && plan && (() => {
                     const diaSemana = currentSesionInfo.fecha.getDay();
                     const esDiaValido = plan.diasSemana.includes(diaSemana);
-                    return esDiaValido ? (
+                    
+                    // Verificar si la fecha está dentro del rango del plan
+                    const fechaInicio = new Date(plan.fechaInicio);
+                    const fechaFin = new Date(fechaInicio);
+                    fechaFin.setDate(fechaFin.getDate() + plan.duracionDias - 1);
+                    
+                    const fechaSesion = new Date(currentSesionInfo.fecha);
+                    const fechaActual = new Date();
+                    fechaActual.setHours(0, 0, 0, 0); // Resetear horas para comparar solo fechas
+                    fechaSesion.setHours(0, 0, 0, 0);
+                    fechaInicio.setHours(0, 0, 0, 0);
+                    fechaFin.setHours(0, 0, 0, 0);
+                    
+                    const estaEnRango = fechaSesion >= fechaInicio && fechaSesion <= fechaFin;
+                    const esFechaValida = esDiaValido && estaEnRango;
+                    
+                    return esFechaValida ? (
                   <Button 
                     size="sm" 
                     color="nutroos-green"
@@ -797,7 +831,12 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                   </Button>
                     ) : (
                       <Text size="sm" c="dimmed">
-                        Este día no está incluido en el plan de entrenamiento.
+                        {!esDiaValido 
+                          ? "Este día no está incluido en el plan de entrenamiento."
+                          : !estaEnRango 
+                            ? "Esta fecha está fuera del rango del plan de entrenamiento."
+                            : "No se puede configurar esta sesión."
+                        }
                       </Text>
                     );
                   })()}

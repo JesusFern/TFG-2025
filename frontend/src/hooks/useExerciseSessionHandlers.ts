@@ -112,6 +112,7 @@ export const useExerciseSessionHandlers = ({
         repeticiones: ejercicioData.repeticiones,
         peso: ejercicioData.peso,
         tiempoDescanso: ejercicioData.tiempoDescanso,
+        nivelIntensidad: ejercicioData.nivelIntensidad,
         ejerciciosAlternativos: ejercicioData.ejerciciosAlternativos,
         opcionesProgresion: ejercicioData.opcionesProgresion
       };
@@ -146,6 +147,7 @@ export const useExerciseSessionHandlers = ({
       repeticiones: ejercicio.repeticiones,
       peso: ejercicio.peso,
       tiempoDescanso: ejercicio.tiempoDescanso,
+      nivelIntensidad: ejercicio.nivelIntensidad,
       ejerciciosAlternativos: ejercicio.ejerciciosAlternativos || [],
       opcionesProgresion: ejercicio.opcionesProgresion || {
         aumentarPeso: false,

@@ -13,6 +13,7 @@ export interface EjercicioSesion {
   repeticiones: number;
   peso?: number;
   tiempoDescanso: number;
+  nivelIntensidad: string;
   ejerciciosAlternativos?: string[];
   opcionesProgresion?: OpcionesProgresion;
 }

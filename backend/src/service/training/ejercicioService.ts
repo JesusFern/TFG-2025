@@ -7,11 +7,7 @@ export async function crearEjercicioService({
   descripcion,
   grupoMuscular,
   equipamiento,
-  series,
-  repeticiones,
-  tiempoDescanso,
   nivelDificultad,
-  nivelIntensidad,
   videoDemostrativo,
   publico = false
 }: {
@@ -20,11 +16,7 @@ export async function crearEjercicioService({
   descripcion: string;
   grupoMuscular: string;
   equipamiento: string;
-  series: number;
-  repeticiones: number;
-  tiempoDescanso: number;
   nivelDificultad: string;
-  nivelIntensidad: string;
   videoDemostrativo?: string;
   publico?: boolean;
 }) {
@@ -49,11 +41,7 @@ export async function crearEjercicioService({
     descripcion,
     grupoMuscular,
     equipamiento,
-    series,
-    repeticiones,
-    tiempoDescanso,
     nivelDificultad,
-    nivelIntensidad,
     videoDemostrativo,
     publico,
     creador: creadorId

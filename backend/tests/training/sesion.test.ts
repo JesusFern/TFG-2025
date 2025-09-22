@@ -239,6 +239,7 @@ describe('Sesión Endpoints', () => {
           repeticiones: 10,
           peso: 80,
           tiempoDescanso: 60,
+          nivelIntensidad: "Media",
           opcionesProgresion: {
             aumentarPeso: true,
             masRepeticiones: false,

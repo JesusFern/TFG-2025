@@ -162,8 +162,8 @@ export async function obtenerPlanesEntrenamientoService(filtros: {
   if (filtros.publico !== undefined) {
     query.publico = filtros.publico;
   }
-  // Para clientes, siempre filtrar por draftMode: false (solo planes publicados)
-  if (filtros.cliente) {
+  // Pero solo si no se está filtrando también por entrenador (es decir, es una consulta directa del cliente)
+  if (filtros.cliente && !filtros.entrenador) {
     query.draftMode = false;
   }
   if (filtros.activo !== undefined) {

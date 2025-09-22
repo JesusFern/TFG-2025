@@ -7,6 +7,12 @@ const EjercicioSesionSchema = new mongoose.Schema({
   repeticiones: { type: Number, required: true, min: 1 },
   peso: { type: Number, min: 0 },
   tiempoDescanso: { type: Number, required: true, min: 0 },
+  nivelIntensidad: { 
+    type: String, 
+    required: true,
+    enum: ['Baja', 'Media', 'Alta'],
+    default: 'Media'
+  },
   ejerciciosAlternativos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Ejercicio' }],
   opcionesProgresion: {
     aumentarPeso: { type: Boolean, default: false },

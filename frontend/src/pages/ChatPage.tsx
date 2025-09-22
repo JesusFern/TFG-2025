@@ -273,6 +273,7 @@ export const ChatPage: React.FC = () => {
         onClose={() => setShowNuevaConversacion(false)}
         title="Nueva conversación"
         size="md"
+        zIndex={2000}
       >
         <Stack gap="md">
           {nuevaConvError && (

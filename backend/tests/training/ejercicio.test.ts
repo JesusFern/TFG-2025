@@ -137,11 +137,7 @@ describe('Ejercicio Endpoints', () => {
         descripcion: "Ejercicio para desarrollar el pecho",
         grupoMuscular: "Pecho",
         equipamiento: "Barra",
-        series: 3,
-        repeticiones: 10,
-        tiempoDescanso: 60,
         nivelDificultad: "Intermedio",
-        nivelIntensidad: "Media",
         videoDemostrativo: "https://example.com/video.mp4"
       };
 
@@ -277,11 +273,7 @@ describe('Ejercicio Endpoints', () => {
         descripcion: "Test description",
         grupoMuscular: "Grupo Invalido",
         equipamiento: "Ninguno",
-        series: 3,
-        repeticiones: 10,
-        tiempoDescanso: 60,
-        nivelDificultad: "Principiante",
-        nivelIntensidad: "Baja"
+        nivelDificultad: "Principiante"
       };
 
       const res = await request(app)
@@ -298,11 +290,7 @@ describe('Ejercicio Endpoints', () => {
         descripcion: "Test description",
         grupoMuscular: "Pecho",
         equipamiento: "Ninguno",
-        series: 3,
-        repeticiones: 10,
-        tiempoDescanso: 60,
-        nivelDificultad: "Nivel Invalido",
-        nivelIntensidad: "Baja"
+        nivelDificultad: "Nivel Invalido"
       };
 
       const res = await request(app)

@@ -146,7 +146,7 @@ export async function obtenerMensajesService(filtros: FiltrosMensajes): Promise<
       // Buscar mensajes de una conversación específica
       const conversacion = await Conversacion.findById(restoFiltros.conversacionId);
       if (conversacion) {
-        filtrosConsulta.$or = [
+        filtrosConsulta.$and = [
           { remitente: { $in: conversacion.participantes } },
           { destinatario: { $in: conversacion.participantes } }
         ];
