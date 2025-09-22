@@ -3,6 +3,7 @@ import styled from 'styled-components';
 import { Button } from '../atoms/ButtonLayout';
 import { Container } from '../atoms/Container';
 import { useMantineColorScheme } from '@mantine/core';
+import { useNavigate } from 'react-router-dom';
 
 const HeroContainer = styled.section<{ isDark: boolean }>`
   min-height: 100vh;
@@ -91,7 +92,16 @@ const ResponsiveLayout = styled.div`
 
 export const Hero: React.FC = () => {
   const { colorScheme } = useMantineColorScheme();
+  const navigate = useNavigate();
   const isDark = colorScheme === 'dark';
+
+  const handleComenzar = () => {
+    navigate('/register');
+  };
+
+  const handleSaberMas = () => {
+    navigate('/acerca-de');
+  };
 
   return (
     <HeroContainer isDark={isDark}>
@@ -108,8 +118,8 @@ export const Hero: React.FC = () => {
               seguimiento de progreso y apoyo profesional para alcanzar tus objetivos de salud.
             </HeroParagraph>
             <ButtonGroup>
-              <Button primary={true}>Comenzar Ahora</Button>
-              <Button>Saber Más</Button>
+              <Button primary={true} onClick={handleComenzar}>Comenzar Ahora</Button>
+              <Button onClick={handleSaberMas}>Saber Más</Button>
             </ButtonGroup>
           </Content>
           <ImageWrapper isDark={isDark}>
