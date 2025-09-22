@@ -3,6 +3,7 @@ import { StreamVideoClient } from '@stream-io/video-react-sdk';
 import { useAuth } from '../hooks/useAuth';
 import { videoService } from '../services/videoService';
 import { VideoContext, VideoContextType } from './VideoContextValue';
+import { useImageOptimization } from '../hooks/useImageOptimization';
 
 
 interface VideoProviderProps {
@@ -16,6 +17,7 @@ export const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
   const [error, setError] = useState<string | null>(null);
   
   const { user } = useAuth();
+  const { optimizeImage, isOptimizing: isImageOptimizing } = useImageOptimization();
 
   const initializeClient = useCallback(async () => {
     if (!user || client) return;
@@ -31,13 +33,16 @@ export const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
         throw new Error('No se pudo obtener el token de Stream.io');
       }
 
+      // Optimizar la imagen de perfil para Stream.io (límite de 5KB)
+      const optimizedImage = await optimizeImage(user.profilePicture);
+
       // Crear el cliente de Stream.io
       const newClient = new StreamVideoClient({
         apiKey: import.meta.env.VITE_STREAM_API_KEY || 'mmhfdzb5evj2',
         user: {
           id: user._id,
           name: user.fullName,
-          image: user.profilePicture || undefined,
+          image: optimizedImage,
         },
         token: tokenData.token,
       });
@@ -46,7 +51,7 @@ export const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
       await newClient.connectUser({
         id: user._id,
         name: user.fullName,
-        image: user.profilePicture || undefined,
+        image: optimizedImage,
       }, tokenData.token);
       
       setClient(newClient);
@@ -92,7 +97,7 @@ export const VideoProvider: React.FC<VideoProviderProps> = ({ children }) => {
   const value: VideoContextType = {
     client,
     isConnected,
-    isLoading,
+    isLoading: isLoading || isImageOptimizing,
     error,
     initializeClient,
     disconnect,
