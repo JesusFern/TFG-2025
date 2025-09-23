@@ -191,10 +191,13 @@ describe('Training Module Integration Tests', () => {
       // 1. Crear ejercicio
       const ejercicioData = {
         nombre: "Press de Banca",
+        slug: "press-de-banca",
         descripcion: "Ejercicio para desarrollar el pecho",
         grupoMuscular: "Pecho",
         equipamiento: "Barra",
-        nivelDificultad: "Intermedio"
+        nivelDificultad: "Intermedio",
+        tipoEjercicio: "Fuerza",
+        instrucciones: "Acuéstate en banco y presiona la barra"
       };
 
       const ejercicioRes = await request(app)

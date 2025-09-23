@@ -1,0 +1,150 @@
+{
+  "flexiones": {
+    "nombre": "Flexiones",
+    "reason": "no_video"
+  },
+  "press-inclinado-mancuernas": {
+    "nombre": "Press inclinado con mancuernas",
+    "reason": "no_video"
+  },
+  "aperturas-mancuernas": {
+    "nombre": "Aperturas con mancuernas",
+    "reason": "no_video"
+  },
+  "remo-barra": {
+    "nombre": "Remo con barra",
+    "reason": "no_video"
+  },
+  "peso-muerto": {
+    "nombre": "Peso muerto",
+    "reason": "no_video"
+  },
+  "press-militar": {
+    "nombre": "Press militar",
+    "reason": "no_video"
+  },
+  "elevaciones-laterales": {
+    "nombre": "Elevaciones laterales",
+    "reason": "no_video"
+  },
+  "elevaciones-frontales": {
+    "nombre": "Elevaciones frontales",
+    "reason": "no_video"
+  },
+  "sentadilla": {
+    "nombre": "Sentadilla",
+    "reason": "no_video"
+  },
+  "sentadilla-barra": {
+    "nombre": "Sentadilla con barra",
+    "reason": "no_video"
+  },
+  "bulgarian-split-squats": {
+    "nombre": "Bulgarian split squats",
+    "reason": "no_video"
+  },
+  "curl-biceps": {
+    "nombre": "Curl de bíceps",
+    "reason": "no_video"
+  },
+  "triceps-banco": {
+    "nombre": "Tríceps en banco",
+    "reason": "no_video"
+  },
+  "extensiones-triceps": {
+    "nombre": "Extensiones de tríceps",
+    "reason": "no_video"
+  },
+  "plancha": {
+    "nombre": "Plancha",
+    "reason": "no_video"
+  },
+  "crunches": {
+    "nombre": "Crunches",
+    "reason": "no_video"
+  },
+  "mountain-climbers": {
+    "nombre": "Mountain climbers",
+    "reason": "no_video"
+  },
+  "russian-twists": {
+    "nombre": "Russian twists",
+    "reason": "no_video"
+  },
+  "burpees": {
+    "nombre": "Burpees",
+    "reason": "no_video"
+  },
+  "jumping-jacks": {
+    "nombre": "Jumping jacks",
+    "reason": "no_video"
+  },
+  "high-knees": {
+    "nombre": "High knees",
+    "reason": "no_video"
+  },
+  "jump-squats": {
+    "nombre": "Jump squats",
+    "reason": "no_video"
+  },
+  "estiramiento-isquiotibiales": {
+    "nombre": "Estiramiento de isquiotibiales",
+    "reason": "no_video"
+  },
+  "estiramiento-pecho": {
+    "nombre": "Estiramiento de pecho",
+    "reason": "no_video"
+  },
+  "estiramiento-espalda": {
+    "nombre": "Estiramiento de espalda",
+    "reason": "no_video"
+  },
+  "kettlebell-swings": {
+    "nombre": "Kettlebell swings",
+    "reason": "no_video"
+  },
+  "turkish-get-ups": {
+    "nombre": "Turkish get-ups",
+    "reason": "no_video"
+  },
+  "farmer-walks": {
+    "nombre": "Farmer walks",
+    "reason": "no_video"
+  },
+  "push-ups-isometricos": {
+    "nombre": "Push-ups isométricos",
+    "reason": "no_video"
+  },
+  "wall-sits": {
+    "nombre": "Wall sits",
+    "reason": "no_video"
+  },
+  "plank-to-push-up": {
+    "nombre": "Plank to push-up",
+    "reason": "no_video"
+  },
+  "single-leg-deadlifts": {
+    "nombre": "Single leg deadlifts",
+    "reason": "no_video"
+  },
+  "pistol-squats": {
+    "nombre": "Pistol squats",
+    "reason": "no_video"
+  },
+  "l-sits": {
+    "nombre": "L-sits",
+    "reason": "no_video"
+  },
+  "arm-circles": {
+    "nombre": "Arm circles",
+    "reason": "no_video"
+  },
+  "leg-swings": {
+    "nombre": "Leg swings",
+    "reason": "no_video"
+  },
+  "hip-circles": {
+    "nombre": "Hip circles",
+    "reason": "no_video"
+  }
+}

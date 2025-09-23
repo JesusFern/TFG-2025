@@ -3,10 +3,13 @@ import { body, param, query } from 'express-validator';
 // Validadores para ejercicios
 export const crearEjercicioValidator = [
   body('nombre').isString().trim().isLength({ min: 1, max: 100 }).withMessage('El nombre es obligatorio y debe tener entre 1 y 100 caracteres'),
+  body('slug').isString().trim().isLength({ min: 1, max: 100 }).matches(/^[a-z0-9-]+$/).withMessage('El slug es obligatorio, debe tener entre 1 y 100 caracteres y solo contener letras minúsculas, números y guiones'),
   body('descripcion').optional().isString().trim().isLength({ min: 0, max: 500 }).withMessage('La descripción debe tener entre 0 y 500 caracteres'),
   body('grupoMuscular').isIn(['Piernas', 'Espalda', 'Pecho', 'Hombros', 'Brazos', 'Core', 'Glúteos', 'Pantorrillas']).withMessage('Grupo muscular no válido'),
-  body('equipamiento').isIn(['Mancuernas', 'Barra', 'Cuerda para saltar', 'Ninguno', 'Máquina', 'Peso corporal', 'Pelota medicinal', 'Bandas de resistencia']).withMessage('Equipamiento no válido'),
+  body('equipamiento').isIn(['Mancuernas', 'Barra', 'Cuerda para saltar', 'Ninguno', 'Máquina', 'Peso corporal', 'Pelota medicinal', 'Bandas de resistencia', 'Barra de dominadas', 'Banco', 'Cable', 'Kettlebell']).withMessage('Equipamiento no válido'),
   body('nivelDificultad').isIn(['Principiante', 'Intermedio', 'Avanzado']).withMessage('Nivel de dificultad no válido'),
+  body('tipoEjercicio').isIn(['Fuerza', 'Cardio', 'Flexibilidad', 'HIIT', 'Resistencia', 'Potencia', 'Estabilidad']).withMessage('Tipo de ejercicio no válido'),
+  body('instrucciones').optional().isString().trim().isLength({ min: 0, max: 1000 }).withMessage('Las instrucciones deben tener entre 0 y 1000 caracteres'),
   body('videoDemostrativo').optional().isURL().withMessage('El video demostrativo debe ser una URL válida'),
   body('publico').optional().isBoolean().toBoolean().withMessage('El campo público debe ser un booleano')
 ];
@@ -14,10 +17,13 @@ export const crearEjercicioValidator = [
 export const actualizarEjercicioValidator = [
   param('id').isMongoId().withMessage('ID de ejercicio no válido'),
   body('nombre').optional().isString().trim().isLength({ min: 1, max: 100 }).withMessage('El nombre debe tener entre 1 y 100 caracteres'),
+  body('slug').optional().isString().trim().isLength({ min: 1, max: 100 }).matches(/^[a-z0-9-]+$/).withMessage('El slug debe tener entre 1 y 100 caracteres y solo contener letras minúsculas, números y guiones'),
   body('descripcion').optional().isString().trim().isLength({ min: 0, max: 500 }).withMessage('La descripción debe tener entre 0 y 500 caracteres'),
   body('grupoMuscular').optional().isIn(['Piernas', 'Espalda', 'Pecho', 'Hombros', 'Brazos', 'Core', 'Glúteos', 'Pantorrillas']).withMessage('Grupo muscular no válido'),
-  body('equipamiento').optional().isIn(['Mancuernas', 'Barra', 'Cuerda para saltar', 'Ninguno', 'Máquina', 'Peso corporal', 'Pelota medicinal', 'Bandas de resistencia']).withMessage('Equipamiento no válido'),
+  body('equipamiento').optional().isIn(['Mancuernas', 'Barra', 'Cuerda para saltar', 'Ninguno', 'Máquina', 'Peso corporal', 'Pelota medicinal', 'Bandas de resistencia', 'Barra de dominadas', 'Banco', 'Cable', 'Kettlebell']).withMessage('Equipamiento no válido'),
   body('nivelDificultad').optional().isIn(['Principiante', 'Intermedio', 'Avanzado']).withMessage('Nivel de dificultad no válido'),
+  body('tipoEjercicio').optional().isIn(['Fuerza', 'Cardio', 'Flexibilidad', 'HIIT', 'Resistencia', 'Potencia', 'Estabilidad']).withMessage('Tipo de ejercicio no válido'),
+  body('instrucciones').optional().isString().trim().isLength({ min: 0, max: 1000 }).withMessage('Las instrucciones deben tener entre 0 y 1000 caracteres'),
   body('videoDemostrativo').optional().isURL().withMessage('El video demostrativo debe ser una URL válida'),
   body('publico').optional().isBoolean().toBoolean().withMessage('El campo público debe ser un booleano')
 ];
@@ -101,9 +107,11 @@ export const actualizarSesionValidator = [
 export const filtrosEjerciciosValidator = [
   query('grupoMuscular').optional().isIn(['Piernas', 'Espalda', 'Pecho', 'Hombros', 'Brazos', 'Core', 'Glúteos', 'Pantorrillas']).withMessage('Grupo muscular no válido'),
   query('nivelDificultad').optional().isIn(['Principiante', 'Intermedio', 'Avanzado']).withMessage('Nivel de dificultad no válido'),
-  query('equipamiento').optional().isIn(['Mancuernas', 'Barra', 'Cuerda para saltar', 'Ninguno', 'Máquina', 'Peso corporal', 'Pelota medicinal', 'Bandas de resistencia']).withMessage('Equipamiento no válido'),
+  query('equipamiento').optional().isIn(['Mancuernas', 'Barra', 'Cuerda para saltar', 'Ninguno', 'Máquina', 'Peso corporal', 'Pelota medicinal', 'Bandas de resistencia', 'Barra de dominadas', 'Banco', 'Cable', 'Kettlebell']).withMessage('Equipamiento no válido'),
+  query('tipoEjercicio').optional().isIn(['Fuerza', 'Cardio', 'Flexibilidad', 'HIIT', 'Resistencia', 'Potencia', 'Estabilidad']).withMessage('Tipo de ejercicio no válido'),
   query('creador').optional().isMongoId().withMessage('ID de creador no válido'),
-  query('publico').optional().isBoolean().toBoolean().withMessage('El campo público debe ser un booleano')
+  query('publico').optional().isBoolean().toBoolean().withMessage('El campo público debe ser un booleano'),
+  query('arquetipo').optional().isBoolean().toBoolean().withMessage('El campo arquetipo debe ser un booleano')
 ];
 
 export const filtrosPlanesValidator = [
@@ -126,6 +134,10 @@ export const filtrosSesionesValidator = [
 // Validadores para parámetros de ruta
 export const idValidator = [
   param('id').isMongoId().withMessage('ID no válido')
+];
+
+export const slugValidator = [
+  param('slug').isString().trim().isLength({ min: 1, max: 100 }).matches(/^[a-z0-9-]+$/).withMessage('Slug no válido')
 ];
 
 export const asignarClienteValidator = [

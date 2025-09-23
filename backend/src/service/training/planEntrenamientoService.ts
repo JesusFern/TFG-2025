@@ -1,6 +1,27 @@
 import PlanEntrenamiento from '../../models/training/planEntrenamiento';
 import User from '../../models/users/user';
 import Sesion from '../../models/training/sesion';
+import { EjercicioDistribucionService } from './ejercicioDistribucionService';
+
+interface EjercicioSesion {
+  ejercicio: string;
+  nombre: string;
+  slug: string;
+  grupoMuscular: string;
+  equipamiento: string;
+  tipoEjercicio: string;
+  instrucciones?: string;
+  videoDemostrativo?: string;
+  series: number;
+  repeticiones: number;
+  tiempoDescanso: number;
+  nivelIntensidad: string;
+  opcionesProgresion: {
+    aumentarPeso: boolean;
+    masRepeticiones: boolean;
+    mayorIntensidad: boolean;
+  };
+}
 
 // Función auxiliar para crear sesiones para un cliente
 async function crearSesionesParaCliente(
@@ -330,4 +351,248 @@ export async function removerClienteService(planId: string, entrenadorId: string
   await plan.save();
 
   return plan;
+}
+
+// ===== FUNCIONES DE GENERACIÓN AUTOMÁTICA =====
+
+// Obtener todos los objetivos disponibles (ahora dinámicos)
+export async function obtenerObjetivosDisponiblesService() {
+  return [
+    {
+      objetivo: 'Ganancia muscular',
+      descripcion: 'Desarrollo de masa muscular y fuerza',
+      nivelDificultad: 'Intermedio',
+      equipamiento: ['Peso corporal', 'Mancuernas', 'Barra'],
+      gruposMusculares: ['Pecho', 'Piernas', 'Espalda', 'Hombros', 'Brazos', 'Core'],
+      estrategiasDisponibles: ['full_body', 'upper_lower', 'push_pull_legs', 'especializacion']
+    },
+    {
+      objetivo: 'Pérdida de peso',
+      descripcion: 'Quema de grasa y mejora de composición corporal',
+      nivelDificultad: 'Principiante',
+      equipamiento: ['Peso corporal', 'Mancuernas'],
+      gruposMusculares: ['Pecho', 'Piernas', 'Espalda', 'Hombros', 'Brazos', 'Core'],
+      estrategiasDisponibles: ['full_body', 'upper_lower', 'push_pull_legs']
+    },
+    {
+      objetivo: 'Resistencia',
+      descripcion: 'Mejora de resistencia cardiovascular y muscular',
+      nivelDificultad: 'Intermedio',
+      equipamiento: ['Peso corporal', 'Mancuernas'],
+      gruposMusculares: ['Pecho', 'Piernas', 'Espalda', 'Hombros', 'Brazos', 'Core'],
+      estrategiasDisponibles: ['full_body', 'upper_lower', 'push_pull_legs']
+    },
+    {
+      objetivo: 'Flexibilidad',
+      descripcion: 'Mejora de movilidad y flexibilidad',
+      nivelDificultad: 'Principiante',
+      equipamiento: ['Peso corporal'],
+      gruposMusculares: ['Core', 'Piernas', 'Espalda'],
+      estrategiasDisponibles: ['full_body']
+    },
+    {
+      objetivo: 'Mantenimiento',
+      descripcion: 'Mantener condición física actual',
+      nivelDificultad: 'Intermedio',
+      equipamiento: ['Peso corporal', 'Mancuernas', 'Barra'],
+      gruposMusculares: ['Pecho', 'Piernas', 'Espalda', 'Hombros', 'Brazos', 'Core'],
+      estrategiasDisponibles: ['full_body', 'upper_lower', 'push_pull_legs']
+    },
+    {
+      objetivo: 'Salud general',
+      descripcion: 'Mejora general de la salud y bienestar',
+      nivelDificultad: 'Principiante',
+      equipamiento: ['Peso corporal', 'Mancuernas'],
+      gruposMusculares: ['Pecho', 'Piernas', 'Espalda', 'Hombros', 'Brazos', 'Core'],
+      estrategiasDisponibles: ['full_body', 'upper_lower']
+    }
+  ];
+}
+
+// Obtener plantilla por objetivo específico (ahora dinámica)
+export async function obtenerPlantillaPorObjetivoService(objetivo: string) {
+  const objetivos = await obtenerObjetivosDisponiblesService();
+  return objetivos.find(obj => obj.objetivo === objetivo) || null;
+}
+
+// Obtener plantillas por filtros (ahora dinámicas)
+export async function obtenerPlantillasPorFiltrosService(filtros: {
+  objetivo?: string;
+  nivelDificultad?: string;
+  equipamiento?: string[];
+  gruposMusculares?: string[];
+}) {
+  let objetivos = await obtenerObjetivosDisponiblesService();
+  
+  if (filtros.objetivo) {
+    objetivos = objetivos.filter(obj => obj.objetivo === filtros.objetivo);
+  }
+  
+  if (filtros.nivelDificultad) {
+    objetivos = objetivos.filter(obj => obj.nivelDificultad === filtros.nivelDificultad);
+  }
+  
+  if (filtros.equipamiento && filtros.equipamiento.length > 0) {
+    objetivos = objetivos.filter(obj => 
+      filtros.equipamiento!.some(eq => obj.equipamiento.includes(eq))
+    );
+  }
+  
+  if (filtros.gruposMusculares && filtros.gruposMusculares.length > 0) {
+    objetivos = objetivos.filter(obj => 
+      filtros.gruposMusculares!.some(grupo => obj.gruposMusculares.includes(grupo))
+    );
+  }
+  
+  return objetivos;
+}
+
+// Buscar plantillas por texto (ahora dinámicas)
+export async function buscarPlantillasService(termino: string) {
+  const objetivos = await obtenerObjetivosDisponiblesService();
+  const terminoLower = termino.toLowerCase();
+  
+  return objetivos.filter(obj => 
+    obj.objetivo.toLowerCase().includes(terminoLower) ||
+    obj.descripcion.toLowerCase().includes(terminoLower) ||
+    obj.gruposMusculares.some(grupo => grupo.toLowerCase().includes(terminoLower))
+  );
+}
+
+// Generar plan desde plantilla usando lógica dinámica
+export async function generarPlanDesdePlantillaService({
+  entrenadorId,
+  objetivo,
+  duracionSemanas,
+  sesionesPorSemana,
+  nombre,
+  descripcion,
+  fechaInicio,
+  diasSemana,
+  clientes,
+  publico = false,
+  nivelDificultad = 'Intermedio'
+}: {
+  entrenadorId: string;
+  objetivo: string;
+  duracionSemanas: number;
+  sesionesPorSemana: number;
+  nombre: string;
+  descripcion?: string;
+  fechaInicio: string;
+  diasSemana: number[];
+  clientes: string[];
+  publico?: boolean;
+  nivelDificultad?: 'Principiante' | 'Intermedio' | 'Avanzado';
+}) {
+  // Validar que el entrenador existe
+  const entrenador = await User.findById(entrenadorId);
+  if (!entrenador || entrenador.role !== 'worker') {
+    throw new Error('Entrenador no encontrado o no válido');
+  }
+
+  // Validar que todos los clientes existen
+  const clientesExistentes = await User.find({ _id: { $in: clientes }, role: 'user' });
+  if (clientesExistentes.length !== clientes.length) {
+    throw new Error('Algunos clientes no fueron encontrados');
+  }
+
+  // Generar sesiones usando la nueva lógica de distribución
+  const sesionesTemplate = await EjercicioDistribucionService.generarSesionesParaPlan(
+    objetivo,
+    sesionesPorSemana,
+    duracionSemanas,
+    diasSemana,
+    nivelDificultad
+  );
+
+  if (sesionesTemplate.length === 0) {
+    throw new Error('No se pudieron generar sesiones para la configuración especificada');
+  }
+
+  // Crear el plan de entrenamiento
+  const duracionDias = duracionSemanas * 7;
+  const plan = new PlanEntrenamiento({
+    entrenador: entrenadorId,
+    nombre,
+    descripcion: descripcion || `Plan de ${objetivo.toLowerCase()} - ${sesionesPorSemana} sesiones/semana`,
+    objetivo,
+    duracionDias,
+    sesionesPorSemana,
+    fechaInicio: new Date(fechaInicio),
+    diasSemana,
+    clientes,
+    publico,
+    draftMode: true
+  });
+
+  await plan.save();
+
+  // Generar sesiones para cada cliente
+  const sesionesCreadas = [];
+  const fechaInicioDate = new Date(fechaInicio);
+
+  // Calcular todas las fechas de sesiones
+  const fechasSesiones = [];
+  for (let semana = 0; semana < duracionSemanas; semana++) {
+    for (let dia = 0; dia < 7; dia++) {
+      const fechaActual = new Date(fechaInicioDate);
+      fechaActual.setDate(fechaActual.getDate() + (semana * 7) + dia);
+      
+      const diaSemana = fechaActual.getDay();
+      if (diasSemana.includes(diaSemana)) {
+        fechasSesiones.push(fechaActual);
+      }
+    }
+  }
+
+  // Crear sesiones para cada cliente
+  for (const clienteId of clientes) {
+    for (let i = 0; i < fechasSesiones.length; i++) {
+      const fechaSesion = fechasSesiones[i];
+      const sesionTemplate = sesionesTemplate[i % sesionesTemplate.length]; // Rotar entre sesiones
+
+      // Preparar ejercicios para la sesión
+      const ejerciciosSesion = sesionTemplate.ejercicios.map((ejercicio: EjercicioSesion, index: number) => ({
+        ejercicio: ejercicio.ejercicio,
+        orden: index + 1,
+        series: ejercicio.series,
+        repeticiones: ejercicio.repeticiones,
+        peso: ejercicio.nivelIntensidad === 'Alta' ? 0 : undefined,
+        tiempoDescanso: ejercicio.tiempoDescanso,
+        nivelIntensidad: ejercicio.nivelIntensidad,
+        ejerciciosAlternativos: [],
+        opcionesProgresion: ejercicio.opcionesProgresion
+      }));
+
+      const sesion = new Sesion({
+        entrenador: entrenadorId,
+        cliente: clienteId,
+        plan: plan._id,
+        fecha: fechaSesion.toISOString(),
+        tipoEntrenamiento: sesionTemplate.tipoEntrenamiento,
+        duracion: sesionTemplate.duracion,
+        ejercicios: ejerciciosSesion,
+        completada: false
+      });
+
+      await sesion.save();
+      sesionesCreadas.push(sesion);
+    }
+  }
+
+  // Actualizar el plan con las sesiones creadas
+  plan.sesiones = sesionesCreadas.map(s => s._id);
+  await plan.save();
+
+  return {
+    plan,
+    sesionesCreadas,
+    plantillaUsada: {
+      objetivo,
+      descripcion: `Plan generado dinámicamente para ${objetivo}`,
+      nivelDificultad,
+      estrategia: EjercicioDistribucionService.determinarEstrategia(sesionesPorSemana)
+    }
+  };
 }

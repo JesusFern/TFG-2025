@@ -12,7 +12,11 @@
     "test:training:planes": "cross-env NODE_ENV=test jest --testPathPattern=tests/training/planEntrenamiento.test.ts --detectOpenHandles --forceExit",
     "test:training:sesiones": "cross-env NODE_ENV=test jest --testPathPattern=tests/training/sesion.test.ts --detectOpenHandles --forceExit",
     "test:training:integration": "cross-env NODE_ENV=test jest --testPathPattern=tests/training/trainingIntegration.test.ts --detectOpenHandles --forceExit",
-    "seed": "ts-node src/seeders/seeders.ts"
+    "seed": "ts-node src/seeders/seeders.ts",
+    "wger-sync-videos": "node scripts/wgerSyncVideos.js",
+    "cleanup-videos": "node scripts/cleanupVideos.js",
+    "test-templates": "ts-node scripts/testTemplateSystem.ts",
+    "test-objetivos": "ts-node scripts/testObjetivos.ts"
   },
   "keywords": [],
   "author": "",
