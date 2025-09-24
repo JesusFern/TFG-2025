@@ -23,1366 +23,1264 @@ export async function seedEjercicios() {
       activo: true
     };
 
+    // Helper function para crear ejercicios de manera más concisa
+    const crearEjercicio = (
+      nombre: string,
+      slug: string,
+      descripcion: string,
+      grupoMuscular: string,
+      equipamiento: string,
+      nivelDificultad: string,
+      tipoEjercicio: string,
+      instrucciones: string,
+      videoDemostrativo?: string
+    ) => ({
+      ...propiedadesPorDefecto,
+      nombre,
+      slug,
+      descripcion,
+      grupoMuscular,
+      equipamiento,
+      nivelDificultad,
+      tipoEjercicio,
+      instrucciones,
+      ...(videoDemostrativo && { videoDemostrativo })
+    });
+
     const ejercicios = [
       // === PECHO ===
-      {
-        ...propiedadesPorDefecto,
-        nombre: 'Press de banca',
-        slug: 'press-de-banca',
-        descripcion: 'Ejercicio básico para desarrollo del pecho con barra',
-        grupoMuscular: 'Pecho',
-        equipamiento: 'Barra',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Acuéstate en banco, agarra la barra con las manos separadas al ancho de los hombros, baja controladamente y empuja hacia arriba',
-        videoDemostrativo: 'https://wger.de/media/exercise-video/73/2bdb390c-312c-4497-a722-5eed2c823e5a.MOV'
-      },
-      {
-        ...propiedadesPorDefecto,
-        nombre: 'Flexiones',
-        slug: 'flexiones',
-        descripcion: 'Ejercicio de peso corporal para pecho',
-        grupoMuscular: 'Pecho',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Posición de plancha, manos separadas al ancho de los hombros, baja el pecho al suelo y empuja hacia arriba'
-      },
-      {
-        ...propiedadesPorDefecto,
-        nombre: 'Press inclinado con mancuernas',
-        slug: 'press-inclinado-mancuernas',
-        descripcion: 'Press de pecho en banco inclinado con mancuernas',
-        grupoMuscular: 'Pecho',
-        equipamiento: 'Mancuernas',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Acuéstate en banco inclinado 30-45°, agarra mancuernas y presiona hacia arriba'
-      },
-      {
-        ...propiedadesPorDefecto,
-        nombre: 'Aperturas con mancuernas',
-        slug: 'aperturas-mancuernas',
-        descripcion: 'Ejercicio de aislamiento para pecho con mancuernas',
-        grupoMuscular: 'Pecho',
-        equipamiento: 'Mancuernas',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Acuéstate en banco, extiende brazos con mancuernas y abre en arco hasta sentir estiramiento',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Press de banca',
+        'press-de-banca',
+        'Ejercicio básico para desarrollo del pecho con barra',
+        'Pecho',
+        'Barra',
+        'Intermedio',
+        'Fuerza',
+        'Acuéstate en banco, agarra la barra con las manos separadas al ancho de los hombros, baja controladamente y empuja hacia arriba',
+        'https://wger.de/media/exercise-video/73/2bdb390c-312c-4497-a722-5eed2c823e5a.MOV'
+      ),
+      crearEjercicio(
+        'Flexiones',
+        'flexiones',
+        'Ejercicio de peso corporal para pecho',
+        'Pecho',
+        'Peso corporal',
+        'Principiante',
+        'Fuerza',
+        'Posición de plancha, manos separadas al ancho de los hombros, baja el pecho al suelo y empuja hacia arriba'
+      ),
+      crearEjercicio(
+        'Press inclinado con mancuernas',
+        'press-inclinado-mancuernas',
+        'Press de pecho en banco inclinado con mancuernas',
+        'Pecho',
+        'Mancuernas',
+        'Intermedio',
+        'Fuerza',
+        'Acuéstate en banco inclinado 30-45°, agarra mancuernas y presiona hacia arriba'
+      ),
+      crearEjercicio(
+        'Aperturas con mancuernas',
+        'aperturas-mancuernas',
+        'Ejercicio de aislamiento para pecho con mancuernas',
+        'Pecho',
+        'Mancuernas',
+        'Intermedio',
+        'Fuerza',
+        'Acuéstate en banco, extiende brazos con mancuernas y abre en arco hasta sentir estiramiento'
+      ),
 
       // === ESPALDA ===
-      {
-        nombre: 'Dominadas',
-        slug: 'dominadas',
-        descripcion: 'Ejercicio de peso corporal para espalda',
-        grupoMuscular: 'Espalda',
-        equipamiento: 'Barra de dominadas',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Cuelga de la barra, manos separadas al ancho de los hombros, tira hacia arriba hasta que el mentón pase la barra',
-        videoDemostrativo: 'https://wger.de/media/exercise-video/475/83067ffe-ccb9-4e22-8507-5131b211ce74.MOV',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Remo con barra',
-        slug: 'remo-barra',
-        descripcion: 'Ejercicio de remo con barra para espalda',
-        grupoMuscular: 'Espalda',
-        equipamiento: 'Barra',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Inclinado 45°, agarra la barra y tira hacia el abdomen, apretando los omóplatos',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Peso muerto',
-        slug: 'peso-muerto',
-        descripcion: 'Ejercicio fundamental para espalda y cadena posterior',
-        grupoMuscular: 'Espalda',
-        equipamiento: 'Barra',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Pies separados al ancho de los hombros, agarra la barra y levántala manteniendo la espalda recta',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Dominadas',
+        'dominadas',
+        'Ejercicio de peso corporal para espalda',
+        'Espalda',
+        'Barra de dominadas',
+        'Intermedio',
+        'Fuerza',
+        'Cuelga de la barra, manos separadas al ancho de los hombros, tira hacia arriba hasta que el mentón pase la barra', 'https://wger.de/media/exercise-video/475/83067ffe-ccb9-4e22-8507-5131b211ce74.MOV'
+      ),
+      crearEjercicio(
+        'Remo con barra',
+        'remo-barra',
+        'Ejercicio de remo con barra para espalda',
+        'Espalda',
+        'Barra',
+        'Intermedio',
+        'Fuerza',
+        'Inclinado 45°, agarra la barra y tira hacia el abdomen, apretando los omóplatos'
+      ),
+      crearEjercicio(
+        'Peso muerto',
+        'peso-muerto',
+        'Ejercicio fundamental para espalda y cadena posterior',
+        'Espalda',
+        'Barra',
+        'Intermedio',
+        'Fuerza',
+        'Pies separados al ancho de los hombros, agarra la barra y levántala manteniendo la espalda recta'
+      ),
 
       // === HOMBROS ===
-      {
-        nombre: 'Press militar',
-        slug: 'press-militar',
-        descripcion: 'Press de hombros con barra de pie',
-        grupoMuscular: 'Hombros',
-        equipamiento: 'Barra',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'De pie, agarra la barra al ancho de los hombros y presiona hacia arriba',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Elevaciones laterales',
-        slug: 'elevaciones-laterales',
-        descripcion: 'Ejercicio de aislamiento para deltoides laterales',
-        grupoMuscular: 'Hombros',
-        equipamiento: 'Mancuernas',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'De pie, eleva mancuernas lateralmente hasta la altura de los hombros',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Elevaciones frontales',
-        slug: 'elevaciones-frontales',
-        descripcion: 'Ejercicio de aislamiento para deltoides frontales',
-        grupoMuscular: 'Hombros',
-        equipamiento: 'Mancuernas',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'De pie, eleva mancuernas frontalmente hasta la altura de los hombros',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Tirón facial',
-        slug: 'tiron-facial',
-        descripcion: 'Ejercicio para deltoides posteriores y trapecio',
-        grupoMuscular: 'Hombros',
-        equipamiento: 'Cable',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Con cable, tira hacia la cara separando las manos',
-        videoDemostrativo: 'https://wger.de/media/exercise-video/222/245a824b-cd39-45f2-b251-2c0b7efead0d.MOV',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Press militar',
+        'press-militar',
+        'Press de hombros con barra de pie',
+        'Hombros',
+        'Barra',
+        'Intermedio',
+        'Fuerza',
+        'De pie, agarra la barra al ancho de los hombros y presiona hacia arriba'
+      ),
+      crearEjercicio(
+        'Elevaciones laterales',
+        'elevaciones-laterales',
+        'Ejercicio de aislamiento para deltoides laterales',
+        'Hombros',
+        'Mancuernas',
+        'Principiante',
+        'Fuerza',
+        'De pie, eleva mancuernas lateralmente hasta la altura de los hombros'
+      ),
+      crearEjercicio(
+        'Elevaciones frontales',
+        'elevaciones-frontales',
+        'Ejercicio de aislamiento para deltoides frontales',
+        'Hombros',
+        'Mancuernas',
+        'Principiante',
+        'Fuerza',
+        'De pie, eleva mancuernas frontalmente hasta la altura de los hombros'
+      ),
+      crearEjercicio(
+        'Tirón facial',
+        'tiron-facial',
+        'Ejercicio para deltoides posteriores y trapecio',
+        'Hombros',
+        'Cable',
+        'Intermedio',
+        'Fuerza',
+        'Con cable, tira hacia la cara separando las manos', 'https://wger.de/media/exercise-video/222/245a824b-cd39-45f2-b251-2c0b7efead0d.MOV'
+      ),
 
       // === PIERNAS ===
-      {
-        nombre: 'Sentadilla',
-        slug: 'sentadilla',
-        descripcion: 'Ejercicio fundamental para piernas',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Pies separados al ancho de los hombros, baja como si te sentaras en una silla',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Sentadilla con barra',
-        slug: 'sentadilla-barra',
-        descripcion: 'Sentadilla con barra en la espalda',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Barra',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Barra en la espalda, baja hasta que los muslos estén paralelos al suelo',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Zancadas',
-        slug: 'zancadas',
-        descripcion: 'Ejercicio unilateral para piernas',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Da un paso largo hacia adelante y baja la rodilla trasera al suelo',
-        videoDemostrativo: 'https://wger.de/media/exercise-video/802/85d1d7f8-c3c5-47e8-9b26-56896919e6e7.MOV',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Peso muerto rumano',
-        slug: 'peso-muerto-rumano',
-        descripcion: 'Variación del peso muerto enfocada en isquiotibiales',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Barra',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Barra en las manos, mantén las piernas casi rectas y baja la barra hacia los pies',
-        videoDemostrativo: 'https://wger.de/media/exercise-video/507/307e7276-a14d-4ea0-b579-f5b0dbc6f5af.MOV',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Sentadillas búlgaras',
-        slug: 'sentadillas-bulgaras',
-        descripcion: 'Sentadilla búlgara con pie trasero elevado',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Pie trasero en banco, baja la rodilla delantera hacia el suelo',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Sentadilla',
+        'sentadilla',
+        'Ejercicio fundamental para piernas',
+        'Piernas',
+        'Peso corporal',
+        'Principiante',
+        'Fuerza',
+        'Pies separados al ancho de los hombros, baja como si te sentaras en una silla'
+      ),
+      crearEjercicio(
+        'Sentadilla con barra',
+        'sentadilla-barra',
+        'Sentadilla con barra en la espalda',
+        'Piernas',
+        'Barra',
+        'Intermedio',
+        'Fuerza',
+        'Barra en la espalda, baja hasta que los muslos estén paralelos al suelo'
+      ),
+      crearEjercicio(
+        'Zancadas',
+        'zancadas',
+        'Ejercicio unilateral para piernas',
+        'Piernas',
+        'Peso corporal',
+        'Principiante',
+        'Fuerza',
+        'Da un paso largo hacia adelante y baja la rodilla trasera al suelo', 'https://wger.de/media/exercise-video/802/85d1d7f8-c3c5-47e8-9b26-56896919e6e7.MOV'
+      ),
+      crearEjercicio(
+        'Peso muerto rumano',
+        'peso-muerto-rumano',
+        'Variación del peso muerto enfocada en isquiotibiales',
+        'Piernas',
+        'Barra',
+        'Intermedio',
+        'Fuerza',
+        'Barra en las manos, mantén las piernas casi rectas y baja la barra hacia los pies', 'https://wger.de/media/exercise-video/507/307e7276-a14d-4ea0-b579-f5b0dbc6f5af.MOV'
+      ),
+      crearEjercicio(
+        'Sentadillas búlgaras',
+        'sentadillas-bulgaras',
+        'Sentadilla búlgara con pie trasero elevado',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'Fuerza',
+        'Pie trasero en banco, baja la rodilla delantera hacia el suelo'
+      ),
 
       // === BRAZOS ===
-      {
-        nombre: 'Curl de bíceps',
-        slug: 'curl-biceps',
-        descripcion: 'Ejercicio de aislamiento para bíceps',
-        grupoMuscular: 'Brazos',
-        equipamiento: 'Mancuernas',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'De pie, flexiona los brazos llevando las mancuernas hacia los hombros',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Tríceps en banco',
-        slug: 'triceps-banco',
-        descripcion: 'Fondos en banco para tríceps',
-        grupoMuscular: 'Brazos',
-        equipamiento: 'Banco',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Apoya las manos en el banco, baja el cuerpo flexionando los codos',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Curl martillo',
-        slug: 'curl-martillo',
-        descripcion: 'Curl de bíceps con agarre neutro',
-        grupoMuscular: 'Brazos',
-        equipamiento: 'Mancuernas',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Agarre neutro, flexiona los brazos manteniendo las muñecas rectas',
-        videoDemostrativo: 'https://wger.de/media/exercise-video/272/df069052-2173-4f24-855f-a0eebe729f24.MOV',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Extensiones de tríceps',
-        slug: 'extensiones-triceps',
-        descripcion: 'Extensiones de tríceps con mancuerna',
-        grupoMuscular: 'Brazos',
-        equipamiento: 'Mancuernas',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Mancuerna sobre la cabeza, extiende los brazos hacia arriba',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Curl de bíceps',
+        'curl-biceps',
+        'Ejercicio de aislamiento para bíceps',
+        'Brazos',
+        'Mancuernas',
+        'Principiante',
+        'Fuerza',
+        'De pie, flexiona los brazos llevando las mancuernas hacia los hombros'
+      ),
+      crearEjercicio(
+        'Tríceps en banco',
+        'triceps-banco',
+        'Fondos en banco para tríceps',
+        'Brazos',
+        'Banco',
+        'Principiante',
+        'Fuerza',
+        'Apoya las manos en el banco, baja el cuerpo flexionando los codos'
+      ),
+      crearEjercicio(
+        'Curl martillo',
+        'curl-martillo',
+        'Curl de bíceps con agarre neutro',
+        'Brazos',
+        'Mancuernas',
+        'Principiante',
+        'Fuerza',
+        'Agarre neutro, flexiona los brazos manteniendo las muñecas rectas', 'https://wger.de/media/exercise-video/272/df069052-2173-4f24-855f-a0eebe729f24.MOV'
+      ),
+      crearEjercicio(
+        'Extensiones de tríceps',
+        'extensiones-triceps',
+        'Extensiones de tríceps con mancuerna',
+        'Brazos',
+        'Mancuernas',
+        'Principiante',
+        'Fuerza',
+        'Mancuerna sobre la cabeza, extiende los brazos hacia arriba'
+      ),
 
       // === CORE ===
-      {
-        nombre: 'Plancha',
-        slug: 'plancha',
-        descripcion: 'Ejercicio isométrico para core',
-        grupoMuscular: 'Core',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Posición de flexión, mantén el cuerpo recto y rígido',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Crunches',
-        slug: 'crunches',
-        descripcion: 'Abdominales básicos',
-        grupoMuscular: 'Core',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Acostado, flexiona el tronco llevando los hombros hacia las rodillas',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Escaladores de montaña',
-        slug: 'mountain-climbers',
-        descripcion: 'Ejercicio dinámico para core y cardio',
-        grupoMuscular: 'Core',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Cardio',
-        instrucciones: 'Posición de plancha, alterna llevando las rodillas al pecho',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Giros rusos',
-        slug: 'russian-twists',
-        descripcion: 'Rotaciones de tronco para core',
-        grupoMuscular: 'Core',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Sentado, inclínate hacia atrás y rota el tronco de lado a lado',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Plancha',
+        'plancha',
+        'Ejercicio isométrico para core',
+        'Core',
+        'Peso corporal',
+        'Principiante',
+        'Fuerza',
+        'Posición de flexión, mantén el cuerpo recto y rígido'
+      ),
+      crearEjercicio(
+        'Crunches',
+        'crunches',
+        'Abdominales básicos',
+        'Core',
+        'Peso corporal',
+        'Principiante',
+        'Fuerza',
+        'Acostado, flexiona el tronco llevando los hombros hacia las rodillas'
+      ),
+      crearEjercicio(
+        'Escaladores de montaña',
+        'mountain-climbers',
+        'Ejercicio dinámico para core y cardio',
+        'Core',
+        'Peso corporal',
+        'Intermedio',
+        'Cardio',
+        'Posición de plancha, alterna llevando las rodillas al pecho'
+      ),
+      crearEjercicio(
+        'Giros rusos',
+        'russian-twists',
+        'Rotaciones de tronco para core',
+        'Core',
+        'Peso corporal',
+        'Principiante',
+        'Fuerza',
+        'Sentado, inclínate hacia atrás y rota el tronco de lado a lado'
+      ),
 
       // === CARDIO/HIIT ===
-      {
-        nombre: 'Burpees',
-        slug: 'burpees',
-        descripcion: 'Ejercicio completo de cardio y fuerza',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Cardio',
-        instrucciones: 'Flexión, salto a sentadilla, salto vertical con brazos arriba',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Saltos de tijera',
-        slug: 'jumping-jacks',
-        descripcion: 'Ejercicio de cardio básico',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Cardio',
-        instrucciones: 'Salta separando piernas y brazos, luego vuelve a juntarlos',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Rodillas altas',
-        slug: 'high-knees',
-        descripcion: 'Carrera en el lugar elevando rodillas',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Cardio',
-        instrucciones: 'Corre en el lugar elevando las rodillas al pecho',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Sentadillas con salto',
-        slug: 'jump-squats',
-        descripcion: 'Sentadillas con salto',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Cardio',
-        instrucciones: 'Haz una sentadilla y salta explosivamente hacia arriba',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Burpees',
+        'burpees',
+        'Ejercicio completo de cardio y fuerza',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'Cardio',
+        'Flexión, salto a sentadilla, salto vertical con brazos arriba'
+      ),
+      crearEjercicio(
+        'Saltos de tijera',
+        'jumping-jacks',
+        'Ejercicio de cardio básico',
+        'Piernas',
+        'Peso corporal',
+        'Principiante',
+        'Cardio',
+        'Salta separando piernas y brazos, luego vuelve a juntarlos'
+      ),
+      crearEjercicio(
+        'Rodillas altas',
+        'high-knees',
+        'Carrera en el lugar elevando rodillas',
+        'Piernas',
+        'Peso corporal',
+        'Principiante',
+        'Cardio',
+        'Corre en el lugar elevando las rodillas al pecho'
+      ),
+      crearEjercicio(
+        'Sentadillas con salto',
+        'jump-squats',
+        'Sentadillas con salto',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'Cardio',
+        'Haz una sentadilla y salta explosivamente hacia arriba'
+      ),
 
       // === FLEXIBILIDAD/MOVILIDAD ===
-      {
-        nombre: 'Estiramiento de isquiotibiales',
-        slug: 'estiramiento-isquiotibiales',
-        descripcion: 'Estiramiento estático para isquiotibiales',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Sentado, extiende una pierna y estírate hacia el pie',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Estiramiento de pecho',
-        slug: 'estiramiento-pecho',
-        descripcion: 'Estiramiento para músculos del pecho',
-        grupoMuscular: 'Pecho',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Coloca el brazo en la pared y gira el cuerpo para estirar el pecho',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Estiramiento de espalda',
-        slug: 'estiramiento-espalda',
-        descripcion: 'Estiramiento para músculos de la espalda',
-        grupoMuscular: 'Espalda',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Sentado, cruza una pierna y gira el tronco hacia el lado opuesto',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Estiramiento de isquiotibiales',
+        'estiramiento-isquiotibiales',
+        'Estiramiento estático para isquiotibiales',
+        'Piernas',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'Sentado, extiende una pierna y estírate hacia el pie'
+      ),
+      crearEjercicio(
+        'Estiramiento de pecho',
+        'estiramiento-pecho',
+        'Estiramiento para músculos del pecho',
+        'Pecho',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'Coloca el brazo en la pared y gira el cuerpo para estirar el pecho'
+      ),
+      crearEjercicio(
+        'Estiramiento de espalda',
+        'estiramiento-espalda',
+        'Estiramiento para músculos de la espalda',
+        'Espalda',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'Sentado, cruza una pierna y gira el tronco hacia el lado opuesto'
+      ),
 
       // === FUNCIONALES ===
-      {
-        nombre: 'Balanceos con kettlebell',
-        slug: 'kettlebell-swings',
-        descripcion: 'Balanceo con kettlebell para cadera y core',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Kettlebell',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Con kettlebell, balancea desde entre las piernas hasta la altura del pecho',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Levantamientos turcos',
-        slug: 'turkish-get-ups',
-        descripcion: 'Levantamiento turco con kettlebell',
-        grupoMuscular: 'Core',
-        equipamiento: 'Kettlebell',
-        nivelDificultad: 'Avanzado',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Acostado, levanta la kettlebell y ponte de pie manteniéndola arriba',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Caminata de granjero',
-        slug: 'farmer-walks',
-        descripcion: 'Caminata con peso para fuerza funcional',
-        grupoMuscular: 'Core',
-        equipamiento: 'Mancuernas',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Camina sosteniendo mancuernas pesadas a los lados',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Balanceos con kettlebell',
+        'kettlebell-swings',
+        'Balanceo con kettlebell para cadera y core',
+        'Piernas',
+        'Kettlebell',
+        'Intermedio',
+        'Fuerza',
+        'Con kettlebell, balancea desde entre las piernas hasta la altura del pecho'
+      ),
+      crearEjercicio(
+        'Levantamientos turcos',
+        'turkish-get-ups',
+        'Levantamiento turco con kettlebell',
+        'Core',
+        'Kettlebell',
+        'Avanzado',
+        'Fuerza',
+        'Acostado, levanta la kettlebell y ponte de pie manteniéndola arriba'
+      ),
+      crearEjercicio(
+        'Caminata de granjero',
+        'farmer-walks',
+        'Caminata con peso para fuerza funcional',
+        'Core',
+        'Mancuernas',
+        'Intermedio',
+        'Fuerza',
+        'Camina sosteniendo mancuernas pesadas a los lados'
+      ),
 
       // === RESISTENCIA ===
-      {
-        nombre: 'Push-ups isométricos',
-        slug: 'push-ups-isometricos',
-        descripcion: 'Flexiones manteniendo la posición',
-        grupoMuscular: 'Pecho',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Mantén la posición de flexión durante el tiempo especificado',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Sentadilla en pared',
-        slug: 'wall-sits',
-        descripcion: 'Sentadilla isométrica contra la pared',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Apoya la espalda en la pared y mantén la posición de sentadilla',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Plancha a flexión',
-        slug: 'plank-to-push-up',
-        descripcion: 'Transición de plancha a flexión',
-        grupoMuscular: 'Core',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Desde plancha, alterna apoyando un brazo y luego el otro',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Push-ups isométricos',
+        'push-ups-isometricos',
+        'Flexiones manteniendo la posición',
+        'Pecho',
+        'Peso corporal',
+        'Intermedio',
+        'Fuerza',
+        'Mantén la posición de flexión durante el tiempo especificado'
+      ),
+      crearEjercicio(
+        'Sentadilla en pared',
+        'wall-sits',
+        'Sentadilla isométrica contra la pared',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'Fuerza',
+        'Apoya la espalda en la pared y mantén la posición de sentadilla'
+      ),
+      crearEjercicio(
+        'Plancha a flexión',
+        'plank-to-push-up',
+        'Transición de plancha a flexión',
+        'Core',
+        'Peso corporal',
+        'Intermedio',
+        'Fuerza',
+        'Desde plancha, alterna apoyando un brazo y luego el otro'
+      ),
 
       // === EQUILIBRIO/ESTABILIDAD ===
-      {
-        nombre: 'Peso muerto a una pierna',
-        slug: 'single-leg-deadlifts',
-        descripcion: 'Peso muerto a una pierna para equilibrio',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'De pie, levanta una pierna y baja el tronco manteniendo el equilibrio',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Sentadillas pistol',
-        slug: 'pistol-squats',
-        descripcion: 'Sentadilla a una pierna',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Avanzado',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'De pie, extiende una pierna y baja en sentadilla con la otra',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Sentadillas en L',
-        slug: 'l-sits',
-        descripcion: 'Sentadilla en L para core y brazos',
-        grupoMuscular: 'Core',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Avanzado',
-        tipoEjercicio: 'Fuerza',
-        instrucciones: 'Sentado, levanta las piernas y mantén la posición en L',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Peso muerto a una pierna',
+        'single-leg-deadlifts',
+        'Peso muerto a una pierna para equilibrio',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'Fuerza',
+        'De pie, levanta una pierna y baja el tronco manteniendo el equilibrio'
+      ),
+      crearEjercicio(
+        'Sentadillas pistol',
+        'pistol-squats',
+        'Sentadilla a una pierna',
+        'Piernas',
+        'Peso corporal',
+        'Avanzado',
+        'Fuerza',
+        'De pie, extiende una pierna y baja en sentadilla con la otra'
+      ),
+      crearEjercicio(
+        'Sentadillas en L',
+        'l-sits',
+        'Sentadilla en L para core y brazos',
+        'Core',
+        'Peso corporal',
+        'Avanzado',
+        'Fuerza',
+        'Sentado, levanta las piernas y mantén la posición en L'
+      ),
 
       // === CALENTAMIENTO ===
-      {
-        nombre: 'Círculos de brazos',
-        slug: 'arm-circles',
-        descripcion: 'Círculos con los brazos para calentamiento',
-        grupoMuscular: 'Hombros',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Extiende los brazos y haz círculos hacia adelante y atrás',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Balanceos de piernas',
-        slug: 'leg-swings',
-        descripcion: 'Balanceos de piernas para calentamiento',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'De pie, balancea una pierna hacia adelante y atrás',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Círculos de cadera',
-        slug: 'hip-circles',
-        descripcion: 'Círculos de cadera para calentamiento',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Manos en la cintura, haz círculos con la cadera',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Círculos de brazos',
+        'arm-circles',
+        'Círculos con los brazos para calentamiento',
+        'Hombros',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'Extiende los brazos y haz círculos hacia adelante y atrás'
+      ),
+      crearEjercicio(
+        'Balanceos de piernas',
+        'leg-swings',
+        'Balanceos de piernas para calentamiento',
+        'Piernas',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'De pie, balancea una pierna hacia adelante y atrás'
+      ),
+      crearEjercicio(
+        'Círculos de cadera',
+        'hip-circles',
+        'Círculos de cadera para calentamiento',
+        'Piernas',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'Manos en la cintura, haz círculos con la cadera'
+      ),
       // === EJERCICIOS DE ESTABILIDAD ===
-      {
-        nombre: 'Plancha lateral',
-        slug: 'plancha-lateral',
-        descripcion: 'Plancha lateral para estabilidad del core',
-        grupoMuscular: 'Core',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Estabilidad',
-        instrucciones: 'Apóyate en un antebrazo lateral, mantén el cuerpo recto y contrae el core',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Perro pájaro',
-        slug: 'bird-dog',
-        descripcion: 'Ejercicio de estabilidad en cuadrupedia',
-        grupoMuscular: 'Core',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Estabilidad',
-        instrucciones: 'En cuadrupedia, extiende brazo y pierna opuestos manteniendo el equilibrio',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Bicho muerto',
-        slug: 'dead-bug',
-        descripcion: 'Ejercicio de estabilidad acostado',
-        grupoMuscular: 'Core',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Estabilidad',
-        instrucciones: 'Acostado boca arriba, brazos y piernas en 90°, baja alternativamente brazo y pierna opuestos',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Press Pallof',
-        slug: 'pallof-press',
-        descripcion: 'Ejercicio anti-rotación con banda',
-        grupoMuscular: 'Core',
-        equipamiento: 'Bandas de resistencia',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Estabilidad',
-        instrucciones: 'Con banda a la altura del pecho, empuja hacia adelante resistiendo la rotación',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Equilibrio a una pierna',
-        slug: 'single-leg-balance',
-        descripcion: 'Equilibrio en una pierna',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Estabilidad',
-        instrucciones: 'Mantén el equilibrio en una pierna, la otra flexionada',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Sentadillas en bosu',
-        slug: 'bosu-ball-squats',
-        descripcion: 'Sentadillas en bosu para estabilidad',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Estabilidad',
-        instrucciones: 'Realiza sentadillas sobre bosu ball manteniendo el equilibrio',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Levantamiento turco',
-        slug: 'turkish-get-up',
-        descripcion: 'Movimiento complejo de estabilidad',
-        grupoMuscular: 'Core',
-        equipamiento: 'Kettlebell',
-        nivelDificultad: 'Avanzado',
-        tipoEjercicio: 'Estabilidad',
-        instrucciones: 'Desde acostado, levántate manteniendo el peso arriba con control total',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Plancha lateral',
+        'plancha-lateral',
+        'Plancha lateral para estabilidad del core',
+        'Core',
+        'Peso corporal',
+        'Intermedio',
+        'Estabilidad',
+        'Apóyate en un antebrazo lateral, mantén el cuerpo recto y contrae el core'
+      ),
+      crearEjercicio(
+        'Perro pájaro',
+        'bird-dog',
+        'Ejercicio de estabilidad en cuadrupedia',
+        'Core',
+        'Peso corporal',
+        'Principiante',
+        'Estabilidad',
+        'En cuadrupedia, extiende brazo y pierna opuestos manteniendo el equilibrio'
+      ),
+      crearEjercicio(
+        'Bicho muerto',
+        'dead-bug',
+        'Ejercicio de estabilidad acostado',
+        'Core',
+        'Peso corporal',
+        'Principiante',
+        'Estabilidad',
+        'Acostado boca arriba, brazos y piernas en 90°, baja alternativamente brazo y pierna opuestos'
+      ),
+      crearEjercicio(
+        'Press Pallof',
+        'pallof-press',
+        'Ejercicio anti-rotación con banda',
+        'Core',
+        'Bandas de resistencia',
+        'Intermedio',
+        'Estabilidad',
+        'Con banda a la altura del pecho, empuja hacia adelante resistiendo la rotación'
+      ),
+      crearEjercicio(
+        'Equilibrio a una pierna',
+        'single-leg-balance',
+        'Equilibrio en una pierna',
+        'Piernas',
+        'Peso corporal',
+        'Principiante',
+        'Estabilidad',
+        'Mantén el equilibrio en una pierna, la otra flexionada'
+      ),
+      crearEjercicio(
+        'Sentadillas en bosu',
+        'bosu-ball-squats',
+        'Sentadillas en bosu para estabilidad',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'Estabilidad',
+        'Realiza sentadillas sobre bosu ball manteniendo el equilibrio'
+      ),
+      crearEjercicio(
+        'Levantamiento turco',
+        'turkish-get-up',
+        'Movimiento complejo de estabilidad',
+        'Core',
+        'Kettlebell',
+        'Avanzado',
+        'Estabilidad',
+        'Desde acostado, levántate manteniendo el peso arriba con control total'
+      ),
       // === EJERCICIOS DE HIIT ===
-      {
-        nombre: 'Sprints Tabata',
-        slug: 'sprints-tabata',
-        descripcion: 'Sprints de alta intensidad en intervalos',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Avanzado',
-        tipoEjercicio: 'HIIT',
-        instrucciones: '20 segundos sprint máximo, 10 segundos descanso, repetir 8 rondas',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Cuerdas de batalla',
-        slug: 'cuerdas-batalla',
-        descripcion: 'Ondas con cuerdas pesadas de alta intensidad',
-        grupoMuscular: 'Brazos',
-        equipamiento: 'Cable',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'HIIT',
-        instrucciones: 'Crea ondas alternas con las cuerdas a máxima velocidad',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Saltos a caja',
-        slug: 'saltos-caja',
-        descripcion: 'Saltos explosivos a caja',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'HIIT',
-        instrucciones: 'Salta explosivamente sobre una caja y baja controladamente',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Sprints Tabata',
+        'sprints-tabata',
+        'Sprints de alta intensidad en intervalos',
+        'Piernas',
+        'Peso corporal',
+        'Avanzado',
+        'HIIT',
+        '20 segundos sprint máximo, 10 segundos descanso, repetir 8 rondas'
+      ),
+      crearEjercicio(
+        'Cuerdas de batalla',
+        'cuerdas-batalla',
+        'Ondas con cuerdas pesadas de alta intensidad',
+        'Brazos',
+        'Cable',
+        'Intermedio',
+        'HIIT',
+        'Crea ondas alternas con las cuerdas a máxima velocidad'
+      ),
+      crearEjercicio(
+        'Saltos a caja',
+        'saltos-caja',
+        'Saltos explosivos a caja',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'HIIT',
+        'Salta explosivamente sobre una caja y baja controladamente'
+      ),
       // === EJERCICIOS DE RESISTENCIA ===
-      {
-        nombre: 'Carrera',
-        slug: 'carrera',
-        descripcion: 'Carrera de resistencia cardiovascular',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Ninguno',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Resistencia',
-        instrucciones: 'Mantén un ritmo constante de carrera durante el tiempo establecido',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Ciclismo',
-        slug: 'ciclismo',
-        descripcion: 'Ciclismo de resistencia',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Máquina',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Resistencia',
-        instrucciones: 'Mantén un ritmo constante en bicicleta estática',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Remo',
-        slug: 'remo',
-        descripcion: 'Remo de resistencia en máquina',
-        grupoMuscular: 'Espalda',
-        equipamiento: 'Máquina',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Resistencia',
-        instrucciones: 'Mantén un ritmo constante en máquina de remo',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Natación',
-        slug: 'natacion',
-        descripcion: 'Natación de resistencia',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Ninguno',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Resistencia',
-        instrucciones: 'Mantén un ritmo constante de nado durante el tiempo establecido',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Elíptica',
-        slug: 'eliptica',
-        descripcion: 'Elíptica de resistencia',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Máquina',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Resistencia',
-        instrucciones: 'Mantén un ritmo constante en elíptica',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Carrera',
+        'carrera',
+        'Carrera de resistencia cardiovascular',
+        'Piernas',
+        'Ninguno',
+        'Principiante',
+        'Resistencia',
+        'Mantén un ritmo constante de carrera durante el tiempo establecido'
+      ),
+      crearEjercicio(
+        'Ciclismo',
+        'ciclismo',
+        'Ciclismo de resistencia',
+        'Piernas',
+        'Máquina',
+        'Principiante',
+        'Resistencia',
+        'Mantén un ritmo constante en bicicleta estática'
+      ),
+      crearEjercicio(
+        'Remo',
+        'remo',
+        'Remo de resistencia en máquina',
+        'Espalda',
+        'Máquina',
+        'Intermedio',
+        'Resistencia',
+        'Mantén un ritmo constante en máquina de remo'
+      ),
+      crearEjercicio(
+        'Natación',
+        'natacion',
+        'Natación de resistencia',
+        'Piernas',
+        'Ninguno',
+        'Intermedio',
+        'Resistencia',
+        'Mantén un ritmo constante de nado durante el tiempo establecido'
+      ),
+      crearEjercicio(
+        'Elíptica',
+        'eliptica',
+        'Elíptica de resistencia',
+        'Piernas',
+        'Máquina',
+        'Principiante',
+        'Resistencia',
+        'Mantén un ritmo constante en elíptica'
+      ),
       // === EJERCICIOS DE POTENCIA ===
-      {
-        nombre: 'Cargada y press',
-        slug: 'cargada-press',
-        descripcion: 'Movimiento explosivo de potencia',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Barra',
-        nivelDificultad: 'Avanzado',
-        tipoEjercicio: 'Potencia',
-        instrucciones: 'Levanta la barra desde el suelo hasta los hombros y luego presiona por encima de la cabeza',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Arrancada',
-        slug: 'arrancada',
-        descripcion: 'Arrancada olímpica de potencia',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Barra',
-        nivelDificultad: 'Avanzado',
-        tipoEjercicio: 'Potencia',
-        instrucciones: 'Levanta la barra desde el suelo hasta por encima de la cabeza en un movimiento',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Cargada de potencia',
-        slug: 'cargada-potencia',
-        descripcion: 'Cargada de potencia',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Barra',
-        nivelDificultad: 'Avanzado',
-        tipoEjercicio: 'Potencia',
-        instrucciones: 'Levanta la barra desde el suelo hasta los hombros con movimiento explosivo',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Sentadillas con salto y peso',
-        slug: 'sentadillas-salto-peso',
-        descripcion: 'Sentadillas con salto y peso',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Mancuernas',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Potencia',
-        instrucciones: 'Realiza sentadilla con peso y salta explosivamente',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Golpes con pelota medicinal',
-        slug: 'golpes-pelota-medicinal',
-        descripcion: 'Golpes explosivos con pelota medicinal',
-        grupoMuscular: 'Core',
-        equipamiento: 'Pelota medicinal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Potencia',
-        instrucciones: 'Levanta la pelota por encima de la cabeza y golpea el suelo con fuerza',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Cargada y press',
+        'cargada-press',
+        'Movimiento explosivo de potencia',
+        'Piernas',
+        'Barra',
+        'Avanzado',
+        'Potencia',
+        'Levanta la barra desde el suelo hasta los hombros y luego presiona por encima de la cabeza'
+      ),
+      crearEjercicio(
+        'Arrancada',
+        'arrancada',
+        'Arrancada olímpica de potencia',
+        'Piernas',
+        'Barra',
+        'Avanzado',
+        'Potencia',
+        'Levanta la barra desde el suelo hasta por encima de la cabeza en un movimiento'
+      ),
+      crearEjercicio(
+        'Cargada de potencia',
+        'cargada-potencia',
+        'Cargada de potencia',
+        'Piernas',
+        'Barra',
+        'Avanzado',
+        'Potencia',
+        'Levanta la barra desde el suelo hasta los hombros con movimiento explosivo'
+      ),
+      crearEjercicio(
+        'Sentadillas con salto y peso',
+        'sentadillas-salto-peso',
+        'Sentadillas con salto y peso',
+        'Piernas',
+        'Mancuernas',
+        'Intermedio',
+        'Potencia',
+        'Realiza sentadilla con peso y salta explosivamente'
+      ),
+      crearEjercicio(
+        'Golpes con pelota medicinal',
+        'golpes-pelota-medicinal',
+        'Golpes explosivos con pelota medicinal',
+        'Core',
+        'Pelota medicinal',
+        'Intermedio',
+        'Potencia',
+        'Levanta la pelota por encima de la cabeza y golpea el suelo con fuerza'
+      ),
       // === MÁS EJERCICIOS DE CARDIO ===
-      {
-        nombre: 'Salto con cuerda',
-        slug: 'salto-cuerda',
-        descripcion: 'Salto con cuerda para cardio',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Cuerda para saltar',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Cardio',
-        instrucciones: 'Salta con la cuerda manteniendo un ritmo constante',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Subidas de escalón',
-        slug: 'subidas-escalon',
-        descripcion: 'Subida de escalón para cardio',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Cardio',
-        instrucciones: 'Sube y baja de un escalón alternando las piernas',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Patadas al glúteo',
-        slug: 'patadas-gluteo',
-        descripcion: 'Patadas al glúteo corriendo',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Cardio',
-        instrucciones: 'Corre en el sitio llevando los talones hacia los glúteos',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Desplazamientos laterales',
-        slug: 'desplazamientos-laterales',
-        descripcion: 'Desplazamientos laterales',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Cardio',
-        instrucciones: 'Desplázate lateralmente manteniendo las rodillas flexionadas',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Caminata de cangrejo',
-        slug: 'caminata-cangrejo',
-        descripcion: 'Caminata de cangrejo',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Cardio',
-        instrucciones: 'Camina en posición de cangrejo hacia adelante y atrás',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Gateo de oso',
-        slug: 'gateo-oso',
-        descripcion: 'Gateo de oso para cardio',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Cardio',
-        instrucciones: 'Gatea manteniendo las rodillas ligeramente elevadas',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Saltos de patinador',
-        slug: 'saltos-patinador',
-        descripcion: 'Saltos de patinador',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Cardio',
-        instrucciones: 'Salta lateralmente de un lado a otro como un patinador',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Saltos de tijera cruzados',
-        slug: 'saltos-tijera-cruzados',
-        descripcion: 'Jumping jacks cruzados',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Cardio',
-        instrucciones: 'Salta cruzando brazos y piernas alternativamente',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Salto con cuerda',
+        'salto-cuerda',
+        'Salto con cuerda para cardio',
+        'Piernas',
+        'Cuerda para saltar',
+        'Principiante',
+        'Cardio',
+        'Salta con la cuerda manteniendo un ritmo constante'
+      ),
+      crearEjercicio(
+        'Subidas de escalón',
+        'subidas-escalon',
+        'Subida de escalón para cardio',
+        'Piernas',
+        'Peso corporal',
+        'Principiante',
+        'Cardio',
+        'Sube y baja de un escalón alternando las piernas'
+      ),
+      crearEjercicio(
+        'Patadas al glúteo',
+        'patadas-gluteo',
+        'Patadas al glúteo corriendo',
+        'Piernas',
+        'Peso corporal',
+        'Principiante',
+        'Cardio',
+        'Corre en el sitio llevando los talones hacia los glúteos'
+      ),
+      crearEjercicio(
+        'Desplazamientos laterales',
+        'desplazamientos-laterales',
+        'Desplazamientos laterales',
+        'Piernas',
+        'Peso corporal',
+        'Principiante',
+        'Cardio',
+        'Desplázate lateralmente manteniendo las rodillas flexionadas'
+      ),
+      crearEjercicio(
+        'Caminata de cangrejo',
+        'caminata-cangrejo',
+        'Caminata de cangrejo',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'Cardio',
+        'Camina en posición de cangrejo hacia adelante y atrás'
+      ),
+      crearEjercicio(
+        'Gateo de oso',
+        'gateo-oso',
+        'Gateo de oso para cardio',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'Cardio',
+        'Gatea manteniendo las rodillas ligeramente elevadas'
+      ),
+      crearEjercicio(
+        'Saltos de patinador',
+        'saltos-patinador',
+        'Saltos de patinador',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'Cardio',
+        'Salta lateralmente de un lado a otro como un patinador'
+      ),
+      crearEjercicio(
+        'Saltos de tijera cruzados',
+        'saltos-tijera-cruzados',
+        'Jumping jacks cruzados',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'Cardio',
+        'Salta cruzando brazos y piernas alternativamente'
+      ),
       // === MÁS EJERCICIOS DE HIIT ===
-      {
-        nombre: 'Intervalos de sprint',
-        slug: 'sprint-intervals',
-        descripcion: 'Intervalos de sprint de alta intensidad',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Avanzado',
-        tipoEjercicio: 'HIIT',
-        instrucciones: '30 segundos sprint máximo, 30 segundos descanso activo',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Variaciones de burpees',
-        slug: 'burpee-variations',
-        descripcion: 'Variaciones de burpees para HIIT',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Avanzado',
-        tipoEjercicio: 'HIIT',
-        instrucciones: 'Burpees con salto, flexión, sentadilla y salto vertical',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Intervalos de escaladores',
-        slug: 'mountain-climber-intervals',
-        descripcion: 'Mountain climbers en intervalos de alta intensidad',
-        grupoMuscular: 'Core',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'HIIT',
-        instrucciones: '40 segundos máximo esfuerzo, 20 segundos descanso',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Intervalos de sentadillas con salto',
-        slug: 'jump-squat-intervals',
-        descripcion: 'Sentadillas con salto en intervalos',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'HIIT',
-        instrucciones: '45 segundos máximo esfuerzo, 15 segundos descanso',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Saltos en plancha',
-        slug: 'plank-jacks',
-        descripcion: 'Jumping jacks en posición de plancha',
-        grupoMuscular: 'Core',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'HIIT',
-        instrucciones: 'En plancha, abre y cierra las piernas como jumping jacks',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Escaladores araña',
-        slug: 'spider-climbers',
-        descripcion: 'Mountain climbers llevando rodilla al codo',
-        grupoMuscular: 'Core',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Avanzado',
-        tipoEjercicio: 'HIIT',
-        instrucciones: 'Lleva la rodilla al codo opuesto alternativamente',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Saltos en pica',
-        slug: 'pike-jumps',
-        descripcion: 'Saltos en pica para HIIT',
-        grupoMuscular: 'Core',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Avanzado',
-        tipoEjercicio: 'HIIT',
-        instrucciones: 'Salta llevando las piernas hacia arriba en posición de pica',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Saltos en estrella',
-        slug: 'star-jumps',
-        descripcion: 'Saltos en estrella de alta intensidad',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'HIIT',
-        instrucciones: 'Salta abriendo brazos y piernas en forma de estrella',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Saltos con rodillas al pecho',
-        slug: 'tuck-jumps',
-        descripcion: 'Saltos llevando rodillas al pecho',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Avanzado',
-        tipoEjercicio: 'HIIT',
-        instrucciones: 'Salta llevando las rodillas al pecho en el aire',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Saltos laterales',
-        slug: 'lateral-bounds',
-        descripcion: 'Saltos laterales explosivos',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Avanzado',
-        tipoEjercicio: 'HIIT',
-        instrucciones: 'Salta lateralmente de un lado a otro con máxima explosividad',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Intervalos de sprint',
+        'sprint-intervals',
+        'Intervalos de sprint de alta intensidad',
+        'Piernas',
+        'Peso corporal',
+        'Avanzado',
+        'HIIT',
+        '30 segundos sprint máximo, 30 segundos descanso activo'
+      ),
+      crearEjercicio(
+        'Variaciones de burpees',
+        'burpee-variations',
+        'Variaciones de burpees para HIIT',
+        'Piernas',
+        'Peso corporal',
+        'Avanzado',
+        'HIIT',
+        'Burpees con salto, flexión, sentadilla y salto vertical'
+      ),
+      crearEjercicio(
+        'Intervalos de escaladores',
+        'mountain-climber-intervals',
+        'Mountain climbers en intervalos de alta intensidad',
+        'Core',
+        'Peso corporal',
+        'Intermedio',
+        'HIIT',
+        '40 segundos máximo esfuerzo, 20 segundos descanso'
+      ),
+      crearEjercicio(
+        'Intervalos de sentadillas con salto',
+        'jump-squat-intervals',
+        'Sentadillas con salto en intervalos',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'HIIT',
+        '45 segundos máximo esfuerzo, 15 segundos descanso'
+      ),
+      crearEjercicio(
+        'Saltos en plancha',
+        'plank-jacks',
+        'Jumping jacks en posición de plancha',
+        'Core',
+        'Peso corporal',
+        'Intermedio',
+        'HIIT',
+        'En plancha, abre y cierra las piernas como jumping jacks'
+      ),
+      crearEjercicio(
+        'Escaladores araña',
+        'spider-climbers',
+        'Mountain climbers llevando rodilla al codo',
+        'Core',
+        'Peso corporal',
+        'Avanzado',
+        'HIIT',
+        'Lleva la rodilla al codo opuesto alternativamente'
+      ),
+      crearEjercicio(
+        'Saltos en pica',
+        'pike-jumps',
+        'Saltos en pica para HIIT',
+        'Core',
+        'Peso corporal',
+        'Avanzado',
+        'HIIT',
+        'Salta llevando las piernas hacia arriba en posición de pica'
+      ),
+      crearEjercicio(
+        'Saltos en estrella',
+        'star-jumps',
+        'Saltos en estrella de alta intensidad',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'HIIT',
+        'Salta abriendo brazos y piernas en forma de estrella'
+      ),
+      crearEjercicio(
+        'Saltos con rodillas al pecho',
+        'tuck-jumps',
+        'Saltos llevando rodillas al pecho',
+        'Piernas',
+        'Peso corporal',
+        'Avanzado',
+        'HIIT',
+        'Salta llevando las rodillas al pecho en el aire'
+      ),
+      crearEjercicio(
+        'Saltos laterales',
+        'lateral-bounds',
+        'Saltos laterales explosivos',
+        'Piernas',
+        'Peso corporal',
+        'Avanzado',
+        'HIIT',
+        'Salta lateralmente de un lado a otro con máxima explosividad'
+      ),
       // === MÁS EJERCICIOS DE RESISTENCIA ===
-      {
-        nombre: 'Ciclismo de larga distancia',
-        slug: 'long-distance-cycling',
-        descripcion: 'Ciclismo de larga distancia',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Máquina',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Resistencia',
-        instrucciones: 'Mantén un ritmo constante durante 30+ minutos',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Esquí de fondo',
-        slug: 'cross-country-skiing',
-        descripcion: 'Esquí de fondo simulado',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Máquina',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Resistencia',
-        instrucciones: 'Simula el movimiento de esquí de fondo en máquina',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Subida de escaleras',
-        slug: 'stair-climbing',
-        descripcion: 'Subida de escaleras de resistencia',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Máquina',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Resistencia',
-        instrucciones: 'Sube escaleras manteniendo un ritmo constante',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Intervalos en máquina de remo',
-        slug: 'rowing-machine-intervals',
-        descripcion: 'Intervalos en máquina de remo',
-        grupoMuscular: 'Espalda',
-        equipamiento: 'Máquina',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Resistencia',
-        instrucciones: 'Alterna períodos de alta y baja intensidad en remo',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Entrenamiento cruzado',
-        slug: 'cross-training',
-        descripcion: 'Entrenamiento cruzado de resistencia',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Máquina',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Resistencia',
-        instrucciones: 'Combina diferentes máquinas cardiovasculares',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Senderismo',
-        slug: 'hiking',
-        descripcion: 'Senderismo de resistencia',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Ninguno',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Resistencia',
-        instrucciones: 'Caminata en terreno variado durante tiempo prolongado',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Caminata nórdica',
-        slug: 'nordic-walking',
-        descripcion: 'Caminata nórdica con bastones',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Ninguno',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Resistencia',
-        instrucciones: 'Caminata con bastones manteniendo ritmo constante',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Aeróbicos acuáticos',
-        slug: 'water-aerobics',
-        descripcion: 'Aeróbicos acuáticos de resistencia',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Ninguno',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Resistencia',
-        instrucciones: 'Ejercicios aeróbicos en agua durante tiempo prolongado',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Cardio con baile',
-        slug: 'dance-cardio',
-        descripcion: 'Baile cardiovascular de resistencia',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Ninguno',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Resistencia',
-        instrucciones: 'Baila manteniendo un ritmo constante durante tiempo prolongado',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Entrenamiento en circuito',
-        slug: 'circuit-training',
-        descripcion: 'Entrenamiento en circuito de resistencia',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Máquina',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Resistencia',
-        instrucciones: 'Rota entre diferentes máquinas sin descanso prolongado',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Ciclismo de larga distancia',
+        'long-distance-cycling',
+        'Ciclismo de larga distancia',
+        'Piernas',
+        'Máquina',
+        'Intermedio',
+        'Resistencia',
+        'Mantén un ritmo constante durante 30+ minutos'
+      ),
+      crearEjercicio(
+        'Esquí de fondo',
+        'cross-country-skiing',
+        'Esquí de fondo simulado',
+        'Piernas',
+        'Máquina',
+        'Intermedio',
+        'Resistencia',
+        'Simula el movimiento de esquí de fondo en máquina'
+      ),
+      crearEjercicio(
+        'Subida de escaleras',
+        'stair-climbing',
+        'Subida de escaleras de resistencia',
+        'Piernas',
+        'Máquina',
+        'Intermedio',
+        'Resistencia',
+        'Sube escaleras manteniendo un ritmo constante'
+      ),
+      crearEjercicio(
+        'Intervalos en máquina de remo',
+        'rowing-machine-intervals',
+        'Intervalos en máquina de remo',
+        'Espalda',
+        'Máquina',
+        'Intermedio',
+        'Resistencia',
+        'Alterna períodos de alta y baja intensidad en remo'
+      ),
+      crearEjercicio(
+        'Entrenamiento cruzado',
+        'cross-training',
+        'Entrenamiento cruzado de resistencia',
+        'Piernas',
+        'Máquina',
+        'Intermedio',
+        'Resistencia',
+        'Combina diferentes máquinas cardiovasculares'
+      ),
+      crearEjercicio(
+        'Senderismo',
+        'hiking',
+        'Senderismo de resistencia',
+        'Piernas',
+        'Ninguno',
+        'Principiante',
+        'Resistencia',
+        'Caminata en terreno variado durante tiempo prolongado'
+      ),
+      crearEjercicio(
+        'Caminata nórdica',
+        'nordic-walking',
+        'Caminata nórdica con bastones',
+        'Piernas',
+        'Ninguno',
+        'Principiante',
+        'Resistencia',
+        'Caminata con bastones manteniendo ritmo constante'
+      ),
+      crearEjercicio(
+        'Aeróbicos acuáticos',
+        'water-aerobics',
+        'Aeróbicos acuáticos de resistencia',
+        'Piernas',
+        'Ninguno',
+        'Principiante',
+        'Resistencia',
+        'Ejercicios aeróbicos en agua durante tiempo prolongado'
+      ),
+      crearEjercicio(
+        'Cardio con baile',
+        'dance-cardio',
+        'Baile cardiovascular de resistencia',
+        'Piernas',
+        'Ninguno',
+        'Principiante',
+        'Resistencia',
+        'Baila manteniendo un ritmo constante durante tiempo prolongado'
+      ),
+      crearEjercicio(
+        'Entrenamiento en circuito',
+        'circuit-training',
+        'Entrenamiento en circuito de resistencia',
+        'Piernas',
+        'Máquina',
+        'Intermedio',
+        'Resistencia',
+        'Rota entre diferentes máquinas sin descanso prolongado'
+      ),
       // === MÁS EJERCICIOS DE POTENCIA ===
-      {
-        nombre: 'Cargada desde colgado',
-        slug: 'hang-clean',
-        descripcion: 'Cargada desde colgado',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Barra',
-        nivelDificultad: 'Avanzado',
-        tipoEjercicio: 'Potencia',
-        instrucciones: 'Carga la barra desde posición colgada hasta los hombros',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Press con impulso',
-        slug: 'push-press',
-        descripcion: 'Press con impulso de piernas',
-        grupoMuscular: 'Hombros',
-        equipamiento: 'Barra',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Potencia',
-        instrucciones: 'Usa el impulso de las piernas para presionar la barra por encima',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Empuje',
-        slug: 'thruster',
-        descripcion: 'Sentadilla con press por encima',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Barra',
-        nivelDificultad: 'Avanzado',
-        tipoEjercicio: 'Potencia',
-        instrucciones: 'Sentadilla seguida inmediatamente de press por encima',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Cargada con kettlebell',
-        slug: 'kettlebell-clean',
-        descripcion: 'Cargada con kettlebell',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Kettlebell',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Potencia',
-        instrucciones: 'Carga la kettlebell desde el suelo hasta la posición de rack',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Arrancada con kettlebell',
-        slug: 'kettlebell-snatch',
-        descripcion: 'Arrancada con kettlebell',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Kettlebell',
-        nivelDificultad: 'Avanzado',
-        tipoEjercicio: 'Potencia',
-        instrucciones: 'Arranca la kettlebell desde el suelo hasta por encima en un movimiento',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Cargada de potencia con mancuernas',
-        slug: 'dumbbell-power-clean',
-        descripcion: 'Cargada de potencia con mancuernas',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Mancuernas',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Potencia',
-        instrucciones: 'Carga las mancuernas desde el suelo hasta los hombros',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Zancadas con salto',
-        slug: 'jump-lunges',
-        descripcion: 'Zancadas con salto explosivo',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Potencia',
-        instrucciones: 'Alterna zancadas con salto explosivo entre cada repetición',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Saltos horizontales',
-        slug: 'broad-jumps',
-        descripcion: 'Saltos horizontales de potencia',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Potencia',
-        instrucciones: 'Salta horizontalmente lo más lejos posible',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Balanceo con kettlebell a un brazo',
-        slug: 'single-arm-kettlebell-swing',
-        descripcion: 'Balanceo con kettlebell a un brazo',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Kettlebell',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Potencia',
-        instrucciones: 'Balancea la kettlebell con un solo brazo hasta la altura del pecho',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Lanzamientos de pelota a la pared',
-        slug: 'wall-ball-shots',
-        descripcion: 'Lanzamientos de pelota a la pared',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Pelota medicinal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Potencia',
-        instrucciones: 'Lanza la pelota a la pared desde sentadilla con máxima potencia',
-        ...propiedadesPorDefecto
-      },
+      crearEjercicio(
+        'Cargada desde colgado',
+        'hang-clean',
+        'Cargada desde colgado',
+        'Piernas',
+        'Barra',
+        'Avanzado',
+        'Potencia',
+        'Carga la barra desde posición colgada hasta los hombros'
+      ),
+      crearEjercicio(
+        'Press con impulso',
+        'push-press',
+        'Press con impulso de piernas',
+        'Hombros',
+        'Barra',
+        'Intermedio',
+        'Potencia',
+        'Usa el impulso de las piernas para presionar la barra por encima'
+      ),
+      crearEjercicio(
+        'Empuje',
+        'thruster',
+        'Sentadilla con press por encima',
+        'Piernas',
+        'Barra',
+        'Avanzado',
+        'Potencia',
+        'Sentadilla seguida inmediatamente de press por encima'
+      ),
+      crearEjercicio(
+        'Cargada con kettlebell',
+        'kettlebell-clean',
+        'Cargada con kettlebell',
+        'Piernas',
+        'Kettlebell',
+        'Intermedio',
+        'Potencia',
+        'Carga la kettlebell desde el suelo hasta la posición de rack'
+      ),
+      crearEjercicio(
+        'Arrancada con kettlebell',
+        'kettlebell-snatch',
+        'Arrancada con kettlebell',
+        'Piernas',
+        'Kettlebell',
+        'Avanzado',
+        'Potencia',
+        'Arranca la kettlebell desde el suelo hasta por encima en un movimiento'
+      ),
+      crearEjercicio(
+        'Cargada de potencia con mancuernas',
+        'dumbbell-power-clean',
+        'Cargada de potencia con mancuernas',
+        'Piernas',
+        'Mancuernas',
+        'Intermedio',
+        'Potencia',
+        'Carga las mancuernas desde el suelo hasta los hombros'
+      ),
+      crearEjercicio(
+        'Zancadas con salto',
+        'jump-lunges',
+        'Zancadas con salto explosivo',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'Potencia',
+        'Alterna zancadas con salto explosivo entre cada repetición'
+      ),
+      crearEjercicio(
+        'Saltos horizontales',
+        'broad-jumps',
+        'Saltos horizontales de potencia',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'Potencia',
+        'Salta horizontalmente lo más lejos posible'
+      ),
+      crearEjercicio(
+        'Balanceo con kettlebell a un brazo',
+        'single-arm-kettlebell-swing',
+        'Balanceo con kettlebell a un brazo',
+        'Piernas',
+        'Kettlebell',
+        'Intermedio',
+        'Potencia',
+        'Balancea la kettlebell con un solo brazo hasta la altura del pecho'
+      ),
+      crearEjercicio(
+        'Lanzamientos de pelota a la pared',
+        'wall-ball-shots',
+        'Lanzamientos de pelota a la pared',
+        'Piernas',
+        'Pelota medicinal',
+        'Intermedio',
+        'Potencia',
+        'Lanza la pelota a la pared desde sentadilla con máxima potencia'
+      ),
       // === MÁS EJERCICIOS DE FLEXIBILIDAD ===
-      {
-        nombre: 'Estiramiento gato-vaca',
-        slug: 'estiramiento-gato-vaca',
-        descripcion: 'Estiramiento de gato-vaca para columna',
-        grupoMuscular: 'Espalda',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'En cuadrupedia, alterna entre arquear y redondear la espalda',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Perro boca abajo',
-        slug: 'perro-boca-abajo',
-        descripcion: 'Postura del perro boca abajo',
-        grupoMuscular: 'Espalda',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Forma una V invertida con el cuerpo, estirando toda la cadena posterior',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Postura del niño',
-        slug: 'postura-del-nino',
-        descripcion: 'Postura del niño para relajación',
-        grupoMuscular: 'Espalda',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Siéntate sobre los talones y estira los brazos hacia adelante',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Postura de la paloma',
-        slug: 'postura-de-la-paloma',
-        descripcion: 'Postura de la paloma para flexibilidad de cadera',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Lleva una pierna hacia adelante en ángulo, estira la otra hacia atrás',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Flexión sentada hacia adelante',
-        slug: 'flexion-sentada-hacia-adelante',
-        descripcion: 'Flexión hacia adelante sentado',
-        grupoMuscular: 'Espalda',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Sentado con piernas extendidas, flexiona hacia adelante desde la cadera',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Flexión de pie hacia adelante',
-        slug: 'flexion-pie-hacia-adelante',
-        descripcion: 'Flexión hacia adelante de pie',
-        grupoMuscular: 'Espalda',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'De pie, flexiona hacia adelante desde la cadera, colgando los brazos',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Guerrero III',
-        slug: 'guerrero-iii',
-        descripcion: 'Guerrero III para equilibrio y flexibilidad',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Equilibrio en una pierna, cuerpo y pierna libre paralelos al suelo',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Postura del triángulo',
-        slug: 'postura-del-triangulo',
-        descripcion: 'Postura del triángulo para flexibilidad lateral',
-        grupoMuscular: 'Espalda',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Piernas separadas, inclínate hacia un lado tocando el tobillo',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Postura de la cobra',
-        slug: 'postura-de-la-cobra',
-        descripcion: 'Postura de la cobra para flexibilidad de columna',
-        grupoMuscular: 'Espalda',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Acostado boca abajo, levanta el pecho apoyándote en los antebrazos',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Postura del puente',
-        slug: 'postura-del-puente',
-        descripcion: 'Postura del puente para flexibilidad de columna',
-        grupoMuscular: 'Espalda',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Acostado boca arriba, levanta las caderas formando un puente',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Estiramiento de mariposa',
-        slug: 'estiramiento-de-mariposa',
-        descripcion: 'Estiramiento de mariposa para cadera',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Sentado, une las plantas de los pies y acerca los talones al cuerpo',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Torsión sentada de columna',
-        slug: 'torsion-sentada-columna',
-        descripcion: 'Torsión sentada de columna',
-        grupoMuscular: 'Espalda',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Sentado, gira el torso hacia un lado, mano opuesta en la rodilla',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Postura del lagarto',
-        slug: 'postura-del-lagarto',
-        descripcion: 'Postura del lagarto para flexibilidad de cadera',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'En posición de zancada baja, apoya los antebrazos en el suelo',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Estiramiento de isquiotibiales acostado',
-        slug: 'estiramiento-isquiotibiales-acostado',
-        descripcion: 'Estiramiento de isquiotibiales acostado',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Acostado, lleva una rodilla al pecho y extiende la pierna hacia arriba',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Postura del águila',
-        slug: 'postura-del-aguila',
-        descripcion: 'Postura del águila para flexibilidad de hombros',
-        grupoMuscular: 'Hombros',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Intermedio',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Envuelve un brazo alrededor del otro y cruza las piernas',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Enhebrar la aguja',
-        slug: 'enhebrar-la-aguja',
-        descripcion: 'Enhebrar la aguja para flexibilidad de hombros',
-        grupoMuscular: 'Hombros',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'En cuadrupedia, pasa un brazo por debajo del otro',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Postura del bebé feliz',
-        slug: 'postura-del-bebe-feliz',
-        descripcion: 'Postura del bebé feliz para flexibilidad de cadera',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Acostado boca arriba, agarra los pies y balancea suavemente',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Piernas en la pared',
-        slug: 'piernas-en-la-pared',
-        descripcion: 'Piernas en la pared para relajación',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Acostado cerca de la pared, eleva las piernas contra la pared',
-        ...propiedadesPorDefecto
-      },
-      {
-        nombre: 'Ángulo atado reclinado',
-        slug: 'angulo-atado-reclinado',
-        descripcion: 'Ángulo atado reclinado para flexibilidad de cadera',
-        grupoMuscular: 'Piernas',
-        equipamiento: 'Peso corporal',
-        nivelDificultad: 'Principiante',
-        tipoEjercicio: 'Flexibilidad',
-        instrucciones: 'Acostado, une las plantas de los pies y deja caer las rodillas',
-        ...propiedadesPorDefecto
-      }
+      crearEjercicio(
+        'Estiramiento gato-vaca',
+        'estiramiento-gato-vaca',
+        'Estiramiento de gato-vaca para columna',
+        'Espalda',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'En cuadrupedia, alterna entre arquear y redondear la espalda'
+      ),
+      crearEjercicio(
+        'Perro boca abajo',
+        'perro-boca-abajo',
+        'Postura del perro boca abajo',
+        'Espalda',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'Forma una V invertida con el cuerpo, estirando toda la cadena posterior'
+      ),
+      crearEjercicio(
+        'Postura del niño',
+        'postura-del-nino',
+        'Postura del niño para relajación',
+        'Espalda',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'Siéntate sobre los talones y estira los brazos hacia adelante'
+      ),
+      crearEjercicio(
+        'Postura de la paloma',
+        'postura-de-la-paloma',
+        'Postura de la paloma para flexibilidad de cadera',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'Flexibilidad',
+        'Lleva una pierna hacia adelante en ángulo, estira la otra hacia atrás'
+      ),
+      crearEjercicio(
+        'Flexión sentada hacia adelante',
+        'flexion-sentada-hacia-adelante',
+        'Flexión hacia adelante sentado',
+        'Espalda',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'Sentado con piernas extendidas, flexiona hacia adelante desde la cadera'
+      ),
+      crearEjercicio(
+        'Flexión de pie hacia adelante',
+        'flexion-pie-hacia-adelante',
+        'Flexión hacia adelante de pie',
+        'Espalda',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'De pie, flexiona hacia adelante desde la cadera, colgando los brazos'
+      ),
+      crearEjercicio(
+        'Guerrero III',
+        'guerrero-iii',
+        'Guerrero III para equilibrio y flexibilidad',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'Flexibilidad',
+        'Equilibrio en una pierna, cuerpo y pierna libre paralelos al suelo'
+      ),
+      crearEjercicio(
+        'Postura del triángulo',
+        'postura-del-triangulo',
+        'Postura del triángulo para flexibilidad lateral',
+        'Espalda',
+        'Peso corporal',
+        'Intermedio',
+        'Flexibilidad',
+        'Piernas separadas, inclínate hacia un lado tocando el tobillo'
+      ),
+      crearEjercicio(
+        'Postura de la cobra',
+        'postura-de-la-cobra',
+        'Postura de la cobra para flexibilidad de columna',
+        'Espalda',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'Acostado boca abajo, levanta el pecho apoyándote en los antebrazos'
+      ),
+      crearEjercicio(
+        'Postura del puente',
+        'postura-del-puente',
+        'Postura del puente para flexibilidad de columna',
+        'Espalda',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'Acostado boca arriba, levanta las caderas formando un puente'
+      ),
+      crearEjercicio(
+        'Estiramiento de mariposa',
+        'estiramiento-de-mariposa',
+        'Estiramiento de mariposa para cadera',
+        'Piernas',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'Sentado, une las plantas de los pies y acerca los talones al cuerpo'
+      ),
+      crearEjercicio(
+        'Torsión sentada de columna',
+        'torsion-sentada-columna',
+        'Torsión sentada de columna',
+        'Espalda',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'Sentado, gira el torso hacia un lado, mano opuesta en la rodilla'
+      ),
+      crearEjercicio(
+        'Postura del lagarto',
+        'postura-del-lagarto',
+        'Postura del lagarto para flexibilidad de cadera',
+        'Piernas',
+        'Peso corporal',
+        'Intermedio',
+        'Flexibilidad',
+        'En posición de zancada baja, apoya los antebrazos en el suelo'
+      ),
+      crearEjercicio(
+        'Estiramiento de isquiotibiales acostado',
+        'estiramiento-isquiotibiales-acostado',
+        'Estiramiento de isquiotibiales acostado',
+        'Piernas',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'Acostado, lleva una rodilla al pecho y extiende la pierna hacia arriba'
+      ),
+      crearEjercicio(
+        'Postura del águila',
+        'postura-del-aguila',
+        'Postura del águila para flexibilidad de hombros',
+        'Hombros',
+        'Peso corporal',
+        'Intermedio',
+        'Flexibilidad',
+        'Envuelve un brazo alrededor del otro y cruza las piernas'
+      ),
+      crearEjercicio(
+        'Enhebrar la aguja',
+        'enhebrar-la-aguja',
+        'Enhebrar la aguja para flexibilidad de hombros',
+        'Hombros',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'En cuadrupedia, pasa un brazo por debajo del otro'
+      ),
+      crearEjercicio(
+        'Postura del bebé feliz',
+        'postura-del-bebe-feliz',
+        'Postura del bebé feliz para flexibilidad de cadera',
+        'Piernas',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'Acostado boca arriba, agarra los pies y balancea suavemente'
+      ),
+      crearEjercicio(
+        'Piernas en la pared',
+        'piernas-en-la-pared',
+        'Piernas en la pared para relajación',
+        'Piernas',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'Acostado cerca de la pared, eleva las piernas contra la pared'
+      ),
+      crearEjercicio(
+        'Ángulo atado reclinado',
+        'angulo-atado-reclinado',
+        'Ángulo atado reclinado para flexibilidad de cadera',
+        'Piernas',
+        'Peso corporal',
+        'Principiante',
+        'Flexibilidad',
+        'Acostado, une las plantas de los pies y deja caer las rodillas'
+      )
     ];
 
     // Crear ejercicios

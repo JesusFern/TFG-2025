@@ -37,10 +37,6 @@ const SeleccionarTipoPlanPage: React.FC = () => {
   const [clienteNombre, setClienteNombre] = useState<string>('');
   const [notice, setNotice] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
 
-  // const handleClienteInfoUpdate = (nombre: string) => {
-  //   setClienteNombre(nombre);
-  // };
-
   useEffect(() => {
     if (clientId) {
       (async () => {
