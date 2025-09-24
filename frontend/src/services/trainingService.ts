@@ -15,10 +15,11 @@ const base = '/api/training';
 
 export const trainingService = {
   // Ejercicios
-  async crearEjercicio(data: CrearEjercicioDTO): Promise<Ejercicio> {
+  async crearEjercicio(data: CrearEjercicioDTO | FormData): Promise<Ejercicio> {
+    const isFormData = data instanceof FormData;
     const res = await apiRequest(`${base}/ejercicios`, {
       method: 'POST',
-      body: JSON.stringify(data)
+      body: isFormData ? data : JSON.stringify(data)
     });
     if (!res.ok) throw new Error((await res.json()).message || 'Error al crear ejercicio');
     const response = await res.json();
@@ -35,6 +36,13 @@ export const trainingService = {
 
   async obtenerEjercicioPorId(id: string): Promise<Ejercicio> {
     const res = await apiRequest(`${base}/ejercicios/${id}`);
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al obtener ejercicio');
+    const data = await res.json();
+    return data.ejercicio;
+  },
+
+  async obtenerEjercicioPorSlug(slug: string): Promise<Ejercicio> {
+    const res = await apiRequest(`${base}/ejercicios/slug/${slug}`);
     if (!res.ok) throw new Error((await res.json()).message || 'Error al obtener ejercicio');
     const data = await res.json();
     return data.ejercicio;
@@ -156,6 +164,53 @@ export const trainingService = {
   async eliminarSesion(id: string): Promise<void> {
     const res = await apiRequest(`${base}/sesiones/${id}`, { method: 'DELETE' });
     if (!res.ok) throw new Error((await res.json()).message || 'Error al eliminar sesión');
+  },
+
+  // Plantillas
+  async obtenerObjetivosDisponibles(): Promise<string[]> {
+    const res = await apiRequest(`${base}/planes/plantillas/objetivos`);
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al obtener objetivos');
+    const data = await res.json();
+    return data.objetivos;
+  },
+
+  async obtenerPlantillaPorObjetivo(objetivo: string): Promise<{ plantilla: unknown; objetivo: string }> {
+    const res = await apiRequest(`${base}/planes/plantillas/objetivo/${encodeURIComponent(objetivo)}`);
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al obtener plantilla');
+    return await res.json();
+  },
+
+  async buscarPlantillas(filtros: Record<string, string> = {}): Promise<unknown[]> {
+    const query = new URLSearchParams(filtros).toString();
+    const res = await apiRequest(`${base}/planes/plantillas/buscar${query ? `?${query}` : ''}`);
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al buscar plantillas');
+    const data = await res.json();
+    return data.plantillas;
+  },
+
+  async generarPlanDesdePlantilla(data: {
+    objetivo: string;
+    duracionSemanas: number;
+    sesionesPorSemana: number;
+    diasSemana: number[];
+    nivelDificultad: string;
+    clientId: string;
+    fechaInicio: Date;
+    nombre: string;
+    descripcion: string;
+    clientes: string[];
+    publico: boolean;
+  }): Promise<PlanEntrenamiento> {
+    const res = await apiRequest(`${base}/planes/plantillas/generar`, {
+      method: 'POST',
+      body: JSON.stringify({
+        ...data,
+        fechaInicio: data.fechaInicio.toISOString()
+      })
+    });
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al generar plan desde plantilla');
+    const response = await res.json();
+    return response.plan;
   },
 };
 

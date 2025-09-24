@@ -91,6 +91,9 @@ import WorkerClientTrainingPlansList from '../pages/WorkerClientTrainingPlansLis
 import CrearPlanEntrenamientoPage from '../pages/CrearPlanEntrenamientoPage';
 import EditarPlanEntrenamientoPage from '../pages/EditarPlanEntrenamientoPage';
 import VerPlanEntrenamientoPage from '../pages/VerPlanEntrenamientoPage';
+import SeleccionarTipoPlanPage from '../pages/SeleccionarTipoPlanPage';
+import SeleccionarObjetivoPlantillaPage from '../pages/SeleccionarObjetivoPlantillaPage';
+import ConfigurarPlantillaPage from '../pages/ConfigurarPlantillaPage';
 import CrearRecetaPage from '../pages/CrearRecetaPage';
 import EditarRecetaPage from '../pages/EditarRecetaPage';
 import MisRecetasPage from '../pages/MisRecetasPage';
@@ -210,10 +213,31 @@ const AppRoutes: React.FC = () => {
         </ProtectedRoute>
       } />
 
+      <Route path="/training/planes/tipo" element={
+        <ProtectedRoute workerRoute={true}>
+          <Layout>
+            <SeleccionarTipoPlanPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
       <Route path="/training/planes/crear" element={
         <ProtectedRoute workerRoute={true}>
           <Layout>
             <CrearPlanEntrenamientoPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/training/planes/plantillas/objetivos" element={
+        <ProtectedRoute workerRoute={true}>
+          <Layout>
+            <SeleccionarObjetivoPlantillaPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/training/planes/plantillas/configurar" element={
+        <ProtectedRoute workerRoute={true}>
+          <Layout>
+            <ConfigurarPlantillaPage />
           </Layout>
         </ProtectedRoute>
       } />

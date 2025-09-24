@@ -123,6 +123,7 @@ const ModalConfirmarAccionCita: React.FC<ModalConfirmarAccionCitaProps> = ({
       }
       size="md"
       centered
+      zIndex={1000}
     >
       <div style={{ position: 'relative' }}>
         <LoadingOverlay visible={loading} />

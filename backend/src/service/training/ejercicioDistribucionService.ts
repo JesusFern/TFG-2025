@@ -100,7 +100,7 @@ export const EJERCICIOS_POR_OBJETIVO: Record<string, {
   nivelDificultad: string[];
 }> = {
   'Ganancia muscular': {
-    tiposEjercicio: ['Fuerza', 'Hipertrofia'],
+    tiposEjercicio: ['Fuerza'],
     gruposMusculares: ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core', 'Glúteos'],
     equipamiento: ['Barra', 'Mancuernas', 'Peso corporal', 'Kettlebell'],
     nivelDificultad: ['Intermedio', 'Avanzado']
@@ -127,6 +127,18 @@ export const EJERCICIOS_POR_OBJETIVO: Record<string, {
     tiposEjercicio: ['Fuerza', 'Resistencia'],
     gruposMusculares: ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core', 'Glúteos'],
     equipamiento: ['Peso corporal', 'Mancuernas', 'Barra'],
+    nivelDificultad: ['Principiante', 'Intermedio']
+  },
+  'Potencia': {
+    tiposEjercicio: ['Potencia', 'Fuerza'],
+    gruposMusculares: ['Pecho', 'Espalda', 'Piernas', 'Hombros', 'Brazos', 'Core', 'Glúteos'],
+    equipamiento: ['Barra', 'Mancuernas', 'Peso corporal', 'Kettlebell'],
+    nivelDificultad: ['Intermedio', 'Avanzado']
+  },
+  'Estabilidad': {
+    tiposEjercicio: ['Estabilidad', 'Movilidad'],
+    gruposMusculares: ['Core', 'Piernas', 'Espalda', 'Hombros'],
+    equipamiento: ['Peso corporal', 'Bandas de resistencia'],
     nivelDificultad: ['Principiante', 'Intermedio']
   },
   'Salud general': {
@@ -172,6 +184,18 @@ export const CONFIGURACION_INTENSIDAD: Record<string, {
     series: { min: 2, max: 3 },
     repeticiones: { min: 8, max: 15 },
     descanso: { min: 45, max: 90 },
+    nivelIntensidad: 'Media'
+  },
+  'Potencia': {
+    series: { min: 3, max: 5 },
+    repeticiones: { min: 3, max: 8 },
+    descanso: { min: 120, max: 180 },
+    nivelIntensidad: 'Alta'
+  },
+  'Estabilidad': {
+    series: { min: 2, max: 4 },
+    repeticiones: { min: 20, max: 45 },
+    descanso: { min: 30, max: 60 },
     nivelIntensidad: 'Media'
   },
   'Salud general': {

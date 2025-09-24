@@ -16,7 +16,7 @@ import {
   IconArrowLeft
 } from '@tabler/icons-react';
 import { Ejercicio } from '../../types/training';
-import { getDifficultyColor } from '../../hooks/useEjercicioData';
+import { getDifficultyColor, getExerciseTypeColor } from '../../hooks/useEjercicioData';
 import { useThemeDetection } from '../../hooks/useThemeDetection';
 import GradientPaper from '../atoms/GradientPaper';
 
@@ -79,7 +79,7 @@ const EjercicioHeader: React.FC<EjercicioHeaderProps> = ({
       )}
 
       {/* Información básica del ejercicio */}
-      <SimpleGrid cols={{ base: 1, sm: 2, md: 3 }} spacing="md">
+      <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
         <Card
           p="md"
           radius="md"
@@ -125,6 +125,22 @@ const EjercicioHeader: React.FC<EjercicioHeaderProps> = ({
           </Group>
           <Badge color={getDifficultyColor(ejercicio.nivelDificultad)} variant="light" size="lg">
             {ejercicio.nivelDificultad || 'No especificado'}
+          </Badge>
+        </Card>
+
+        <Card
+          p="md"
+          radius="md"
+          bg={isDark ? "dark.7" : "white"}
+          withBorder
+          style={{ borderColor: isDark ? theme.colors.dark[4] : theme.colors.gray[3] }}
+        >
+          <Group gap="xs" mb="xs">
+            <IconBarbell size={20} color={theme.colors.blue[6]} />
+            <Text fw={600} size="sm">Tipo de Ejercicio</Text>
+          </Group>
+          <Badge color={getExerciseTypeColor(ejercicio.tipoEjercicio)} variant="light" size="lg">
+            {ejercicio.tipoEjercicio || 'No especificado'}
           </Badge>
         </Card>
 

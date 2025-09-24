@@ -82,6 +82,31 @@ const ModalDetallesEjercicio: React.FC<ModalDetallesEjercicioProps> = ({
           height={250}
         />
 
+        {/* Instrucciones del ejercicio */}
+        {ejercicio.instrucciones && (
+          <Paper 
+            p="lg" 
+            radius="md" 
+            withBorder
+            bg={isDark ? "dark.7" : "gray.0"}
+            style={{ borderColor: isDark ? theme.colors.dark[4] : theme.colors.gray[3] }}
+          >
+            <Title order={4} mb="md" c="nutroos-green.6">
+              Instrucciones del Ejercicio
+            </Title>
+            
+            <Text 
+              size="sm" 
+              style={{ 
+                whiteSpace: 'pre-line',
+                lineHeight: 1.6 
+              }}
+            >
+              {ejercicio.instrucciones}
+            </Text>
+          </Paper>
+        )}
+
         {/* Consejos de ejecución */}
         <Paper 
           p="lg" 

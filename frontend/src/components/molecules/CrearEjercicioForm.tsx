@@ -12,13 +12,14 @@ import {
   Group,
   Grid,
   Divider,
-  Checkbox
+  Checkbox,
+  FileInput
 } from '@mantine/core';
 import { IconAlertCircle, IconPlus } from '@tabler/icons-react';
 import type { Ejercicio, CrearEjercicioDTO } from '../../types/training';
 import type { EjercicioSesion, OpcionesProgresion } from '../../types/trainingCommon';
 import { trainingService } from '../../services/trainingService';
-import { useExerciseOptions } from '../../hooks/useExerciseOptions';
+import { useExerciseOptions, generateSlugFromName } from '../../hooks/useExerciseOptions';
 import { OPCIONES_PROGRESION_DEFAULT } from '../../constants/training';
 
 interface CrearEjercicioFormProps {
@@ -34,13 +35,17 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
 }) => {
   const [nuevoEjercicio, setNuevoEjercicio] = useState<CrearEjercicioDTO>({
     nombre: '',
+    slug: '',
     descripcion: '',
     grupoMuscular: 'Pecho',
     equipamiento: 'Mancuernas',
     nivelDificultad: 'Intermedio',
+    tipoEjercicio: 'Fuerza',
+    instrucciones: '',
     videoDemostrativo: '',
     publico: false
   });
+  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [creandoEjercicio, setCreandoEjercicio] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
@@ -53,11 +58,11 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
   const [opcionesProgresion, setOpcionesProgresion] = useState<OpcionesProgresion>(OPCIONES_PROGRESION_DEFAULT);
 
   // Usar el hook para las opciones de los Selects
-  const { gruposMusculares, equipamientos, nivelesDificultad, nivelesIntensidad } = useExerciseOptions();
+  const { gruposMusculares, equipamientos, nivelesDificultad, nivelesIntensidad, tiposEjercicio } = useExerciseOptions();
 
   // Función para determinar si el equipamiento requiere peso obligatorio
   const equipamientoRequierePeso = (equipamiento: string): boolean => {
-    const equipamientosConPeso = ['Mancuernas', 'Barra', 'Máquina', 'Pelota medicinal', 'Bandas de resistencia'];
+    const equipamientosConPeso = ['Mancuernas', 'Barra', 'Máquina', 'Pelota medicinal', 'Bandas de resistencia', 'Kettlebell', 'Cable'];
     return equipamientosConPeso.includes(equipamiento);
   };
 
@@ -79,7 +84,22 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
     setError(null);
 
     try {
-      const ejercicioCreado = await trainingService.crearEjercicio(nuevoEjercicio);
+      const formData = new FormData();
+      formData.append('nombre', nuevoEjercicio.nombre);
+      formData.append('slug', generateSlugFromName(nuevoEjercicio.nombre));
+      formData.append('descripcion', nuevoEjercicio.descripcion);
+      formData.append('grupoMuscular', nuevoEjercicio.grupoMuscular);
+      formData.append('equipamiento', nuevoEjercicio.equipamiento);
+      formData.append('nivelDificultad', nuevoEjercicio.nivelDificultad);
+      formData.append('tipoEjercicio', nuevoEjercicio.tipoEjercicio);
+      formData.append('instrucciones', nuevoEjercicio.instrucciones || '');
+      formData.append('publico', nuevoEjercicio.publico.toString());
+      
+      if (videoFile) {
+        formData.append('video', videoFile);
+      }
+
+      const ejercicioCreado = await trainingService.crearEjercicio(formData);
       onEjercicioCreado(ejercicioCreado);
       
       // Crear ejercicio para la sesión con las opciones de progresión
@@ -100,13 +120,17 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
       // Reset form
       setNuevoEjercicio({
         nombre: '',
+        slug: '',
         descripcion: '',
         grupoMuscular: 'Pecho',
         equipamiento: 'Mancuernas',
         nivelDificultad: 'Intermedio',
+        tipoEjercicio: 'Fuerza',
+        instrucciones: '',
         videoDemostrativo: '',
         publico: false
       });
+      setVideoFile(null);
       setSeries(3);
       setRepeticiones(10);
       setPeso(undefined);
@@ -145,12 +169,25 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
         onChange={(e) => setNuevoEjercicio(prev => ({ ...prev, nombre: e.target.value }))}
         required
       />
+      {nuevoEjercicio.nombre && (
+        <Text size="sm" c="dimmed">
+          <strong>Slug generado:</strong> {generateSlugFromName(nuevoEjercicio.nombre)}
+        </Text>
+      )}
 
       <Textarea
         label="Descripción"
         placeholder="Describe cómo realizar el ejercicio..."
         value={nuevoEjercicio.descripcion}
         onChange={(e) => setNuevoEjercicio(prev => ({ ...prev, descripcion: e.target.value }))}
+        minRows={3}
+      />
+
+      <Textarea
+        label="Instrucciones"
+        placeholder="Instrucciones detalladas paso a paso..."
+        value={nuevoEjercicio.instrucciones || ''}
+        onChange={(e) => setNuevoEjercicio(prev => ({ ...prev, instrucciones: e.target.value }))}
         minRows={3}
       />
 
@@ -181,7 +218,7 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
             }}
           />
         </Grid.Col>
-        <Grid.Col span={12}>
+        <Grid.Col span={6}>
           <Select
             label="Nivel de Dificultad"
             data={nivelesDificultad}
@@ -194,14 +231,29 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
             }}
           />
         </Grid.Col>
+        <Grid.Col span={6}>
+          <Select
+            label="Tipo de Ejercicio"
+            data={tiposEjercicio}
+            value={nuevoEjercicio.tipoEjercicio}
+            onChange={(value) => setNuevoEjercicio(prev => ({ ...prev, tipoEjercicio: value || 'Fuerza' }))}
+            styles={{
+              dropdown: {
+                zIndex: 2000
+              }
+            }}
+          />
+        </Grid.Col>
       </Grid>
 
-      <TextInput
-        label="Video Demostrativo (URL)"
-        placeholder="https://example.com/video.mp4"
-        value={nuevoEjercicio.videoDemostrativo}
-        onChange={(e) => setNuevoEjercicio(prev => ({ ...prev, videoDemostrativo: e.target.value }))}
-        description="Opcional: URL del video demostrativo del ejercicio"
+      <FileInput
+        label="Video Demostrativo"
+        placeholder="Selecciona un archivo de video"
+        accept="video/*"
+        value={videoFile}
+        onChange={setVideoFile}
+        description="Opcional: Sube un video demostrativo del ejercicio (máximo 50MB)"
+        clearable
       />
 
       <Grid>

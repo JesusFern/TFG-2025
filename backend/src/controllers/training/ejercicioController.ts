@@ -28,7 +28,6 @@ export const crearEjercicio = async (req: AuthenticatedRequest, res: Response) =
       nivelDificultad,
       tipoEjercicio,
       instrucciones,
-      videoDemostrativo,
       publico
     } = matchedData(req, { locations: ['body'], includeOptionals: true }) as {
       nombre: string;
@@ -39,9 +38,16 @@ export const crearEjercicio = async (req: AuthenticatedRequest, res: Response) =
       nivelDificultad: string;
       tipoEjercicio: string;
       instrucciones?: string;
-      videoDemostrativo?: string;
       publico?: boolean;
     };
+
+    // Manejar video subido
+    let videoDemostrativo: string | undefined;
+    if (req.file) {
+      // Construir URL del video subido
+      const baseUrl = process.env.BASE_URL || 'http://localhost:3001';
+      videoDemostrativo = `${baseUrl}/uploads/videos/${req.file.filename}`;
+    }
 
     logger.debug('Procesando datos para crear ejercicio', {
       creadorId,

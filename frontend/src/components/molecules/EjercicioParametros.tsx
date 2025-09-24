@@ -11,7 +11,8 @@ import {
   IconTarget,
   IconWeight,
   IconBarbell,
-  IconUser
+  IconUser,
+  IconActivity
 } from '@tabler/icons-react';
 import { Ejercicio } from '../../types/training';
 import { useThemeDetection } from '../../hooks/useThemeDetection';
@@ -46,7 +47,7 @@ const EjercicioParametros: React.FC<EjercicioParametrosProps> = ({
         </Title>
       )}
       
-      <SimpleGrid cols={2} spacing="md">
+      <SimpleGrid cols={{ base: 2, sm: 3 }} spacing="md">
         <Box>
           <Group gap="xs" mb="xs">
             <IconTarget size={16} color={theme.colors.blue[6]} />
@@ -69,7 +70,17 @@ const EjercicioParametros: React.FC<EjercicioParametrosProps> = ({
 
         <Box>
           <Group gap="xs" mb="xs">
-            <IconUser size={16} color={theme.colors.cyan[6]} />
+            <IconActivity size={16} color={theme.colors.blue[6]} />
+            <Text fw={600} size="sm">Tipo de Ejercicio</Text>
+          </Group>
+          <Text size="lg" fw={700} c="nutroos-green.6">
+            {ejercicio.tipoEjercicio}
+          </Text>
+        </Box>
+
+        <Box>
+          <Group gap="xs" mb="xs">
+            <IconUser size={16} color={theme.colors.blue[6]} />
             <Text fw={600} size="sm">Nivel de Dificultad</Text>
           </Group>
           <Text size="lg" fw={700} c="nutroos-green.6">

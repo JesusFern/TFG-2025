@@ -75,7 +75,7 @@ const SeleccionEjercicio: React.FC<SeleccionEjercicioProps> = ({
   
   // Función para determinar si el equipamiento requiere peso obligatorio
   const equipamientoRequierePeso = (equipamiento: string): boolean => {
-    const equipamientosConPeso = ['Mancuernas', 'Barra', 'Máquina', 'Pelota medicinal', 'Bandas de resistencia'];
+    const equipamientosConPeso = ['Mancuernas', 'Barra', 'Máquina', 'Pelota medicinal', 'Bandas de resistencia', 'Kettlebell', 'Cable'];
     return equipamientosConPeso.includes(equipamiento);
   };
 
