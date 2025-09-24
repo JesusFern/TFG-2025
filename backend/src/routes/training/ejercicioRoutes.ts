@@ -17,12 +17,12 @@ import {
 } from '../../validators/trainingValidators';
 import { validateRequest } from '../../middlewares/validationMiddleware';
 import uploadVideo from '../../config/multerVideo';
-import { handleVideoUploadError } from '../../middlewares/uploadVideoMiddleware';
+import { createUploadErrorHandler } from '../../middlewares/uploadMiddleware';
 
 const router = Router();
 
 // Rutas para ejercicios
-router.post('/', uploadVideo.single('video'), handleVideoUploadError, authenticateToken, authorizeWorker, crearEjercicioValidator, validateRequest, crearEjercicio);
+router.post('/', uploadVideo.single('video'), createUploadErrorHandler('video'), authenticateToken, authorizeWorker, crearEjercicioValidator, validateRequest, crearEjercicio);
 router.get('/', authenticateToken, filtrosEjerciciosValidator, validateRequest, obtenerEjercicios);
 router.get('/slug/:slug', authenticateToken, slugValidator, validateRequest, obtenerEjercicioPorSlug);
 router.get('/:id', authenticateToken, idValidator, validateRequest, obtenerEjercicioPorId);

@@ -16,9 +16,17 @@ export async function seedEjercicios() {
     await Ejercicio.deleteMany({});
     console.log('Ejercicios existentes eliminados.');
 
+    // Propiedades por defecto para todos los ejercicios
+    const propiedadesPorDefecto = {
+      arquetipo: true,
+      publico: true,
+      activo: true
+    };
+
     const ejercicios = [
       // === PECHO ===
       {
+        ...propiedadesPorDefecto,
         nombre: 'Press de banca',
         slug: 'press-de-banca',
         descripcion: 'Ejercicio básico para desarrollo del pecho con barra',
@@ -27,12 +35,10 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Acuéstate en banco, agarra la barra con las manos separadas al ancho de los hombros, baja controladamente y empuja hacia arriba',
-        videoDemostrativo: 'https://wger.de/media/exercise-video/73/2bdb390c-312c-4497-a722-5eed2c823e5a.MOV',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        videoDemostrativo: 'https://wger.de/media/exercise-video/73/2bdb390c-312c-4497-a722-5eed2c823e5a.MOV'
       },
       {
+        ...propiedadesPorDefecto,
         nombre: 'Flexiones',
         slug: 'flexiones',
         descripcion: 'Ejercicio de peso corporal para pecho',
@@ -40,12 +46,10 @@ export async function seedEjercicios() {
         equipamiento: 'Peso corporal',
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Fuerza',
-        instrucciones: 'Posición de plancha, manos separadas al ancho de los hombros, baja el pecho al suelo y empuja hacia arriba',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        instrucciones: 'Posición de plancha, manos separadas al ancho de los hombros, baja el pecho al suelo y empuja hacia arriba'
       },
       {
+        ...propiedadesPorDefecto,
         nombre: 'Press inclinado con mancuernas',
         slug: 'press-inclinado-mancuernas',
         descripcion: 'Press de pecho en banco inclinado con mancuernas',
@@ -53,12 +57,10 @@ export async function seedEjercicios() {
         equipamiento: 'Mancuernas',
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Fuerza',
-        instrucciones: 'Acuéstate en banco inclinado 30-45°, agarra mancuernas y presiona hacia arriba',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        instrucciones: 'Acuéstate en banco inclinado 30-45°, agarra mancuernas y presiona hacia arriba'
       },
       {
+        ...propiedadesPorDefecto,
         nombre: 'Aperturas con mancuernas',
         slug: 'aperturas-mancuernas',
         descripcion: 'Ejercicio de aislamiento para pecho con mancuernas',
@@ -67,9 +69,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Acuéstate en banco, extiende brazos con mancuernas y abre en arco hasta sentir estiramiento',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
 
       // === ESPALDA ===
@@ -83,9 +83,7 @@ export async function seedEjercicios() {
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Cuelga de la barra, manos separadas al ancho de los hombros, tira hacia arriba hasta que el mentón pase la barra',
         videoDemostrativo: 'https://wger.de/media/exercise-video/475/83067ffe-ccb9-4e22-8507-5131b211ce74.MOV',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Remo con barra',
@@ -96,9 +94,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Inclinado 45°, agarra la barra y tira hacia el abdomen, apretando los omóplatos',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Peso muerto',
@@ -109,9 +105,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Pies separados al ancho de los hombros, agarra la barra y levántala manteniendo la espalda recta',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
 
       // === HOMBROS ===
@@ -124,9 +118,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'De pie, agarra la barra al ancho de los hombros y presiona hacia arriba',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Elevaciones laterales',
@@ -137,9 +129,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'De pie, eleva mancuernas lateralmente hasta la altura de los hombros',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Elevaciones frontales',
@@ -150,9 +140,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'De pie, eleva mancuernas frontalmente hasta la altura de los hombros',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Tirón facial',
@@ -164,9 +152,7 @@ export async function seedEjercicios() {
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Con cable, tira hacia la cara separando las manos',
         videoDemostrativo: 'https://wger.de/media/exercise-video/222/245a824b-cd39-45f2-b251-2c0b7efead0d.MOV',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
 
       // === PIERNAS ===
@@ -179,9 +165,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Pies separados al ancho de los hombros, baja como si te sentaras en una silla',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Sentadilla con barra',
@@ -192,9 +176,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Barra en la espalda, baja hasta que los muslos estén paralelos al suelo',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Zancadas',
@@ -206,9 +188,7 @@ export async function seedEjercicios() {
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Da un paso largo hacia adelante y baja la rodilla trasera al suelo',
         videoDemostrativo: 'https://wger.de/media/exercise-video/802/85d1d7f8-c3c5-47e8-9b26-56896919e6e7.MOV',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Peso muerto rumano',
@@ -220,9 +200,7 @@ export async function seedEjercicios() {
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Barra en las manos, mantén las piernas casi rectas y baja la barra hacia los pies',
         videoDemostrativo: 'https://wger.de/media/exercise-video/507/307e7276-a14d-4ea0-b579-f5b0dbc6f5af.MOV',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Sentadillas búlgaras',
@@ -233,9 +211,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Pie trasero en banco, baja la rodilla delantera hacia el suelo',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
 
       // === BRAZOS ===
@@ -248,9 +224,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'De pie, flexiona los brazos llevando las mancuernas hacia los hombros',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Tríceps en banco',
@@ -261,9 +235,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Apoya las manos en el banco, baja el cuerpo flexionando los codos',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Curl martillo',
@@ -275,9 +247,7 @@ export async function seedEjercicios() {
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Agarre neutro, flexiona los brazos manteniendo las muñecas rectas',
         videoDemostrativo: 'https://wger.de/media/exercise-video/272/df069052-2173-4f24-855f-a0eebe729f24.MOV',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Extensiones de tríceps',
@@ -288,9 +258,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Mancuerna sobre la cabeza, extiende los brazos hacia arriba',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
 
       // === CORE ===
@@ -303,9 +271,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Posición de flexión, mantén el cuerpo recto y rígido',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Crunches',
@@ -316,9 +282,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Acostado, flexiona el tronco llevando los hombros hacia las rodillas',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Escaladores de montaña',
@@ -329,9 +293,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Cardio',
         instrucciones: 'Posición de plancha, alterna llevando las rodillas al pecho',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Giros rusos',
@@ -342,9 +304,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Sentado, inclínate hacia atrás y rota el tronco de lado a lado',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
 
       // === CARDIO/HIIT ===
@@ -357,9 +317,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Cardio',
         instrucciones: 'Flexión, salto a sentadilla, salto vertical con brazos arriba',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Saltos de tijera',
@@ -370,9 +328,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Cardio',
         instrucciones: 'Salta separando piernas y brazos, luego vuelve a juntarlos',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Rodillas altas',
@@ -383,9 +339,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Cardio',
         instrucciones: 'Corre en el lugar elevando las rodillas al pecho',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Sentadillas con salto',
@@ -396,9 +350,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Cardio',
         instrucciones: 'Haz una sentadilla y salta explosivamente hacia arriba',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
 
       // === FLEXIBILIDAD/MOVILIDAD ===
@@ -411,9 +363,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Sentado, extiende una pierna y estírate hacia el pie',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Estiramiento de pecho',
@@ -424,9 +374,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Coloca el brazo en la pared y gira el cuerpo para estirar el pecho',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Estiramiento de espalda',
@@ -437,9 +385,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Sentado, cruza una pierna y gira el tronco hacia el lado opuesto',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
 
       // === FUNCIONALES ===
@@ -452,9 +398,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Con kettlebell, balancea desde entre las piernas hasta la altura del pecho',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Levantamientos turcos',
@@ -465,9 +409,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Avanzado',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Acostado, levanta la kettlebell y ponte de pie manteniéndola arriba',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Caminata de granjero',
@@ -478,9 +420,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Camina sosteniendo mancuernas pesadas a los lados',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
 
       // === RESISTENCIA ===
@@ -493,9 +433,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Mantén la posición de flexión durante el tiempo especificado',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Sentadilla en pared',
@@ -506,9 +444,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Apoya la espalda en la pared y mantén la posición de sentadilla',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Plancha a flexión',
@@ -519,9 +455,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Desde plancha, alterna apoyando un brazo y luego el otro',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
 
       // === EQUILIBRIO/ESTABILIDAD ===
@@ -534,9 +468,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'De pie, levanta una pierna y baja el tronco manteniendo el equilibrio',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Sentadillas pistol',
@@ -547,9 +479,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Avanzado',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'De pie, extiende una pierna y baja en sentadilla con la otra',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Sentadillas en L',
@@ -560,9 +490,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Avanzado',
         tipoEjercicio: 'Fuerza',
         instrucciones: 'Sentado, levanta las piernas y mantén la posición en L',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
 
       // === CALENTAMIENTO ===
@@ -575,9 +503,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Extiende los brazos y haz círculos hacia adelante y atrás',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Balanceos de piernas',
@@ -588,9 +514,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'De pie, balancea una pierna hacia adelante y atrás',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Círculos de cadera',
@@ -601,9 +525,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Manos en la cintura, haz círculos con la cadera',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       // === EJERCICIOS DE ESTABILIDAD ===
       {
@@ -615,9 +537,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Estabilidad',
         instrucciones: 'Apóyate en un antebrazo lateral, mantén el cuerpo recto y contrae el core',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Perro pájaro',
@@ -628,9 +548,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Estabilidad',
         instrucciones: 'En cuadrupedia, extiende brazo y pierna opuestos manteniendo el equilibrio',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Bicho muerto',
@@ -641,9 +559,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Estabilidad',
         instrucciones: 'Acostado boca arriba, brazos y piernas en 90°, baja alternativamente brazo y pierna opuestos',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Press Pallof',
@@ -654,9 +570,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Estabilidad',
         instrucciones: 'Con banda a la altura del pecho, empuja hacia adelante resistiendo la rotación',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Equilibrio a una pierna',
@@ -667,9 +581,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Estabilidad',
         instrucciones: 'Mantén el equilibrio en una pierna, la otra flexionada',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Sentadillas en bosu',
@@ -680,9 +592,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Estabilidad',
         instrucciones: 'Realiza sentadillas sobre bosu ball manteniendo el equilibrio',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Levantamiento turco',
@@ -693,9 +603,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Avanzado',
         tipoEjercicio: 'Estabilidad',
         instrucciones: 'Desde acostado, levántate manteniendo el peso arriba con control total',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       // === EJERCICIOS DE HIIT ===
       {
@@ -707,9 +615,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Avanzado',
         tipoEjercicio: 'HIIT',
         instrucciones: '20 segundos sprint máximo, 10 segundos descanso, repetir 8 rondas',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Cuerdas de batalla',
@@ -720,9 +626,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'HIIT',
         instrucciones: 'Crea ondas alternas con las cuerdas a máxima velocidad',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Saltos a caja',
@@ -733,9 +637,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'HIIT',
         instrucciones: 'Salta explosivamente sobre una caja y baja controladamente',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       // === EJERCICIOS DE RESISTENCIA ===
       {
@@ -747,9 +649,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Resistencia',
         instrucciones: 'Mantén un ritmo constante de carrera durante el tiempo establecido',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Ciclismo',
@@ -760,9 +660,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Resistencia',
         instrucciones: 'Mantén un ritmo constante en bicicleta estática',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Remo',
@@ -773,9 +671,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Resistencia',
         instrucciones: 'Mantén un ritmo constante en máquina de remo',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Natación',
@@ -786,9 +682,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Resistencia',
         instrucciones: 'Mantén un ritmo constante de nado durante el tiempo establecido',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Elíptica',
@@ -799,9 +693,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Resistencia',
         instrucciones: 'Mantén un ritmo constante en elíptica',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       // === EJERCICIOS DE POTENCIA ===
       {
@@ -813,9 +705,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Avanzado',
         tipoEjercicio: 'Potencia',
         instrucciones: 'Levanta la barra desde el suelo hasta los hombros y luego presiona por encima de la cabeza',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Arrancada',
@@ -826,9 +716,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Avanzado',
         tipoEjercicio: 'Potencia',
         instrucciones: 'Levanta la barra desde el suelo hasta por encima de la cabeza en un movimiento',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Cargada de potencia',
@@ -839,9 +727,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Avanzado',
         tipoEjercicio: 'Potencia',
         instrucciones: 'Levanta la barra desde el suelo hasta los hombros con movimiento explosivo',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Sentadillas con salto y peso',
@@ -852,9 +738,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Potencia',
         instrucciones: 'Realiza sentadilla con peso y salta explosivamente',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Golpes con pelota medicinal',
@@ -865,9 +749,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Potencia',
         instrucciones: 'Levanta la pelota por encima de la cabeza y golpea el suelo con fuerza',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       // === MÁS EJERCICIOS DE CARDIO ===
       {
@@ -879,9 +761,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Cardio',
         instrucciones: 'Salta con la cuerda manteniendo un ritmo constante',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Subidas de escalón',
@@ -892,9 +772,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Cardio',
         instrucciones: 'Sube y baja de un escalón alternando las piernas',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Patadas al glúteo',
@@ -905,9 +783,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Cardio',
         instrucciones: 'Corre en el sitio llevando los talones hacia los glúteos',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Desplazamientos laterales',
@@ -918,9 +794,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Cardio',
         instrucciones: 'Desplázate lateralmente manteniendo las rodillas flexionadas',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Caminata de cangrejo',
@@ -931,9 +805,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Cardio',
         instrucciones: 'Camina en posición de cangrejo hacia adelante y atrás',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Gateo de oso',
@@ -944,9 +816,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Cardio',
         instrucciones: 'Gatea manteniendo las rodillas ligeramente elevadas',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Saltos de patinador',
@@ -957,9 +827,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Cardio',
         instrucciones: 'Salta lateralmente de un lado a otro como un patinador',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Saltos de tijera cruzados',
@@ -970,9 +838,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Cardio',
         instrucciones: 'Salta cruzando brazos y piernas alternativamente',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       // === MÁS EJERCICIOS DE HIIT ===
       {
@@ -984,9 +850,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Avanzado',
         tipoEjercicio: 'HIIT',
         instrucciones: '30 segundos sprint máximo, 30 segundos descanso activo',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Variaciones de burpees',
@@ -997,9 +861,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Avanzado',
         tipoEjercicio: 'HIIT',
         instrucciones: 'Burpees con salto, flexión, sentadilla y salto vertical',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Intervalos de escaladores',
@@ -1010,9 +872,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'HIIT',
         instrucciones: '40 segundos máximo esfuerzo, 20 segundos descanso',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Intervalos de sentadillas con salto',
@@ -1023,9 +883,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'HIIT',
         instrucciones: '45 segundos máximo esfuerzo, 15 segundos descanso',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Saltos en plancha',
@@ -1036,9 +894,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'HIIT',
         instrucciones: 'En plancha, abre y cierra las piernas como jumping jacks',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Escaladores araña',
@@ -1049,9 +905,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Avanzado',
         tipoEjercicio: 'HIIT',
         instrucciones: 'Lleva la rodilla al codo opuesto alternativamente',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Saltos en pica',
@@ -1062,9 +916,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Avanzado',
         tipoEjercicio: 'HIIT',
         instrucciones: 'Salta llevando las piernas hacia arriba en posición de pica',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Saltos en estrella',
@@ -1075,9 +927,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'HIIT',
         instrucciones: 'Salta abriendo brazos y piernas en forma de estrella',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Saltos con rodillas al pecho',
@@ -1088,9 +938,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Avanzado',
         tipoEjercicio: 'HIIT',
         instrucciones: 'Salta llevando las rodillas al pecho en el aire',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Saltos laterales',
@@ -1101,9 +949,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Avanzado',
         tipoEjercicio: 'HIIT',
         instrucciones: 'Salta lateralmente de un lado a otro con máxima explosividad',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       // === MÁS EJERCICIOS DE RESISTENCIA ===
       {
@@ -1115,9 +961,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Resistencia',
         instrucciones: 'Mantén un ritmo constante durante 30+ minutos',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Esquí de fondo',
@@ -1128,9 +972,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Resistencia',
         instrucciones: 'Simula el movimiento de esquí de fondo en máquina',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Subida de escaleras',
@@ -1141,9 +983,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Resistencia',
         instrucciones: 'Sube escaleras manteniendo un ritmo constante',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Intervalos en máquina de remo',
@@ -1154,9 +994,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Resistencia',
         instrucciones: 'Alterna períodos de alta y baja intensidad en remo',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Entrenamiento cruzado',
@@ -1167,9 +1005,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Resistencia',
         instrucciones: 'Combina diferentes máquinas cardiovasculares',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Senderismo',
@@ -1180,9 +1016,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Resistencia',
         instrucciones: 'Caminata en terreno variado durante tiempo prolongado',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Caminata nórdica',
@@ -1193,9 +1027,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Resistencia',
         instrucciones: 'Caminata con bastones manteniendo ritmo constante',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Aeróbicos acuáticos',
@@ -1206,9 +1038,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Resistencia',
         instrucciones: 'Ejercicios aeróbicos en agua durante tiempo prolongado',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Cardio con baile',
@@ -1219,9 +1049,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Resistencia',
         instrucciones: 'Baila manteniendo un ritmo constante durante tiempo prolongado',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Entrenamiento en circuito',
@@ -1232,9 +1060,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Resistencia',
         instrucciones: 'Rota entre diferentes máquinas sin descanso prolongado',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       // === MÁS EJERCICIOS DE POTENCIA ===
       {
@@ -1246,9 +1072,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Avanzado',
         tipoEjercicio: 'Potencia',
         instrucciones: 'Carga la barra desde posición colgada hasta los hombros',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Press con impulso',
@@ -1259,9 +1083,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Potencia',
         instrucciones: 'Usa el impulso de las piernas para presionar la barra por encima',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Empuje',
@@ -1272,9 +1094,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Avanzado',
         tipoEjercicio: 'Potencia',
         instrucciones: 'Sentadilla seguida inmediatamente de press por encima',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Cargada con kettlebell',
@@ -1285,9 +1105,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Potencia',
         instrucciones: 'Carga la kettlebell desde el suelo hasta la posición de rack',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Arrancada con kettlebell',
@@ -1298,9 +1116,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Avanzado',
         tipoEjercicio: 'Potencia',
         instrucciones: 'Arranca la kettlebell desde el suelo hasta por encima en un movimiento',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Cargada de potencia con mancuernas',
@@ -1311,9 +1127,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Potencia',
         instrucciones: 'Carga las mancuernas desde el suelo hasta los hombros',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Zancadas con salto',
@@ -1324,9 +1138,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Potencia',
         instrucciones: 'Alterna zancadas con salto explosivo entre cada repetición',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Saltos horizontales',
@@ -1337,9 +1149,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Potencia',
         instrucciones: 'Salta horizontalmente lo más lejos posible',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Balanceo con kettlebell a un brazo',
@@ -1350,9 +1160,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Potencia',
         instrucciones: 'Balancea la kettlebell con un solo brazo hasta la altura del pecho',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Lanzamientos de pelota a la pared',
@@ -1363,9 +1171,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Potencia',
         instrucciones: 'Lanza la pelota a la pared desde sentadilla con máxima potencia',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       // === MÁS EJERCICIOS DE FLEXIBILIDAD ===
       {
@@ -1377,9 +1183,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'En cuadrupedia, alterna entre arquear y redondear la espalda',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Perro boca abajo',
@@ -1390,9 +1194,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Forma una V invertida con el cuerpo, estirando toda la cadena posterior',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Postura del niño',
@@ -1403,9 +1205,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Siéntate sobre los talones y estira los brazos hacia adelante',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Postura de la paloma',
@@ -1416,9 +1216,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Lleva una pierna hacia adelante en ángulo, estira la otra hacia atrás',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Flexión sentada hacia adelante',
@@ -1429,9 +1227,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Sentado con piernas extendidas, flexiona hacia adelante desde la cadera',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Flexión de pie hacia adelante',
@@ -1442,9 +1238,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'De pie, flexiona hacia adelante desde la cadera, colgando los brazos',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Guerrero III',
@@ -1455,9 +1249,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Equilibrio en una pierna, cuerpo y pierna libre paralelos al suelo',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Postura del triángulo',
@@ -1468,9 +1260,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Piernas separadas, inclínate hacia un lado tocando el tobillo',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Postura de la cobra',
@@ -1481,9 +1271,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Acostado boca abajo, levanta el pecho apoyándote en los antebrazos',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Postura del puente',
@@ -1494,9 +1282,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Acostado boca arriba, levanta las caderas formando un puente',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Estiramiento de mariposa',
@@ -1507,9 +1293,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Sentado, une las plantas de los pies y acerca los talones al cuerpo',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Torsión sentada de columna',
@@ -1520,9 +1304,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Sentado, gira el torso hacia un lado, mano opuesta en la rodilla',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Postura del lagarto',
@@ -1533,9 +1315,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'En posición de zancada baja, apoya los antebrazos en el suelo',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Estiramiento de isquiotibiales acostado',
@@ -1546,9 +1326,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Acostado, lleva una rodilla al pecho y extiende la pierna hacia arriba',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Postura del águila',
@@ -1559,9 +1337,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Intermedio',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Envuelve un brazo alrededor del otro y cruza las piernas',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Enhebrar la aguja',
@@ -1572,9 +1348,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'En cuadrupedia, pasa un brazo por debajo del otro',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Postura del bebé feliz',
@@ -1585,9 +1359,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Acostado boca arriba, agarra los pies y balancea suavemente',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Piernas en la pared',
@@ -1598,9 +1370,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Acostado cerca de la pared, eleva las piernas contra la pared',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       },
       {
         nombre: 'Ángulo atado reclinado',
@@ -1611,9 +1381,7 @@ export async function seedEjercicios() {
         nivelDificultad: 'Principiante',
         tipoEjercicio: 'Flexibilidad',
         instrucciones: 'Acostado, une las plantas de los pies y deja caer las rodillas',
-        arquetipo: true,
-        publico: true,
-        activo: true
+        ...propiedadesPorDefecto
       }
     ];
 

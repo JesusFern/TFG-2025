@@ -1,59 +1,32 @@
-import React, { useEffect, useState } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
-  Container, 
-  Paper, 
-  Breadcrumbs, 
-  Title, 
-  Avatar, 
-  Box, 
-  Group,
   SimpleGrid,
   Card,
   Text,
   Button,
   Stack,
-  Alert
+  Alert,
+  Group,
+  Title
 } from '@mantine/core';
 import { 
-  IconChevronRight, 
   IconTarget,
   IconArrowLeft,
   IconInfoCircle
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import GlobalNotificationOverlay from '../components/atoms/GlobalNotificationOverlay';
-import { getUserById } from '../services/userService';
 import { BREADCRUMBS_TRAINING_BASE } from '../constants/training';
-import { createBreadcrumbItems, renderClientInfo } from '../components/common/BreadcrumbUtils';
-
-interface ObjetivoPlantilla {
-  nombre: string;
-  descripcion: string;
-  icono: string;
-  color: string;
-  beneficios: string[];
-}
+import { createBreadcrumbItems } from '../components/common/BreadcrumbUtils';
+import { PageLayout } from '../components/common/PageLayout';
+import { useClientData } from '../hooks/useClientData';
+import { OBJETIVOS_ENTRENAMIENTO } from '../constants/objectives';
 
 const SeleccionarObjetivoPlantillaPage: React.FC = () => {
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
-  const clientId = searchParams.get('clientId');
-  const [clienteNombre, setClienteNombre] = useState<string>('');
+  const { clientId, clienteNombre } = useClientData();
   const [notice, setNotice] = useState<{ message: string; type: 'success' | 'error' | 'info' | 'warning' } | null>(null);
-
-  useEffect(() => {
-    if (clientId) {
-      (async () => {
-        try {
-          const userData = await getUserById(clientId);
-          setClienteNombre(userData.fullName);
-        } catch {
-          // ignore
-        }
-      })();
-    }
-  }, [clientId]);
 
 
   const handleObjetivoSeleccionado = (objetivo: string) => {
@@ -69,108 +42,16 @@ const SeleccionarObjetivoPlantillaPage: React.FC = () => {
     { title: 'Seleccionar objetivo', href: '#', icon: undefined }
   ]);
 
-  const objetivosPredefinidos: ObjetivoPlantilla[] = [
-    {
-      nombre: 'Ganancia muscular',
-      descripcion: 'Desarrolla masa muscular y fuerza con ejercicios específicos',
-      icono: '💪',
-      color: 'red',
-      beneficios: ['Hipertrofia muscular', 'Aumento de fuerza', 'Mejora de composición corporal']
-    },
-    {
-      nombre: 'Pérdida de peso',
-      descripcion: 'Quema grasa y mejora la condición física general',
-      icono: '🔥',
-      color: 'orange',
-      beneficios: ['Quema de grasa', 'Mejora cardiovascular', 'Aumento de metabolismo']
-    },
-    {
-      nombre: 'Resistencia',
-      descripcion: 'Mejora la capacidad cardiovascular y la resistencia',
-      icono: '🏃',
-      color: 'blue',
-      beneficios: ['Mejora cardiovascular', 'Aumento de resistencia', 'Mejor condición física']
-    },
-    {
-      nombre: 'Flexibilidad',
-      descripcion: 'Desarrolla movilidad y flexibilidad muscular',
-      icono: '🧘',
-      color: 'grape',
-      beneficios: ['Mejor movilidad', 'Reducción de lesiones', 'Relajación muscular']
-    },
-    {
-      nombre: 'Potencia',
-      descripcion: 'Desarrolla explosividad y velocidad en movimientos',
-      icono: '⚡',
-      color: 'yellow',
-      beneficios: ['Mejora de explosividad', 'Aumento de velocidad', 'Desarrollo de potencia']
-    },
-    {
-      nombre: 'Estabilidad',
-      descripcion: 'Fortalece el core y mejora el equilibrio corporal',
-      icono: '⚖️',
-      color: 'teal',
-      beneficios: ['Fortalecimiento del core', 'Mejor equilibrio', 'Prevención de lesiones']
-    },
-    {
-      nombre: 'Mantenimiento',
-      descripcion: 'Mantén tu condición física actual',
-      icono: '🔄',
-      color: 'cyan',
-      beneficios: ['Mantener forma física', 'Rutina equilibrada', 'Bienestar general']
-    },
-    {
-      nombre: 'Salud general',
-      descripcion: 'Mejora tu salud y bienestar general',
-      icono: '❤️',
-      color: 'green',
-      beneficios: ['Mejora de salud', 'Bienestar general', 'Prevención de enfermedades']
-    }
-  ];
 
   return (
-    <Container size="lg" py="xl">
-      <Paper 
-        p="md" 
-        mb="lg" 
-        style={{ 
-          backgroundColor: 'var(--app-paper-bg)', 
-          borderBottom: '1px solid var(--app-border-color)' 
-        }}
-      >
-        <Breadcrumbs separator={<IconChevronRight size={14} />}>
-          {items}
-        </Breadcrumbs>
-      </Paper>
-
-      <Paper 
-        p="lg" 
-        mb="xl" 
-        withBorder 
-        radius="md"
-        style={{ 
-          backgroundColor: 'var(--app-paper-bg)', 
-          borderColor: 'var(--app-border-color)' 
-        }}
-      >
-        <Group mb="md" align="flex-start">
-          <Avatar 
-            size="lg" 
-            color="nutroos-green" 
-            radius="xl"
-          >
-            <IconTarget size="1.5rem" />
-          </Avatar>
-          
-          <Box style={{ flex: 1 }}>
-            <Title order={2} mb={5} c="nutroos-green.6">Seleccionar Objetivo</Title>
-            {renderClientInfo(clienteNombre, clientId)}
-            <Text size="sm" c="dimmed" mt="xs">
-              Elige el objetivo principal del plan de entrenamiento
-            </Text>
-          </Box>
-        </Group>
-      </Paper>
+    <PageLayout
+      breadcrumbItems={items}
+      title="Seleccionar Objetivo"
+      subtitle="Elige el objetivo principal del plan de entrenamiento"
+      icon={<IconTarget size="1.5rem" />}
+      clienteNombre={clienteNombre}
+      clientId={clientId}
+    >
 
       <Alert
         icon={<IconInfoCircle size={16} />}
@@ -191,7 +72,7 @@ const SeleccionarObjetivoPlantillaPage: React.FC = () => {
       )}
 
       <SimpleGrid cols={{ base: 1, md: 2, lg: 3 }} spacing="lg">
-        {objetivosPredefinidos.map((objetivo, index) => (
+        {OBJETIVOS_ENTRENAMIENTO.map((objetivo, index) => (
           <motion.div
             key={objetivo.nombre}
             initial={{ opacity: 0, y: 20 }}
@@ -262,7 +143,7 @@ const SeleccionarObjetivoPlantillaPage: React.FC = () => {
           Volver
         </Button>
       </Group>
-    </Container>
+    </PageLayout>
   );
 };
 
