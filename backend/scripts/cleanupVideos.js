@@ -24,21 +24,72 @@ let seederContent = fs.readFileSync(SEED_PATH, 'utf-8');
 let exercisesWithVideos = 0;
 let exercisesWithoutVideos = 0;
 
-// Process each exercise in the seeder
-seederContent = seederContent.replace(
-  /(\{[^}]*?slug:\s*['"]([^'"]+)['"][^}]*?videoDemostrativo:\s*['"][^'"]*['"][^}]*?\})/g,
-  (match, fullMatch, slug) => {
-    if (videoSlugs.has(slug)) {
-      // Keep the video for exercises that have videos
-      exercisesWithVideos++;
-      return match;
-    } else {
-      // Remove videoDemostrativo field for exercises without videos
-      exercisesWithoutVideos++;
-      return match.replace(/,?\s*videoDemostrativo:\s*['"][^'"]*['"]/, '');
+// Process each exercise in the seeder using a safer approach
+function parseExerciseBlocks(content) {
+  const blocks = [];
+  let currentBlock = '';
+  let braceCount = 0;
+  let inBlock = false;
+  
+  for (let i = 0; i < content.length; i++) {
+    const char = content[i];
+    
+    if (char === '{') {
+      if (braceCount === 0) {
+        inBlock = true;
+        currentBlock = '';
+      }
+      braceCount++;
+    }
+    
+    if (inBlock) {
+      currentBlock += char;
+    }
+    
+    if (char === '}') {
+      braceCount--;
+      if (braceCount === 0 && inBlock) {
+        blocks.push(currentBlock);
+        currentBlock = '';
+        inBlock = false;
+      }
     }
   }
-);
+  
+  return blocks;
+}
+
+function extractSlugFromBlock(block) {
+  const slugMatch = block.match(/slug:\s*['"]([^'"]+)['"]/);
+  return slugMatch ? slugMatch[1] : null;
+}
+
+function removeVideoField(block) {
+  // Remove videoDemostrativo field using a simple string replacement
+  return block.replace(/,?\s*videoDemostrativo:\s*['"][^'"]*['"]/, '');
+}
+
+// Parse exercise blocks safely
+const exerciseBlocks = parseExerciseBlocks(seederContent);
+
+// Process each block
+let updatedContent = seederContent;
+for (const block of exerciseBlocks) {
+  const slug = extractSlugFromBlock(block);
+  if (!slug) continue;
+  
+  if (videoSlugs.has(slug)) {
+    // Keep the video for exercises that have videos
+    exercisesWithVideos++;
+  } else {
+    // Remove videoDemostrativo field for exercises without videos
+    exercisesWithoutVideos++;
+    const updatedBlock = removeVideoField(block);
+    updatedContent = updatedContent.replace(block, updatedBlock);
+  }
+}
+
+seederContent = updatedContent;
 
 // Write the updated content back
 fs.writeFileSync(SEED_PATH, seederContent, 'utf-8');

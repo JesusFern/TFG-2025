@@ -16,21 +16,27 @@ const OUTPUT_MISSING = path.join(OUTPUT_DIR, 'wger_videos_missing.json');
 
 const WGER_BASE = 'https://wger.de/api/v2';
 const LANGUAGE = 'es'; // prefer Spanish names
-const WGER_USERNAME = 'MrMigo00';
-const WGER_PASSWORD = 'HOla98765432@';
+const WGER_USERNAME = process.env.WGER_USERNAME;
+const WGER_PASSWORD = process.env.WGER_PASSWORD;
 
 /**
  * Extracts [{ slug, nombre }] from the seed file using a lightweight regex approach.
  */
 function extractExercisesFromSeed(seedContent) {
   const entries = [];
-  // Match blocks with nombre: '...', slug: '...'
-  const regex = /\{[\s\S]*?nombre:\s*'([^']+)'[\s\S]*?slug:\s*'([^']+)'[\s\S]*?\}/g;
-  let match;
-  while ((match = regex.exec(seedContent)) !== null) {
-    const nombre = match[1].trim();
-    const slug = match[2].trim();
-    entries.push({ slug, nombre });
+  // Use a safer approach to extract exercise blocks
+  const exerciseBlocks = seedContent.match(/\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}/g) || [];
+  
+  for (const block of exerciseBlocks) {
+    // Extract nombre and slug using safer regex
+    const nombreMatch = block.match(/nombre:\s*'([^']+)'/);
+    const slugMatch = block.match(/slug:\s*'([^']+)'/);
+    
+    if (nombreMatch && slugMatch) {
+      const nombre = nombreMatch[1].trim();
+      const slug = slugMatch[1].trim();
+      entries.push({ slug, nombre });
+    }
   }
   return entries;
 }

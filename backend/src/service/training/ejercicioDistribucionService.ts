@@ -1,3 +1,4 @@
+import { randomBytes } from 'crypto';
 import Ejercicio from '../../models/training/ejercicio';
 
 // Interfaces para tipos
@@ -420,8 +421,13 @@ export class EjercicioDistribucionService {
   }
 
   // Métodos auxiliares
+  private static secureRandom(): number {
+    const bytes = randomBytes(4);
+    return bytes.readUInt32BE(0) / 0xffffffff;
+  }
+
   private static seleccionarEjerciciosAleatorios(ejercicios: EjercicioDB[], cantidad: number): EjercicioDB[] {
-    const shuffled = [...ejercicios].sort(() => 0.5 - Math.random());
+    const shuffled = [...ejercicios].sort(() => 0.5 - this.secureRandom());
     return shuffled.slice(0, cantidad);
   }
 
@@ -432,7 +438,7 @@ export class EjercicioDistribucionService {
     nivelIntensidad: string;
   }): number {
     const { min, max } = configIntensidad.series;
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    return Math.floor(this.secureRandom() * (max - min + 1)) + min;
   }
 
   private static generarRepeticiones(configIntensidad: {
@@ -442,7 +448,7 @@ export class EjercicioDistribucionService {
     nivelIntensidad: string;
   }): number {
     const { min, max } = configIntensidad.repeticiones;
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    return Math.floor(this.secureRandom() * (max - min + 1)) + min;
   }
 
   private static generarTiempoDescanso(configIntensidad: {
@@ -452,7 +458,7 @@ export class EjercicioDistribucionService {
     nivelIntensidad: string;
   }): number {
     const { min, max } = configIntensidad.descanso;
-    return Math.floor(Math.random() * (max - min + 1)) + min;
+    return Math.floor(this.secureRandom() * (max - min + 1)) + min;
   }
 
   private static generarOpcionesProgresion(objetivo: string): {
