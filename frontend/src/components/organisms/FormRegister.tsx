@@ -12,6 +12,7 @@ import ExerciseStep from '../molecules/ExerciseStep';
 import NutritionStep from '../molecules/NutritionStep';
 import { RegisterFormErrors, RegisterFormState } from '../../types';
 import { apiRequest, apiConfig } from '../../services/api';
+import { OBJETIVOS_OPCIONES } from '../../constants/objectives';
 
 const actividadOptions = [
   { value: 'Sedentario', label: 'Sedentario' },
@@ -32,14 +33,7 @@ const ejercicioOptions = [
   { value: 'Otros', label: 'Otros' },
 ];
 
-const objetivoOptions = [
-  { value: 'Pérdida de peso', label: 'Pérdida de peso' },
-  { value: 'Ganancia muscular', label: 'Ganancia muscular' },
-  { value: 'Resistencia', label: 'Resistencia' },
-  { value: 'Flexibilidad', label: 'Flexibilidad' },
-  { value: 'Salud general', label: 'Salud general' },
-  { value: 'Rehabilitación', label: 'Rehabilitación' },
-];
+const objetivoOptions = OBJETIVOS_OPCIONES;
 
 const generoOptions = [
   { value: 'Masculino', label: 'Masculino' },

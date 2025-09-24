@@ -25,7 +25,8 @@ import {
   IconEdit,
   IconTrash,
   IconAlertCircle,
-  IconCheck
+  IconCheck,
+  IconClock
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 // format y es ya no se usan directamente, se usan a través de las utilidades
@@ -44,6 +45,7 @@ import ModalEliminarSesion from '../components/molecules/ModalEliminarSesion';
 import ModalCrearSesion from '../components/molecules/ModalCrearSesion';
 import EditarPlanHeader from '../components/molecules/EditarPlanHeader';
 import PlanInfo from '../components/molecules/PlanInfo';
+import DraggableExerciseList from '../components/molecules/DraggableExerciseList';
 
 // SesionInfo ya está importado desde trainingCommon
 
@@ -276,6 +278,56 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
   
   const handleOpenEjerciciosModalWrapper = () => {
     handleOpenEjerciciosModal(setEjerciciosSesion, setShowEjerciciosModal);
+  };
+
+  const handleReorderEjercicios = async (newOrder: EjercicioSesion[]) => {
+    if (!currentSesionInfo?.data || !plan?.draftMode) return;
+
+    try {
+      setPublishLoading(true);
+      
+      // Actualizar el orden de los ejercicios
+      const updatedEjercicios = newOrder.map((ejercicio, index) => ({
+        ...ejercicio,
+        orden: index + 1
+      }));
+
+      const sesionId = (currentSesionInfo.data as { _id?: string })._id;
+      if (!sesionId) return;
+
+      // Obtener los datos actuales de la sesión para enviar todos los campos requeridos
+      const sesionActual = currentSesionInfo.data as Record<string, unknown>;
+      
+      // Actualizar en el backend con todos los campos requeridos
+      await trainingService.actualizarSesion(sesionId, {
+        fecha: sesionActual.fecha as string,
+        hora: sesionActual.hora as string | undefined,
+        tipoEntrenamiento: sesionActual.tipoEntrenamiento as string,
+        duracion: sesionActual.duracion as number,
+        ejercicios: updatedEjercicios
+      });
+
+      // Actualizar el estado local
+      setCurrentSesionLocal(prev => prev ? {
+        ...prev,
+        data: prev.data ? {
+          ...(prev.data as Record<string, unknown>),
+          ejercicios: updatedEjercicios
+        } : null
+      } : null);
+
+      // Recargar los datos para que se actualice el estado global
+      await refetch();
+
+      setEjerciciosSesionActual(updatedEjercicios);
+      setSuccessMessage("Orden de ejercicios actualizado correctamente");
+      setError(null);
+      
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al reordenar ejercicios');
+    } finally {
+      setPublishLoading(false);
+    }
   };
 
   const handleEditarSesion = (sesionId: string) => {
@@ -638,18 +690,51 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
               {currentSesionInfo?.data ? (
                 <Box>
                   <Group justify="space-between" mb="md">
-                    <Title order={4} c="nutroos-green.6">
-                      {currentSesionInfo.nombreCompleto}
-                    </Title>
+                    <Stack gap="xs">
+                      <Title order={4} c="nutroos-green.6">
+                        {currentSesionInfo.nombreCompleto}
+                      </Title>
+                      <Group gap="md">
+                        <Badge 
+                          color="blue" 
+                          variant="light" 
+                          size="lg"
+                          leftSection={<IconBarbell size={14} />}
+                        >
+                          {(currentSesionInfo.data as { tipoEntrenamiento?: string }).tipoEntrenamiento || 'Sin tipo'}
+                        </Badge>
+                        {(currentSesionInfo.data as { hora?: string }).hora && (
+                          <Badge 
+                            color="green" 
+                            variant="light" 
+                            size="lg"
+                            leftSection={<IconClock size={14} />}
+                          >
+                            {(currentSesionInfo.data as { hora?: string }).hora}
+                          </Badge>
+                        )}
+                        {(currentSesionInfo.data as { duracion?: number }).duracion && (
+                          <Badge 
+                            color="orange" 
+                            variant="light" 
+                            size="lg"
+                          >
+                            {(currentSesionInfo.data as { duracion?: number }).duracion} min
+                          </Badge>
+                        )}
+                      </Group>
+                    </Stack>
                     <Group gap="xs">
-                      <ActionIcon 
+                      <Button 
+                        size="sm"
                         color="nutroos-green" 
                         variant="light"
+                        leftSection={<IconEdit size={16} />}
                         onClick={() => handleEditarSesion((currentSesionInfo.data as { _id?: string })?._id || '')}
                         disabled={!plan?.draftMode}
                       >
-                        <IconEdit size={16} />
-                      </ActionIcon>
+                        Editar sesión
+                      </Button>
                       <ActionIcon 
                         color="red" 
                         variant="light"
@@ -677,94 +762,15 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                     </Group>
 
                     {(currentSesionInfo.data as { ejercicios?: EjercicioSesion[]; _id?: string }).ejercicios && (currentSesionInfo.data as { ejercicios?: EjercicioSesion[]; _id?: string }).ejercicios!.length > 0 ? (
-                      <Stack key={`ejercicios-${forceUpdate}-${(currentSesionInfo.data as { _id?: string })._id}`} gap="md">
-                        {(currentSesionInfo.data as { ejercicios?: EjercicioSesion[] }).ejercicios!.map((ejercicio: {
-                          ejercicio: string;
-                          orden: number;
-                          series: number;
-                          repeticiones: number;
-                          peso?: number;
-                          tiempoDescanso: number;
-                          ejerciciosAlternativos?: string[];
-                          opcionesProgresion?: {
-                            aumentarPeso: boolean;
-                            masRepeticiones: boolean;
-                            mayorIntensidad: boolean;
-                          };
-                        }, ejercicioIndex: number) => {
-                          const ejercicioData = ejercicios.find(e => e._id === ejercicio.ejercicio);
-                          return (
-                            <Paper key={ejercicioIndex} p="md" withBorder radius="md" style={{ backgroundColor: 'var(--mantine-color-gray-0)' }}>
-                              <Group justify="space-between" mb="xs">
-                                <Text fw={500}>
-                                  {ejercicioIndex + 1}. {ejercicioData?.nombre || 'Ejercicio no encontrado'}
-                                </Text>
-                                <Group gap="xs">
-                                  <ActionIcon 
-                                    size="sm" 
-                                    color="nutroos-green" 
-                                    variant="light"
-                                    onClick={() => handleEditarEjercicio(ejercicioIndex)}
-                                    disabled={!plan?.draftMode}
-                                  >
-                                    <IconEdit size={14} />
-                                  </ActionIcon>
-                                  <ActionIcon 
-                                    size="sm" 
-                                    color="red" 
-                                    variant="light"
-                                    onClick={() => setEjercicioAEliminar(ejercicioIndex)}
-                                    loading={loading}
-                                    disabled={!plan?.draftMode}
-                                  >
-                                    <IconTrash size={14} />
-                                  </ActionIcon>
-                                </Group>
-                              </Group>
-                              
-                              {/* Descripción del ejercicio */}
-                              {ejercicioData?.descripcion && (
-                                <Text size="sm" c="dimmed" mb="xs">
-                                  {ejercicioData.descripcion}
-                                </Text>
-                              )}
-                              
-                              {/* Etiquetas informativas del ejercicio */}
-                              {ejercicioData && (
-                                <Group gap="xs" mb="md">
-                                  <Badge size="sm" color="blue" variant="light">
-                                    {ejercicioData.grupoMuscular}
-                                  </Badge>
-                                  <Badge size="sm" color="green" variant="light">
-                                    {ejercicioData.equipamiento}
-                                  </Badge>
-                                  <Badge size="sm" color="orange" variant="light">
-                                    {ejercicioData.nivelDificultad}
-                                  </Badge>
-                                </Group>
-                              )}
-                              
-                              {/* Configuración de la sesión */}
-                              <Group gap="md">
-                                <Text size="sm">
-                                  <strong>Series:</strong> {ejercicio.series}
-                                </Text>
-                                <Text size="sm">
-                                  <strong>Repeticiones:</strong> {ejercicio.repeticiones}
-                                </Text>
-                                <Text size="sm">
-                                  <strong>Descanso:</strong> {ejercicio.tiempoDescanso}s
-                                </Text>
-                                {ejercicio.peso && (
-                                  <Text size="sm">
-                                    <strong>Peso:</strong> {ejercicio.peso}kg
-                                  </Text>
-                                )}
-                              </Group>
-                            </Paper>
-                          );
-                        })}
-      </Stack>
+                      <DraggableExerciseList
+                        key={`ejercicios-${forceUpdate}-${(currentSesionInfo.data as { _id?: string })._id}`}
+                        ejercicios={(currentSesionInfo.data as { ejercicios?: EjercicioSesion[] }).ejercicios!}
+                        ejerciciosData={ejercicios}
+                        onReorder={handleReorderEjercicios}
+                        onEdit={handleEditarEjercicio}
+                        onDelete={setEjercicioAEliminar}
+                        disabled={!plan?.draftMode}
+                      />
                     ) : (
                       <Box p="md" style={{ backgroundColor: 'var(--mantine-color-gray-0)', borderRadius: '8px' }}>
                         <Text size="sm" c="dimmed" ta="center" mb="md">

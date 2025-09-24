@@ -68,6 +68,7 @@ const ModalEditarEjercicioSesion: React.FC<ModalEditarEjercicioSesionProps> = ({
       title="Editar ejercicio"
       size="lg"
       centered
+      zIndex={1000}
     >
       <motion.div
         initial={{ opacity: 0, y: 20 }}

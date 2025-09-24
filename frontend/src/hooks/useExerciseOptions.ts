@@ -5,7 +5,20 @@ interface ExerciseOptions {
   equipamientos: { value: string; label: string }[];
   nivelesDificultad: { value: string; label: string }[];
   nivelesIntensidad: { value: string; label: string }[];
+  tiposEjercicio: { value: string; label: string }[];
 }
+
+// Función helper para generar slug a partir del nombre
+export const generateSlugFromName = (name: string): string => {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '') // Remove accents
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
+    .replace(/\s+/g, '-') // Replace spaces with hyphens
+    .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
+    .replace(/(^-|-$)/g, ''); // Remove leading/trailing hyphens - grouped for explicit precedence
+};
 
 export const useExerciseOptions = (): ExerciseOptions => {
   return useMemo(() => ({
@@ -27,7 +40,11 @@ export const useExerciseOptions = (): ExerciseOptions => {
       { value: 'Máquina', label: 'Máquina' },
       { value: 'Peso corporal', label: 'Peso corporal' },
       { value: 'Pelota medicinal', label: 'Pelota medicinal' },
-      { value: 'Bandas de resistencia', label: 'Bandas de resistencia' }
+      { value: 'Bandas de resistencia', label: 'Bandas de resistencia' },
+      { value: 'Barra de dominadas', label: 'Barra de dominadas' },
+      { value: 'Banco', label: 'Banco' },
+      { value: 'Cable', label: 'Cable' },
+      { value: 'Kettlebell', label: 'Kettlebell' }
     ],
     nivelesDificultad: [
       { value: 'Principiante', label: 'Principiante' },
@@ -38,6 +55,15 @@ export const useExerciseOptions = (): ExerciseOptions => {
       { value: 'Baja', label: 'Baja' },
       { value: 'Media', label: 'Media' },
       { value: 'Alta', label: 'Alta' }
+    ],
+    tiposEjercicio: [
+      { value: 'Fuerza', label: 'Fuerza' },
+      { value: 'Cardio', label: 'Cardio' },
+      { value: 'Flexibilidad', label: 'Flexibilidad' },
+      { value: 'HIIT', label: 'HIIT' },
+      { value: 'Resistencia', label: 'Resistencia' },
+      { value: 'Potencia', label: 'Potencia' },
+      { value: 'Estabilidad', label: 'Estabilidad' }
     ]
   }), []);
 };

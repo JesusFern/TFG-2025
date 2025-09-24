@@ -60,7 +60,7 @@ const WorkerClientsDashboard: React.FC = () => {
 	};
 
 	const handleCrearPlan = (clienteId: string) => {
-		navigate(`/training/planes/crear?clientId=${clienteId}`);
+		navigate(`/training/planes/tipo?clientId=${clienteId}`);
 	};
 
 	const handleVerPlanes = (clienteId: string) => {

@@ -1,6 +1,7 @@
 import { seedAdminUser, seedUsers } from './users/seedUsers';
 import { seedWorkers } from './users/seedWorkers';
 import { seedSuscriptionPlans } from './suscriptionPlans/seedSuscriptionPlans';
+import { seedEjercicios } from './training/seedEjercicios';
 import mongoose from 'mongoose';
 import User from '../models/users/user';
 import dotenv from 'dotenv';
@@ -14,6 +15,7 @@ async function runSeed() {
   try {
     const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/nutroos';
     await mongoose.connect(mongoUri);
+    console.log('Conectado a MongoDB');
 
     await User.deleteMany({});
     console.log('Colección de usuarios borrada.');
@@ -26,12 +28,19 @@ async function runSeed() {
     // Crear planes de suscripción
     await seedSuscriptionPlans();
 
-    await mongoose.disconnect();
+    // Crear ejercicios de entrenamiento
+    await seedEjercicios();
+
     console.log('Seed finalizado exitosamente');
   } catch (error) {
     console.error('Error en el seed:', error);
-    await mongoose.disconnect();
     process.exit(1);
+  } finally {
+    // Asegurar que la conexión se cierre siempre
+    if (mongoose.connection.readyState === 1) {
+      await mongoose.disconnect();
+      console.log('Desconectado de MongoDB');
+    }
   }
 }
 

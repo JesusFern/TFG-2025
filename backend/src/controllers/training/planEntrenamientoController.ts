@@ -9,7 +9,12 @@ import {
   actualizarPlanEntrenamientoService,
   eliminarPlanEntrenamientoService,
   asignarClienteService,
-  removerClienteService
+  removerClienteService,
+  obtenerObjetivosDisponiblesService,
+  obtenerPlantillaPorObjetivoService,
+  obtenerPlantillasPorFiltrosService,
+  buscarPlantillasService,
+  generarPlanDesdePlantillaService
 } from '../../service/training/planEntrenamientoService';
 import logger from '../../utils/logger';
 
@@ -320,6 +325,180 @@ export const publicarPlanEntrenamiento = async (req: AuthenticatedRequest, res: 
     });
     res.status(400).json({
       message: 'Error al publicar plan de entrenamiento',
+      error: error instanceof Error ? error.message : error
+    });
+  }
+};
+
+// ===== CONTROLADORES DE PLANTILLAS =====
+
+// Obtener todos los objetivos disponibles
+export const obtenerObjetivosDisponibles = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const objetivos = await obtenerObjetivosDisponiblesService();
+    res.json({
+      message: 'Objetivos de entrenamiento obtenidos correctamente',
+      objetivos
+    });
+  } catch (error) {
+    logger.error('Error al obtener objetivos de entrenamiento', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    res.status(400).json({
+      message: 'Error al obtener objetivos de entrenamiento',
+      error: error instanceof Error ? error.message : error
+    });
+  }
+};
+
+// Obtener plantilla por objetivo específico
+export const obtenerPlantillaPorObjetivo = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { objetivo } = req.params;
+    const plantilla = await obtenerPlantillaPorObjetivoService(objetivo);
+    
+    if (!plantilla) {
+      res.status(404).json({
+        message: 'Objetivo de entrenamiento no encontrado'
+      });
+      return;
+    }
+
+    res.json({
+      message: 'Plantilla obtenida correctamente',
+      plantilla
+    });
+  } catch (error) {
+    logger.error('Error al obtener plantilla por objetivo', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    res.status(400).json({
+      message: 'Error al obtener plantilla por objetivo',
+      error: error instanceof Error ? error.message : error
+    });
+  }
+};
+
+// Obtener plantillas por filtros
+export const obtenerPlantillasPorFiltros = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { objetivo, nivelDificultad, equipamiento, gruposMusculares } = req.query;
+    
+    const filtros: {
+      objetivo?: string;
+      nivelDificultad?: string;
+      equipamiento?: string[];
+      gruposMusculares?: string[];
+    } = {};
+    if (objetivo && typeof objetivo === 'string') filtros.objetivo = objetivo;
+    if (nivelDificultad && typeof nivelDificultad === 'string') filtros.nivelDificultad = nivelDificultad;
+    if (equipamiento) {
+      filtros.equipamiento = Array.isArray(equipamiento) 
+        ? equipamiento.filter((item): item is string => typeof item === 'string')
+        : [equipamiento].filter((item): item is string => typeof item === 'string');
+    }
+    if (gruposMusculares) {
+      filtros.gruposMusculares = Array.isArray(gruposMusculares) 
+        ? gruposMusculares.filter((item): item is string => typeof item === 'string')
+        : [gruposMusculares].filter((item): item is string => typeof item === 'string');
+    }
+
+    const plantillas = await obtenerPlantillasPorFiltrosService(filtros);
+    res.json({
+      message: 'Plantillas obtenidas correctamente',
+      plantillas,
+      total: plantillas.length
+    });
+  } catch (error) {
+    logger.error('Error al obtener plantillas por filtros', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    res.status(400).json({
+      message: 'Error al obtener plantillas por filtros',
+      error: error instanceof Error ? error.message : error
+    });
+  }
+};
+
+// Buscar plantillas por texto
+export const buscarPlantillas = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { termino } = req.query;
+    
+    if (!termino || typeof termino !== 'string') {
+      res.status(400).json({
+        message: 'Término de búsqueda es requerido'
+      });
+      return;
+    }
+
+    const plantillas = await buscarPlantillasService(termino);
+    res.json({
+      message: 'Búsqueda de plantillas completada',
+      plantillas,
+      total: plantillas.length,
+      termino
+    });
+  } catch (error) {
+    logger.error('Error al buscar plantillas', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    res.status(400).json({
+      message: 'Error al buscar plantillas',
+      error: error instanceof Error ? error.message : error
+    });
+  }
+};
+
+// Generar plan desde plantilla
+export const generarPlanDesdePlantilla = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const entrenadorId = req.user?.id;
+    if (!entrenadorId) {
+      res.status(401).json({ message: 'No autenticado' });
+      return;
+    }
+
+    const { objetivo, duracionSemanas, sesionesPorSemana, nombre, descripcion, fechaInicio, diasSemana, clientes, publico, nivelDificultad } = req.body;
+
+    if (!objetivo || !duracionSemanas || !sesionesPorSemana || !nombre || !fechaInicio || !diasSemana || !clientes) {
+      res.status(400).json({
+        message: 'Faltan campos requeridos: objetivo, duracionSemanas, sesionesPorSemana, nombre, fechaInicio, diasSemana, clientes'
+      });
+      return;
+    }
+
+    const resultado = await generarPlanDesdePlantillaService({
+      entrenadorId,
+      objetivo,
+      duracionSemanas,
+      sesionesPorSemana,
+      nombre,
+      descripcion,
+      fechaInicio,
+      diasSemana,
+      clientes,
+      publico,
+      nivelDificultad
+    });
+
+    logger.info('Plan generado desde plantilla correctamente', {
+      planId: resultado.plan._id,
+      objetivoUsado: resultado.plantillaUsada.objetivo
+    });
+
+    res.status(201).json({
+      message: 'Plan generado desde plantilla correctamente',
+      plan: resultado.plan,
+      sesionesCreadas: resultado.sesionesCreadas.length,
+      plantillaUsada: resultado.plantillaUsada
+    });
+  } catch (error) {
+    logger.error('Error al generar plan desde plantilla', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    res.status(400).json({
+      message: 'Error al generar plan desde plantilla',
       error: error instanceof Error ? error.message : error
     });
   }

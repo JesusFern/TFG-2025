@@ -4,6 +4,7 @@ import {
   crearEjercicioService, 
   obtenerEjerciciosService, 
   obtenerEjercicioPorIdService,
+  obtenerEjercicioPorSlugService,
   actualizarEjercicioService,
   eliminarEjercicioService
 } from '../../service/training/ejercicioService';
@@ -20,21 +21,33 @@ export const crearEjercicio = async (req: AuthenticatedRequest, res: Response) =
 
     const {
       nombre,
+      slug,
       descripcion,
       grupoMuscular,
       equipamiento,
       nivelDificultad,
-      videoDemostrativo,
+      tipoEjercicio,
+      instrucciones,
       publico
     } = matchedData(req, { locations: ['body'], includeOptionals: true }) as {
       nombre: string;
+      slug: string;
       descripcion: string;
       grupoMuscular: string;
       equipamiento: string;
       nivelDificultad: string;
-      videoDemostrativo?: string;
+      tipoEjercicio: string;
+      instrucciones?: string;
       publico?: boolean;
     };
+
+    // Manejar video subido
+    let videoDemostrativo: string | undefined;
+    if (req.file) {
+      // Construir URL del video subido
+      const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+      videoDemostrativo = `${baseUrl}/uploads/videos/${req.file.filename}`;
+    }
 
     logger.debug('Procesando datos para crear ejercicio', {
       creadorId,
@@ -46,10 +59,13 @@ export const crearEjercicio = async (req: AuthenticatedRequest, res: Response) =
     const ejercicio = await crearEjercicioService({
       creadorId,
       nombre,
+      slug,
       descripcion,
       grupoMuscular,
       equipamiento,
       nivelDificultad,
+      tipoEjercicio,
+      instrucciones,
       videoDemostrativo,
       publico
     });
@@ -71,8 +87,10 @@ export const obtenerEjercicios = async (req: AuthenticatedRequest, res: Response
       grupoMuscular?: string;
       nivelDificultad?: string;
       equipamiento?: string;
+      tipoEjercicio?: string;
       creador?: string;
       publico?: boolean;
+      arquetipo?: boolean;
     };
 
     const ejercicios = await obtenerEjerciciosService(filtros);
@@ -109,6 +127,25 @@ export const obtenerEjercicioPorId = async (req: AuthenticatedRequest, res: Resp
   }
 };
 
+export const obtenerEjercicioPorSlug = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { slug } = matchedData(req, { locations: ['params'] }) as { slug: string };
+
+    const ejercicio = await obtenerEjercicioPorSlugService(slug);
+
+    logger.info('Ejercicio obtenido correctamente', { slug });
+    res.status(200).json({ ejercicio });
+  } catch (error) {
+    logger.error('Error al obtener ejercicio', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    res.status(404).json({
+      message: 'Error al obtener ejercicio',
+      error: error instanceof Error ? error.message : error
+    });
+  }
+};
+
 export const actualizarEjercicio = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const creadorId = req.user?.id;
@@ -120,10 +157,13 @@ export const actualizarEjercicio = async (req: AuthenticatedRequest, res: Respon
     const { id } = matchedData(req, { locations: ['params'] }) as { id: string };
     const datosActualizacion = matchedData(req, { locations: ['body'], includeOptionals: true }) as Partial<{
       nombre: string;
+      slug: string;
       descripcion: string;
       grupoMuscular: string;
       equipamiento: string;
       nivelDificultad: string;
+      tipoEjercicio: string;
+      instrucciones: string;
       videoDemostrativo: string;
       publico: boolean;
     }>;

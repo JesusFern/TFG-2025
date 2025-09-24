@@ -127,6 +127,7 @@ const ModalReagendarCita: React.FC<ModalReagendarCitaProps> = ({
     <Modal
       opened={opened}
       onClose={handleClose}
+      zIndex={1000}
       title={
         <Group gap="xs">
           <IconRefresh size={20} color="var(--mantine-color-orange-6)" />

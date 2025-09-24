@@ -49,7 +49,7 @@ const ModalGestionarEjercicios: React.FC<ModalGestionarEjerciciosProps> = ({
     <Modal
       opened={opened}
       onClose={onClose}
-      zIndex={1000}
+      zIndex={1001}
       title={
         <Group gap="xs" align="center">
           <IconBarbell size={20} color="var(--mantine-color-nutroos-green-6)" />

@@ -91,6 +91,7 @@ const ModalCancelarCita: React.FC<ModalCancelarCitaProps> = ({
       }
       size="md"
       centered
+      zIndex={1000}
     >
       <div style={{ position: 'relative' }}>
         <LoadingOverlay visible={loading} />
