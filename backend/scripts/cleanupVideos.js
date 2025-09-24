@@ -77,10 +77,10 @@ function removeVideoField(block) {
   let result = filteredLines.join('\n');
   
   // Clean up any double commas that might have been left
-  result = result.replace(/,\s*,/g, ',');
+  result = result.replaceAll(/,\s*,/g, ',');
   
   // Clean up any trailing comma before closing brace
-  result = result.replace(/,(\s*})/g, '$1');
+  result = result.replaceAll(/,(\s*})/g, '$1');
   
   return result;
 }

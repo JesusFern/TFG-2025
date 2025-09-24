@@ -17,7 +17,7 @@ export const generateSlugFromName = (name: string): string => {
     .replace(/[^a-z0-9\s-]/g, '') // Remove special characters except spaces and hyphens
     .replace(/\s+/g, '-') // Replace spaces with hyphens
     .replace(/-+/g, '-') // Replace multiple hyphens with single hyphen
-    .replace(/^-|-$/g, ''); // Remove leading/trailing hyphens
+    .replace(/(^-|-$)/g, ''); // Remove leading/trailing hyphens - grouped for explicit precedence
 };
 
 export const useExerciseOptions = (): ExerciseOptions => {
