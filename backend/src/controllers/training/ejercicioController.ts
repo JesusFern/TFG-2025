@@ -45,7 +45,7 @@ export const crearEjercicio = async (req: AuthenticatedRequest, res: Response) =
     let videoDemostrativo: string | undefined;
     if (req.file) {
       // Construir URL del video subido
-      const baseUrl = process.env.BASE_URL || 'http://localhost:3001';
+      const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
       videoDemostrativo = `${baseUrl}/uploads/videos/${req.file.filename}`;
     }
 
