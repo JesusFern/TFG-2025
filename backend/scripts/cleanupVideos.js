@@ -65,8 +65,24 @@ function extractSlugFromBlock(block) {
 }
 
 function removeVideoField(block) {
-  // Remove videoDemostrativo field using a simple string replacement
-  return block.replace(/,?\s*videoDemostrativo:\s*['"][^'"]*['"]/, '');
+  // Remove videoDemostrativo field using a safer approach
+  const lines = block.split('\n');
+  const filteredLines = lines.filter(line => {
+    // Check if line contains videoDemostrativo field
+    const trimmedLine = line.trim();
+    return !trimmedLine.includes('videoDemostrativo:');
+  });
+  
+  // Join lines and clean up any trailing commas
+  let result = filteredLines.join('\n');
+  
+  // Clean up any double commas that might have been left
+  result = result.replace(/,\s*,/g, ',');
+  
+  // Clean up any trailing comma before closing brace
+  result = result.replace(/,(\s*})/g, '$1');
+  
+  return result;
 }
 
 // Parse exercise blocks safely

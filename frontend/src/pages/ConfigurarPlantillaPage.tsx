@@ -99,7 +99,7 @@ const ConfigurarPlantillaPage: React.FC = () => {
   ];
 
   const handleDiaSemanaChange = (dia: string, checked: boolean) => {
-    const diaNum = parseInt(dia);
+    const diaNum = Number.parseInt(dia, 10);
     if (checked) {
       setDiasSemana(prev => [...prev, diaNum]);
     } else {
@@ -340,10 +340,10 @@ const ConfigurarPlantillaPage: React.FC = () => {
                     {diasSemanaOptions.map((dia) => (
                       <Button
                         key={dia.value}
-                        variant={diasSemana.includes(parseInt(dia.value)) ? 'filled' : 'outline'}
-                        color={diasSemana.includes(parseInt(dia.value)) ? 'nutroos-green' : 'gray'}
-                        onClick={() => handleDiaSemanaChange(dia.value, !diasSemana.includes(parseInt(dia.value)))}
-                        disabled={diasSemana.length >= sesionesPorSemana && !diasSemana.includes(parseInt(dia.value))}
+                        variant={diasSemana.includes(Number.parseInt(dia.value, 10)) ? 'filled' : 'outline'}
+                        color={diasSemana.includes(Number.parseInt(dia.value, 10)) ? 'nutroos-green' : 'gray'}
+                        onClick={() => handleDiaSemanaChange(dia.value, !diasSemana.includes(Number.parseInt(dia.value, 10)))}
+                        disabled={diasSemana.length >= sesionesPorSemana && !diasSemana.includes(Number.parseInt(dia.value, 10))}
                         fullWidth
                       >
                         {dia.label}

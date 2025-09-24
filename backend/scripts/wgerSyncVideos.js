@@ -86,9 +86,9 @@ function normalizeText(text) {
   return text
     .toLowerCase()
     .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '') // Remove accents
-    .replace(/[^\w\s]/g, '') // Remove special chars
-    .replace(/\s+/g, ' ') // Normalize spaces
+    .replaceAll(/[\u0300-\u036f]/g, '') // Remove accents
+    .replaceAll(/[^\w\s]/g, '') // Remove special chars
+    .replaceAll(/\s+/g, ' ') // Normalize spaces
     .trim();
 }
 
@@ -176,7 +176,7 @@ async function findExerciseIdByName(nombre) {
       nombre.replace('Tríceps', 'Triceps'),
       nombre.replace('Bíceps', 'Biceps'),
       // Remove common words
-      nombre.replace(/\b(de|con|en|del|la|el|las|los)\b/g, '').trim(),
+      nombre.replaceAll(/\b(de|con|en|del|la|el|las|los)\b/g, '').trim(),
       // First word only
       nombre.split(' ')[0],
       // Last word only

@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import PlanEntrenamiento from '../../models/training/planEntrenamiento';
 import User from '../../models/users/user';
 import Sesion from '../../models/training/sesion';
@@ -492,8 +493,25 @@ export async function generarPlanDesdePlantillaService({
   }
 
   // Validar que todos los clientes existen
-  const clientesExistentes = await User.find({ _id: { $in: clientes }, role: 'user' });
-  if (clientesExistentes.length !== clientes.length) {
+  // Validar que todos los IDs son ObjectIds válidos
+  const clientesValidos = clientes.filter(id => {
+    try {
+      return mongoose.Types.ObjectId.isValid(id);
+    } catch {
+      return false;
+    }
+  });
+  
+  if (clientesValidos.length !== clientes.length) {
+    throw new Error('Algunos IDs de clientes no son válidos');
+  }
+  
+  const clientesExistentes = await User.find({ 
+    _id: { $in: clientesValidos }, 
+    role: 'user' 
+  });
+  
+  if (clientesExistentes.length !== clientesValidos.length) {
     throw new Error('Algunos clientes no fueron encontrados');
   }
 
