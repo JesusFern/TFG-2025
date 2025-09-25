@@ -8,7 +8,12 @@ import type {
   ActualizarPlanDTO, 
   SesionPlan, 
   CrearSesionAPIDTO,
-  ActualizarSesionDTO 
+  ActualizarSesionDTO,
+  RegistroEjercicio,
+  CrearRegistroEjercicioDTO,
+  ActualizarRegistroEjercicioDTO,
+  ProgresoEjercicio,
+  SesionCompleta
 } from '../types/training';
 
 const base = '/api/training';
@@ -211,6 +216,82 @@ export const trainingService = {
     if (!res.ok) throw new Error((await res.json()).message || 'Error al generar plan desde plantilla');
     const response = await res.json();
     return response.plan;
+  },
+
+  // Registro de Ejercicios
+  async crearRegistroEjercicio(data: CrearRegistroEjercicioDTO): Promise<RegistroEjercicio> {
+    const res = await apiRequest(`${base}/registros`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al crear registro de ejercicio');
+    const response = await res.json();
+    return response.registro;
+  },
+
+  async obtenerRegistrosEjercicio(params: Record<string, string | number | boolean> = {}): Promise<RegistroEjercicio[]> {
+    const query = new URLSearchParams(params as Record<string, string>).toString();
+    const res = await apiRequest(`${base}/registros${query ? `?${query}` : ''}`);
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al obtener registros');
+    const data = await res.json();
+    return data.registros || data.items || data;
+  },
+
+  async obtenerRegistroEjercicioPorId(id: string): Promise<RegistroEjercicio> {
+    const res = await apiRequest(`${base}/registros/${id}`);
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al obtener registro');
+    const data = await res.json();
+    return data.registro;
+  },
+
+  async actualizarRegistroEjercicio(id: string, data: ActualizarRegistroEjercicioDTO): Promise<RegistroEjercicio> {
+    const res = await apiRequest(`${base}/registros/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al actualizar registro');
+    const response = await res.json();
+    return response.registro;
+  },
+
+  async eliminarRegistroEjercicio(id: string): Promise<void> {
+    const res = await apiRequest(`${base}/registros/${id}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al eliminar registro');
+  },
+
+  async marcarRegistroCompletado(id: string): Promise<RegistroEjercicio> {
+    const res = await apiRequest(`${base}/registros/${id}/completado`, {
+      method: 'PATCH'
+    });
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al marcar registro como completado');
+    const response = await res.json();
+    return response.registro;
+  },
+
+  async obtenerProgresoEjercicio(ejercicioId: string, params: Record<string, string> = {}): Promise<ProgresoEjercicio[]> {
+    const query = new URLSearchParams(params).toString();
+    const res = await apiRequest(`${base}/registros/progreso/${ejercicioId}${query ? `?${query}` : ''}`);
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al obtener progreso');
+    const data = await res.json();
+    return data.progreso || data;
+  },
+
+  async verificarSesionCompleta(sesionId: string): Promise<SesionCompleta> {
+    const res = await apiRequest(`${base}/registros/verificar-sesion/${sesionId}`);
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al verificar sesión');
+    const data = await res.json();
+    return data;
+  },
+  
+  // Sesión: marcar como completada (permite completar aunque falten ejercicios)
+  async marcarSesionCompletada(sesionId: string): Promise<{ message: string; sesion: SesionPlan }> {
+    const res = await apiRequest(`${base}/sesiones/${sesionId}/completar`, {
+      method: 'PATCH'
+    });
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al marcar sesión como completada');
+    return await res.json();
   },
 };
 

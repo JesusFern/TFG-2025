@@ -103,6 +103,46 @@ export type CrearSesionAPIDTO = {
 
 export type ActualizarSesionDTO = Partial<CrearSesionDTO>;
 
+export interface RegistroEjercicio {
+  _id?: string;
+  ejercicio: string; // ID del ejercicio
+  sesion: string; // ID de la sesión
+  cliente: string; // ID del cliente
+  repeticionesRealizadas: number;
+  seriesCompletadas: number;
+  cargaUtilizada?: number; // peso utilizado
+  nivelEsfuerzo: number; // 1-10
+  videoCliente?: string; // URL del video del cliente
+  notas?: string;
+  tiempoDescanso?: number; // tiempo real de descanso
+  duracionEjercicio?: number; // duración real del ejercicio
+  ordenEnSesion?: number; // orden en la sesión
+  completado: boolean;
+  fecha: string; // fecha del registro
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export type CrearRegistroEjercicioDTO = Omit<RegistroEjercicio, '_id' | 'cliente' | 'fecha' | 'createdAt' | 'updatedAt'>;
+export type ActualizarRegistroEjercicioDTO = Partial<CrearRegistroEjercicioDTO> & { completado?: boolean };
+
+export interface ProgresoEjercicio {
+  ejercicio: Ejercicio;
+  registros: RegistroEjercicio[];
+  mejorCarga: number;
+  mejorRepeticiones: number;
+  progresoPromedio: number;
+  totalSesiones: number;
+}
+
+export interface SesionCompleta {
+  sesionCompleta: boolean;
+  totalEjercicios: number;
+  ejerciciosRegistrados: number;
+  ejerciciosCompletados: number;
+  porcentajeCompletado: number;
+}
+
 export interface Paginado<T> {
   items: T[];
   total: number;

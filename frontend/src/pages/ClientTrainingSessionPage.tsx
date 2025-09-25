@@ -14,27 +14,27 @@ import {
   Paper,
   Button,
   Center,
-  SimpleGrid,
-  Box,
-  Timeline,
-  ActionIcon
+  SimpleGrid
 } from '@mantine/core';
 import { 
   IconArrowLeft, 
   IconClock, 
-  IconTarget, 
   IconBarbell,
   IconAlertCircle,
-  IconEye,
-  IconWeight,
   IconRepeat,
-  IconPlayerPlay
+  IconPlayerPlay,
+  IconTrophy
 } from '@tabler/icons-react';
 import { useThemeDetection } from '../hooks/useThemeDetection';
 import { formatDate } from '../utils/trainingUtils';
-import { SesionPlan, Ejercicio } from '../types/training';
+import { SesionPlan, Ejercicio, RegistroEjercicio, SesionCompleta } from '../types/training';
 import { trainingService } from '../services/trainingService';
 import ModalDetallesEjercicio from '../components/molecules/ModalDetallesEjercicio';
+import ModalRegistroEjercicio from '../components/molecules/ModalRegistroEjercicio';
+import ModalDetallesRegistro from '../components/molecules/ModalDetallesRegistro';
+import ModalEditarRegistro from '../components/molecules/ModalEditarRegistro';
+import ModalSesionCompleta from '../components/molecules/ModalSesionCompleta';
+import EjercicioRegistroCard from '../components/molecules/EjercicioRegistroCard';
 
 const ClientTrainingSessionPage: React.FC = () => {
   const { planId, sesionId } = useParams();
@@ -44,10 +44,42 @@ const ClientTrainingSessionPage: React.FC = () => {
   
   const [sesion, setSesion] = useState<SesionPlan | null>(null);
   const [ejercicios, setEjercicios] = useState<Ejercicio[]>([]);
+  const [registros, setRegistros] = useState<RegistroEjercicio[]>([]);
+  const [sesionCompleta, setSesionCompleta] = useState<SesionCompleta | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selectedEjercicio, setSelectedEjercicio] = useState<Ejercicio | null>(null);
   const [modalOpened, setModalOpened] = useState(false);
+  
+  // Estados para modales de registro
+  const [modalRegistroOpened, setModalRegistroOpened] = useState(false);
+  const [modalDetallesOpened, setModalDetallesOpened] = useState(false);
+  const [modalEditarOpened, setModalEditarOpened] = useState(false);
+  const [modalSesionCompletaOpened, setModalSesionCompletaOpened] = useState(false);
+  const [selectedRegistro, setSelectedRegistro] = useState<RegistroEjercicio | null>(null);
+
+  // Función para determinar si la sesión es futura
+  const esSesionFutura = (fechaSesion: string): boolean => {
+    const hoy = new Date();
+    const fechaSesionDate = new Date(fechaSesion);
+    
+    // Resetear las horas para comparar solo fechas
+    hoy.setHours(0, 0, 0, 0);
+    fechaSesionDate.setHours(0, 0, 0, 0);
+    
+    return fechaSesionDate > hoy;
+  };
+
+  const [ejercicioParaRegistrar, setEjercicioParaRegistrar] = useState<{
+    ejercicio: Ejercicio;
+    ejercicioSesion: {
+      series: number;
+      repeticiones: number;
+      peso?: number;
+      tiempoDescanso: number;
+      nivelIntensidad: string;
+    };
+  } | null>(null);
 
   useEffect(() => {
     const cargarSesion = async () => {
@@ -75,6 +107,23 @@ const ClientTrainingSessionPage: React.FC = () => {
           });
           setEjercicios([]);
         }
+
+        // Cargar registros de ejercicios
+        try {
+          const registrosData = await trainingService.obtenerRegistrosEjercicio({ sesion: sesionId });
+          setRegistros(registrosData);
+        } catch (err) {
+          console.warn('Error al cargar registros:', err);
+          setRegistros([]);
+        }
+
+        // Verificar estado de la sesión
+        try {
+          const sesionCompletaData = await trainingService.verificarSesionCompleta(sesionId);
+          setSesionCompleta(sesionCompletaData);
+        } catch (err) {
+          console.warn('Error al verificar sesión completa:', err);
+        }
         
       } catch (err) {
         console.error('Error al cargar sesión:', err);
@@ -94,6 +143,149 @@ const ClientTrainingSessionPage: React.FC = () => {
 
   const getEjercicioById = (ejercicioId: string): Ejercicio | null => {
     return ejercicios.find(e => e._id === ejercicioId) || null;
+  };
+
+  const getRegistroByEjercicio = (ejercicioId: string): RegistroEjercicio | undefined => {
+    // El campo ejercicio puede ser un objeto o un string, necesitamos manejarlo
+    const registro = registros.find(r => {
+      const ejercicioIdEnRegistro = typeof r.ejercicio === 'string' 
+        ? r.ejercicio 
+        : (r.ejercicio as { _id: string })._id;
+      return ejercicioIdEnRegistro === ejercicioId;
+    });
+    
+    return registro;
+  };
+
+  const handleRegistrarEjercicio = (
+    ejercicio: Ejercicio,
+    ejercicioSesion: {
+      series: number;
+      repeticiones: number;
+      peso?: number;
+      tiempoDescanso: number;
+      nivelIntensidad: string;
+    }
+  ) => {
+    setEjercicioParaRegistrar({ ejercicio, ejercicioSesion });
+    setModalRegistroOpened(true);
+  };
+
+  const handleNoCompletado = async (ejercicio: Ejercicio) => {
+    try {
+      const datosRegistro = {
+        ejercicio: ejercicio._id!,
+        sesion: sesionId!,
+        repeticionesRealizadas: 0,
+        seriesCompletadas: 0,
+        cargaUtilizada: 0,
+        nivelEsfuerzo: 1,
+        videoCliente: '',
+        notas: 'Ejercicio no completado',
+        tiempoDescanso: 0,
+        duracionEjercicio: 0,
+        ordenEnSesion: 1,
+        completado: false
+      };
+
+      await trainingService.crearRegistroEjercicio(datosRegistro);
+      await handleRegistroExitoso();
+    } catch (err) {
+      console.error('Error al registrar ejercicio no completado:', err);
+    }
+  };
+
+  const handleVerRegistro = (registro: RegistroEjercicio) => {
+    setSelectedRegistro(registro);
+    setModalDetallesOpened(true);
+  };
+
+  const handleEditarRegistro = (registro: RegistroEjercicio) => {
+    setSelectedRegistro(registro);
+    setModalEditarOpened(true);
+  };
+
+  const handleActualizacionExitosa = async () => {
+    // Recargar registros y estado de sesión
+    if (sesionId) {
+      try {
+        const registrosData = await trainingService.obtenerRegistrosEjercicio({ sesion: sesionId });
+        setRegistros(registrosData);
+        
+        const sesionCompletaData = await trainingService.verificarSesionCompleta(sesionId);
+        setSesionCompleta(sesionCompletaData);
+      } catch (err) {
+        console.error('Error al recargar datos:', err);
+      }
+    }
+  };
+
+  const handleRegistroExitoso = async () => {
+    // Recargar registros y estado de sesión
+    if (sesionId) {
+      try {
+        const registrosData = await trainingService.obtenerRegistrosEjercicio({ sesion: sesionId });
+        setRegistros(registrosData);
+        
+        const sesionCompletaData = await trainingService.verificarSesionCompleta(sesionId);
+        setSesionCompleta(sesionCompletaData);
+      } catch (err) {
+        console.error('Error al recargar datos:', err);
+      }
+    }
+  };
+
+  const handleMarcarSesionCompleta = () => {
+    setModalSesionCompletaOpened(true);
+  };
+
+  const handleConfirmarSesionCompleta = async () => {
+    if (!sesionId || !sesion) return;
+    try {
+      // Crear registros "no completados" para ejercicios sin registrar
+      const ejerciciosSinRegistrar = sesion.ejercicios?.filter(ejercicioSesion => {
+        const ejercicio = ejercicioSesion.ejercicio as unknown as Ejercicio;
+        const registro = getRegistroByEjercicio(ejercicio?._id || '');
+        return !registro;
+      }) || [];
+
+      // Crear registros para ejercicios sin registrar
+      for (const ejercicioSesion of ejerciciosSinRegistrar) {
+        const ejercicio = ejercicioSesion.ejercicio as unknown as Ejercicio;
+        const datosRegistro = {
+          ejercicio: ejercicio._id!,
+          sesion: sesionId,
+          repeticionesRealizadas: 0,
+          seriesCompletadas: 0,
+          cargaUtilizada: 0,
+          nivelEsfuerzo: 1,
+          videoCliente: '',
+          notas: 'Ejercicio no completado - Sesión marcada como completa',
+          tiempoDescanso: 0,
+          duracionEjercicio: 0,
+          ordenEnSesion: 1,
+          completado: false
+        };
+
+        await trainingService.crearRegistroEjercicio(datosRegistro);
+      }
+
+      // Marcar sesión como completada
+      await trainingService.marcarSesionCompletada(sesionId);
+      setModalSesionCompletaOpened(false);
+
+      // Refrescar datos de sesión y estado
+      const sesionData = await trainingService.obtenerSesionPorId(sesionId);
+      setSesion(sesionData);
+      const sesionCompletaData = await trainingService.verificarSesionCompleta(sesionId);
+      setSesionCompleta(sesionCompletaData);
+      
+      // Recargar registros
+      const registrosData = await trainingService.obtenerRegistrosEjercicio({ sesion: sesionId });
+      setRegistros(registrosData);
+    } catch (err) {
+      console.error('Error al marcar sesión como completa', err);
+    }
   };
 
   const formatTime = (minutes: number): string => {
@@ -246,6 +438,69 @@ const ClientTrainingSessionPage: React.FC = () => {
         </SimpleGrid>
       </Paper>
 
+      {/* Panel de estado y acción para completar sesión (movido arriba) */}
+      {sesionCompleta && (
+        <Paper 
+          p="lg" 
+          shadow="xs" 
+          radius="md" 
+          mb="xl" 
+          withBorder
+          bg={isDark ? "dark.7" : "white"}
+          style={{ borderColor: isDark ? theme.colors.dark[4] : theme.colors.gray[3] }}
+        >
+          <Group justify="space-between" align="center">
+            <div>
+              <Group align="center" mb="xs">
+                <Title order={3} c="nutroos-green.6">
+                  Estado de la Sesión
+                </Title>
+                {sesion?.completada && (
+                  <Badge color="green" variant="filled" leftSection={<IconTrophy size={12} />}>
+                    Completada
+                  </Badge>
+                )}
+              </Group>
+              <Text c="dimmed">
+                {sesionCompleta.ejerciciosCompletados} de {sesionCompleta.totalEjercicios} ejercicios completados • {sesionCompleta.porcentajeCompletado?.toFixed?.(0) ?? 0}%
+              </Text>
+            </div>
+            {!sesion?.completada && sesion?.fecha && !esSesionFutura(sesion.fecha) && (
+              <Button
+                color="nutroos-green"
+                leftSection={<IconTrophy size={16} />}
+                onClick={handleMarcarSesionCompleta}
+              >
+                Marcar Sesión como Completa
+              </Button>
+            )}
+          </Group>
+        </Paper>
+      )}
+
+      {/* Aviso informativo */}
+      {sesion && esSesionFutura(sesion.fecha) ? (
+        <Alert
+          color="orange"
+          variant="light"
+          title="Sesión Futura"
+          mb="lg"
+          icon={<IconClock size={16} />}
+        >
+          Esta sesión está programada para el futuro. No puedes registrar ejercicios hasta el día acordado para realizar la sesión.
+        </Alert>
+      ) : (
+        <Alert
+          color="blue"
+          variant="light"
+          title="Importante"
+          mb="lg"
+          icon={<IconAlertCircle size={16} />}
+        >
+          Recuerda registrar tus ejercicios para llevar un seguimiento adecuado de tus entrenos. Esto ayuda a tu entrenador a ver tu progreso.
+        </Alert>
+      )}
+
       {/* Lista de ejercicios */}
       <Paper 
         p="lg" 
@@ -272,160 +527,31 @@ const ClientTrainingSessionPage: React.FC = () => {
             </Stack>
           </Center>
         ) : (
-          <Timeline active={sesion.ejercicios?.length || 0} bulletSize={24} lineWidth={2}>
+          <Stack gap="md">
             {sesion.ejercicios?.map((ejercicioSesion, index) => {
               const ejercicio = ejercicioSesion.ejercicio as unknown as Ejercicio;
+              const registro = getRegistroByEjercicio(ejercicio?._id || '');
+              
               
               return (
-                <Timeline.Item
+                <EjercicioRegistroCard
                   key={index}
-                  bullet={
-                    <ActionIcon
-                      size={24}
-                      radius="xl"
-                      color="nutroos-green"
-                      variant="filled"
-                    >
-                      {index + 1}
-                    </ActionIcon>
-                  }
-                  title={
-                    <Group justify="space-between" align="flex-start">
-                      <div>
-                        <Text fw={600} size="lg">
-                          {ejercicio?.nombre || 'Ejercicio no encontrado'}
-                        </Text>
-                        <Text size="sm" c="dimmed">
-                          {ejercicio?.grupoMuscular} • {ejercicio?.equipamiento}
-                        </Text>
-                      </div>
-                      <Button
-                        size="xs"
-                        variant="light"
-                        leftSection={<IconEye size={14} />}
-                        onClick={() => ejercicio && handleVerEjercicio(ejercicio)}
-                        disabled={!ejercicio}
-                      >
-                        Ver Detalles
-                      </Button>
-                    </Group>
-                  }
-                >
-                  <Card
-                    p="md"
-                    radius="md"
-                    bg={isDark ? "dark.8" : "gray.0"}
-                    withBorder
-                    style={{ borderColor: isDark ? theme.colors.dark[4] : theme.colors.gray[3] }}
-                  >
-                    <SimpleGrid cols={{ base: 1, sm: 2, md: 4 }} spacing="md">
-                      <Box>
-                        <Text size="xs" fw={600} c="dimmed" mb="xs">
-                          SERIES
-                        </Text>
-                        <Group gap="xs">
-                          <IconRepeat size={16} color={theme.colors.blue[6]} />
-                          <Text fw={600}>{ejercicioSesion.series}</Text>
-                        </Group>
-                      </Box>
-
-                      <Box>
-                        <Text size="xs" fw={600} c="dimmed" mb="xs">
-                          REPETICIONES
-                        </Text>
-                        <Group gap="xs">
-                          <IconTarget size={16} color={theme.colors.teal[6]} />
-                          <Text fw={600}>{ejercicioSesion.repeticiones}</Text>
-                        </Group>
-                      </Box>
-
-                      {ejercicioSesion.peso && (
-                        <Box>
-                          <Text size="xs" fw={600} c="dimmed" mb="xs">
-                            PESO
-                          </Text>
-                          <Group gap="xs">
-                            <IconWeight size={16} color={theme.colors.orange[6]} />
-                            <Text fw={600}>{ejercicioSesion.peso} kg</Text>
-                          </Group>
-                        </Box>
-                      )}
-
-                      <Box>
-                        <Text size="xs" fw={600} c="dimmed" mb="xs">
-                          DESCANSO
-                        </Text>
-                        <Group gap="xs">
-                          <IconClock size={16} color={theme.colors.cyan[6]} />
-                          <Text fw={600}>{ejercicioSesion.tiempoDescanso}s</Text>
-                        </Group>
-                      </Box>
-
-                      <Box>
-                        <Text size="xs" fw={600} c="dimmed" mb="xs">
-                          INTENSIDAD
-                        </Text>
-                        <Group gap="xs">
-                          <IconTarget size={16} color={theme.colors.grape[6]} />
-                          <Text fw={600}>{ejercicioSesion.nivelIntensidad}</Text>
-                        </Group>
-                      </Box>
-                    </SimpleGrid>
-
-                    {/* Ejercicios alternativos */}
-                    {ejercicioSesion.ejerciciosAlternativos && ejercicioSesion.ejerciciosAlternativos.length > 0 && (
-                      <Box mt="md">
-                        <Text size="xs" fw={600} c="dimmed" mb="xs">
-                          EJERCICIOS ALTERNATIVOS
-                        </Text>
-                        <Group gap="xs">
-                          {ejercicioSesion.ejerciciosAlternativos.map((altId, idx) => {
-                            const altEjercicio = getEjercicioById(altId);
-                            return (
-                              <Badge
-                                key={idx}
-                                size="sm"
-                                variant="light"
-                                color="gray"
-                              >
-                                {altEjercicio?.nombre || 'Ejercicio no encontrado'}
-                              </Badge>
-                            );
-                          })}
-                        </Group>
-                      </Box>
-                    )}
-
-                    {/* Opciones de progresión */}
-                    {ejercicioSesion.opcionesProgresion && (
-                      <Box mt="md">
-                        <Text size="xs" fw={600} c="dimmed" mb="xs">
-                          OPCIONES DE PROGRESIÓN
-                        </Text>
-                        <Group gap="xs">
-                          {ejercicioSesion.opcionesProgresion.aumentarPeso && (
-                            <Badge size="sm" color="green" variant="light">
-                              Aumentar Peso
-                            </Badge>
-                          )}
-                          {ejercicioSesion.opcionesProgresion.masRepeticiones && (
-                            <Badge size="sm" color="blue" variant="light">
-                              Más Repeticiones
-                            </Badge>
-                          )}
-                          {ejercicioSesion.opcionesProgresion.mayorIntensidad && (
-                            <Badge size="sm" color="orange" variant="light">
-                              Mayor Intensidad
-                            </Badge>
-                          )}
-                        </Group>
-                      </Box>
-                    )}
-                  </Card>
-                </Timeline.Item>
+                  ejercicio={ejercicio}
+                  ejercicioSesion={ejercicioSesion}
+                  registro={registro}
+                  onRegistrar={() => ejercicio && handleRegistrarEjercicio(ejercicio, ejercicioSesion)}
+                  onNoCompletado={() => ejercicio && handleNoCompletado(ejercicio)}
+                  onVerRegistro={() => registro && handleVerRegistro(registro)}
+                  onEditarRegistro={() => registro && handleEditarRegistro(registro)}
+                  onVerEjercicio={() => ejercicio && handleVerEjercicio(ejercicio)}
+                  orden={index + 1}
+                  sesionCompletada={sesionCompleta?.sesionCompleta || false}
+                  sesionMarcadaCompleta={sesion?.completada || false}
+                  sesionFutura={sesion ? esSesionFutura(sesion.fecha) : false}
+                />
               );
             })}
-          </Timeline>
+          </Stack>
         )}
       </Paper>
 
@@ -446,12 +572,71 @@ const ClientTrainingSessionPage: React.FC = () => {
         </Paper>
       )}
 
-      {/* Modal de detalles del ejercicio */}
+
+      {/* Modales */}
       <ModalDetallesEjercicio
         opened={modalOpened}
         onClose={() => setModalOpened(false)}
         ejercicio={selectedEjercicio}
       />
+
+      {ejercicioParaRegistrar && (
+        <ModalRegistroEjercicio
+          opened={modalRegistroOpened}
+          onClose={() => {
+            setModalRegistroOpened(false);
+            setEjercicioParaRegistrar(null);
+          }}
+          ejercicio={ejercicioParaRegistrar.ejercicio}
+          sesion={sesion!}
+          ejercicioSesion={ejercicioParaRegistrar.ejercicioSesion}
+          onSuccess={handleRegistroExitoso}
+        />
+      )}
+
+      {selectedRegistro && (
+        <ModalDetallesRegistro
+          opened={modalDetallesOpened}
+          onClose={() => {
+            setModalDetallesOpened(false);
+            setSelectedRegistro(null);
+          }}
+          registro={selectedRegistro}
+          ejercicio={typeof selectedRegistro.ejercicio === 'string' 
+            ? getEjercicioById(selectedRegistro.ejercicio) || {} as Ejercicio
+            : selectedRegistro.ejercicio as Ejercicio
+          }
+          onEditar={() => {
+            setModalDetallesOpened(false);
+            handleEditarRegistro(selectedRegistro);
+          }}
+        />
+      )}
+
+      {selectedRegistro && (
+        <ModalEditarRegistro
+          opened={modalEditarOpened}
+          onClose={() => {
+            setModalEditarOpened(false);
+            setSelectedRegistro(null);
+          }}
+          registro={selectedRegistro}
+          ejercicio={typeof selectedRegistro.ejercicio === 'string' 
+            ? getEjercicioById(selectedRegistro.ejercicio) || {} as Ejercicio
+            : selectedRegistro.ejercicio as Ejercicio
+          }
+          onSuccess={handleActualizacionExitosa}
+        />
+      )}
+
+      {sesionCompleta && (
+        <ModalSesionCompleta
+          opened={modalSesionCompletaOpened}
+          onClose={() => setModalSesionCompletaOpened(false)}
+          sesionCompleta={sesionCompleta}
+          onConfirmar={handleConfirmarSesionCompleta}
+        />
+      )}
     </Container>
   );
 };

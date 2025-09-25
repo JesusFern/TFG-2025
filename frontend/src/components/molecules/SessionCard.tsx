@@ -11,7 +11,9 @@ import {
   IconClock,
   IconBarbell,
   IconCalendar,
-  IconPlayerPlay
+  IconPlayerPlay,
+  IconTrophy,
+  IconX
 } from '@tabler/icons-react';
 import { SesionPlan } from '../../types/training';
 import { Ejercicio } from '../../types/training';
@@ -35,6 +37,7 @@ import InteractiveCard from '../atoms/InteractiveCard';
 interface SessionCardProps {
   sesion: SesionPlan;
   fechaFormateada: string;
+  fecha: Date;
   ejercicios: Ejercicio[];
   onSessionClick: (sesionId: string) => void;
 }
@@ -42,9 +45,34 @@ interface SessionCardProps {
 const SessionCard: React.FC<SessionCardProps> = ({
   sesion,
   fechaFormateada,
+  fecha,
   ejercicios,
   onSessionClick
 }) => {
+  // Función para determinar si una fecha es hoy
+  const esHoy = (fechaSesion: Date): boolean => {
+    const hoy = new Date();
+    const fechaComparar = new Date(fechaSesion);
+    
+    // Resetear las horas para comparar solo fechas
+    hoy.setHours(0, 0, 0, 0);
+    fechaComparar.setHours(0, 0, 0, 0);
+    
+    return hoy.getTime() === fechaComparar.getTime();
+  };
+
+  // Función para determinar si una sesión está atrasada (no completada en su día)
+  const esAtrasada = (fechaSesion: Date, completada?: boolean): boolean => {
+    const hoy = new Date();
+    const fechaComparar = new Date(fechaSesion);
+    
+    // Resetear las horas para comparar solo fechas
+    hoy.setHours(0, 0, 0, 0);
+    fechaComparar.setHours(0, 0, 0, 0);
+    
+    // Si la sesión es del pasado y no está completada, está atrasada
+    return fechaComparar < hoy && !completada;
+  };
   const handleClick = () => {
     if (sesion._id) {
       onSessionClick(sesion._id);
@@ -61,9 +89,44 @@ const SessionCard: React.FC<SessionCardProps> = ({
         {/* Header de la sesión */}
         <Group justify="space-between" align="flex-start">
           <div>
-            <Title order={5} mb="xs" c="nutroos-green.6">
-              {sesion.tipoEntrenamiento}
-            </Title>
+            <Group align="center" mb="xs">
+              <Title order={5} c="nutroos-green.6">
+                {sesion.tipoEntrenamiento}
+              </Title>
+              {/* Etiquetas de estado */}
+              <Group gap="xs">
+                {esHoy(fecha) && (
+                  <Badge 
+                    color="blue" 
+                    variant="filled" 
+                    leftSection={<IconCalendar size={12} />}
+                    size="xs"
+                  >
+                    Hoy
+                  </Badge>
+                )}
+                {sesion.completada && (
+                  <Badge 
+                    color="green" 
+                    variant="filled" 
+                    leftSection={<IconTrophy size={12} />}
+                    size="xs"
+                  >
+                    Completada
+                  </Badge>
+                )}
+                {esAtrasada(fecha, sesion.completada) && (
+                  <Badge 
+                    color="red" 
+                    variant="filled" 
+                    leftSection={<IconX size={12} />}
+                    size="xs"
+                  >
+                    No Completado
+                  </Badge>
+                )}
+              </Group>
+            </Group>
             <Text size="sm" c="dimmed" fw={500}>
               {fechaFormateada}
             </Text>

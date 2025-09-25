@@ -32,7 +32,8 @@ export const crearRegistroEjercicio = async (req: AuthenticatedRequest, res: Res
       notas,
       tiempoDescanso,
       duracionEjercicio,
-      ordenEnSesion
+      ordenEnSesion,
+      completado
     } = matchedData(req, { locations: ['body'], includeOptionals: true }) as {
       ejercicio: string;
       sesion: string;
@@ -45,6 +46,7 @@ export const crearRegistroEjercicio = async (req: AuthenticatedRequest, res: Res
       tiempoDescanso?: number;
       duracionEjercicio?: number;
       ordenEnSesion?: number;
+      completado?: boolean;
     };
 
     logger.debug('Procesando datos para crear registro de ejercicio', {
@@ -66,7 +68,8 @@ export const crearRegistroEjercicio = async (req: AuthenticatedRequest, res: Res
       notas,
       tiempoDescanso,
       duracionEjercicio,
-      ordenEnSesion
+      ordenEnSesion,
+      completado
     });
 
     logger.info('Registro de ejercicio creado correctamente', { registroId: registro._id });

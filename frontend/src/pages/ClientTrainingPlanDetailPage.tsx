@@ -120,6 +120,7 @@ const ClientTrainingPlanDetailPage: React.FC = () => {
                     key={`${sesionInfo.weekDayIndex}-${index}`}
                     sesion={sesion}
                     fechaFormateada={sesionInfo.fechaFormateada}
+                    fecha={sesionInfo.fecha}
                     ejercicios={ejercicios}
                     onSessionClick={handleVerSesion}
                   />

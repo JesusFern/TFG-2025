@@ -177,7 +177,8 @@ export const crearRegistroEjercicioValidator = [
   body('notas').optional().isString().trim().isLength({ max: 1000 }).withMessage('Las notas deben tener máximo 1000 caracteres'),
   body('tiempoDescanso').optional().isInt({ min: 0, max: 3600 }).toInt().withMessage('El tiempo de descanso debe ser un número entero entre 0 y 3600 segundos'),
   body('duracionEjercicio').optional().isInt({ min: 0, max: 7200 }).toInt().withMessage('La duración del ejercicio debe ser un número entero entre 0 y 7200 segundos'),
-  body('ordenEnSesion').optional().isInt({ min: 1 }).toInt().withMessage('El orden en la sesión debe ser un número entero mayor que 0')
+  body('ordenEnSesion').optional().isInt({ min: 1 }).toInt().withMessage('El orden en la sesión debe ser un número entero mayor que 0'),
+  body('completado').optional().isBoolean().toBoolean().withMessage('El campo completado debe ser un booleano')
 ];
 
 export const actualizarRegistroEjercicioValidator = [

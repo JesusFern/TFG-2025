@@ -16,7 +16,8 @@ export async function crearRegistroEjercicioService({
   notas,
   tiempoDescanso,
   duracionEjercicio,
-  ordenEnSesion
+  ordenEnSesion,
+  completado
 }: {
   ejercicioId: string;
   sesionId: string;
@@ -30,6 +31,7 @@ export async function crearRegistroEjercicioService({
   tiempoDescanso?: number;
   duracionEjercicio?: number;
   ordenEnSesion?: number;
+  completado?: boolean;
 }) {
   // Validar que el cliente existe y tiene rol 'user'
   const clienteUser = await User.findById(clienteId);
@@ -96,7 +98,9 @@ export async function crearRegistroEjercicioService({
     notas,
     tiempoDescanso,
     duracionEjercicio,
-    ordenEnSesion: ordenEnSesion || ejercicioEnSesion.orden
+    ordenEnSesion: ordenEnSesion || ejercicioEnSesion.orden,
+    completado: completado !== undefined ? completado : true, // Usar el valor enviado o true por defecto
+    fecha: new Date()
   });
 
   await registro.save();
@@ -316,15 +320,26 @@ export async function verificarSesionCompletaService(sesionId: string, clienteId
   const ejerciciosConRegistro = registros.map(r => r.ejercicio.toString());
   const ejerciciosSesion = sesion.ejercicios.map(e => e.ejercicio.toString());
   
+  // Calcular ejercicios completados (con completado: true)
+  const ejerciciosCompletados = registros
+    .filter(r => r.completado)
+    .map(r => r.ejercicio.toString());
+  
   const ejerciciosFaltantes = ejerciciosSesion.filter(ejercicioId => 
     !ejerciciosConRegistro.includes(ejercicioId)
   );
+
+  const porcentajeCompletado = ejerciciosSesion.length > 0 
+    ? Math.round((ejerciciosCompletados.length / ejerciciosSesion.length) * 100)
+    : 0;
 
   return {
     sesionCompleta: ejerciciosFaltantes.length === 0,
     ejerciciosFaltantes,
     totalEjercicios: ejerciciosSesion.length,
     ejerciciosRegistrados: ejerciciosConRegistro.length,
+    ejerciciosCompletados: ejerciciosCompletados.length,
+    porcentajeCompletado,
     registros
   };
 }
