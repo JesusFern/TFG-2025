@@ -16,7 +16,11 @@ const RegistroEjercicioSchema = new mongoose.Schema({
   videoCliente: { type: String },
   notas: { type: String },
   completado: { type: Boolean, default: false },
-  fecha: { type: Date, default: Date.now }
+  fecha: { type: Date, default: Date.now },
+  // Campos adicionales para mejor seguimiento
+  tiempoDescanso: { type: Number, min: 0 }, // Tiempo de descanso entre series en segundos
+  duracionEjercicio: { type: Number, min: 0 }, // Duración total del ejercicio en segundos
+  ordenEnSesion: { type: Number, min: 1 } // Orden del ejercicio en la sesión
 }, {
   timestamps: true
 });
@@ -26,5 +30,9 @@ RegistroEjercicioSchema.index({ sesion: 1 });
 RegistroEjercicioSchema.index({ cliente: 1 });
 RegistroEjercicioSchema.index({ fecha: 1 });
 RegistroEjercicioSchema.index({ completado: 1 });
+// Índices compuestos para consultas frecuentes
+RegistroEjercicioSchema.index({ sesion: 1, cliente: 1 });
+RegistroEjercicioSchema.index({ sesion: 1, ejercicio: 1 });
+RegistroEjercicioSchema.index({ cliente: 1, fecha: 1 });
 
 export default mongoose.model('RegistroEjercicio', RegistroEjercicioSchema);
