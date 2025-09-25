@@ -30,7 +30,7 @@ import {
   IconX
 } from '@tabler/icons-react';
 import { Comida, Plato, DiaDieta } from '../../types';
-import PlatoForm from '../../components/forms/diets/PlatoForm';
+import PlatoFormConIngredientes from '../../components/forms/diets/PlatoFormConIngredientes';
 import { actualizarDiaDieta } from '../../services/dietService';
 import { actualizarPlatos, crearPlato, eliminarPlato } from '../../services/platoService';
 
@@ -507,18 +507,36 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
             {editingPlato ? "Editar Plato" : "Añadir Plato"}
           </Text>
         }
-        size="lg"
+        size="xl"
         centered
+        scrollAreaComponent={undefined}
+        zIndex={2000}
+        styles={{
+          content: {
+            maxHeight: '90vh',
+            overflow: 'hidden',
+            zIndex: 2000
+          },
+          body: {
+            padding: 0,
+            maxHeight: 'calc(90vh - 60px)',
+            overflow: 'auto'
+          },
+          overlay: {
+            zIndex: 1999
+          }
+        }}
         overlayProps={{
           color: isDark ? 'rgba(0, 0, 0, 0.7)' : 'rgba(0, 0, 0, 0.3)'
         }}
       >
         <Box p="md">
-          <PlatoForm 
+          <PlatoFormConIngredientes 
             plato={editingPlato || {
               nombre: '',
               orden: comida.platos.length + 1,
-              receta: null
+              receta: null,
+              ingredientesPersonalizados: []
             }}
             onSave={handleSavePlato}
             onCancel={closeModal}

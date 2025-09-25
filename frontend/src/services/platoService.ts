@@ -11,6 +11,10 @@ const formatearPlatoParaBackend = (plato: Plato) => {
     nombre: string;
     orden: number;
     receta?: string | null;
+    ingredientesPersonalizados?: Array<{
+      ingrediente: string;
+      peso: number;
+    }>;
   } = {
     nombre: plato.nombre || '',
     orden: plato.orden
@@ -34,6 +38,10 @@ const formatearPlatoParaBackend = (plato: Plato) => {
   
   if (plato.receta) {
     platoFormateado.receta = plato.receta;
+  }
+  
+  if (plato.ingredientesPersonalizados && plato.ingredientesPersonalizados.length > 0) {
+    platoFormateado.ingredientesPersonalizados = plato.ingredientesPersonalizados;
   }
   
   return platoFormateado;

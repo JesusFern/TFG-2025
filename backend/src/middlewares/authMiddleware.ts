@@ -6,7 +6,8 @@ import UserSuscription from '../models/suscriptionPlans/userSuscription';
 import { SuscriptionPlanDocument } from '../models/suscriptionPlans/suscriptionPlan';
 
 export const authenticateToken = (req: AuthenticatedRequest, res: Response, next: NextFunction) => {
-  const token = req.header('Authorization')?.split(' ')[1];
+  const authHeader = req.header('Authorization');
+  const token = authHeader?.split(' ')[1];
   
   if (!token) {
     res.status(401).json({ message: 'Acceso denegado' });

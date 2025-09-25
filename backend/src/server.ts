@@ -13,6 +13,8 @@ import suscriptionPlanRoutes from './routes/suscriptionPlan/suscriptionPlanRoute
 import assignmentRequestRoutes from './routes/assignmentRequests/assignmentRequestRoutes';
 import videoRoutes from './routes/video';
 import citasRoutes from './routes/citas';
+import alimentosHibridoRoutes from './routes/alimentos/alimentosHibridoRoutes';
+import ingredientesRoutes from './routes/alimentos/ingredientesRoutes';
 import { SocketServer } from './socket/socketServer';
 
 dotenv.config();
@@ -56,6 +58,8 @@ app.use('/api/suscription-plans', suscriptionPlanRoutes);
 app.use('/api/assignment-requests', assignmentRequestRoutes);
 app.use('/api', videoRoutes);
 app.use('/api', citasRoutes);
+app.use('/api/alimentos', alimentosHibridoRoutes);
+app.use('/api/ingredientes', ingredientesRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("API corriendo...");

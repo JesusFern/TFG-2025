@@ -243,7 +243,8 @@ export const crearPlato = async (req: AuthenticatedRequest, res: Response): Prom
     const nuevoPlato = {
       orden: plato.orden || (dieta.dias[diaIndex].comidas[comidaIndex].platos.length + 1),
       nombre: plato.nombre || '',
-      receta: plato.receta ? new mongoose.Types.ObjectId(plato.receta) : null
+      receta: plato.receta ? new mongoose.Types.ObjectId(plato.receta) : null,
+      ingredientesPersonalizados: plato.ingredientesPersonalizados || []
     };
     
     dieta.dias[diaIndex].comidas[comidaIndex].platos.push(nuevoPlato);

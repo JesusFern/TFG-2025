@@ -34,11 +34,36 @@ export const crearReceta = async (req: AuthenticatedRequest, res: Response): Pro
       ingredientes,
       pasosPreparacion,
       tiempoPreparacion,
-      informacionNutricional,
       publica
     } = req.body;
 
-    if (!validarDatosReceta({ nombreReceta, ingredientes, pasosPreparacion, publica }, res)) {
+    // Debug: ver qué está llegando
+    console.log('Datos recibidos en req.body:', JSON.stringify(req.body, null, 2));
+    console.log('Tipo de ingredientes:', typeof ingredientes, Array.isArray(ingredientes));
+    if (Array.isArray(ingredientes)) {
+      console.log('Primer ingrediente:', ingredientes[0], typeof ingredientes[0]);
+    }
+
+    // Procesar ingredientes si vienen como FormData
+    let ingredientesProcesados = ingredientes;
+    if (Array.isArray(ingredientes)) {
+      ingredientesProcesados = ingredientes.map(ingrediente => {
+        // Si viene como string JSON, parsearlo
+        if (typeof ingrediente === 'string') {
+          try {
+            return JSON.parse(ingrediente);
+          } catch (error) {
+            console.error('Error al parsear ingrediente:', error);
+            return ingrediente;
+          }
+        }
+        return ingrediente;
+      });
+    }
+
+    console.log('Ingredientes procesados:', JSON.stringify(ingredientesProcesados, null, 2));
+
+    if (!validarDatosReceta({ nombreReceta, ingredientes: ingredientesProcesados, pasosPreparacion, publica }, res)) {
       return;
     }
 
@@ -59,10 +84,9 @@ export const crearReceta = async (req: AuthenticatedRequest, res: Response): Pro
 
     const receta = await crearRecetaService({
       nombreReceta,
-      ingredientes,
+      ingredientes: ingredientesProcesados,
       pasosPreparacion,
       tiempoPreparacion,
-      informacionNutricional,
       imagenes,
       publica,
       creadorId: userId
@@ -92,8 +116,20 @@ export const obtenerReceta = async (req: AuthenticatedRequest, res: Response): P
       return;
     }
     
+    // Calcular información nutricional total
+    const informacionNutricional = await receta.calcularInformacionNutricional();
+    
+    // Formatear la información nutricional como string
+    const informacionNutricionalTexto = `Calorías: ${informacionNutricional.calorias} kcal | Proteínas: ${informacionNutricional.proteinas}g | Carbohidratos: ${informacionNutricional.hidratosCarbono}g | Grasas: ${informacionNutricional.grasas}g`;
+    
+    // Agregar la información nutricional a la receta
+    const recetaConInfoNutricional = {
+      ...receta.toObject(),
+      informacionNutricional: informacionNutricionalTexto
+    };
+    
     logger.info('Receta obtenida correctamente', { recetaId, userId });
-    res.status(200).json({ receta });
+    res.status(200).json({ receta: recetaConInfoNutricional });
   } catch (error) {
     manejarErrorReceta(error as Error, res, 'obtener la receta', { recetaId: req.params.id });
   }
@@ -200,14 +236,30 @@ export const actualizarReceta = async (req: AuthenticatedRequest, res: Response)
       ingredientes,
       pasosPreparacion,
       tiempoPreparacion,
-      informacionNutricional,
       publica,
       imagenesAEliminar
     } = req.body;
 
+    // Procesar ingredientes si vienen como FormData
+    let ingredientesProcesados = ingredientes;
+    if (Array.isArray(ingredientes)) {
+      ingredientesProcesados = ingredientes.map(ingrediente => {
+        // Si viene como string JSON, parsearlo
+        if (typeof ingrediente === 'string') {
+          try {
+            return JSON.parse(ingrediente);
+          } catch (error) {
+            console.error('Error al parsear ingrediente:', error);
+            return ingrediente;
+          }
+        }
+        return ingrediente;
+      });
+    }
+
     // Validar datos si se proporcionan
     if (nombreReceta || ingredientes || publica !== undefined) {
-      if (!validarDatosReceta({ nombreReceta, ingredientes, pasosPreparacion, publica }, res)) {
+      if (!validarDatosReceta({ nombreReceta, ingredientes: ingredientesProcesados, pasosPreparacion, publica }, res)) {
         return;
       }
     }
@@ -226,10 +278,9 @@ export const actualizarReceta = async (req: AuthenticatedRequest, res: Response)
 
     const recetaActualizada = await actualizarRecetaService(recetaId, {
       nombreReceta,
-      ingredientes,
+      ingredientes: ingredientesProcesados,
       pasosPreparacion,
       tiempoPreparacion,
-      informacionNutricional,
       imagenes: imagenes.length > 0 ? imagenes : undefined,
       imagenesAEliminar,
       publica

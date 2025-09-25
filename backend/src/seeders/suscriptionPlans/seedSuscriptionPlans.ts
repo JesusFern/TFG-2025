@@ -1,8 +1,4 @@
-import mongoose from 'mongoose';
 import SuscriptionPlan from '../../models/suscriptionPlans/suscriptionPlan';
-import dotenv from 'dotenv';
-
-dotenv.config();
 
 function getBeneficios(tipoPlan: string, tipoPrecio: string): string[] {
   const baseBeneficios = tipoPrecio === 'Básico' 
@@ -66,8 +62,7 @@ function getBeneficios(tipoPlan: string, tipoPrecio: string): string[] {
 }
 
 export async function seedSuscriptionPlans() {
-  const mongoUri = process.env.MONGO_URI || 'mongodb://localhost:27017/nutroos';
-  await mongoose.connect(mongoUri);
+  // No conectar aquí, usar la conexión del seeder principal
 
   // Eliminar planes de suscripción existentes
   await SuscriptionPlan.deleteMany({});
@@ -142,5 +137,5 @@ export async function seedSuscriptionPlans() {
   }
 
   console.log('Seeder de planes de suscripción completado');
-  await mongoose.disconnect();
+  // No desconectar aquí, lo hace el seeder principal
 }

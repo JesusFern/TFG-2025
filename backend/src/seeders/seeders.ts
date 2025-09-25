@@ -1,6 +1,7 @@
 import { seedAdminUser, seedUsers } from './users/seedUsers';
 import { seedWorkers } from './users/seedWorkers';
 import { seedSuscriptionPlans } from './suscriptionPlans/seedSuscriptionPlans';
+import { seedIngredientes } from './diets/seedIngredientes';
 import { seedEjercicios } from './training/seedEjercicios';
 import mongoose from 'mongoose';
 import User from '../models/users/user';
@@ -27,6 +28,9 @@ async function runSeed() {
 
     // Crear planes de suscripción
     await seedSuscriptionPlans();
+
+    // Cargar ingredientes (requiere JSON generado previamente)
+    await seedIngredientes();
 
     // Crear ejercicios de entrenamiento
     await seedEjercicios();
