@@ -60,7 +60,6 @@ function procesarLineaAlimento(linea: string): AlimentoTCA | null {
     return null;
   }
 
-  const codigo = match[1];
   const resto = match[2];
 
   // Dividir el resto por espacios, manteniendo números decimales con coma
