@@ -167,6 +167,11 @@ export async function obtenerRegistrosEjercicioService(filtros: {
 }
 
 export async function obtenerRegistroEjercicioPorIdService(registroId: string) {
+  // Validar que el ID sea un ObjectId válido
+  if (!mongoose.Types.ObjectId.isValid(registroId)) {
+    throw new Error('ID de registro no válido');
+  }
+
   const registro = await RegistroEjercicio.findById(registroId)
     .populate('ejercicio', 'nombre grupoMuscular equipamiento nivelDificultad instrucciones videoDemostrativo')
     .populate('sesion', 'fecha tipoEntrenamiento duracion ejercicios')
@@ -194,6 +199,14 @@ export async function actualizarRegistroEjercicioService(
     completado: boolean;
   }>
 ) {
+  // Validar que los IDs sean ObjectIds válidos
+  if (!mongoose.Types.ObjectId.isValid(registroId)) {
+    throw new Error('ID de registro no válido');
+  }
+  if (!mongoose.Types.ObjectId.isValid(clienteId)) {
+    throw new Error('ID de cliente no válido');
+  }
+
   const registro = await RegistroEjercicio.findById(registroId);
   if (!registro) {
     throw new Error('Registro de ejercicio no encontrado');
@@ -223,6 +236,14 @@ export async function actualizarRegistroEjercicioService(
 }
 
 export async function eliminarRegistroEjercicioService(registroId: string, clienteId: string) {
+  // Validar que los IDs sean ObjectIds válidos
+  if (!mongoose.Types.ObjectId.isValid(registroId)) {
+    throw new Error('ID de registro no válido');
+  }
+  if (!mongoose.Types.ObjectId.isValid(clienteId)) {
+    throw new Error('ID de cliente no válido');
+  }
+
   const registro = await RegistroEjercicio.findById(registroId);
   if (!registro) {
     throw new Error('Registro de ejercicio no encontrado');
@@ -250,6 +271,14 @@ export async function eliminarRegistroEjercicioService(registroId: string, clien
 }
 
 export async function marcarRegistroCompletadoService(registroId: string, clienteId: string) {
+  // Validar que los IDs sean ObjectIds válidos
+  if (!mongoose.Types.ObjectId.isValid(registroId)) {
+    throw new Error('ID de registro no válido');
+  }
+  if (!mongoose.Types.ObjectId.isValid(clienteId)) {
+    throw new Error('ID de cliente no válido');
+  }
+
   const registro = await RegistroEjercicio.findById(registroId);
   if (!registro) {
     throw new Error('Registro de ejercicio no encontrado');
@@ -317,6 +346,14 @@ export async function obtenerProgresoEjercicioService(ejercicioId: string, clien
 }
 
 export async function verificarSesionCompletaService(sesionId: string, clienteId: string) {
+  // Validar que los IDs sean ObjectIds válidos
+  if (!mongoose.Types.ObjectId.isValid(sesionId)) {
+    throw new Error('ID de sesión no válido');
+  }
+  if (!mongoose.Types.ObjectId.isValid(clienteId)) {
+    throw new Error('ID de cliente no válido');
+  }
+
   // Obtener la sesión con sus ejercicios
   const sesion = await Sesion.findById(sesionId)
     .populate('ejercicios.ejercicio');
@@ -330,10 +367,10 @@ export async function verificarSesionCompletaService(sesionId: string, clienteId
     throw new Error('No tienes permisos para verificar esta sesión');
   }
 
-  // Obtener todos los registros de ejercicios para esta sesión
+  // Obtener todos los registros de ejercicios para esta sesión de forma segura
   const registros = await RegistroEjercicio.find({
-    sesion: sesionId,
-    cliente: clienteId
+    sesion: new mongoose.Types.ObjectId(sesionId),
+    cliente: new mongoose.Types.ObjectId(clienteId)
   });
 
   // Verificar que todos los ejercicios de la sesión tienen registro
