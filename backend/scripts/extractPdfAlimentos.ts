@@ -42,7 +42,7 @@ function extraerNumero(texto: string): number {
   
   // Limpiar el texto y extraer números
   const numeroLimpio = texto
-    .replace(/[^\d.,\-]/g, '') // Solo números, puntos, comas y guiones
+    .replace(/[^\d.,-]/g, '') // Solo números, puntos, comas y guiones
     .replace(',', '.'); // Convertir comas a puntos
   
   const numero = parseFloat(numeroLimpio);
