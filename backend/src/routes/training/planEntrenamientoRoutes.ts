@@ -1,13 +1,18 @@
 import { Router } from 'express';
-import { 
-  crearPlanEntrenamiento, 
-  obtenerPlanesEntrenamiento, 
+import {
+  crearPlanEntrenamiento,
+  obtenerPlanesEntrenamiento,
   obtenerPlanEntrenamientoPorId,
-  actualizarPlanEntrenamiento, 
+  actualizarPlanEntrenamiento,
   eliminarPlanEntrenamiento,
   asignarCliente,
   removerCliente,
-  publicarPlanEntrenamiento
+  publicarPlanEntrenamiento,
+  obtenerObjetivosDisponibles,
+  obtenerPlantillaPorObjetivo,
+  obtenerPlantillasPorFiltros,
+  buscarPlantillas,
+  generarPlanDesdePlantilla
 } from '../../controllers/training/planEntrenamientoController';
 import { authenticateToken, authorizeWorker } from '../../middlewares/authMiddleware';
 import { 
@@ -35,5 +40,22 @@ router.delete('/:id/clientes/:clienteId', authenticateToken, authorizeWorker, re
 
 // Ruta para publicar plan de entrenamiento
 router.patch('/:id/publicar', authenticateToken, authorizeWorker, idValidator, validateRequest, publicarPlanEntrenamiento);
+
+// ===== RUTAS DE PLANTILLAS =====
+
+// Obtener todos los objetivos disponibles
+router.get('/plantillas/objetivos', authenticateToken, obtenerObjetivosDisponibles);
+
+// Obtener plantilla por objetivo específico
+router.get('/plantillas/objetivo/:objetivo', authenticateToken, obtenerPlantillaPorObjetivo);
+
+// Obtener plantillas por filtros
+router.get('/plantillas/filtrar', authenticateToken, obtenerPlantillasPorFiltros);
+
+// Buscar plantillas por texto
+router.get('/plantillas/buscar', authenticateToken, buscarPlantillas);
+
+// Generar plan desde plantilla
+router.post('/plantillas/generar', authenticateToken, authorizeWorker, generarPlanDesdePlantilla);
 
 export default router;

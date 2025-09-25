@@ -1,0 +1,466 @@
+{
+  "flexiones": {
+    "nombre": "Flexiones",
+    "reason": "no_video"
+  },
+  "press-inclinado-mancuernas": {
+    "nombre": "Press inclinado con mancuernas",
+    "reason": "no_video"
+  },
+  "aperturas-mancuernas": {
+    "nombre": "Aperturas con mancuernas",
+    "reason": "no_video"
+  },
+  "remo-barra": {
+    "nombre": "Remo con barra",
+    "reason": "no_video"
+  },
+  "peso-muerto": {
+    "nombre": "Peso muerto",
+    "reason": "no_video"
+  },
+  "press-militar": {
+    "nombre": "Press militar",
+    "reason": "no_video"
+  },
+  "elevaciones-laterales": {
+    "nombre": "Elevaciones laterales",
+    "reason": "no_video"
+  },
+  "elevaciones-frontales": {
+    "nombre": "Elevaciones frontales",
+    "reason": "no_video"
+  },
+  "sentadilla": {
+    "nombre": "Sentadilla",
+    "reason": "no_video"
+  },
+  "sentadilla-barra": {
+    "nombre": "Sentadilla con barra",
+    "reason": "no_video"
+  },
+  "bulgarian-split-squats": {
+    "nombre": "Bulgarian split squats",
+    "reason": "no_video"
+  },
+  "curl-biceps": {
+    "nombre": "Curl de bíceps",
+    "reason": "no_video"
+  },
+  "triceps-banco": {
+    "nombre": "Tríceps en banco",
+    "reason": "no_video"
+  },
+  "extensiones-triceps": {
+    "nombre": "Extensiones de tríceps",
+    "reason": "no_video"
+  },
+  "plancha": {
+    "nombre": "Plancha",
+    "reason": "no_video"
+  },
+  "crunches": {
+    "nombre": "Crunches",
+    "reason": "no_video"
+  },
+  "mountain-climbers": {
+    "nombre": "Mountain climbers",
+    "reason": "no_video"
+  },
+  "russian-twists": {
+    "nombre": "Russian twists",
+    "reason": "no_video"
+  },
+  "burpees": {
+    "nombre": "Burpees",
+    "reason": "no_video"
+  },
+  "jumping-jacks": {
+    "nombre": "Jumping jacks",
+    "reason": "no_video"
+  },
+  "high-knees": {
+    "nombre": "High knees",
+    "reason": "no_video"
+  },
+  "jump-squats": {
+    "nombre": "Jump squats",
+    "reason": "no_video"
+  },
+  "estiramiento-isquiotibiales": {
+    "nombre": "Estiramiento de isquiotibiales",
+    "reason": "no_video"
+  },
+  "estiramiento-pecho": {
+    "nombre": "Estiramiento de pecho",
+    "reason": "no_video"
+  },
+  "estiramiento-espalda": {
+    "nombre": "Estiramiento de espalda",
+    "reason": "no_video"
+  },
+  "kettlebell-swings": {
+    "nombre": "Kettlebell swings",
+    "reason": "no_video"
+  },
+  "turkish-get-ups": {
+    "nombre": "Turkish get-ups",
+    "reason": "no_video"
+  },
+  "farmer-walks": {
+    "nombre": "Farmer walks",
+    "reason": "no_video"
+  },
+  "push-ups-isometricos": {
+    "nombre": "Push-ups isométricos",
+    "reason": "no_video"
+  },
+  "wall-sits": {
+    "nombre": "Wall sits",
+    "reason": "no_video"
+  },
+  "plank-to-push-up": {
+    "nombre": "Plank to push-up",
+    "reason": "no_video"
+  },
+  "single-leg-deadlifts": {
+    "nombre": "Single leg deadlifts",
+    "reason": "no_video"
+  },
+  "pistol-squats": {
+    "nombre": "Pistol squats",
+    "reason": "no_video"
+  },
+  "l-sits": {
+    "nombre": "L-sits",
+    "reason": "no_video"
+  },
+  "arm-circles": {
+    "nombre": "Arm circles",
+    "reason": "no_video"
+  },
+  "leg-swings": {
+    "nombre": "Leg swings",
+    "reason": "no_video"
+  },
+  "hip-circles": {
+    "nombre": "Hip circles",
+    "reason": "no_video"
+  },
+  "plancha-lateral": {
+    "nombre": "Plancha lateral",
+    "reason": "no_video"
+  },
+  "bird-dog": {
+    "nombre": "Bird dog",
+    "reason": "no_video"
+  },
+  "dead-bug": {
+    "nombre": "Dead bug",
+    "reason": "no_video"
+  },
+  "pallof-press": {
+    "nombre": "Pallof press",
+    "reason": "no_video"
+  },
+  "single-leg-balance": {
+    "nombre": "Single leg balance",
+    "reason": "no_video"
+  },
+  "bosu-ball-squats": {
+    "nombre": "Bosu ball squats",
+    "reason": "no_video"
+  },
+  "turkish-get-up": {
+    "nombre": "Turkish get-up",
+    "reason": "no_video"
+  },
+  "farmers-walk": {
+    "nombre": "Farmer\\",
+    "reason": "no_video"
+  },
+  "tabata-sprints": {
+    "nombre": "Tabata sprints",
+    "reason": "no_video"
+  },
+  "battle-ropes": {
+    "nombre": "Battle ropes",
+    "reason": "no_video"
+  },
+  "box-jumps": {
+    "nombre": "Box jumps",
+    "reason": "no_video"
+  },
+  "running": {
+    "nombre": "Running",
+    "reason": "no_video"
+  },
+  "cycling": {
+    "nombre": "Cycling",
+    "reason": "no_video"
+  },
+  "rowing": {
+    "nombre": "Rowing",
+    "reason": "no_video"
+  },
+  "swimming": {
+    "nombre": "Swimming",
+    "reason": "no_video"
+  },
+  "elliptical": {
+    "nombre": "Elliptical",
+    "reason": "no_video"
+  },
+  "clean-and-press": {
+    "nombre": "Clean and press",
+    "reason": "no_video"
+  },
+  "snatch": {
+    "nombre": "Snatch",
+    "reason": "no_video"
+  },
+  "power-clean": {
+    "nombre": "Power clean",
+    "reason": "no_video"
+  },
+  "jump-squats-with-weight": {
+    "nombre": "Jump squats with weight",
+    "reason": "no_video"
+  },
+  "medicine-ball-slams": {
+    "nombre": "Medicine ball slams",
+    "reason": "no_video"
+  },
+  "jump-rope": {
+    "nombre": "Jump rope",
+    "reason": "no_video"
+  },
+  "step-ups": {
+    "nombre": "Step ups",
+    "reason": "no_video"
+  },
+  "lunges": {
+    "nombre": "Lunges",
+    "reason": "no_video"
+  },
+  "butt-kicks": {
+    "nombre": "Butt kicks",
+    "reason": "no_video"
+  },
+  "side-shuffles": {
+    "nombre": "Side shuffles",
+    "reason": "no_video"
+  },
+  "crab-walks": {
+    "nombre": "Crab walks",
+    "reason": "no_video"
+  },
+  "bear-crawls": {
+    "nombre": "Bear crawls",
+    "reason": "no_video"
+  },
+  "skater-jumps": {
+    "nombre": "Skater jumps",
+    "reason": "no_video"
+  },
+  "cross-jacks": {
+    "nombre": "Cross jacks",
+    "reason": "no_video"
+  },
+  "sprint-intervals": {
+    "nombre": "Sprint intervals",
+    "reason": "no_video"
+  },
+  "burpee-variations": {
+    "nombre": "Burpee variations",
+    "reason": "no_video"
+  },
+  "mountain-climber-intervals": {
+    "nombre": "Mountain climber intervals",
+    "reason": "no_video"
+  },
+  "jump-squat-intervals": {
+    "nombre": "Jump squat intervals",
+    "reason": "no_video"
+  },
+  "plank-jacks": {
+    "nombre": "Plank jacks",
+    "reason": "no_video"
+  },
+  "spider-climbers": {
+    "nombre": "Spider climbers",
+    "reason": "no_video"
+  },
+  "pike-jumps": {
+    "nombre": "Pike jumps",
+    "reason": "no_video"
+  },
+  "star-jumps": {
+    "nombre": "Star jumps",
+    "reason": "no_video"
+  },
+  "tuck-jumps": {
+    "nombre": "Tuck jumps",
+    "reason": "no_video"
+  },
+  "lateral-bounds": {
+    "nombre": "Lateral bounds",
+    "reason": "no_video"
+  },
+  "long-distance-cycling": {
+    "nombre": "Long distance cycling",
+    "reason": "no_video"
+  },
+  "cross-country-skiing": {
+    "nombre": "Cross-country skiing",
+    "reason": "no_video"
+  },
+  "stair-climbing": {
+    "nombre": "Stair climbing",
+    "reason": "no_video"
+  },
+  "rowing-machine-intervals": {
+    "nombre": "Rowing machine intervals",
+    "reason": "no_video"
+  },
+  "cross-training": {
+    "nombre": "Cross training",
+    "reason": "no_video"
+  },
+  "hiking": {
+    "nombre": "Hiking",
+    "reason": "no_video"
+  },
+  "nordic-walking": {
+    "nombre": "Nordic walking",
+    "reason": "no_video"
+  },
+  "water-aerobics": {
+    "nombre": "Water aerobics",
+    "reason": "no_video"
+  },
+  "dance-cardio": {
+    "nombre": "Dance cardio",
+    "reason": "no_video"
+  },
+  "circuit-training": {
+    "nombre": "Circuit training",
+    "reason": "no_video"
+  },
+  "hang-clean": {
+    "nombre": "Hang clean",
+    "reason": "no_video"
+  },
+  "push-press": {
+    "nombre": "Push press",
+    "reason": "no_video"
+  },
+  "thruster": {
+    "nombre": "Thruster",
+    "reason": "no_video"
+  },
+  "kettlebell-clean": {
+    "nombre": "Kettlebell clean",
+    "reason": "no_video"
+  },
+  "kettlebell-snatch": {
+    "nombre": "Kettlebell snatch",
+    "reason": "no_video"
+  },
+  "dumbbell-power-clean": {
+    "nombre": "Dumbbell power clean",
+    "reason": "no_video"
+  },
+  "jump-lunges": {
+    "nombre": "Jump lunges",
+    "reason": "no_video"
+  },
+  "broad-jumps": {
+    "nombre": "Broad jumps",
+    "reason": "no_video"
+  },
+  "single-arm-kettlebell-swing": {
+    "nombre": "Single arm kettlebell swing",
+    "reason": "no_video"
+  },
+  "wall-ball-shots": {
+    "nombre": "Wall ball shots",
+    "reason": "no_video"
+  },
+  "estiramiento-gato-vaca": {
+    "nombre": "Estiramiento gato-vaca",
+    "reason": "no_video"
+  },
+  "perro-boca-abajo": {
+    "nombre": "Perro boca abajo",
+    "reason": "no_video"
+  },
+  "postura-del-nino": {
+    "nombre": "Postura del niño",
+    "reason": "no_video"
+  },
+  "postura-de-la-paloma": {
+    "nombre": "Postura de la paloma",
+    "reason": "no_video"
+  },
+  "flexion-sentada-hacia-adelante": {
+    "nombre": "Flexión sentada hacia adelante",
+    "reason": "no_video"
+  },
+  "flexion-pie-hacia-adelante": {
+    "nombre": "Flexión de pie hacia adelante",
+    "reason": "no_video"
+  },
+  "guerrero-iii": {
+    "nombre": "Guerrero III",
+    "reason": "no_video"
+  },
+  "postura-del-triangulo": {
+    "nombre": "Postura del triángulo",
+    "reason": "no_video"
+  },
+  "postura-de-la-cobra": {
+    "nombre": "Postura de la cobra",
+    "reason": "no_video"
+  },
+  "postura-del-puente": {
+    "nombre": "Postura del puente",
+    "reason": "no_video"
+  },
+  "estiramiento-de-mariposa": {
+    "nombre": "Estiramiento de mariposa",
+    "reason": "no_video"
+  },
+  "torsion-sentada-columna": {
+    "nombre": "Torsión sentada de columna",
+    "reason": "no_video"
+  },
+  "postura-del-lagarto": {
+    "nombre": "Postura del lagarto",
+    "reason": "no_video"
+  },
+  "estiramiento-isquiotibiales-acostado": {
+    "nombre": "Estiramiento de isquiotibiales acostado",
+    "reason": "no_video"
+  },
+  "postura-del-aguila": {
+    "nombre": "Postura del águila",
+    "reason": "no_video"
+  },
+  "enhebrar-la-aguja": {
+    "nombre": "Enhebrar la aguja",
+    "reason": "no_video"
+  },
+  "postura-del-bebe-feliz": {
+    "nombre": "Postura del bebé feliz",
+    "reason": "no_video"
+  },
+  "piernas-en-la-pared": {
+    "nombre": "Piernas en la pared",
+    "reason": "no_video"
+  },
+  "angulo-atado-reclinado": {
+    "nombre": "Ángulo atado reclinado",
+    "reason": "no_video"
+  }
+}

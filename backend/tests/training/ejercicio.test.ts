@@ -54,16 +54,17 @@ jest.mock('../../src/service/training/ejercicioService', () => ({
     return {
       _id: ejercicioId,
       nombre: ejercicioData.nombre,
+      slug: ejercicioData.slug,
       descripcion: ejercicioData.descripcion,
       grupoMuscular: ejercicioData.grupoMuscular,
       equipamiento: ejercicioData.equipamiento,
-      series: ejercicioData.series,
-      repeticiones: ejercicioData.repeticiones,
-      tiempoDescanso: ejercicioData.tiempoDescanso,
       nivelDificultad: ejercicioData.nivelDificultad,
-      nivelIntensidad: ejercicioData.nivelIntensidad,
+      tipoEjercicio: ejercicioData.tipoEjercicio,
+      instrucciones: ejercicioData.instrucciones,
       videoDemostrativo: ejercicioData.videoDemostrativo,
       creador: ejercicioData.creadorId,
+      arquetipo: false,
+      publico: ejercicioData.publico || false,
       activo: true,
       createdAt: new Date(),
       updatedAt: new Date()
@@ -73,16 +74,17 @@ jest.mock('../../src/service/training/ejercicioService', () => ({
     return [{
       _id: ejercicioId,
       nombre: "Press de Banca",
+      slug: "press-de-banca",
       descripcion: "Ejercicio para pecho",
       grupoMuscular: "Pecho",
       equipamiento: "Barra",
-      series: 3,
-      repeticiones: 10,
-      tiempoDescanso: 60,
       nivelDificultad: "Intermedio",
-      nivelIntensidad: "Media",
+      tipoEjercicio: "Fuerza",
+      instrucciones: "Acuéstate en banco y presiona la barra",
       videoDemostrativo: "https://example.com/video.mp4",
       creador: { _id: workerId, nombre: "Test Trainer", email: "trainer@test.com" },
+      arquetipo: false,
+      publico: true,
       activo: true
     }];
   }),
@@ -90,16 +92,38 @@ jest.mock('../../src/service/training/ejercicioService', () => ({
     return {
       _id: id,
       nombre: "Press de Banca",
+      slug: "press-de-banca",
       descripcion: "Ejercicio para pecho",
       grupoMuscular: "Pecho",
       equipamiento: "Barra",
-      series: 3,
-      repeticiones: 10,
-      tiempoDescanso: 60,
       nivelDificultad: "Intermedio",
-      nivelIntensidad: "Media",
+      tipoEjercicio: "Fuerza",
+      instrucciones: "Acuéstate en banco y presiona la barra",
       videoDemostrativo: "https://example.com/video.mp4",
       creador: { _id: workerId, nombre: "Test Trainer", email: "trainer@test.com" },
+      arquetipo: false,
+      publico: true,
+      activo: true
+    };
+  }),
+  obtenerEjercicioPorSlugService: jest.fn().mockImplementation(async (slug) => {
+    if (slug === 'invalid-slug') {
+      throw new Error('Ejercicio no encontrado');
+    }
+    return {
+      _id: ejercicioId,
+      nombre: "Press de Banca",
+      slug: slug,
+      descripcion: "Ejercicio para pecho",
+      grupoMuscular: "Pecho",
+      equipamiento: "Barra",
+      nivelDificultad: "Intermedio",
+      tipoEjercicio: "Fuerza",
+      instrucciones: "Acuéstate en banco y presiona la barra",
+      videoDemostrativo: "https://example.com/video.mp4",
+      creador: { _id: workerId, nombre: "Test Trainer", email: "trainer@test.com" },
+      arquetipo: false,
+      publico: true,
       activo: true
     };
   }),
@@ -107,16 +131,17 @@ jest.mock('../../src/service/training/ejercicioService', () => ({
     return {
       _id: id,
       nombre: datos.nombre || "Press de Banca",
+      slug: datos.slug || "press-de-banca",
       descripcion: datos.descripcion || "Ejercicio para pecho",
       grupoMuscular: datos.grupoMuscular || "Pecho",
       equipamiento: datos.equipamiento || "Barra",
-      series: datos.series || 3,
-      repeticiones: datos.repeticiones || 10,
-      tiempoDescanso: datos.tiempoDescanso || 60,
       nivelDificultad: datos.nivelDificultad || "Intermedio",
-      nivelIntensidad: datos.nivelIntensidad || "Media",
+      tipoEjercicio: datos.tipoEjercicio || "Fuerza",
+      instrucciones: datos.instrucciones || "Acuéstate en banco y presiona la barra",
       videoDemostrativo: datos.videoDemostrativo || "https://example.com/video.mp4",
       creador: creadorId,
+      arquetipo: false,
+      publico: datos.publico !== undefined ? datos.publico : true,
       activo: true
     };
   }),
@@ -134,10 +159,13 @@ describe('Ejercicio Endpoints', () => {
     it('debería crear un ejercicio correctamente', async () => {
       const ejercicioData = {
         nombre: "Press de Banca",
+        slug: "press-de-banca",
         descripcion: "Ejercicio para desarrollar el pecho",
         grupoMuscular: "Pecho",
         equipamiento: "Barra",
         nivelDificultad: "Intermedio",
+        tipoEjercicio: "Fuerza",
+        instrucciones: "Acuéstate en banco y presiona la barra",
         videoDemostrativo: "https://example.com/video.mp4"
       };
 
@@ -157,6 +185,7 @@ describe('Ejercicio Endpoints', () => {
       const ejercicioIncompleto = {
         nombre: "Press de Banca",
         grupoMuscular: "Pecho"
+        // Faltan campos requeridos: slug, equipamiento, nivelDificultad, tipoEjercicio
       };
 
       const res = await request(app)
@@ -196,6 +225,26 @@ describe('Ejercicio Endpoints', () => {
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('ejercicios');
+    });
+  });
+
+  describe('GET /api/training/ejercicios/slug/:slug', () => {
+    it('debería obtener un ejercicio por slug', async () => {
+      const res = await request(app)
+        .get('/api/training/ejercicios/slug/press-de-banca')
+        .set('Authorization', 'Bearer fake-token');
+
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toHaveProperty('ejercicio');
+      expect(res.body.ejercicio.slug).toEqual('press-de-banca');
+    });
+
+    it('debería fallar con slug inválido', async () => {
+      const res = await request(app)
+        .get('/api/training/ejercicios/slug/invalid-slug')
+        .set('Authorization', 'Bearer fake-token');
+
+      expect(res.statusCode).toEqual(404);
     });
   });
 
@@ -270,10 +319,12 @@ describe('Ejercicio Endpoints', () => {
     it('debería validar grupo muscular válido', async () => {
       const ejercicioData = {
         nombre: "Test Exercise",
+        slug: "test-exercise",
         descripcion: "Test description",
         grupoMuscular: "Grupo Invalido",
         equipamiento: "Ninguno",
-        nivelDificultad: "Principiante"
+        nivelDificultad: "Principiante",
+        tipoEjercicio: "Fuerza"
       };
 
       const res = await request(app)
@@ -287,10 +338,12 @@ describe('Ejercicio Endpoints', () => {
     it('debería validar nivel de dificultad válido', async () => {
       const ejercicioData = {
         nombre: "Test Exercise",
+        slug: "test-exercise",
         descripcion: "Test description",
         grupoMuscular: "Pecho",
         equipamiento: "Ninguno",
-        nivelDificultad: "Nivel Invalido"
+        nivelDificultad: "Nivel Invalido",
+        tipoEjercicio: "Fuerza"
       };
 
       const res = await request(app)

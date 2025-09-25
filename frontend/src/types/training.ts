@@ -1,13 +1,18 @@
 export interface Ejercicio {
   _id?: string;
   nombre: string;
+  slug: string;
   descripcion: string;
   grupoMuscular: string;
   equipamiento: string;
   nivelDificultad: string;
+  tipoEjercicio: string;
+  instrucciones?: string;
   videoDemostrativo?: string;
+  arquetipo?: boolean;
   creador?: string;
   publico?: boolean;
+  activo?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -60,7 +65,7 @@ export interface SesionPlan {
   updatedAt?: string;
 }
 
-export type CrearEjercicioDTO = Omit<Ejercicio, '_id' | 'creador' | 'createdAt' | 'updatedAt'> & {
+export type CrearEjercicioDTO = Omit<Ejercicio, '_id' | 'creador' | 'arquetipo' | 'activo' | 'createdAt' | 'updatedAt'> & {
   publico: boolean;
 };
 export type ActualizarEjercicioDTO = Partial<CrearEjercicioDTO>;

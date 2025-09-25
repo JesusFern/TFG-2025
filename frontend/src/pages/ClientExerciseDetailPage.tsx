@@ -96,6 +96,25 @@ const ClientExerciseDetailPage: React.FC = () => {
             </Text>
           </Paper>
 
+          {/* Instrucciones del ejercicio */}
+          {ejercicio.instrucciones && (
+            <Paper 
+              p="lg" 
+              shadow="xs" 
+              radius="md" 
+              withBorder
+              bg={isDark ? "dark.7" : "white"}
+              style={{ borderColor: isDark ? theme.colors.dark[4] : theme.colors.gray[3] }}
+            >
+              <Title order={4} mb="md" c="nutroos-green.6">
+                Instrucciones
+              </Title>
+              <Text c="dimmed" style={{ whiteSpace: 'pre-line' }}>
+                {ejercicio.instrucciones}
+              </Text>
+            </Paper>
+          )}
+
           {/* Parámetros del ejercicio */}
           <EjercicioParametros 
             ejercicio={ejercicio}

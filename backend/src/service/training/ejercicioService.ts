@@ -4,19 +4,25 @@ import User from '../../models/users/user';
 export async function crearEjercicioService({
   creadorId,
   nombre,
+  slug,
   descripcion,
   grupoMuscular,
   equipamiento,
   nivelDificultad,
+  tipoEjercicio,
+  instrucciones,
   videoDemostrativo,
   publico = false
 }: {
   creadorId: string;
   nombre: string;
+  slug: string;
   descripcion: string;
   grupoMuscular: string;
   equipamiento: string;
   nivelDificultad: string;
+  tipoEjercicio: string;
+  instrucciones?: string;
   videoDemostrativo?: string;
   publico?: boolean;
 }) {
@@ -26,22 +32,24 @@ export async function crearEjercicioService({
     throw new Error('El creador debe ser un usuario con rol worker');
   }
 
-  // Validar que no existe un ejercicio con el mismo nombre del mismo creador
+  // Validar que no existe un ejercicio con el mismo slug
   const ejercicioExistente = await Ejercicio.findOne({ 
-    nombre, 
-    creador: creadorId,
+    slug,
     activo: true 
   });
   if (ejercicioExistente) {
-    throw new Error('Ya existe un ejercicio con ese nombre');
+    throw new Error('Ya existe un ejercicio con ese slug');
   }
 
   const ejercicio = new Ejercicio({
     nombre,
+    slug,
     descripcion,
     grupoMuscular,
     equipamiento,
     nivelDificultad,
+    tipoEjercicio,
+    instrucciones,
     videoDemostrativo,
     publico,
     creador: creadorId
@@ -55,10 +63,20 @@ export async function obtenerEjerciciosService(filtros: {
   grupoMuscular?: string;
   nivelDificultad?: string;
   equipamiento?: string;
+  tipoEjercicio?: string;
   creador?: string;
   publico?: boolean;
+  arquetipo?: boolean;
 }) {
-  const query: { activo: boolean; grupoMuscular?: string; nivelDificultad?: string; equipamiento?: string; creador?: string } = { activo: true };
+  const query: { 
+    activo: boolean; 
+    grupoMuscular?: string; 
+    nivelDificultad?: string; 
+    equipamiento?: string; 
+    tipoEjercicio?: string;
+    creador?: string;
+    arquetipo?: boolean;
+  } = { activo: true };
 
   if (filtros.grupoMuscular) {
     query.grupoMuscular = filtros.grupoMuscular;
@@ -69,8 +87,14 @@ export async function obtenerEjerciciosService(filtros: {
   if (filtros.equipamiento) {
     query.equipamiento = filtros.equipamiento;
   }
+  if (filtros.tipoEjercicio) {
+    query.tipoEjercicio = filtros.tipoEjercicio;
+  }
   if (filtros.creador) {
     query.creador = filtros.creador;
+  }
+  if (filtros.arquetipo !== undefined) {
+    query.arquetipo = filtros.arquetipo;
   }
 
   const ejercicios = await Ejercicio.find(query)
@@ -91,19 +115,29 @@ export async function obtenerEjercicioPorIdService(ejercicioId: string) {
   return ejercicio;
 }
 
+export async function obtenerEjercicioPorSlugService(slug: string) {
+  const ejercicio = await Ejercicio.findOne({ slug, activo: true })
+    .populate('creador', 'nombre email');
+  
+  if (!ejercicio) {
+    throw new Error('Ejercicio no encontrado');
+  }
+
+  return ejercicio;
+}
+
 export async function actualizarEjercicioService(
   ejercicioId: string,
   creadorId: string,
   datosActualizacion: Partial<{
     nombre: string;
+    slug: string;
     descripcion: string;
     grupoMuscular: string;
     equipamiento: string;
-    series: number;
-    repeticiones: number;
-    tiempoDescanso: number;
     nivelDificultad: string;
-    nivelIntensidad: string;
+    tipoEjercicio: string;
+    instrucciones: string;
     videoDemostrativo: string;
     publico: boolean;
   }>
@@ -114,19 +148,18 @@ export async function actualizarEjercicioService(
   }
 
   // Verificar que el usuario es el creador del ejercicio
-  if (ejercicio.creador.toString() !== creadorId) {
+  if (!ejercicio.creador || ejercicio.creador.toString() !== creadorId) {
     throw new Error('No tienes permisos para editar este ejercicio');
   }
 
-  // Si se está cambiando el nombre, verificar que no exista otro con el mismo nombre
-  if (datosActualizacion.nombre && datosActualizacion.nombre !== ejercicio.nombre) {
+  // Si se está cambiando el slug, verificar que no exista otro con el mismo slug
+  if (datosActualizacion.slug && datosActualizacion.slug !== ejercicio.slug) {
     const ejercicioExistente = await Ejercicio.findOne()
-      .where('nombre').equals(datosActualizacion.nombre)
-      .where('creador').equals(creadorId)
+      .where('slug').equals(datosActualizacion.slug)
       .where('activo').equals(true)
       .where('_id').ne(ejercicioId);
     if (ejercicioExistente) {
-      throw new Error('Ya existe un ejercicio con ese nombre');
+      throw new Error('Ya existe un ejercicio con ese slug');
     }
   }
 
@@ -143,7 +176,7 @@ export async function eliminarEjercicioService(ejercicioId: string, creadorId: s
   }
 
   // Verificar que el usuario es el creador del ejercicio
-  if (ejercicio.creador.toString() !== creadorId) {
+  if (!ejercicio.creador || ejercicio.creador.toString() !== creadorId) {
     throw new Error('No tienes permisos para eliminar este ejercicio');
   }
 

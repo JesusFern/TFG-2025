@@ -85,6 +85,7 @@ const ModalEditarSesion: React.FC<ModalEditarSesionProps> = ({
       title="Editar sesión"
       size="lg"
       centered
+      zIndex={1000}
     >
       <motion.div
         initial={{ opacity: 0, y: 20 }}

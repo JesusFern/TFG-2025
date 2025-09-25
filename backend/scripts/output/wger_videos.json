@@ -1,0 +1,30 @@
+{
+  "press-de-banca": {
+    "nombre": "Press de banca",
+    "videoUrl": "https://wger.de/media/exercise-video/73/2bdb390c-312c-4497-a722-5eed2c823e5a.MOV"
+  },
+  "dominadas": {
+    "nombre": "Dominadas",
+    "videoUrl": "https://wger.de/media/exercise-video/475/83067ffe-ccb9-4e22-8507-5131b211ce74.MOV"
+  },
+  "pull-ups": {
+    "nombre": "Pull-ups",
+    "videoUrl": "https://wger.de/media/exercise-video/475/83067ffe-ccb9-4e22-8507-5131b211ce74.MOV"
+  },
+  "face-pulls": {
+    "nombre": "Face pulls",
+    "videoUrl": "https://wger.de/media/exercise-video/222/245a824b-cd39-45f2-b251-2c0b7efead0d.MOV"
+  },
+  "zancadas": {
+    "nombre": "Zancadas",
+    "videoUrl": "https://wger.de/media/exercise-video/802/85d1d7f8-c3c5-47e8-9b26-56896919e6e7.MOV"
+  },
+  "peso-muerto-rumano": {
+    "nombre": "Peso muerto rumano",
+    "videoUrl": "https://wger.de/media/exercise-video/507/307e7276-a14d-4ea0-b579-f5b0dbc6f5af.MOV"
+  },
+  "curl-martillo": {
+    "nombre": "Curl martillo",
+    "videoUrl": "https://wger.de/media/exercise-video/272/df069052-2173-4f24-855f-a0eebe729f24.MOV"
+  }
+}

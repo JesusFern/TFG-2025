@@ -59,6 +59,7 @@ const ModalEliminarSesion: React.FC<ModalEliminarSesionProps> = ({
       title="Eliminar sesión"
       size="md"
       centered
+      zIndex={1000}
     >
       <motion.div
         initial={{ opacity: 0, y: 20 }}
