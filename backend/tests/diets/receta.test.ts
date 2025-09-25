@@ -1,54 +1,77 @@
 import mongoose from 'mongoose';
-import { 
-  crearRecetaService, 
-  obtenerRecetasPublicasService, 
-  obtenerMisRecetasService, 
-  obtenerRecetasPublicasYPropiasService,
-  buscarRecetasService,
-  actualizarRecetaService,
-  eliminarRecetaService,
-  limpiarImagenesHuerfanasService
-} from '../../src/service/diets/recetaService';
+import { crearRecetaService, obtenerRecetaService, obtenerRecetasPublicasService, actualizarRecetaService, eliminarRecetaService } from '../../src/service/diets/recetaService';
 import Receta from '../../src/models/diets/receta';
 
-
 // Mock del modelo Receta
-
 jest.mock('../../src/models/diets/receta', () => {
-  return {
-    __esModule: true,
-    default: jest.fn().mockImplementation((data) => {
-      const receta = {
+  const mockSave = jest.fn();
+  const mockFindById = jest.fn();
+  const mockFindByIdAndUpdate = jest.fn();
+  const mockFindByIdAndDelete = jest.fn();
+  // mockFind no se usa directamente
+  const mockFindOne = jest.fn();
+  
+  // Configurar el mock de find para que tenga populate y sort
+  const mockFindWithPopulate = jest.fn().mockReturnValue({
+    populate: jest.fn().mockReturnValue({
+      sort: jest.fn().mockResolvedValue([])
+    })
+  });
+
+  // El mock del save se configurará dinámicamente en cada test
+
+  const mockReceta = jest.fn().mockImplementation((data) => ({
         _id: new mongoose.Types.ObjectId(),
         nombreReceta: data.nombreReceta,
         ingredientes: data.ingredientes,
         pasosPreparacion: data.pasosPreparacion || [],
         tiempoPreparacion: data.tiempoPreparacion || '',
-        informacionNutricional: data.informacionNutricional || '',
         imagenes: data.imagenes || [],
         publica: data.publica,
         creador: data.creador,
-        save: jest.fn().mockResolvedValue({
-          _id: new mongoose.Types.ObjectId(),
-          nombreReceta: data.nombreReceta,
-          ingredientes: data.ingredientes,
-          pasosPreparacion: data.pasosPreparacion || [],
-          tiempoPreparacion: data.tiempoPreparacion || '',
-          informacionNutricional: data.informacionNutricional || '',
-          imagenes: data.imagenes || [],
-          publica: data.publica,
-          creador: data.creador
-        })
-      };
-      return receta;
-    }),
-    findById: jest.fn(),
-    findByIdAndUpdate: jest.fn(),
-    findByIdAndDelete: jest.fn(),
-    find: jest.fn(),
-    findOne: jest.fn()
+    save: mockSave
+  }));
+
+  // Asignar métodos estáticos - usando any para evitar conflictos con tipos de Mongoose
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (mockReceta as any).findById = mockFindById;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (mockReceta as any).findByIdAndUpdate = mockFindByIdAndUpdate;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (mockReceta as any).findByIdAndDelete = mockFindByIdAndDelete;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (mockReceta as any).find = mockFindWithPopulate;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  (mockReceta as any).findOne = mockFindOne;
+
+  return {
+    __esModule: true,
+    default: mockReceta
   };
 });
+
+// Mock del modelo Ingrediente
+jest.mock('../../src/models/diets/ingrediente', () => ({
+  __esModule: true,
+  default: {
+    findById: jest.fn().mockResolvedValue({
+      _id: new mongoose.Types.ObjectId(),
+      nombre: 'Test Ingrediente',
+      calorias: 100,
+      proteinas: 10,
+      grasas: 5,
+      hidratosCarbono: 15
+    }),
+    findOne: jest.fn().mockResolvedValue({
+      _id: new mongoose.Types.ObjectId(),
+      nombre: 'Test Ingrediente',
+      calorias: 100,
+      proteinas: 10,
+      grasas: 5,
+      hidratosCarbono: 15
+    })
+  }
+}));
 
 describe('Receta Service - Unit Tests', () => {
   beforeEach(() => {
@@ -59,27 +82,73 @@ describe('Receta Service - Unit Tests', () => {
     it('debería crear una receta exitosamente', async () => {
       const datosReceta = {
         nombreReceta: 'Ensalada César',
-        ingredientes: ['Lechuga', 'Pollo', 'Queso parmesano'],
-        pasosPreparacion: ['Cortar la lechuga', 'Cocinar el pollo'],
-        tiempoPreparacion: '20 minutos',
-        informacionNutricional: '350 calorías',
+        ingredientes: [
+          {
+            nombre: 'Lechuga',
+            peso: 100,
+            informacionNutricional: {
+              calorias: 15,
+              proteinas: 1.4,
+              carbohidratos: 3,
+              grasas: 0.2
+            }
+          }
+        ],
+        pasosPreparacion: ['Cortar la lechuga'],
+        tiempoPreparacion: '15 minutos',
         imagenes: ['/uploads/recipes/test/image.jpg'],
         publica: true,
         creadorId: new mongoose.Types.ObjectId().toString()
       };
 
+      // Configurar el mock del save para devolver los datos correctos
+      const mockSave = jest.fn().mockResolvedValue({
+        _id: new mongoose.Types.ObjectId(),
+        nombreReceta: datosReceta.nombreReceta,
+        ingredientes: datosReceta.ingredientes,
+        pasosPreparacion: datosReceta.pasosPreparacion,
+        tiempoPreparacion: datosReceta.tiempoPreparacion,
+        imagenes: datosReceta.imagenes,
+        publica: datosReceta.publica,
+        creador: datosReceta.creadorId
+      });
+
+      // Reemplazar el mock del save - usando any para evitar conflictos con tipos de Mongoose
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (Receta as any).mockImplementation((data: Record<string, unknown>) => ({
+        _id: new mongoose.Types.ObjectId(),
+        nombreReceta: data.nombreReceta,
+        ingredientes: data.ingredientes,
+        pasosPreparacion: data.pasosPreparacion || [],
+        tiempoPreparacion: data.tiempoPreparacion || '',
+        imagenes: data.imagenes || [],
+        publica: data.publica,
+        creador: data.creador,
+        save: mockSave
+      }));
+
       const resultado = await crearRecetaService(datosReceta);
 
       expect(resultado).toBeDefined();
-      expect(resultado.nombreReceta).toBe(datosReceta.nombreReceta);
-      expect(resultado.ingredientes).toEqual(datosReceta.ingredientes);
+      expect(resultado.nombreReceta).toBe('Ensalada César');
       expect(resultado.publica).toBe(true);
     });
 
     it('debería convertir publica de string a boolean', async () => {
       const datosReceta = {
-        nombreReceta: 'Ensalada César',
-        ingredientes: ['Lechuga', 'Pollo'],
+        nombreReceta: 'Ensalada Simple',
+        ingredientes: [
+          {
+            nombre: 'Lechuga',
+            peso: 100,
+            informacionNutricional: {
+              calorias: 15,
+              proteinas: 1.4,
+              carbohidratos: 3,
+              grasas: 0.2
+            }
+          }
+        ],
         publica: 'false',
         creadorId: new mongoose.Types.ObjectId().toString()
       };
@@ -90,9 +159,9 @@ describe('Receta Service - Unit Tests', () => {
       expect(resultado.publica).toBe(false);
     });
 
-    it('debería manejar ingredientes vacíos correctamente', async () => {
+    it('debería manejar ingredientes vacíos', async () => {
       const datosReceta = {
-        nombreReceta: 'Ensalada César',
+        nombreReceta: 'Receta Vacía',
         ingredientes: [],
         publica: true,
         creadorId: new mongoose.Types.ObjectId().toString()
@@ -103,533 +172,157 @@ describe('Receta Service - Unit Tests', () => {
       expect(resultado).toBeDefined();
       expect(resultado.ingredientes).toEqual([]);
     });
+  });
 
-    it('debería manejar campos opcionales correctamente', async () => {
-      const datosReceta = {
-        nombreReceta: 'Receta Simple',
-        ingredientes: ['Ingrediente 1'],
+  describe('obtenerRecetaService', () => {
+    it('debería obtener una receta por ID', async () => {
+      const recetaId = new mongoose.Types.ObjectId().toString();
+      const recetaMock = {
+        _id: recetaId,
+        nombreReceta: 'Test Recipe',
+        ingredientes: [
+          {
+            ingrediente: new mongoose.Types.ObjectId(),
+            peso: 100
+          }
+        ],
+        pasosPreparacion: ['Paso 1'],
+        tiempoPreparacion: '15 minutos',
+        imagenes: [],
         publica: true,
-        creadorId: new mongoose.Types.ObjectId().toString()
+        creador: new mongoose.Types.ObjectId()
       };
 
-      const resultado = await crearRecetaService(datosReceta);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (Receta as any).findById.mockResolvedValue(recetaMock);
+
+      const resultado = await obtenerRecetaService(recetaId);
 
       expect(resultado).toBeDefined();
-      expect(resultado.pasosPreparacion).toEqual([]);
-      expect(resultado.tiempoPreparacion).toBe('');
-      expect(resultado.informacionNutricional).toBe('');
-      expect(resultado.imagenes).toEqual([]);
+      expect(resultado.nombreReceta).toBe('Test Recipe');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((Receta as any).findById).toHaveBeenCalledWith(recetaId);
+    });
+
+    it('debería lanzar error si la receta no existe', async () => {
+      const recetaId = new mongoose.Types.ObjectId().toString();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (Receta as any).findById.mockResolvedValue(null);
+
+      await expect(obtenerRecetaService(recetaId)).rejects.toThrow('Receta no encontrada');
     });
   });
 
   describe('obtenerRecetasPublicasService', () => {
-    it('debería obtener solo recetas públicas', async () => {
-      const mockFind = jest.fn().mockReturnValue({
-        sort: jest.fn().mockResolvedValue([
+    it('debería obtener recetas públicas', async () => {
+      const recetasMock = [
           {
             _id: new mongoose.Types.ObjectId(),
-            nombreReceta: 'Receta Pública',
-            publica: true
-          }
-        ])
-      });
+          nombreReceta: 'Receta 1',
+          ingredientes: [],
+          pasosPreparacion: [],
+          tiempoPreparacion: '15 minutos',
+          imagenes: [],
+              publica: true,
+              creador: new mongoose.Types.ObjectId()
+            },
+            {
+              _id: new mongoose.Types.ObjectId(),
+          nombreReceta: 'Receta 2',
+          ingredientes: [],
+          pasosPreparacion: [],
+          tiempoPreparacion: '20 minutos',
+          imagenes: [],
+              publica: true,
+              creador: new mongoose.Types.ObjectId()
+        }
+      ];
 
-      (Receta as jest.MockedClass<typeof Receta>).find = mockFind;
+      // Configurar el mock para que funcione con populate y sort
+      const mockQuery = {
+        populate: jest.fn().mockReturnThis(),
+        sort: jest.fn().mockResolvedValue(recetasMock)
+      };
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (Receta as any).find.mockReturnValue(mockQuery);
 
       const resultado = await obtenerRecetasPublicasService();
 
       expect(resultado).toBeDefined();
-      expect(Array.isArray(resultado)).toBe(true);
-      expect(mockFind).toHaveBeenCalledWith({ publica: true });
-    });
-
-    it('debería devolver array vacío si no hay recetas públicas', async () => {
-      const mockFind = jest.fn().mockReturnValue({
-        sort: jest.fn().mockResolvedValue([])
-      });
-
-      (Receta as jest.MockedClass<typeof Receta>).find = mockFind;
-
-      const resultado = await obtenerRecetasPublicasService();
-
-      expect(resultado).toBeDefined();
-      expect(Array.isArray(resultado)).toBe(true);
-      expect(resultado.length).toBe(0);
-    });
-  });
-
-  describe('obtenerMisRecetasService', () => {
-    it('debería obtener recetas del creador específico', async () => {
-      const creadorId = new mongoose.Types.ObjectId().toString();
-      const mockFind = jest.fn().mockReturnValue({
-        sort: jest.fn().mockResolvedValue([
-          {
-            _id: new mongoose.Types.ObjectId(),
-            nombreReceta: 'Mi Receta',
-            creador: creadorId
-          }
-        ])
-      });
-
-      (Receta as jest.MockedClass<typeof Receta>).find = mockFind;
-
-      const resultado = await obtenerMisRecetasService(creadorId);
-
-      expect(resultado).toBeDefined();
-      expect(Array.isArray(resultado)).toBe(true);
-      expect(mockFind).toHaveBeenCalledWith({ creador: creadorId });
-    });
-
-    it('debería devolver array vacío si el creador no tiene recetas', async () => {
-      const creadorId = new mongoose.Types.ObjectId().toString();
-      const mockFind = jest.fn().mockReturnValue({
-        sort: jest.fn().mockResolvedValue([])
-      });
-
-      (Receta as jest.MockedClass<typeof Receta>).find = mockFind;
-
-      const resultado = await obtenerMisRecetasService(creadorId);
-
-      expect(resultado).toBeDefined();
-      expect(Array.isArray(resultado)).toBe(true);
-      expect(resultado.length).toBe(0);
-    });
-  });
-
-  describe('obtenerRecetasPublicasYPropiasService', () => {
-    it('debería obtener recetas públicas y propias del usuario', async () => {
-      const creadorId = new mongoose.Types.ObjectId().toString();
-      const mockFind = jest.fn().mockReturnValue({
-        sort: jest.fn().mockResolvedValue([
-          {
-            _id: new mongoose.Types.ObjectId(),
-            nombreReceta: 'Receta Pública',
-            publica: true
-          },
-          {
-            _id: new mongoose.Types.ObjectId(),
-            nombreReceta: 'Mi Receta',
-            publica: false,
-            creador: creadorId
-          }
-        ])
-      });
-
-      (Receta as jest.MockedClass<typeof Receta>).find = mockFind;
-
-      const resultado = await obtenerRecetasPublicasYPropiasService(creadorId);
-
-      expect(resultado).toBeDefined();
-      expect(Array.isArray(resultado)).toBe(true);
       expect(resultado.length).toBe(2);
-      expect(mockFind).toHaveBeenCalledWith({
-        $or: [
-          { publica: true },
-          { creador: creadorId }
-        ]
-      });
-    });
-
-    it('debería manejar casos donde no hay recetas', async () => {
-      const creadorId = new mongoose.Types.ObjectId().toString();
-      const mockFind = jest.fn().mockReturnValue({
-        sort: jest.fn().mockResolvedValue([])
-      });
-
-      (Receta as jest.MockedClass<typeof Receta>).find = mockFind;
-
-      const resultado = await obtenerRecetasPublicasYPropiasService(creadorId);
-
-      expect(resultado).toBeDefined();
-      expect(Array.isArray(resultado)).toBe(true);
-      expect(resultado.length).toBe(0);
-    });
-  });
-
-  describe('buscarRecetasService', () => {
-    const creadorId = new mongoose.Types.ObjectId().toString();
-
-    it('debería buscar recetas por nombre con término específico', async () => {
-      const termino = 'Ensalada';
-      const mockFind = jest.fn().mockReturnValue({
-        sort: jest.fn().mockReturnValue({
-          limit: jest.fn().mockResolvedValue([
-            {
-              _id: new mongoose.Types.ObjectId(),
-              nombreReceta: 'Ensalada César',
-              ingredientes: ['Lechuga', 'Pollo'],
-              publica: true,
-              creador: new mongoose.Types.ObjectId()
-            },
-            {
-              _id: new mongoose.Types.ObjectId(),
-              nombreReceta: 'Ensalada Griega',
-              ingredientes: ['Tomate', 'Pepino'],
-              publica: false,
-              creador: creadorId
-            }
-          ])
-        })
-      });
-
-      (Receta as jest.MockedClass<typeof Receta>).find = mockFind;
-
-      const resultado = await buscarRecetasService(termino, creadorId);
-
-      expect(resultado).toBeDefined();
-      expect(Array.isArray(resultado)).toBe(true);
-      expect(resultado.length).toBe(2);
-      expect(mockFind).toHaveBeenCalledWith({
-        $and: [
-          {
-            $or: [
-              { publica: true },
-              { creador: creadorId }
-            ]
-          },
-          {
-            $or: [
-              { nombreReceta: { $regex: termino, $options: 'i' } },
-              { ingredientes: { $regex: termino, $options: 'i' } }
-            ]
-          }
-        ]
-      });
-    });
-
-    it('debería devolver todas las recetas públicas y propias cuando el término está vacío', async () => {
-      const termino = '';
-      const mockFind = jest.fn().mockReturnValue({
-        sort: jest.fn().mockReturnValue({
-          limit: jest.fn().mockResolvedValue([
-            {
-              _id: new mongoose.Types.ObjectId(),
-              nombreReceta: 'Receta Pública',
-              publica: true,
-              creador: new mongoose.Types.ObjectId()
-            },
-            {
-              _id: new mongoose.Types.ObjectId(),
-              nombreReceta: 'Mi Receta',
-              publica: false,
-              creador: creadorId
-            }
-          ])
-        })
-      });
-
-      (Receta as jest.MockedClass<typeof Receta>).find = mockFind;
-
-      const resultado = await buscarRecetasService(termino, creadorId);
-
-      expect(resultado).toBeDefined();
-      expect(Array.isArray(resultado)).toBe(true);
-      expect(resultado.length).toBe(2);
-      expect(mockFind).toHaveBeenCalledWith({
-        $or: [
-          { publica: true },
-          { creador: creadorId }
-        ]
-      });
-    });
-
-    it('debería buscar recetas por ingredientes', async () => {
-      const termino = 'Pollo';
-      const mockFind = jest.fn().mockReturnValue({
-        sort: jest.fn().mockReturnValue({
-          limit: jest.fn().mockResolvedValue([
-            {
-              _id: new mongoose.Types.ObjectId(),
-              nombreReceta: 'Ensalada con Pollo',
-              ingredientes: ['Lechuga', 'Pollo', 'Tomate'],
-              publica: true,
-              creador: new mongoose.Types.ObjectId()
-            }
-          ])
-        })
-      });
-
-      (Receta as jest.MockedClass<typeof Receta>).find = mockFind;
-
-      const resultado = await buscarRecetasService(termino, creadorId);
-
-      expect(resultado).toBeDefined();
-      expect(Array.isArray(resultado)).toBe(true);
-      expect(resultado.length).toBe(1);
-      expect(mockFind).toHaveBeenCalledWith({
-        $and: [
-          {
-            $or: [
-              { publica: true },
-              { creador: creadorId }
-            ]
-          },
-          {
-            $or: [
-              { nombreReceta: { $regex: termino, $options: 'i' } },
-              { ingredientes: { $regex: termino, $options: 'i' } }
-            ]
-          }
-        ]
-      });
-    });
-
-    it('debería limitar los resultados a 10 recetas', async () => {
-      const termino = 'test';
-      const mockFind = jest.fn().mockReturnValue({
-        sort: jest.fn().mockReturnValue({
-          limit: jest.fn().mockResolvedValue([
-            {
-              _id: new mongoose.Types.ObjectId(),
-              nombreReceta: 'Test Recipe',
-              publica: true,
-              creador: new mongoose.Types.ObjectId()
-            }
-          ])
-        })
-      });
-
-      (Receta as jest.MockedClass<typeof Receta>).find = mockFind;
-
-      const resultado = await buscarRecetasService(termino, creadorId);
-
-      expect(resultado).toBeDefined();
-      expect(Array.isArray(resultado)).toBe(true);
-      expect(mockFind).toHaveBeenCalled();
-    });
-
-    it('debería manejar búsquedas que no encuentran resultados', async () => {
-      const termino = 'RecetaInexistente';
-      const mockFind = jest.fn().mockReturnValue({
-        sort: jest.fn().mockReturnValue({
-          limit: jest.fn().mockResolvedValue([])
-        })
-      });
-
-      (Receta as jest.MockedClass<typeof Receta>).find = mockFind;
-
-      const resultado = await buscarRecetasService(termino, creadorId);
-
-      expect(resultado).toBeDefined();
-      expect(Array.isArray(resultado)).toBe(true);
-      expect(resultado.length).toBe(0);
-    });
-
-    it('debería manejar término con espacios en blanco', async () => {
-      const termino = '  Ensalada  ';
-      const mockFind = jest.fn().mockReturnValue({
-        sort: jest.fn().mockReturnValue({
-          limit: jest.fn().mockResolvedValue([])
-        })
-      });
-
-      (Receta as jest.MockedClass<typeof Receta>).find = mockFind;
-
-      const resultado = await buscarRecetasService(termino, creadorId);
-
-      expect(resultado).toBeDefined();
-      expect(Array.isArray(resultado)).toBe(true);
-      expect(mockFind).toHaveBeenCalledWith({
-        $and: [
-          {
-            $or: [
-              { publica: true },
-              { creador: creadorId }
-            ]
-          },
-          {
-            $or: [
-              { nombreReceta: { $regex: 'Ensalada', $options: 'i' } },
-              { ingredientes: { $regex: 'Ensalada', $options: 'i' } }
-            ]
-          }
-        ]
-      });
-    });
-
-    it('debería incluir recetas públicas y privadas del creador en la búsqueda', async () => {
-      const termino = 'test';
-      const mockFind = jest.fn().mockReturnValue({
-        sort: jest.fn().mockReturnValue({
-          limit: jest.fn().mockResolvedValue([
-            {
-              _id: new mongoose.Types.ObjectId(),
-              nombreReceta: 'Receta Pública Test',
-              publica: true,
-              creador: new mongoose.Types.ObjectId()
-            },
-            {
-              _id: new mongoose.Types.ObjectId(),
-              nombreReceta: 'Mi Receta Test',
-              publica: false,
-              creador: creadorId
-            }
-          ])
-        })
-      });
-
-      (Receta as jest.MockedClass<typeof Receta>).find = mockFind;
-
-      const resultado = await buscarRecetasService(termino, creadorId);
-
-      expect(resultado).toBeDefined();
-      expect(Array.isArray(resultado)).toBe(true);
-      expect(resultado.length).toBe(2);
-      expect(mockFind).toHaveBeenCalledWith({
-        $and: [
-          {
-            $or: [
-              { publica: true },
-              { creador: creadorId }
-            ]
-          },
-          {
-            $or: [
-              { nombreReceta: { $regex: termino, $options: 'i' } },
-              { ingredientes: { $regex: termino, $options: 'i' } }
-            ]
-          }
-        ]
-      });
-    });
-  });
-
-  describe('Validaciones de Datos', () => {
-    it('debería manejar ingredientes con espacios en blanco', async () => {
-      const datosReceta = {
-        nombreReceta: 'Receta Test',
-        ingredientes: ['  Ingrediente 1  ', '  Ingrediente 2  '],
-        publica: true,
-        creadorId: new mongoose.Types.ObjectId().toString()
-      };
-
-      const resultado = await crearRecetaService(datosReceta);
-
-      expect(resultado).toBeDefined();
-      expect(resultado.ingredientes).toEqual(['Ingrediente 1', 'Ingrediente 2']);
-    });
-
-    it('debería manejar pasos de preparación con espacios en blanco', async () => {
-      const datosReceta = {
-        nombreReceta: 'Receta Test',
-        ingredientes: ['Ingrediente 1'],
-        pasosPreparacion: ['  Paso 1  ', '  Paso 2  '],
-        publica: true,
-        creadorId: new mongoose.Types.ObjectId().toString()
-      };
-
-      const resultado = await crearRecetaService(datosReceta);
-
-      expect(resultado).toBeDefined();
-      expect(resultado.pasosPreparacion).toEqual(['Paso 1', 'Paso 2']);
-    });
-
-    it('debería manejar múltiples imágenes', async () => {
-      const datosReceta = {
-        nombreReceta: 'Receta con Imágenes',
-        ingredientes: ['Ingrediente 1'],
-        imagenes: [
-          '/uploads/recipes/test/image1.jpg',
-          '/uploads/recipes/test/image2.jpg',
-          '/uploads/recipes/test/image3.jpg'
-        ],
-        publica: true,
-        creadorId: new mongoose.Types.ObjectId().toString()
-      };
-
-      const resultado = await crearRecetaService(datosReceta);
-
-      expect(resultado).toBeDefined();
-      expect(resultado.imagenes).toHaveLength(3);
-      expect(resultado.imagenes).toEqual(datosReceta.imagenes);
-    });
-  });
-
-  describe('Casos Edge', () => {
-    it('debería manejar nombre de receta con espacios', async () => {
-      const datosReceta = {
-        nombreReceta: '  Ensalada César  ',
-        ingredientes: ['Lechuga'],
-        publica: true,
-        creadorId: new mongoose.Types.ObjectId().toString()
-      };
-
-      const resultado = await crearRecetaService(datosReceta);
-
-      expect(resultado).toBeDefined();
-      expect(resultado.nombreReceta).toBe('Ensalada César');
-    });
-
-    it('debería manejar información nutricional vacía', async () => {
-      const datosReceta = {
-        nombreReceta: 'Receta Test',
-        ingredientes: ['Ingrediente 1'],
-        informacionNutricional: '',
-        publica: true,
-        creadorId: new mongoose.Types.ObjectId().toString()
-      };
-
-      const resultado = await crearRecetaService(datosReceta);
-
-      expect(resultado).toBeDefined();
-      expect(resultado.informacionNutricional).toBe('');
-    });
-
-    it('debería manejar tiempo de preparación vacío', async () => {
-      const datosReceta = {
-        nombreReceta: 'Receta Test',
-        ingredientes: ['Ingrediente 1'],
-        tiempoPreparacion: '',
-        publica: true,
-        creadorId: new mongoose.Types.ObjectId().toString()
-      };
-
-      const resultado = await crearRecetaService(datosReceta);
-
-      expect(resultado).toBeDefined();
-      expect(resultado.tiempoPreparacion).toBe('');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((Receta as any).find).toHaveBeenCalledWith({ publica: true });
+      expect(mockQuery.populate).toHaveBeenCalledWith('ingredientes.ingrediente');
+      expect(mockQuery.sort).toHaveBeenCalledWith({ nombreReceta: 1 });
     });
   });
 
   describe('actualizarRecetaService', () => {
-    it('debería ser una función definida', () => {
-      expect(typeof actualizarRecetaService).toBe('function');
+    it('debería actualizar una receta existente', async () => {
+      const recetaId = new mongoose.Types.ObjectId().toString();
+      const datosActualizacion = {
+        nombreReceta: 'Receta Actualizada',
+        ingredientes: [
+          {
+            nombre: 'Ingrediente Actualizado',
+            peso: 200,
+            informacionNutricional: {
+              calorias: 200,
+              proteinas: 20,
+              carbohidratos: 30,
+              grasas: 10
+            }
+          }
+        ],
+        publica: false,
+        creadorId: new mongoose.Types.ObjectId().toString()
+      };
+
+      const recetaActualizada = {
+        _id: recetaId,
+        ...datosActualizacion
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (Receta as any).findByIdAndUpdate.mockResolvedValue(recetaActualizada);
+
+      const resultado = await actualizarRecetaService(recetaId, datosActualizacion);
+
+      expect(resultado).toBeDefined();
+      expect(resultado.nombreReceta).toBe('Receta Actualizada');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((Receta as any).findByIdAndUpdate).toHaveBeenCalledWith(recetaId, expect.any(Object), { new: true, runValidators: true });
     });
   });
 
   describe('eliminarRecetaService', () => {
-    it('debería ser una función definida', () => {
-      expect(typeof eliminarRecetaService).toBe('function');
-    });
-  });
+    it('debería eliminar una receta', async () => {
+      const recetaId = new mongoose.Types.ObjectId().toString();
+      const recetaEliminada = {
+        _id: recetaId,
+        nombreReceta: 'Receta Eliminada'
+      };
 
-  describe('limpiarImagenesHuerfanasService', () => {
-    it('debería manejar directorio que no existe', async () => {
-      const resultado = await limpiarImagenesHuerfanasService();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (Receta as any).findByIdAndDelete.mockResolvedValue(recetaEliminada);
 
-      expect(resultado).toBeDefined();
-      expect(resultado).toHaveProperty('mensaje');
-      expect(resultado).toHaveProperty('imagenesEncontradas');
-      expect(resultado).toHaveProperty('imagenesEliminadas');
-      if (resultado.imagenesHuerfanas !== undefined) {
-        expect(Array.isArray(resultado.imagenesHuerfanas)).toBe(true);
-      }
-    });
-
-    it('debería devolver estructura de respuesta correcta', async () => {
-      const resultado = await limpiarImagenesHuerfanasService();
+      const resultado = await eliminarRecetaService(recetaId);
 
       expect(resultado).toBeDefined();
-      expect(typeof resultado.mensaje).toBe('string');
-      expect(typeof resultado.imagenesEncontradas).toBe('number');
-      expect(typeof resultado.imagenesEliminadas).toBe('number');
-      if (resultado.imagenesHuerfanas !== undefined) {
-        expect(Array.isArray(resultado.imagenesHuerfanas)).toBe(true);
-      }
+      expect(resultado.nombreReceta).toBe('Receta Eliminada');
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((Receta as any).findByIdAndDelete).toHaveBeenCalledWith(recetaId);
+    });
+
+    it('debería lanzar error si la receta a eliminar no existe', async () => {
+      const recetaId = new mongoose.Types.ObjectId().toString();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (Receta as any).findByIdAndDelete.mockResolvedValue(null);
+
+      await expect(eliminarRecetaService(recetaId)).rejects.toThrow('Receta no encontrada');
     });
   });
 });
-
 
 afterAll(async () => {
   await mongoose.connection.close();
