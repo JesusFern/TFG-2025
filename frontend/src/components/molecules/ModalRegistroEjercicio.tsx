@@ -70,6 +70,7 @@ const ModalRegistroEjercicio: React.FC<ModalRegistroEjercicioProps> = ({
       closeOnClickOutside={!loading}
       closeOnEscape={!loading}
       withCloseButton={!loading}
+      zIndex={1000}
     >
       {error && (
         <Alert

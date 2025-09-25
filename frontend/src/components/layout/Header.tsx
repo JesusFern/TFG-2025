@@ -177,6 +177,16 @@ const Header: React.FC = () => {
                     Dashboard
                   </Menu.Item>
 
+                  <Menu.Item
+                    leftSection={<IconCalendarEvent size={14} />}
+                    onClick={() => {
+                      navigate('/progreso-semanal');
+                      closeMobileMenu();
+                    }}
+                  >
+                    Progreso Semanal
+                  </Menu.Item>
+
                   {user.role === 'worker' && user.workerType === 'nutricionista' && (
                     <Menu.Item
                       leftSection={<IconUser size={14} />}
@@ -279,6 +289,19 @@ const Header: React.FC = () => {
                 color="nutroos-green"
               >
                 Dashboard
+              </Button>
+              
+              <Button
+                variant="light"
+                leftSection={<IconCalendarEvent size={16} />}
+                onClick={() => {
+                  navigate('/progreso-semanal');
+                  closeMobileMenu();
+                }}
+                fullWidth
+                color="nutroos-green"
+              >
+                Progreso Semanal
               </Button>
               
               {user.role === 'worker' && user.workerType === 'nutricionista' && (

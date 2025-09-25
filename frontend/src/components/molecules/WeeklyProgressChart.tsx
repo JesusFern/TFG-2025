@@ -1,6 +1,7 @@
 import React from 'react';
-import { Paper, Title, Text, Group, Stack, useMantineTheme, RingProgress } from '@mantine/core';
-import { IconTrendingUp, IconTarget, IconCheck } from '@tabler/icons-react';
+import { Paper, Title, Text, Group, Stack, useMantineTheme, RingProgress, Button } from '@mantine/core';
+import { IconTrendingUp, IconTarget, IconCheck, IconArrowRight } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
 
 interface WeeklyProgressChartProps {
   nutritionProgress: number;
@@ -14,6 +15,7 @@ export const WeeklyProgressChart: React.FC<WeeklyProgressChartProps> = ({
   goalProgress
 }) => {
   const theme = useMantineTheme();
+  const navigate = useNavigate();
 
   const getProgressColor = (progress: number) => {
     if (progress >= 80) return theme.colors.green[6];
@@ -109,6 +111,17 @@ export const WeeklyProgressChart: React.FC<WeeklyProgressChartProps> = ({
             }
           </Text>
         </Paper>
+
+        {/* Botón para ver detalles */}
+        <Button
+          variant="light"
+          color="nutroos-green"
+          rightSection={<IconArrowRight size={16} />}
+          onClick={() => navigate('/progreso-semanal')}
+          fullWidth
+        >
+          Ver Detalles Completos
+        </Button>
       </Stack>
     </Paper>
   );

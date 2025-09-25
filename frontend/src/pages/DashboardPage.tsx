@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Grid,
@@ -10,7 +10,9 @@ import {
   useMantineTheme,
   useMantineColorScheme,
   Stack,
-  Button
+  Button,
+  Loader,
+  Center
 } from '@mantine/core';
 import {
   IconChartLine,
@@ -31,6 +33,15 @@ import { WeeklyProgressChart } from '../components/molecules/WeeklyProgressChart
 import { CurrentSubscription } from '../components/molecules/CurrentSubscription';
 import { ComingSoonBadge } from '../components/atoms/ComingSoonBadge';
 import { ComingSoonModal } from '../components/atoms/ComingSoonModal';
+import { estadisticasService } from '../services/estadisticasService';
+import { EstadisticasSemanal } from '../types/estadisticas';
+
+// Tipo extendido para manejar la diferencia entre frontend y backend
+interface EstadisticasSemanalBackend extends EstadisticasSemanal {
+  progreso: EstadisticasSemanal['progreso'] & {
+    ejerciciosRegistrados?: number;
+  };
+}
 
 interface DashboardCardProps {
   title: string;
@@ -129,6 +140,10 @@ const DashboardPage: React.FC = () => {
     description: ''
   });
 
+  // Estado para las estadísticas semanales
+  const [weeklyStats, setWeeklyStats] = useState<EstadisticasSemanalBackend | null>(null);
+  const [loadingStats, setLoadingStats] = useState(false);
+
   // Función para mostrar modal de próximamente
   const showComingSoon = (title: string, description: string) => {
     setComingSoonModal({
@@ -138,8 +153,46 @@ const DashboardPage: React.FC = () => {
     });
   };
 
-  // Datos de progreso simulados (en producción vendrían del backend)
-  const weeklyProgress = {
+  // Cargar estadísticas semanales
+  const loadWeeklyStats = useCallback(async () => {
+    if (user?.role !== 'user') return; // Solo para clientes
+
+    try {
+      setLoadingStats(true);
+      const currentDate = new Date();
+      const weekNumber = getWeekNumber(currentDate);
+      const year = currentDate.getFullYear();
+
+      const response = await estadisticasService.getMiProgresoSemanal(weekNumber, year);
+      if (response.success) {
+        setWeeklyStats(response.estadisticas as EstadisticasSemanalBackend);
+      }
+    } catch (error) {
+      console.error('Error cargando estadísticas semanales:', error);
+    } finally {
+      setLoadingStats(false);
+    }
+  }, [user]);
+
+  // Función para obtener el número de semana (ISO 8601)
+  const getWeekNumber = (date: Date): number => {
+    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+    const dayNum = d.getUTCDay() || 7;
+    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
+    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
+    return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1)/7);
+  };
+
+  useEffect(() => {
+    loadWeeklyStats();
+  }, [user, loadWeeklyStats]);
+
+  // Datos de progreso - usar datos reales si están disponibles, sino datos por defecto
+  const weeklyProgress = weeklyStats ? {
+    nutrition: 0, // La nutrición aún no está implementada
+    exercise: Math.round(weeklyStats.progreso.porcentajeCompletitud),
+    goal: Math.round((weeklyStats.progreso.porcentajeCompletitud + weeklyStats.asistencia.porcentajeAsistencia) / 2) // Promedio entre ejercicio y asistencia
+  } : {
     nutrition: 85,
     exercise: 72,
     goal: 78
@@ -153,8 +206,8 @@ const DashboardPage: React.FC = () => {
         description: 'Visualiza tu progreso en nutrición y entrenamiento de esta semana',
         icon: <IconChartLine size={32} />,
         color: 'green',
-        onClick: () => showComingSoon('Progreso Semanal', 'Esta funcionalidad te permitirá ver gráficos detallados de tu progreso semanal en nutrición y entrenamiento.'),
-        comingSoon: true
+        onClick: () => navigate('/progreso-semanal'),
+        badge: 'Disponible'
       },
       {
         title: 'Calendario',
@@ -341,11 +394,22 @@ const DashboardPage: React.FC = () => {
         <Grid gutter="lg">
           <Grid.Col span={{ base: 12, lg: 4 }}>
             <Stack gap="lg">
-              <WeeklyProgressChart
-                nutritionProgress={weeklyProgress.nutrition}
-                exerciseProgress={weeklyProgress.exercise}
-                goalProgress={weeklyProgress.goal}
-              />
+              {loadingStats && user?.role === 'user' ? (
+                <Paper p="lg" radius="lg" withBorder>
+                  <Center py="xl">
+                    <Stack align="center" gap="md">
+                      <Loader size="lg" />
+                      <Text c="dimmed">Cargando progreso semanal...</Text>
+                    </Stack>
+                  </Center>
+                </Paper>
+              ) : (
+                <WeeklyProgressChart
+                  nutritionProgress={weeklyProgress.nutrition}
+                  exerciseProgress={weeklyProgress.exercise}
+                  goalProgress={weeklyProgress.goal}
+                />
+              )}
               {user?.role === 'user' && (
                 <CurrentSubscription />
               )}

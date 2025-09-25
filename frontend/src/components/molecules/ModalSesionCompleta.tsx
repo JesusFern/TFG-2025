@@ -67,6 +67,7 @@ const ModalSesionCompleta: React.FC<ModalSesionCompletaProps> = ({
       title="Estado de la Sesión"
       size="md"
       centered
+      zIndex={1000}
     >
       <Stack gap="lg">
         {/* Resumen de progreso */}

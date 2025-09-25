@@ -98,6 +98,7 @@ const ModalEditarRegistro: React.FC<ModalEditarRegistroProps> = ({
       title="Editar Registro de Ejercicio"
       size="xl"
       centered
+      zIndex={1000}
     >
       <Stack gap="lg">
         {/* Información del ejercicio */}

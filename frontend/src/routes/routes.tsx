@@ -109,6 +109,7 @@ import MyDietsPage from '../pages/MyDietsPage';
 import CitasPage from '../pages/CitasPage';
 import CrearCitaPage from '../pages/CrearCitaPage';
 import EditarCitaPage from '../pages/EditarCitaPage';
+import ProgresoSemanalPage from '../pages/ProgresoSemanalPage';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -327,6 +328,15 @@ const AppRoutes: React.FC = () => {
         <ProtectedRoute>
           <Layout>
             <MyDietsPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+
+      {/* Ruta para progreso semanal */}
+      <Route path="/progreso-semanal" element={
+        <ProtectedRoute>
+          <Layout>
+            <ProgresoSemanalPage />
           </Layout>
         </ProtectedRoute>
       } />

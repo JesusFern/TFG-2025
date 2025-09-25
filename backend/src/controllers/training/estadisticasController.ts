@@ -7,7 +7,6 @@ import {
 } from '../../service/training/estadisticasService';
 import logger from '../../utils/logger';
 import { matchedData } from 'express-validator';
-
 export const obtenerEstadisticasCliente = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { clienteId } = matchedData(req, { locations: ['params'] }) as { clienteId: string };
@@ -40,6 +39,7 @@ export const obtenerEstadisticasCliente = async (req: AuthenticatedRequest, res:
 
     logger.info('Estadísticas del cliente obtenidas correctamente', { clienteId });
     res.status(200).json({ 
+      success: true,
       message: 'Estadísticas obtenidas correctamente', 
       estadisticas 
     });
@@ -91,6 +91,7 @@ export const obtenerEstadisticasSemanal = async (req: AuthenticatedRequest, res:
       numeroSemana: numeroSemanaNum 
     });
     res.status(200).json({ 
+      success: true,
       message: 'Estadísticas semanales obtenidas correctamente', 
       estadisticas 
     });
@@ -132,6 +133,7 @@ export const obtenerProgresoEjercicios = async (req: AuthenticatedRequest, res: 
       cantidad: progreso.length 
     });
     res.status(200).json({ 
+      success: true,
       message: 'Progreso de ejercicios obtenido correctamente', 
       progreso 
     });
@@ -178,8 +180,10 @@ export const obtenerMiProgreso = async (req: AuthenticatedRequest, res: Response
       fechaFinDate
     );
 
+
     logger.info('Progreso personal obtenido correctamente', { clienteId });
     res.status(200).json({ 
+      success: true,
       message: 'Progreso personal obtenido correctamente', 
       estadisticas 
     });
@@ -229,6 +233,7 @@ export const obtenerMiProgresoSemanal = async (req: AuthenticatedRequest, res: R
       numeroSemana: numeroSemanaNum 
     });
     res.status(200).json({ 
+      success: true,
       message: 'Progreso semanal personal obtenido correctamente', 
       estadisticas 
     });
@@ -269,6 +274,7 @@ export const obtenerMiProgresoEjercicios = async (req: AuthenticatedRequest, res
       cantidad: progreso.length 
     });
     res.status(200).json({ 
+      success: true,
       message: 'Progreso personal de ejercicios obtenido correctamente', 
       progreso 
     });

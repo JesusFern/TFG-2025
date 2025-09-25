@@ -64,6 +64,7 @@ const ModalDetallesRegistro: React.FC<ModalDetallesRegistroProps> = ({
       title="Detalles del Registro"
       size="lg"
       centered
+      zIndex={1000}
     >
       <Stack gap="lg">
         {/* Header del ejercicio */}
