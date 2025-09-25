@@ -5,6 +5,26 @@ import Receta from '../../models/diets/receta';
 import User from '../../models/users/user';
 import { esIdValido } from '../commonValidators';
 
+// Interface para ingrediente en validación
+interface IngredienteValidacion {
+  nombre: string;
+  peso: number;
+  informacionNutricional: {
+    calorias: number;
+    proteinas: number;
+    carbohidratos: number;
+    grasas: number;
+    fibra?: number;
+    azucares?: number;
+    sal?: number;
+    sodio?: number;
+  };
+  marca?: string;
+  id?: string;
+  imagenIngrediente?: string;
+  fuente?: string;
+}
+
 export const verificarRecetaExiste = async (
   recetaId: string,
   res: Response
@@ -15,7 +35,7 @@ export const verificarRecetaExiste = async (
   }
 
   try {
-    const receta = await Receta.findById(recetaId);
+    const receta = await Receta.findById(recetaId).populate('ingredientes.ingrediente');
     if (!receta) {
       res.status(404).json({ message: 'Receta no encontrada' });
       return null;
@@ -31,7 +51,24 @@ export const verificarRecetaExiste = async (
 export const validarDatosReceta = (
   datosReceta: {
     nombreReceta?: string;
-    ingredientes?: string[] | unknown;
+    ingredientes?: Array<{
+      nombre: string;
+      peso: number;
+      informacionNutricional: {
+        calorias: number;
+        proteinas: number;
+        carbohidratos: number;
+        grasas: number;
+        fibra?: number;
+        azucares?: number;
+        sal?: number;
+        sodio?: number;
+      };
+      marca?: string;
+      id?: string;
+      imagenIngrediente?: string;
+      fuente?: string;
+    }> | unknown;
     pasosPreparacion?: string[] | unknown;
     publica?: boolean | string | unknown;
   },
@@ -47,12 +84,40 @@ export const validarDatosReceta = (
     return false;
   }
 
-  const ingredientesValidos = datosReceta.ingredientes.every(ingrediente => 
-    typeof ingrediente === 'string' && ingrediente.trim() !== ''
-  );
+  const ingredientesValidos = datosReceta.ingredientes.every(ingrediente => {
+    if (typeof ingrediente !== 'object' || ingrediente === null) {
+      return false;
+    }
+    
+    const ing = ingrediente as IngredienteValidacion;
+    
+    // Validar campos obligatorios
+    if (!ing.nombre || typeof ing.nombre !== 'string' || ing.nombre.trim() === '') {
+      return false;
+    }
+    
+    if (!ing.peso || typeof ing.peso !== 'number' || ing.peso <= 0) {
+      return false;
+    }
+    
+    if (!ing.informacionNutricional || typeof ing.informacionNutricional !== 'object') {
+      return false;
+    }
+    
+    // Validar información nutricional
+    const info = ing.informacionNutricional;
+    if (typeof info.calorias !== 'number' || 
+        typeof info.proteinas !== 'number' || 
+        typeof info.carbohidratos !== 'number' || 
+        typeof info.grasas !== 'number') {
+      return false;
+    }
+    
+    return true;
+  });
 
   if (!ingredientesValidos) {
-    res.status(400).json({ message: 'Todos los ingredientes deben ser texto válido' });
+    res.status(400).json({ message: 'Todos los ingredientes deben tener nombre, peso e información nutricional válidos' });
     return false;
   }
 

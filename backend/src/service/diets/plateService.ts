@@ -7,6 +7,10 @@ type PlatoUpdate = {
   nombre?: string;
   orden?: number;
   receta?: string;
+  ingredientesPersonalizados?: Array<{
+    ingrediente: string;
+    peso: number;
+  }>;
 };
 
 interface NotFoundError extends Error {
@@ -41,6 +45,22 @@ export async function actualizarPlatosService(platos: PlatoUpdate[]) {
               throw error;
             }
             subPlato.receta = new mongoose.Types.ObjectId(plato.receta);
+          }
+          if (typeof plato.ingredientesPersonalizados !== 'undefined') {
+            // Limpiar ingredientes existentes usando el método de Mongoose
+            subPlato.ingredientesPersonalizados.splice(0, subPlato.ingredientesPersonalizados.length);
+            // Añadir los nuevos ingredientes uno por uno
+            for (const ing of plato.ingredientesPersonalizados) {
+              // Validar que el ingrediente tenga un ID válido
+              if (ing.ingrediente && mongoose.Types.ObjectId.isValid(ing.ingrediente)) {
+                subPlato.ingredientesPersonalizados.push({
+                  ingrediente: new mongoose.Types.ObjectId(ing.ingrediente),
+                  peso: ing.peso
+                });
+              } else {
+                console.warn(`Ingrediente con ID inválido omitido: ${ing.ingrediente}`);
+              }
+            }
           }
           platoActualizado = subPlato;
         }
