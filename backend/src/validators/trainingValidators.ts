@@ -216,3 +216,9 @@ export const ejercicioIdValidator = [
 export const sesionIdValidator = [
   param('sesionId').isMongoId().withMessage('ID de sesión no válido')
 ];
+
+export const obtenerProgresoEjercicioValidator = [
+  param('ejercicioId').isMongoId().withMessage('ID de ejercicio no válido'),
+  query('fechaDesde').optional().isISO8601().withMessage('Fecha desde debe ser una fecha válida en formato ISO8601'),
+  query('fechaHasta').optional().isISO8601().withMessage('Fecha hasta debe ser una fecha válida en formato ISO8601')
+];

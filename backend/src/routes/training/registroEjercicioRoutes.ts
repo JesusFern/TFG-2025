@@ -16,8 +16,8 @@ import {
   filtrosRegistroEjercicioValidator,
   marcarRegistroCompletadoValidator,
   idValidator,
-  ejercicioIdValidator,
-  sesionIdValidator
+  sesionIdValidator,
+  obtenerProgresoEjercicioValidator
 } from '../../validators/trainingValidators';
 import { validateRequest } from '../../middlewares/validationMiddleware';
 
@@ -76,7 +76,7 @@ router.patch(
 router.get(
   '/progreso/:ejercicioId',
   authenticateToken,
-  ejercicioIdValidator,
+  obtenerProgresoEjercicioValidator,
   validateRequest,
   obtenerProgresoEjercicio
 );

@@ -3,6 +3,7 @@ import Sesion from '../../models/training/sesion';
 import Ejercicio from '../../models/training/ejercicio';
 import User from '../../models/users/user';
 import logger from '../../utils/logger';
+import mongoose from 'mongoose';
 
 export async function crearRegistroEjercicioService({
   ejercicioId,
@@ -271,19 +272,38 @@ export async function marcarRegistroCompletadoService(registroId: string, client
 }
 
 export async function obtenerProgresoEjercicioService(ejercicioId: string, clienteId: string, fechaDesde?: string, fechaHasta?: string) {
+  // Validar que los IDs sean ObjectIds válidos
+  if (!mongoose.Types.ObjectId.isValid(ejercicioId)) {
+    throw new Error('ID de ejercicio no válido');
+  }
+  if (!mongoose.Types.ObjectId.isValid(clienteId)) {
+    throw new Error('ID de cliente no válido');
+  }
+
+  // Construir query de forma segura
   const query: Record<string, unknown> = {
-    ejercicio: ejercicioId,
-    cliente: clienteId,
+    ejercicio: new mongoose.Types.ObjectId(ejercicioId),
+    cliente: new mongoose.Types.ObjectId(clienteId),
     completado: true
   };
 
+  // Validar y construir filtro de fechas de forma segura
   if (fechaDesde || fechaHasta) {
     query.fecha = {} as Record<string, unknown>;
+    
     if (fechaDesde) {
-      (query.fecha as Record<string, unknown>).$gte = new Date(fechaDesde);
+      const fechaDesdeDate = new Date(fechaDesde);
+      if (isNaN(fechaDesdeDate.getTime())) {
+        throw new Error('Fecha desde no válida');
+      }
+      (query.fecha as Record<string, unknown>).$gte = fechaDesdeDate;
     }
+    
     if (fechaHasta) {
       const fechaHastaDate = new Date(fechaHasta);
+      if (isNaN(fechaHastaDate.getTime())) {
+        throw new Error('Fecha hasta no válida');
+      }
       fechaHastaDate.setDate(fechaHastaDate.getDate() + 1);
       (query.fecha as Record<string, unknown>).$lt = fechaHastaDate;
     }

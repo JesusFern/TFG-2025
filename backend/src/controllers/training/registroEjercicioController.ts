@@ -261,14 +261,20 @@ export const obtenerProgresoEjercicio = async (req: AuthenticatedRequest, res: R
       return;
     }
 
-    const { ejercicioId } = req.params;
-    const { fechaDesde, fechaHasta } = req.query;
+    const { ejercicioId, fechaDesde, fechaHasta } = matchedData(req, { 
+      locations: ['params', 'query'], 
+      includeOptionals: true 
+    }) as {
+      ejercicioId: string;
+      fechaDesde?: string;
+      fechaHasta?: string;
+    };
 
     const progreso = await obtenerProgresoEjercicioService(
       ejercicioId, 
       clienteId, 
-      fechaDesde as string, 
-      fechaHasta as string
+      fechaDesde, 
+      fechaHasta
     );
 
     logger.info('Progreso de ejercicio obtenido correctamente', { 
