@@ -18,13 +18,13 @@ import {
   Stack,
   Divider,
   Badge,
-  Image
+  Image,
+  NumberInput
 } from '@mantine/core';
 import { 
   IconCheck, 
   IconChefHat, 
   IconClock, 
-  IconInfoCircle,
   IconPlus,
   IconTrash,
   IconPhoto,
@@ -34,6 +34,10 @@ import {
 } from '@tabler/icons-react';
 import { useMediaQuery } from '@mantine/hooks';
 import { crearReceta, actualizarReceta, CrearRecetaDTO, ApiRecetaResponse, RecetaResponse } from '../../../services/recetaService';
+import { Ingrediente, IngredientePoblado } from '../../../types/diets';
+import { guardarIngredientesOpenFoodFacts } from '../../../services/ingredientesService';
+import { useThemeDetection } from '../../../hooks/useThemeDetection';
+import BuscadorIngredientes from '../../molecules/BuscadorIngredientes';
 
 interface FormularioCrearRecetaProps {
   onSuccess: (recetaData: ApiRecetaResponse) => void;
@@ -49,16 +53,16 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
   recetaInicial
 }) => {
   const isMobile = useMediaQuery('(max-width: 768px)');
+  const isDark = useThemeDetection();
   
   const [active, setActive] = useState(0);
   const [loading, setLoading] = useState(false);
   
   // Estados del formulario
   const [nombreReceta, setNombreReceta] = useState('');
-  const [ingredientes, setIngredientes] = useState<string[]>(['']);
+  const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
   const [pasosPreparacion, setPasosPreparacion] = useState<string[]>(['']);
   const [tiempoPreparacion, setTiempoPreparacion] = useState('');
-  const [informacionNutricional, setInformacionNutricional] = useState('');
   const [publica, setPublica] = useState(false);
   const [imagenes, setImagenes] = useState<File[]>([]);
   const [imagenesExistentes, setImagenesExistentes] = useState<string[]>([]);
@@ -71,10 +75,44 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
   useEffect(() => {
     if (modoEdicion && recetaInicial) {
       setNombreReceta(recetaInicial.nombreReceta);
-      setIngredientes(recetaInicial.ingredientes.length > 0 ? recetaInicial.ingredientes : ['']);
+      // Convertir ingredientes del formato anterior al nuevo formato
+      if (recetaInicial.ingredientes && Array.isArray(recetaInicial.ingredientes)) {
+        if (typeof recetaInicial.ingredientes[0] === 'string') {
+          // Formato anterior (string[])
+          const ingredientesConvertidos: Ingrediente[] = (recetaInicial.ingredientes as string[]).map(nombre => ({
+            nombre,
+            peso: 100, // Peso por defecto
+            informacionNutricional: {
+              calorias: 0,
+              proteinas: 0,
+              carbohidratos: 0,
+              grasas: 0
+            }
+          }));
+          setIngredientes(ingredientesConvertidos);
+        } else if (recetaInicial.ingredientes[0] && typeof recetaInicial.ingredientes[0] === 'object' && 'ingrediente' in recetaInicial.ingredientes[0]) {
+          // Formato IngredientePoblado (desde BD)
+          const ingredientesConvertidos: Ingrediente[] = (recetaInicial.ingredientes as unknown as IngredientePoblado[]).map(item => ({
+            nombre: item.ingrediente.nombre,
+            peso: item.peso,
+            informacionNutricional: {
+              calorias: item.ingrediente.calorias,
+              proteinas: item.ingrediente.proteinas,
+              carbohidratos: item.ingrediente.hidratosCarbono,
+              grasas: item.ingrediente.grasas
+            },
+            marca: item.ingrediente.marca,
+            imagenIngrediente: item.ingrediente.imagenIngrediente,
+            fuente: item.ingrediente.fuente
+          }));
+          setIngredientes(ingredientesConvertidos);
+        } else {
+          // Formato Ingrediente (formulario)
+          setIngredientes(recetaInicial.ingredientes as Ingrediente[]);
+        }
+      }
       setPasosPreparacion(recetaInicial.pasosPreparacion.length > 0 ? recetaInicial.pasosPreparacion : ['']);
       setTiempoPreparacion(recetaInicial.tiempoPreparacion || '');
-      setInformacionNutricional(recetaInicial.informacionNutricional || '');
       setPublica(recetaInicial.publica);
       setImagenesExistentes(recetaInicial.imagenes || []);
     }
@@ -90,17 +128,13 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
         }
         break;
       case 1: {
-        const ingredientesValidos = ingredientes.filter(ing => ing.trim() !== '');
-        if (ingredientesValidos.length === 0) {
+        if (ingredientes.length === 0) {
           newErrors.ingredientes = 'Debe agregar al menos un ingrediente';
         }
         break;
       }
       case 2:
         // Los pasos de preparación son opcionales, no validamos
-        break;
-      case 3:
-        // Información adicional es opcional, no validamos
         break;
     }
 
@@ -110,25 +144,26 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
 
   const nextStep = () => {
     if (validateStep(active)) {
-      setActive((current) => (current < 4 ? current + 1 : current));
+      setActive((current) => (current < 3 ? current + 1 : current));
     }
   };
 
   const prevStep = () => setActive((current) => (current > 0 ? current - 1 : current));
 
-  const addIngrediente = () => {
-    setIngredientes([...ingredientes, '']);
+  const addIngrediente = (ingrediente: Ingrediente) => {
+    setIngredientes([...ingredientes, ingrediente]);
   };
 
   const removeIngrediente = (index: number) => {
-    if (ingredientes.length > 1) {
-      setIngredientes(ingredientes.filter((_, i) => i !== index));
-    }
+    setIngredientes(ingredientes.filter((_, i) => i !== index));
   };
 
-  const updateIngrediente = (index: number, value: string) => {
+  const updateIngredientePeso = (index: number, nuevoPeso: number) => {
     const newIngredientes = [...ingredientes];
-    newIngredientes[index] = value;
+    newIngredientes[index] = {
+      ...newIngredientes[index],
+      peso: nuevoPeso
+    };
     setIngredientes(newIngredientes);
   };
 
@@ -162,6 +197,26 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
     return `${import.meta.env.VITE_BACKEND_HOST || 'http://localhost:5000'}${imagePath}`;
   };
 
+  // Función auxiliar para obtener información nutricional según el tipo de ingrediente
+  const obtenerInfoNutricional = (ingrediente: Ingrediente | IngredientePoblado | string) => {
+    if (typeof ingrediente === 'string') {
+      // Ingrediente como string (formato antiguo)
+      return { calorias: 0, proteinas: 0, carbohidratos: 0, grasas: 0 };
+    } else if ('ingrediente' in ingrediente && ingrediente.ingrediente) {
+      // IngredientePoblado (desde BD)
+      return {
+        calorias: ingrediente.ingrediente.calorias,
+        proteinas: ingrediente.ingrediente.proteinas,
+        carbohidratos: ingrediente.ingrediente.hidratosCarbono,
+        grasas: ingrediente.ingrediente.grasas
+      };
+    } else if ('informacionNutricional' in ingrediente) {
+      // Ingrediente (formulario)
+      return ingrediente.informacionNutricional;
+    }
+    return { calorias: 0, proteinas: 0, carbohidratos: 0, grasas: 0 };
+  };
+
   const handleSubmit = async () => {
     if (!validateStep(0) || !validateStep(1)) {
       setActive(0);
@@ -173,10 +228,9 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
     try {
       const recetaData: CrearRecetaDTO = {
         nombreReceta: nombreReceta.trim(),
-        ingredientes: ingredientes.filter(ing => ing.trim() !== ''),
+        ingredientes: ingredientes,
         pasosPreparacion: pasosPreparacion.filter(paso => paso.trim() !== ''),
         tiempoPreparacion: tiempoPreparacion.trim() || undefined,
-        informacionNutricional: informacionNutricional.trim() || undefined,
         publica
       };
 
@@ -193,6 +247,20 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
         );
       } else {
         response = await crearReceta(recetaData, imagenesValidas.length > 0 ? imagenesValidas : undefined);
+        
+        // Después de crear la receta exitosamente, guardar ingredientes de OpenFoodFacts
+        try {
+          const resultadoGuardado = await guardarIngredientesOpenFoodFacts(ingredientes);
+          if (resultadoGuardado.guardados > 0) {
+            console.log(`Se guardaron ${resultadoGuardado.guardados} ingredientes de OpenFoodFacts en la base de datos local`);
+          }
+          if (resultadoGuardado.errores > 0) {
+            console.warn(`Hubo ${resultadoGuardado.errores} errores al guardar algunos ingredientes de OpenFoodFacts`);
+          }
+        } catch (error) {
+          console.error('Error al guardar ingredientes de OpenFoodFacts:', error);
+          // No fallar la creación de la receta por este error
+        }
       }
       
       onSuccess(response);
@@ -241,40 +309,146 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
             <Title order={3} c="nutroos-green.6">
               <Group gap="xs">
                 <IconChefHat size={20} />
-                Ingredientes
+                Ingredientes con Información Nutricional
               </Group>
             </Title>
             
-            {ingredientes.map((ingrediente, index) => (
-              <Group key={index} gap="sm">
-                <TextInput
-                  placeholder={`Ingrediente ${index + 1}`}
-                  value={ingrediente}
-                  onChange={(e) => updateIngrediente(index, e.target.value)}
-                  style={{ flex: 1 }}
-                  size="md"
-                />
-                {ingredientes.length > 1 && (
-                  <ActionIcon
-                    color="red"
-                    variant="light"
-                    onClick={() => removeIngrediente(index)}
-                    size="lg"
-                  >
-                    <IconTrash size={16} />
-                  </ActionIcon>
-                )}
-              </Group>
-            ))}
+            <Text size="sm" c="dimmed">
+              Busca ingredientes para obtener automáticamente su información nutricional
+            </Text>
+
+            {/* Buscador de ingredientes */}
+            <BuscadorIngredientes 
+              onSeleccionar={addIngrediente}
+              placeholder="Buscar ingrediente (ej: manzana, pollo, arroz...)"
+            />
             
-            <Button
-              variant="light"
-              leftSection={<IconPlus size={16} />}
-              onClick={addIngrediente}
-              color="nutroos-green"
-            >
-              Agregar ingrediente
-            </Button>
+            {/* Lista de ingredientes seleccionados */}
+            {ingredientes.length > 0 && (
+              <Paper p="md" withBorder>
+                <Text size="sm" fw={500} mb="sm">
+                  Ingredientes agregados ({ingredientes.length}):
+                </Text>
+                
+                <Stack gap="sm">
+                  {ingredientes.map((ingrediente, index) => (
+                    <Paper 
+                      key={index} 
+                      p="sm" 
+                      withBorder 
+                      style={{ 
+                        backgroundColor: isDark ? 'var(--mantine-color-dark-6)' : 'var(--mantine-color-gray-0)',
+                        borderColor: isDark ? 'var(--mantine-color-dark-4)' : 'var(--mantine-color-gray-3)'
+                      }}
+                    >
+                      <Group justify="space-between" align="flex-start">
+                        <Group gap="sm" style={{ flex: 1 }}>
+                          {ingrediente.imagenIngrediente && (
+                            <Image
+                              src={ingrediente.imagenIngrediente}
+                              alt={ingrediente.nombre}
+                              w={40}
+                              h={40}
+                              radius="sm"
+                              fallbackSrc="/api/placeholder/40/40"
+                            />
+                          )}
+                          
+                          <Box style={{ flex: 1 }}>
+                            <Group justify="space-between" align="flex-start">
+                              <Box>
+                                <Text size="sm" fw={500} c={isDark ? "gray.0" : "dark.8"}>
+                                  {ingrediente.nombre}
+                                </Text>
+                                {ingrediente.marca && (
+                                  <Text size="xs" c="dimmed">
+                                    {ingrediente.marca}
+                                  </Text>
+                                )}
+                              </Box>
+                              
+                              <Group gap="xs">
+                                <NumberInput
+                                  size="xs"
+                                  w={80}
+                                  value={ingrediente.peso}
+                                  onChange={(value) => updateIngredientePeso(index, Number(value) || 0)}
+                                  min={1}
+                                  max={5000}
+                                  step={10}
+                                  placeholder="Peso"
+                                />
+                                <ActionIcon
+                                  color="red"
+                                  variant="light"
+                                  onClick={() => removeIngrediente(index)}
+                                  size="sm"
+                                >
+                                  <IconTrash size={14} />
+                                </ActionIcon>
+                              </Group>
+                            </Group>
+                            
+                            <Text size="xs" c="dimmed" mt="xs" ta="center">
+                              📊 Para {typeof ingrediente === 'object' && 'peso' in ingrediente ? ingrediente.peso : 100}g: 
+                              {(() => {
+                                const infoNutricional = obtenerInfoNutricional(ingrediente);
+                                const peso = typeof ingrediente === 'object' && 'peso' in ingrediente ? ingrediente.peso : 100;
+                                return (
+                                  <>
+                                    <Text component="span" c={isDark ? "orange.3" : "orange.6"} fw={500}>🔥 {Math.round(infoNutricional.calorias * peso / 100)} kcal</Text> | 
+                                    <Text component="span" c={isDark ? "green.3" : "green.6"} fw={500}>💪 {((infoNutricional.proteinas * peso) / 100).toFixed(1)}g proteínas</Text> | 
+                                    <Text component="span" c={isDark ? "yellow.3" : "yellow.6"} fw={500}>🍞 {((infoNutricional.carbohidratos * peso) / 100).toFixed(1)}g carbohidratos</Text> | 
+                                    <Text component="span" c={isDark ? "red.3" : "red.6"} fw={500}>🧈 {((infoNutricional.grasas * peso) / 100).toFixed(1)}g grasas</Text>
+                                  </>
+                                );
+                              })()}
+                            </Text>
+                          </Box>
+                        </Group>
+                      </Group>
+                    </Paper>
+                  ))}
+                </Stack>
+
+                {/* Resumen nutricional total */}
+                <Divider my="sm" />
+                <Box 
+                  p="xs" 
+                  style={{ 
+                    backgroundColor: isDark ? 'var(--mantine-color-nutroos-green-9)' : 'var(--mantine-color-nutroos-green-0)',
+                    borderRadius: 4,
+                    border: `1px solid ${isDark ? 'var(--mantine-color-nutroos-green-7)' : 'var(--mantine-color-nutroos-green-2)'}`
+                  }}
+                >
+                  <Text size="sm" fw={500} c={isDark ? "nutroos-green.2" : "nutroos-green.7"}>
+                    Información nutricional total:
+                  </Text>
+                  <Text size="sm" c={isDark ? "nutroos-green.1" : "dark.8"}>
+                    Calorías: {ingredientes.reduce((total, ing) => {
+                      const infoNutricional = obtenerInfoNutricional(ing);
+                      const peso = typeof ing === 'object' && 'peso' in ing ? ing.peso : 100;
+                      return total + Math.round((infoNutricional.calorias * peso) / 100);
+                    }, 0)} kcal | 
+                    Proteínas: {ingredientes.reduce((total, ing) => {
+                      const infoNutricional = obtenerInfoNutricional(ing);
+                      const peso = typeof ing === 'object' && 'peso' in ing ? ing.peso : 100;
+                      return total + ((infoNutricional.proteinas * peso) / 100);
+                    }, 0).toFixed(1)}g | 
+                    Carbohidratos: {ingredientes.reduce((total, ing) => {
+                      const infoNutricional = obtenerInfoNutricional(ing);
+                      const peso = typeof ing === 'object' && 'peso' in ing ? ing.peso : 100;
+                      return total + ((infoNutricional.carbohidratos * peso) / 100);
+                    }, 0).toFixed(1)}g | 
+                    Grasas: {ingredientes.reduce((total, ing) => {
+                      const infoNutricional = obtenerInfoNutricional(ing);
+                      const peso = typeof ing === 'object' && 'peso' in ing ? ing.peso : 100;
+                      return total + ((infoNutricional.grasas * peso) / 100);
+                    }, 0).toFixed(1)}g
+                  </Text>
+                </Box>
+              </Paper>
+            )}
             
             {errors.ingredientes && (
               <Alert icon={<IconAlertCircle size={16} />} color="red" variant="light">
@@ -293,6 +467,15 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
                 Pasos de Preparación
               </Group>
             </Title>
+            
+            <TextInput
+              label="Tiempo de preparación"
+              placeholder="Ej: 30 minutos"
+              value={tiempoPreparacion}
+              onChange={(e) => setTiempoPreparacion(e.target.value)}
+              leftSection={<IconClock size={16} />}
+              size="md"
+            />
             
             <Text size="sm" c="dimmed">
               Agrega los pasos para preparar la receta (opcional)
@@ -337,36 +520,6 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
         );
 
       case 3:
-        return (
-          <Stack gap="md">
-            <Title order={3} c="nutroos-green.6">
-              <Group gap="xs">
-                <IconInfoCircle size={20} />
-                Información Adicional
-              </Group>
-            </Title>
-            
-            <TextInput
-              label="Tiempo de preparación"
-              placeholder="Ej: 30 minutos"
-              value={tiempoPreparacion}
-              onChange={(e) => setTiempoPreparacion(e.target.value)}
-              leftSection={<IconClock size={16} />}
-              size="md"
-            />
-            
-            <Textarea
-              label="Información nutricional"
-              placeholder="Ej: 350 calorías, 15g proteína, 25g carbohidratos..."
-              value={informacionNutricional}
-              onChange={(e) => setInformacionNutricional(e.target.value)}
-              minRows={3}
-              size="md"
-            />
-          </Stack>
-        );
-
-      case 4:
         return (
           <Stack gap="md">
             <Title order={3} c="nutroos-green.6">
@@ -510,13 +663,8 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
         />
         <Stepper.Step 
           label="Preparación" 
-          description="Pasos de cocción"
+          description="Pasos y tiempo"
           icon={<IconChefHat size={18} />}
-        />
-        <Stepper.Step 
-          label="Información adicional" 
-          description="Tiempo y nutrición"
-          icon={<IconInfoCircle size={18} />}
         />
         <Stepper.Step 
           label="Imágenes" 
@@ -541,7 +689,7 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
           Anterior
         </Button>
 
-        {active < 4 ? (
+        {active < 3 ? (
           <Button
             onClick={nextStep}
             color="nutroos-green"

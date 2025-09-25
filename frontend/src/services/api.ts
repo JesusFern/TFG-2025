@@ -21,12 +21,18 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
   // Si el body es FormData, no establecer Content-Type
   const isFormData = options.body instanceof FormData;
   
+  const headers: Record<string, string> = {
+    ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
+    ...(options.headers as Record<string, string>),
+  };
+
+  // Agregar token de autorización si existe
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const defaultOptions: RequestInit = {
-    headers: {
-      ...(isFormData ? {} : { 'Content-Type': 'application/json' }),
-      ...options.headers,
-      ...(token && { 'Authorization': `Bearer ${token}` }),
-    },
+    headers,
     ...options,
   };
 

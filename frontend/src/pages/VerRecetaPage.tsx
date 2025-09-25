@@ -21,6 +21,7 @@ import {
 } from '@mantine/core';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { eliminarReceta } from '../services/recetaService';
+import { Ingrediente, IngredientePoblado } from '../types/diets';
 import FormularioCrearReceta from '../components/forms/recetas/FormularioCrearReceta';
 import { useReceta } from '../hooks/useReceta';
 import { useAuth } from '../hooks/useAuth';
@@ -238,73 +239,10 @@ const VerRecetaPage: React.FC = () => {
         />
       ) : (
         <Grid>
-        {/* Columna izquierda - Imágenes */}
-        <Grid.Col span={{ base: 12, md: 6 }}>
-          <Paper 
-            p="lg" 
-            withBorder 
-            radius="md"
-            style={{ 
-              backgroundColor: 'var(--app-paper-bg)', 
-              borderColor: 'var(--app-border-color)' 
-            }}
-          >
-            <Title order={3} mb="md" c="nutroos-green.6">
-              <Group gap="xs">
-                <IconPhoto size={20} />
-                Imágenes de la Receta
-              </Group>
-            </Title>
-
-            {receta.imagenes && receta.imagenes.length > 0 ? (
-              <Grid>
-                {receta.imagenes.map((imagen, index) => (
-                  <Grid.Col key={index} span={6}>
-                    <Card
-                      shadow="sm"
-                      padding="xs"
-                      radius="md"
-                      withBorder
-                      style={{ 
-                        cursor: 'pointer',
-                        transition: 'transform 0.2s ease'
-                      }}
-                      onClick={() => handleVerImagen(index)}
-                      onMouseEnter={(e) => {
-                        e.currentTarget.style.transform = 'scale(1.02)';
-                      }}
-                      onMouseLeave={(e) => {
-                        e.currentTarget.style.transform = 'scale(1)';
-                      }}
-                    >
-                      <Card.Section>
-                        <Image
-                          src={getImageUrl(imagen)}
-                          height={250}
-                          alt={`Imagen ${index + 1} de ${receta.nombreReceta}`}
-                          style={{ borderRadius: 'var(--mantine-radius-md)' }}
-                          fit="contain"
-                        />
-                      </Card.Section>
-                    </Card>
-                  </Grid.Col>
-                ))}
-              </Grid>
-            ) : (
-              <Center style={{ height: 300 }}>
-                <Stack align="center" gap="md">
-                  <IconPhoto size={48} color="var(--mantine-color-dimmed)" />
-                  <Text c="dimmed">No hay imágenes disponibles</Text>
-                </Stack>
-              </Center>
-            )}
-          </Paper>
-        </Grid.Col>
-
-        {/* Columna derecha - Información */}
+        {/* Columna izquierda - Imágenes, Pasos e Información Nutricional */}
         <Grid.Col span={{ base: 12, md: 6 }}>
           <Stack gap="lg">
-            {/* Ingredientes */}
+            {/* Imágenes */}
             <Paper 
               p="lg" 
               withBorder 
@@ -316,26 +254,75 @@ const VerRecetaPage: React.FC = () => {
             >
               <Title order={3} mb="md" c="nutroos-green.6">
                 <Group gap="xs">
-                  <IconChefHat size={20} />
-                  Ingredientes ({receta.ingredientes.length})
+                  <IconPhoto size={20} />
+                  Imágenes de la Receta
                 </Group>
               </Title>
-              
-              <List spacing="xs" size="sm">
-                {receta.ingredientes.map((ingrediente, index) => (
-                  <List.Item
-                    key={index}
-                    icon={
-                      <ThemeIcon color="nutroos-green" size={20} radius="xl">
-                        {index + 1}
-                      </ThemeIcon>
-                    }
-                  >
-                    {ingrediente}
-                  </List.Item>
-                ))}
-              </List>
+
+              {receta.imagenes && receta.imagenes.length > 0 ? (
+                <Grid>
+                  {receta.imagenes.map((imagen, index) => (
+                    <Grid.Col key={index} span={6}>
+                      <Card
+                        shadow="sm"
+                        padding="xs"
+                        radius="md"
+                        withBorder
+                        style={{ 
+                          cursor: 'pointer',
+                          transition: 'transform 0.2s ease'
+                        }}
+                        onClick={() => handleVerImagen(index)}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'scale(1.02)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'scale(1)';
+                        }}
+                      >
+                        <Card.Section>
+                          <Image
+                            src={getImageUrl(imagen)}
+                            height={250}
+                            alt={`Imagen ${index + 1} de ${receta.nombreReceta}`}
+                            style={{ borderRadius: 'var(--mantine-radius-md)' }}
+                            fit="contain"
+                          />
+                        </Card.Section>
+                      </Card>
+                    </Grid.Col>
+                  ))}
+                </Grid>
+              ) : (
+                <Center style={{ height: 300 }}>
+                  <Stack align="center" gap="md">
+                    <IconPhoto size={48} color="var(--mantine-color-dimmed)" />
+                    <Text c="dimmed">No hay imágenes disponibles</Text>
+                  </Stack>
+                </Center>
+              )}
             </Paper>
+
+            {/* Información nutricional */}
+            {receta.informacionNutricional && (
+              <Paper 
+                p="lg" 
+                withBorder 
+                radius="md"
+                style={{ 
+                  backgroundColor: 'var(--app-paper-bg)', 
+                  borderColor: 'var(--app-border-color)' 
+                }}
+              >
+                <Title order={3} mb="md" c="nutroos-green.6">
+                  Información Nutricional Total
+                </Title>
+                <Text size="sm" c="dimmed" mb="sm">
+                  Valores calculados para todos los ingredientes
+                </Text>
+                <Text>{receta.informacionNutricional}</Text>
+              </Paper>
+            )}
 
             {/* Pasos de preparación */}
             {receta.pasosPreparacion && receta.pasosPreparacion.length > 0 && (
@@ -368,25 +355,80 @@ const VerRecetaPage: React.FC = () => {
                 </List>
               </Paper>
             )}
-
-            {/* Información nutricional */}
-            {receta.informacionNutricional && (
-              <Paper 
-                p="lg" 
-                withBorder 
-                radius="md"
-                style={{ 
-                  backgroundColor: 'var(--app-paper-bg)', 
-                  borderColor: 'var(--app-border-color)' 
-                }}
-              >
-                <Title order={3} mb="md" c="nutroos-green.6">
-                  Información Nutricional
-                </Title>
-                <Text>{receta.informacionNutricional}</Text>
-              </Paper>
-            )}
           </Stack>
+        </Grid.Col>
+
+        {/* Columna derecha - Solo Ingredientes */}
+        <Grid.Col span={{ base: 12, md: 6 }}>
+          <Paper 
+            p="lg" 
+            withBorder 
+            radius="md"
+            style={{ 
+              backgroundColor: 'var(--app-paper-bg)', 
+              borderColor: 'var(--app-border-color)' 
+            }}
+          >
+            <Title order={3} mb="md" c="nutroos-green.6">
+              <Group gap="xs">
+                <IconChefHat size={20} />
+                Ingredientes ({receta.ingredientes.length})
+              </Group>
+            </Title>
+            
+            <List spacing="xs" size="sm">
+              {receta.ingredientes.map((ingrediente, index) => (
+                <List.Item
+                  key={index}
+                  icon={
+                    <ThemeIcon color="nutroos-green" size={20} radius="xl">
+                      {index + 1}
+                    </ThemeIcon>
+                  }
+                >
+                  <Group justify="space-between" align="center">
+                    <Box>
+                      <Text fw={500}>
+                        {typeof ingrediente === 'string' 
+                          ? ingrediente 
+                          : 'ingrediente' in ingrediente 
+                            ? (ingrediente as unknown as IngredientePoblado).ingrediente?.nombre || 'Ingrediente'
+                            : (ingrediente as Ingrediente).nombre || 'Ingrediente'
+                        }
+                      </Text>
+                      <Text size="xs" c="dimmed">
+                        {typeof ingrediente === 'object' && 'peso' in ingrediente 
+                          ? `${(ingrediente as unknown as IngredientePoblado).peso}g`
+                          : typeof ingrediente === 'object' && 'peso' in ingrediente
+                            ? `${(ingrediente as Ingrediente).peso}g`
+                            : '100g'
+                        }
+                      </Text>
+                      {/* Mostrar información nutricional si está disponible */}
+                      {typeof ingrediente === 'object' && 'ingrediente' in ingrediente && (ingrediente as unknown as IngredientePoblado).ingrediente && (
+                        <Text size="xs" c="dimmed" mt="xs">
+                          📊 Calorías: {Math.round(((ingrediente as unknown as IngredientePoblado).ingrediente.calorias * (ingrediente as unknown as IngredientePoblado).peso) / 100)} kcal | 
+                          💪 Proteínas: {(((ingrediente as unknown as IngredientePoblado).ingrediente.proteinas * (ingrediente as unknown as IngredientePoblado).peso) / 100).toFixed(1)}g | 
+                          🍞 Carbohidratos: {(((ingrediente as unknown as IngredientePoblado).ingrediente.hidratosCarbono * (ingrediente as unknown as IngredientePoblado).peso) / 100).toFixed(1)}g | 
+                          🧈 Grasas: {(((ingrediente as unknown as IngredientePoblado).ingrediente.grasas * (ingrediente as unknown as IngredientePoblado).peso) / 100).toFixed(1)}g
+                        </Text>
+                      )}
+                    </Box>
+                    {typeof ingrediente === 'object' && 'ingrediente' in ingrediente && (ingrediente as unknown as IngredientePoblado).ingrediente?.imagenIngrediente && (
+                      <Image
+                        src={(ingrediente as unknown as IngredientePoblado).ingrediente.imagenIngrediente}
+                        alt={(ingrediente as unknown as IngredientePoblado).ingrediente.nombre}
+                        w={30}
+                        h={30}
+                        radius="sm"
+                        fallbackSrc="/api/placeholder/30/30"
+                      />
+                    )}
+                  </Group>
+                </List.Item>
+              ))}
+            </List>
+          </Paper>
         </Grid.Col>
       </Grid>
       )}

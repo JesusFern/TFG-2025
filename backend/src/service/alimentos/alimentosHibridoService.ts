@@ -58,6 +58,9 @@ function convertirIngredienteLocal(ingrediente: IngredienteDocument): Ingredient
   };
 }
 
+/**
+ * Busca ingredientes en la base de datos local
+ */
 async function buscarIngredientesLocales(
   nombre: string, 
   page: number, 
@@ -74,7 +77,7 @@ async function buscarIngredientesLocales(
         }
       },
       {
-        // TS no reconoce correctamente $meta en score; casteamos a PipelineStage
+        // TS no reconoce correctamente $meta en score; necesitamos casteo para PipelineStage
         $addFields: {
           score: { $meta: 'textScore' },
           // Priorizar fuente Interna (1), luego Openfoodfacts (2), luego Trabajador (3)
@@ -91,7 +94,7 @@ async function buscarIngredientesLocales(
         }
       },
       {
-        // Casteo a any para permitir uso de $meta en sort con types de Mongoose
+        // Casteo necesario para permitir uso de $meta en sort con types de Mongoose
         $sort: ({
           prioridadFuente: 1 as const, 
           score: { $meta: 'textScore' } 

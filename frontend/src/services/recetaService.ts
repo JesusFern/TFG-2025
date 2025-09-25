@@ -1,24 +1,24 @@
 import { apiRequest } from './api';
+import { Ingrediente } from '../types/diets';
 
 export interface CrearRecetaDTO {
   nombreReceta: string;
-  ingredientes: string[];
+  ingredientes: Ingrediente[];
   pasosPreparacion?: string[];
   tiempoPreparacion?: string;
-  informacionNutricional?: string;
   publica: boolean;
 }
 
 export interface RecetaResponse {
   _id: string;
   nombreReceta: string;
-  ingredientes: string[];
+  ingredientes: Ingrediente[] | string[]; // Compatibilidad con formato anterior
   pasosPreparacion: string[];
   tiempoPreparacion: string;
-  informacionNutricional: string;
   imagenes: string[];
   creador?: string;
   publica: boolean;
+  informacionNutricional?: string; // Información nutricional calculada
   createdAt?: string;
   updatedAt?: string;
 }
@@ -49,7 +49,35 @@ const construirFormDataReceta = (
   
   if (recetaData.ingredientes) {
     recetaData.ingredientes.forEach((ingrediente, index) => {
-      formData.append(`ingredientes[${index}]`, ingrediente);
+      // Transformar ingrediente para el backend
+      const ingredienteTransformado = {
+        nombre: ingrediente.nombre,
+        peso: ingrediente.peso,
+        informacionNutricional: {
+          calorias: typeof ingrediente.informacionNutricional.calorias === 'string' 
+            ? parseFloat(ingrediente.informacionNutricional.calorias) || 0 
+            : ingrediente.informacionNutricional.calorias,
+          proteinas: typeof ingrediente.informacionNutricional.proteinas === 'string' 
+            ? parseFloat(ingrediente.informacionNutricional.proteinas) || 0 
+            : ingrediente.informacionNutricional.proteinas,
+          carbohidratos: typeof ingrediente.informacionNutricional.carbohidratos === 'string' 
+            ? parseFloat(ingrediente.informacionNutricional.carbohidratos) || 0 
+            : ingrediente.informacionNutricional.carbohidratos,
+          grasas: typeof ingrediente.informacionNutricional.grasas === 'string' 
+            ? parseFloat(ingrediente.informacionNutricional.grasas) || 0 
+            : ingrediente.informacionNutricional.grasas,
+          fibra: ingrediente.informacionNutricional.fibra,
+          azucares: ingrediente.informacionNutricional.azucares,
+          sal: ingrediente.informacionNutricional.sal,
+          sodio: ingrediente.informacionNutricional.sodio
+        },
+        marca: ingrediente.marca,
+        id: ingrediente.id || (ingrediente.codigoBarras && !ingrediente.imagenIngrediente ? ingrediente.codigoBarras : null), // Solo usar codigoBarras si NO es de OpenFoodFacts
+        imagenIngrediente: ingrediente.imagenIngrediente,
+        fuente: ingrediente.fuente
+      };
+      
+      formData.append(`ingredientes[${index}]`, JSON.stringify(ingredienteTransformado));
     });
   }
   
@@ -63,10 +91,6 @@ const construirFormDataReceta = (
   // Agregar campos opcionales
   if (recetaData.tiempoPreparacion) {
     formData.append('tiempoPreparacion', recetaData.tiempoPreparacion);
-  }
-  
-  if (recetaData.informacionNutricional) {
-    formData.append('informacionNutricional', recetaData.informacionNutricional);
   }
   
   // Agregar imágenes si existen
