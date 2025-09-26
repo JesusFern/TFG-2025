@@ -11,16 +11,16 @@ import {
   ThemeIcon,
   Divider
 } from '@mantine/core';
-import { IconBarbell, IconCalendar } from '@tabler/icons-react';
+import { IconBarbell, IconCalendar, IconCheck, IconX } from '@tabler/icons-react';
 import { RegistroEjercicioDetalle } from '../../types/estadisticas';
 
-interface ModalDetallesRegistroProps {
+interface ModalRegistroDesdeSesionProps {
   opened: boolean;
   onClose: () => void;
   registro: RegistroEjercicioDetalle | null;
 }
 
-export const ModalDetallesRegistro: React.FC<ModalDetallesRegistroProps> = ({
+export const ModalRegistroDesdeSesion: React.FC<ModalRegistroDesdeSesionProps> = ({
   opened,
   onClose,
   registro
@@ -31,9 +31,9 @@ export const ModalDetallesRegistro: React.FC<ModalDetallesRegistroProps> = ({
     <Modal
       opened={opened}
       onClose={onClose}
-      title={`Detalles del Registro: ${registro.ejercicio.nombre}`}
+      title={`Registro del Ejercicio: ${registro.ejercicio.nombre}`}
       size="md"
-      zIndex={1000}
+      zIndex={1001}
     >
       <Stack gap="md">
         {/* Información del ejercicio */}
@@ -45,12 +45,15 @@ export const ModalDetallesRegistro: React.FC<ModalDetallesRegistroProps> = ({
             <div>
               <Text size="lg" fw={600}>{registro.ejercicio.nombre}</Text>
               <Text size="sm" c="dimmed">
-                Sesión: {registro.sesion.tipoEntrenamiento}
+                Sesión: {registro.sesion.nombre}
               </Text>
             </div>
           </Group>
           
           <Group gap="md">
+            <Badge color="blue" variant="light" size="sm">
+              {registro.sesion.tipoEntrenamiento || 'Fuerza'}
+            </Badge>
             <Badge 
               color={registro.completado ? 'green' : 'red'}
               variant="light"

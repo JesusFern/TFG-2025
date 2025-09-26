@@ -4,6 +4,7 @@ import { IconBarbell, IconApple } from '@tabler/icons-react';
 import { useAuth } from '../hooks/useAuth';
 import ProgresoEntrenamientoTab from '../components/molecules/ProgresoEntrenamientoTab';
 import ProgresoNutricionTab from '../components/molecules/ProgresoNutricionTab';
+import ProgresoEntrenamientoWorkerTab from '../components/molecules/ProgresoEntrenamientoWorkerTab';
 
 const ProgresoSemanalPage: React.FC = () => {
   const { user } = useAuth();
@@ -19,6 +20,19 @@ const ProgresoSemanalPage: React.FC = () => {
     );
   }
 
+  // Si es trabajador, mostrar vista de seguimiento de clientes
+  if (user.role === 'worker') {
+    return (
+      <Container size="xl" py="xl">
+        <Title order={1} mb="xl" c="nutroos-green">
+          Seguimiento de Clientes
+        </Title>
+        <ProgresoEntrenamientoWorkerTab />
+      </Container>
+    );
+  }
+
+  // Si es usuario, mostrar vista personal
   return (
     <Container size="xl" py="xl">
       <Title order={1} mb="xl" c="nutroos-green">

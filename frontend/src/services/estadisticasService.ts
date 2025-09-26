@@ -125,4 +125,63 @@ export const estadisticasService = {
       throw error;
     }
   },
+
+  // Obtener rachas de entrenamiento
+  getRachasEntrenamiento: async () => {
+    try {
+      const response = await apiRequest('/api/estadisticas/rachas', {
+        method: 'GET',
+      });
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error en getRachasEntrenamiento:', error);
+      throw error;
+    }
+  },
+
+  // Obtener clientes del trabajador con sus estadísticas
+  getClientesTrabajador: async (semana?: number, año?: number) => {
+    try {
+      const params = new URLSearchParams();
+      if (semana) params.append('semana', semana.toString());
+      if (año) params.append('año', año.toString());
+
+      const response = await apiRequest(`/api/estadisticas/trabajador/clientes?${params.toString()}`, {
+        method: 'GET',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+        throw new Error(errorData.message || `Error ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error en getClientesTrabajador:', error);
+      throw error;
+    }
+  },
+
+  // Obtener detalles completos de un cliente específico
+  getDetallesCliente: async (clienteId: string) => {
+    try {
+      const response = await apiRequest(`/api/estadisticas/trabajador/cliente/${clienteId}`, {
+        method: 'GET',
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Error desconocido' }));
+        throw new Error(errorData.message || `Error ${response.status}`);
+      }
+      
+      const data = await response.json();
+      return data;
+    } catch (error) {
+      console.error('Error en getDetallesCliente:', error);
+      throw error;
+    }
+  },
 };

@@ -5,7 +5,10 @@ import {
   obtenerProgresoEjercicios,
   obtenerMiProgreso,
   obtenerMiProgresoSemanal,
-  obtenerMiProgresoEjercicios
+  obtenerMiProgresoEjercicios,
+  obtenerRachasEntrenamiento,
+  obtenerClientesTrabajador,
+  obtenerDetallesCliente
 } from '../../controllers/training/estadisticasController';
 import { authenticateToken } from '../../middlewares/authMiddleware';
 import { 
@@ -69,6 +72,27 @@ router.get(
   miProgresoEjerciciosValidator,
   validateRequest,
   obtenerMiProgresoEjercicios
+);
+
+// Ruta para rachas de entrenamiento (solo para clientes)
+router.get(
+  '/rachas',
+  authenticateToken,
+  obtenerRachasEntrenamiento
+);
+
+// Ruta para obtener clientes del trabajador
+router.get(
+  '/trabajador/clientes',
+  authenticateToken,
+  obtenerClientesTrabajador
+);
+
+// Ruta para obtener detalles completos de un cliente específico
+router.get(
+  '/trabajador/cliente/:clienteId',
+  authenticateToken,
+  obtenerDetallesCliente
 );
 
 export default router;

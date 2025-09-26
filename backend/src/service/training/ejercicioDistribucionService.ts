@@ -25,6 +25,7 @@ interface EjercicioSesionGenerado {
   videoDemostrativo?: string;
   series: number;
   repeticiones: number;
+  peso: number;
   tiempoDescanso: number;
   nivelIntensidad: string;
   opcionesProgresion: {
@@ -303,6 +304,7 @@ export class EjercicioDistribucionService {
           videoDemostrativo: ejercicio.videoDemostrativo,
           series: this.generarSeries(configIntensidad),
           repeticiones: this.generarRepeticiones(configIntensidad),
+          peso: this.generarPesoInicial(ejercicio.equipamiento, ejercicio.tipoEjercicio, ejercicio.nivelDificultad),
           tiempoDescanso: this.generarTiempoDescanso(configIntensidad),
           nivelIntensidad: configIntensidad.nivelIntensidad,
           opcionesProgresion: this.generarOpcionesProgresion(objetivo)
@@ -342,6 +344,7 @@ export class EjercicioDistribucionService {
             videoDemostrativo: ejercicio.videoDemostrativo,
             series: this.generarSeries(configIntensidad),
             repeticiones: this.generarRepeticiones(configIntensidad),
+            peso: this.generarPesoInicial(ejercicio.equipamiento, ejercicio.tipoEjercicio, ejercicio.nivelDificultad),
             tiempoDescanso: this.generarTiempoDescanso(configIntensidad),
             nivelIntensidad: configIntensidad.nivelIntensidad,
             opcionesProgresion: this.generarOpcionesProgresion(objetivo)
@@ -523,5 +526,88 @@ export class EjercicioDistribucionService {
     const duracionPorEjercicio = objetivo === 'Flexibilidad' ? 5 : 8;
     
     return duracionBase + (cantidadEjercicios * duracionPorEjercicio);
+  }
+
+  /**
+   * Determina si un equipamiento requiere peso
+   */
+  private static equipamientoRequierePeso(equipamiento: string): boolean {
+    const equipamientosConPeso = ['Mancuernas', 'Barra', 'Máquina', 'Pelota medicinal', 'Bandas de resistencia', 'Kettlebell', 'Cable'];
+    return equipamientosConPeso.includes(equipamiento);
+  }
+
+  /**
+   * Genera un peso inicial basado en el equipamiento y tipo de ejercicio
+   */
+  private static generarPesoInicial(equipamiento: string, tipoEjercicio: string, nivelDificultad: string): number {
+    if (!this.equipamientoRequierePeso(equipamiento)) {
+      return 0;
+    }
+
+    // Pesos base según el tipo de ejercicio y equipamiento
+    const pesosBase: Record<string, Record<string, number>> = {
+      'Mancuernas': {
+        'Fuerza': 15,
+        'Hipertrofia': 12,
+        'Resistencia': 8,
+        'Potencia': 20,
+        'Estabilidad': 10
+      },
+      'Barra': {
+        'Fuerza': 40,
+        'Hipertrofia': 30,
+        'Resistencia': 20,
+        'Potencia': 50,
+        'Estabilidad': 25
+      },
+      'Máquina': {
+        'Fuerza': 50,
+        'Hipertrofia': 40,
+        'Resistencia': 25,
+        'Potencia': 60,
+        'Estabilidad': 30
+      },
+      'Kettlebell': {
+        'Fuerza': 20,
+        'Hipertrofia': 16,
+        'Resistencia': 12,
+        'Potencia': 24,
+        'Estabilidad': 14
+      },
+      'Cable': {
+        'Fuerza': 30,
+        'Hipertrofia': 25,
+        'Resistencia': 15,
+        'Potencia': 35,
+        'Estabilidad': 20
+      },
+      'Bandas de resistencia': {
+        'Fuerza': 25, // Banda pesada (roja/negra)
+        'Hipertrofia': 20, // Banda media-pesada (azul)
+        'Resistencia': 15, // Banda media (verde)
+        'Potencia': 30, // Banda extra pesada
+        'Estabilidad': 10 // Banda ligera (amarilla)
+      },
+      'Pelota medicinal': {
+        'Fuerza': 8,
+        'Hipertrofia': 6,
+        'Resistencia': 4,
+        'Potencia': 10,
+        'Estabilidad': 5
+      }
+    };
+
+    const pesoBase = pesosBase[equipamiento]?.[tipoEjercicio] || 10;
+    
+    // Ajustar según nivel de dificultad
+    const multiplicadores = {
+      'Principiante': 0.6,
+      'Intermedio': 1.0,
+      'Avanzado': 1.4
+    };
+
+    const multiplicador = multiplicadores[nivelDificultad as keyof typeof multiplicadores] || 1.0;
+    
+    return Math.round(pesoBase * multiplicador);
   }
 }

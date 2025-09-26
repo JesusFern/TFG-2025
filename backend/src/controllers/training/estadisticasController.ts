@@ -3,7 +3,10 @@ import { AuthenticatedRequest } from '../../types';
 import { 
   obtenerEstadisticasClienteService,
   obtenerEstadisticasSemanalService,
-  obtenerProgresoEjerciciosService
+  obtenerProgresoEjerciciosService,
+  obtenerRachasEntrenamientoService,
+  obtenerClientesTrabajadorService,
+  obtenerDetallesClienteService
 } from '../../service/training/estadisticasService';
 import logger from '../../utils/logger';
 import { matchedData } from 'express-validator';
@@ -287,6 +290,120 @@ export const obtenerMiProgresoEjercicios = async (req: AuthenticatedRequest, res
     res.status(400).json({ 
       message: 'Error al obtener progreso personal de ejercicios', 
       error: (error as Error).message 
+    });
+  }
+};
+
+export const obtenerRachasEntrenamiento = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const clienteId = req.user?.id;
+    if (!clienteId) {
+      res.status(401).json({ message: 'No autenticado' });
+      return;
+    }
+
+    logger.info('Obteniendo rachas de entrenamiento', { clienteId });
+
+    const rachas = await obtenerRachasEntrenamientoService(clienteId);
+
+    logger.info('Rachas de entrenamiento obtenidas correctamente', { 
+      clienteId,
+      rachaActual: rachas.rachaActual.dias,
+      rachaMaxima: rachas.rachaMaxima.dias
+    });
+
+    res.status(200).json({ 
+      success: true,
+      rachas 
+    });
+
+  } catch (error) {
+    logger.error('Error al obtener rachas de entrenamiento', {
+      error: error instanceof Error ? error.message : String(error),
+      clienteId: req.user?.id
+    });
+    res.status(500).json({ 
+      message: 'Error interno del servidor',
+      error: (error as Error).message 
+    });
+  }
+};
+
+// Obtener clientes del trabajador con sus estadísticas
+export const obtenerClientesTrabajador = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { semana, año } = req.query;
+    const trabajadorId = req.user?.id;
+
+    if (!trabajadorId) {
+      res.status(401).json({
+        success: false,
+        message: 'Usuario no autenticado'
+      });
+      return;
+    }
+
+    if (req.user?.role !== 'worker') {
+      res.status(403).json({
+        success: false,
+        message: 'Solo los trabajadores pueden acceder a esta información'
+      });
+      return;
+    }
+
+    const semanaNum = semana ? parseInt(semana as string) : undefined;
+    const añoNum = año ? parseInt(año as string) : undefined;
+
+    const resultado = await obtenerClientesTrabajadorService(trabajadorId, semanaNum, añoNum);
+
+    res.status(200).json({
+      message: 'Datos de clientes obtenidos correctamente',
+      ...resultado
+    });
+
+  } catch (error) {
+    console.error('Error en obtenerClientesTrabajador:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Error interno del servidor'
+    });
+  }
+};
+
+// Obtener detalles completos de un cliente específico
+export const obtenerDetallesCliente = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const { clienteId } = req.params;
+    const trabajadorId = req.user?.id;
+
+    if (!trabajadorId) {
+      res.status(401).json({
+        success: false,
+        message: 'Usuario no autenticado'
+      });
+      return;
+    }
+
+    if (req.user?.role !== 'worker') {
+      res.status(403).json({
+        success: false,
+        message: 'Solo los trabajadores pueden acceder a esta información'
+      });
+      return;
+    }
+
+    const resultado = await obtenerDetallesClienteService(trabajadorId, clienteId);
+
+    res.status(200).json({
+      message: 'Detalles del cliente obtenidos correctamente',
+      ...resultado
+    });
+
+  } catch (error) {
+    console.error('Error en obtenerDetallesCliente:', error);
+    res.status(500).json({
+      success: false,
+      message: error instanceof Error ? error.message : 'Error interno del servidor'
     });
   }
 };
