@@ -164,3 +164,61 @@ export const agregarNotasSesionValidator = [
   param('id').isMongoId().withMessage('ID de sesión no válido'),
   body('notas').isString().trim().isLength({ min: 1, max: 1000 }).withMessage('Las notas son obligatorias y deben tener entre 1 y 1000 caracteres')
 ];
+
+// Validadores para registro de ejercicios
+export const crearRegistroEjercicioValidator = [
+  body('ejercicio').isMongoId().withMessage('ID de ejercicio no válido'),
+  body('sesion').isMongoId().withMessage('ID de sesión no válido'),
+  body('cargaUtilizada').optional().isFloat({ min: 0 }).toFloat().withMessage('La carga utilizada debe ser un número positivo'),
+  body('repeticionesRealizadas').isInt({ min: 0, max: 1000 }).toInt().withMessage('Las repeticiones realizadas deben ser un número entero entre 0 y 1000'),
+  body('seriesCompletadas').isInt({ min: 0, max: 100 }).toInt().withMessage('Las series completadas deben ser un número entero entre 0 y 100'),
+  body('nivelEsfuerzo').isInt({ min: 1, max: 10 }).toInt().withMessage('El nivel de esfuerzo debe ser un número entero entre 1 y 10'),
+  body('videoCliente').optional().isString().trim().isLength({ max: 500 }).withMessage('El video del cliente debe tener máximo 500 caracteres'),
+  body('notas').optional().isString().trim().isLength({ max: 1000 }).withMessage('Las notas deben tener máximo 1000 caracteres'),
+  body('tiempoDescanso').optional().isInt({ min: 0, max: 3600 }).toInt().withMessage('El tiempo de descanso debe ser un número entero entre 0 y 3600 segundos'),
+  body('duracionEjercicio').optional().isInt({ min: 0, max: 7200 }).toInt().withMessage('La duración del ejercicio debe ser un número entero entre 0 y 7200 segundos'),
+  body('ordenEnSesion').optional().isInt({ min: 1 }).toInt().withMessage('El orden en la sesión debe ser un número entero mayor que 0'),
+  body('completado').optional().isBoolean().toBoolean().withMessage('El campo completado debe ser un booleano')
+];
+
+export const actualizarRegistroEjercicioValidator = [
+  param('id').isMongoId().withMessage('ID de registro no válido'),
+  body('cargaUtilizada').optional().isFloat({ min: 0 }).toFloat().withMessage('La carga utilizada debe ser un número positivo'),
+  body('repeticionesRealizadas').optional().isInt({ min: 0, max: 1000 }).toInt().withMessage('Las repeticiones realizadas deben ser un número entero entre 0 y 1000'),
+  body('seriesCompletadas').optional().isInt({ min: 0, max: 100 }).toInt().withMessage('Las series completadas deben ser un número entero entre 0 y 100'),
+  body('nivelEsfuerzo').optional().isInt({ min: 1, max: 10 }).toInt().withMessage('El nivel de esfuerzo debe ser un número entero entre 1 y 10'),
+  body('videoCliente').optional().isString().trim().isLength({ max: 500 }).withMessage('El video del cliente debe tener máximo 500 caracteres'),
+  body('notas').optional().isString().trim().isLength({ max: 1000 }).withMessage('Las notas deben tener máximo 1000 caracteres'),
+  body('tiempoDescanso').optional().isInt({ min: 0, max: 3600 }).toInt().withMessage('El tiempo de descanso debe ser un número entero entre 0 y 3600 segundos'),
+  body('duracionEjercicio').optional().isInt({ min: 0, max: 7200 }).toInt().withMessage('La duración del ejercicio debe ser un número entero entre 0 y 7200 segundos'),
+  body('completado').optional().isBoolean().toBoolean().withMessage('El campo completado debe ser un booleano')
+];
+
+export const filtrosRegistroEjercicioValidator = [
+  query('sesion').optional().isMongoId().withMessage('ID de sesión no válido'),
+  query('cliente').optional().isMongoId().withMessage('ID de cliente no válido'),
+  query('ejercicio').optional().isMongoId().withMessage('ID de ejercicio no válido'),
+  query('completado').optional().isBoolean().toBoolean().withMessage('El campo completado debe ser un booleano'),
+  query('fecha').optional().isISO8601().withMessage('La fecha debe ser una fecha válida'),
+  query('fechaDesde').optional().isISO8601().withMessage('La fecha desde debe ser una fecha válida'),
+  query('fechaHasta').optional().isISO8601().withMessage('La fecha hasta debe ser una fecha válida')
+];
+
+export const marcarRegistroCompletadoValidator = [
+  param('id').isMongoId().withMessage('ID de registro no válido')
+];
+
+// Validadores para progreso y verificación
+export const ejercicioIdValidator = [
+  param('ejercicioId').isMongoId().withMessage('ID de ejercicio no válido')
+];
+
+export const sesionIdValidator = [
+  param('sesionId').isMongoId().withMessage('ID de sesión no válido')
+];
+
+export const obtenerProgresoEjercicioValidator = [
+  param('ejercicioId').isMongoId().withMessage('ID de ejercicio no válido'),
+  query('fechaDesde').optional().isISO8601().withMessage('Fecha desde debe ser una fecha válida en formato ISO8601'),
+  query('fechaHasta').optional().isISO8601().withMessage('Fecha hasta debe ser una fecha válida en formato ISO8601')
+];

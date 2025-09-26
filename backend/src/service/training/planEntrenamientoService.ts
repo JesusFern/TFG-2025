@@ -15,6 +15,7 @@ interface EjercicioSesion {
   videoDemostrativo?: string;
   series: number;
   repeticiones: number;
+  peso: number;
   tiempoDescanso: number;
   nivelIntensidad: string;
   opcionesProgresion: {
@@ -576,7 +577,7 @@ export async function generarPlanDesdePlantillaService({
         orden: index + 1,
         series: ejercicio.series,
         repeticiones: ejercicio.repeticiones,
-        peso: ejercicio.nivelIntensidad === 'Alta' ? 0 : undefined,
+        peso: ejercicio.peso || 0, // Usar el peso generado por ejercicioDistribucionService, 0 si es undefined
         tiempoDescanso: ejercicio.tiempoDescanso,
         nivelIntensidad: ejercicio.nivelIntensidad,
         ejerciciosAlternativos: [],

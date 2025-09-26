@@ -1,6 +1,6 @@
 import React from 'react';
-import { Box, Text, Stack, Group } from '@mantine/core';
-import { IconBarbell, IconClock, IconTarget } from '@tabler/icons-react';
+import { Box, Text, Stack, Group, Badge } from '@mantine/core';
+import { IconBarbell, IconClock, IconTarget, IconCalendar, IconTrophy, IconX } from '@tabler/icons-react';
 import type { PlanEntrenamiento, SesionPlan, Ejercicio } from '../../types/training';
 
 interface SesionInfo {
@@ -24,6 +24,30 @@ const TrainingSessionsTable: React.FC<TrainingSessionsTableProps> = ({
   isDark,
   getEjercicioById
 }) => {
+  // Función para determinar si una fecha es hoy
+  const esHoy = (fecha: Date): boolean => {
+    const hoy = new Date();
+    const fechaSesion = new Date(fecha);
+    
+    // Resetear las horas para comparar solo fechas
+    hoy.setHours(0, 0, 0, 0);
+    fechaSesion.setHours(0, 0, 0, 0);
+    
+    return hoy.getTime() === fechaSesion.getTime();
+  };
+
+  // Función para determinar si una sesión está atrasada (no completada en su día)
+  const esAtrasada = (fecha: Date, completada?: boolean): boolean => {
+    const hoy = new Date();
+    const fechaSesion = new Date(fecha);
+    
+    // Resetear las horas para comparar solo fechas
+    hoy.setHours(0, 0, 0, 0);
+    fechaSesion.setHours(0, 0, 0, 0);
+    
+    // Si la sesión es del pasado y no está completada, está atrasada
+    return fechaSesion < hoy && !completada;
+  };
   return (
     <Box px="xl" py="md" mx="auto" style={{ overflowX: 'auto' }}>
       <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -67,11 +91,47 @@ const TrainingSessionsTable: React.FC<TrainingSessionsTableProps> = ({
                   <Stack gap="sm">
                     {/* Información de la sesión */}
                     <Box>
-                      <Group gap="xs" mb="xs">
-                        <IconBarbell size={16} color="var(--mantine-color-nutroos-green-6)" />
-                        <Text fw={600} size="sm" c="nutroos-green">
-                          {sesionInfo.data.tipoEntrenamiento}
-                        </Text>
+                      <Group gap="xs" mb="xs" justify="space-between">
+                        <Group gap="xs">
+                          <IconBarbell size={16} color="var(--mantine-color-nutroos-green-6)" />
+                          <Text fw={600} size="sm" c="nutroos-green">
+                            {sesionInfo.data.tipoEntrenamiento}
+                          </Text>
+                        </Group>
+                        
+                        {/* Etiquetas de estado */}
+                        <Group gap="xs">
+                          {esHoy(sesionInfo.fecha) && (
+                            <Badge 
+                              color="blue" 
+                              variant="filled" 
+                              leftSection={<IconCalendar size={12} />}
+                              size="xs"
+                            >
+                              Hoy
+                            </Badge>
+                          )}
+                          {sesionInfo.data.completada && (
+                            <Badge 
+                              color="green" 
+                              variant="filled" 
+                              leftSection={<IconTrophy size={12} />}
+                              size="xs"
+                            >
+                              Completada
+                            </Badge>
+                          )}
+                          {esAtrasada(sesionInfo.fecha, sesionInfo.data.completada) && (
+                            <Badge 
+                              color="red" 
+                              variant="filled" 
+                              leftSection={<IconX size={12} />}
+                              size="xs"
+                            >
+                              No Completado
+                            </Badge>
+                          )}
+                        </Group>
                       </Group>
                       
                       {sesionInfo.data.hora && (
