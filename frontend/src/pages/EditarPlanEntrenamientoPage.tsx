@@ -875,6 +875,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
         onEjercicioCreado={handleEjercicioCreado}
         ejerciciosExistentes={ejercicios}
         siguienteOrden={ejerciciosSesion.length + 1}
+        tipoEntrenamiento={(currentSesionInfo?.data as { tipoEntrenamiento?: string })?.tipoEntrenamiento || 'Fuerza'}
       />
 
       

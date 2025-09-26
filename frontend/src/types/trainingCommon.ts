@@ -16,6 +16,7 @@ export interface EjercicioSesion {
   nivelIntensidad: string;
   ejerciciosAlternativos?: string[];
   opcionesProgresion?: OpcionesProgresion;
+  wgerExercise?: import('./wger').WgerExercise;
 }
 
 export interface BreadcrumbItem {

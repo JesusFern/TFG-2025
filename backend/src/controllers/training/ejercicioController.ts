@@ -6,7 +6,8 @@ import {
   obtenerEjercicioPorIdService,
   obtenerEjercicioPorSlugService,
   actualizarEjercicioService,
-  eliminarEjercicioService
+  eliminarEjercicioService,
+  crearEjercicioDesdeWgerService
 } from '../../service/training/ejercicioService';
 import logger from '../../utils/logger';
 import { matchedData } from 'express-validator';
@@ -214,6 +215,41 @@ export const eliminarEjercicio = async (req: AuthenticatedRequest, res: Response
     });
     res.status(400).json({
       message: 'Error al eliminar ejercicio',
+      error: error instanceof Error ? error.message : error
+    });
+  }
+};
+
+export const crearEjercicioDesdeWger = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const creadorId = req.user?.id;
+    if (!creadorId) {
+      res.status(401).json({ message: 'No autenticado' });
+      return;
+    }
+
+    const { wgerExercise, tipoEntrenamiento } = req.body;
+
+    logger.debug('Creando ejercicio desde wger', {
+      creadorId,
+      wgerId: wgerExercise.id,
+      nombre: wgerExercise.name,
+      tipoEntrenamiento
+    });
+
+    const ejercicio = await crearEjercicioDesdeWgerService(wgerExercise, creadorId, tipoEntrenamiento);
+
+    logger.info('Ejercicio creado desde wger correctamente', { 
+      ejercicioId: ejercicio._id,
+      wgerId: wgerExercise.id 
+    });
+    res.status(201).json({ ejercicio });
+  } catch (error) {
+    logger.error('Error al crear ejercicio desde wger', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    res.status(400).json({
+      message: 'Error al crear ejercicio desde wger',
       error: error instanceof Error ? error.message : error
     });
   }

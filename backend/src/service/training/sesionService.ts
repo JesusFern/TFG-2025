@@ -63,15 +63,22 @@ export async function crearSesionService({
     }
   }
 
-  // Validar que todos los ejercicios existen
+  // Separar ejercicios de la BD de ejercicios de wger
   const ejerciciosIds = ejercicios.map(e => e.ejercicio);
-  const ejerciciosExistentes = await Ejercicio.find({ 
-    _id: { $in: ejerciciosIds },
-    activo: true 
-  });
-  if (ejerciciosExistentes.length !== ejerciciosIds.length) {
-    throw new Error('Algunos ejercicios no existen o no están activos');
+  const ejerciciosBD = ejerciciosIds.filter(id => !id.startsWith('wger_'));
+  
+  // Validar que todos los ejercicios de la BD existen
+  if (ejerciciosBD.length > 0) {
+    const ejerciciosExistentes = await Ejercicio.find({ 
+      _id: { $in: ejerciciosBD },
+      activo: true 
+    });
+    if (ejerciciosExistentes.length !== ejerciciosBD.length) {
+      throw new Error('Algunos ejercicios de la base de datos no existen o no están activos');
+    }
   }
+  
+  // Los ejercicios de wger no necesitan validación en la BD
 
   // Validar que no hay ejercicios duplicados en el mismo orden
   const ordenes = ejercicios.map(e => e.orden);
@@ -206,24 +213,32 @@ export async function actualizarSesionService(
   if (datosActualizacion.ejercicios) {
     const ejerciciosIds = datosActualizacion.ejercicios.map(e => e.ejercicio);
     
-    // Buscar ejercicios existentes con un pequeño retraso para ejercicios recién creados
-    let ejerciciosExistentes = await Ejercicio.find({ 
-      _id: { $in: ejerciciosIds },
-      activo: true 
-    });
+    // Separar ejercicios de la BD de ejercicios de wger
+    const ejerciciosBD = ejerciciosIds.filter(id => !id.startsWith('wger_'));
     
-    // Si no se encuentran todos los ejercicios, esperar un poco y volver a intentar
-    if (ejerciciosExistentes.length !== ejerciciosIds.length) {
-      await new Promise(resolve => setTimeout(resolve, 100));
-      ejerciciosExistentes = await Ejercicio.find({ 
-        _id: { $in: ejerciciosIds },
+    // Validar que todos los ejercicios de la BD existen
+    if (ejerciciosBD.length > 0) {
+      // Buscar ejercicios existentes con un pequeño retraso para ejercicios recién creados
+      let ejerciciosExistentes = await Ejercicio.find({ 
+        _id: { $in: ejerciciosBD },
         activo: true 
       });
       
-      if (ejerciciosExistentes.length !== ejerciciosIds.length) {
-        throw new Error('Algunos ejercicios no existen o no están activos');
+      // Si no se encuentran todos los ejercicios, esperar un poco y volver a intentar
+      if (ejerciciosExistentes.length !== ejerciciosBD.length) {
+        await new Promise(resolve => setTimeout(resolve, 100));
+        ejerciciosExistentes = await Ejercicio.find({ 
+          _id: { $in: ejerciciosBD },
+          activo: true 
+        });
+        
+        if (ejerciciosExistentes.length !== ejerciciosBD.length) {
+          throw new Error('Algunos ejercicios de la base de datos no existen o no están activos');
+        }
       }
     }
+    
+    // Los ejercicios de wger no necesitan validación en la BD
 
     // Validar que no hay ejercicios duplicados en el mismo orden
     const ordenes = datosActualizacion.ejercicios.map(e => e.orden);

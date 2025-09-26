@@ -67,6 +67,12 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
   };
 
   const pesoEsObligatorio = equipamientoRequierePeso(nuevoEjercicio.equipamiento);
+  
+  // Validar si el peso es obligatorio y está especificado
+  const pesoValido = pesoEsObligatorio ? (peso !== undefined && peso > 0) : true;
+  
+  // Validar si el formulario está completo
+  const formularioCompleto = nuevoEjercicio.nombre.trim() && pesoValido;
 
   const handleCrearEjercicio = async () => {
     if (!nuevoEjercicio.nombre.trim()) {
@@ -269,6 +275,17 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
 
       <Divider label="Configuración de la Sesión" labelPosition="center" />
 
+      {pesoEsObligatorio && !pesoValido && (
+        <Alert
+          icon={<IconAlertCircle size={16} />}
+          title="Peso requerido"
+          color="red"
+          variant="light"
+        >
+          Este ejercicio requiere especificar un peso mayor a 0 kg ({nuevoEjercicio.equipamiento}).
+        </Alert>
+      )}
+
       <Grid>
         <Grid.Col span={4}>
           <NumberInput
@@ -358,6 +375,7 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
           color="nutroos-green" 
           onClick={handleCrearEjercicio}
           loading={creandoEjercicio}
+          disabled={!formularioCompleto}
           leftSection={<IconPlus size={16} />}
         >
           Crear y Agregar

@@ -15,6 +15,7 @@ import type {
   ProgresoEjercicio,
   SesionCompleta
 } from '../types/training';
+import type { WgerExercise } from '../types/wger';
 
 const base = '/api/training';
 
@@ -27,6 +28,16 @@ export const trainingService = {
       body: isFormData ? data : JSON.stringify(data)
     });
     if (!res.ok) throw new Error((await res.json()).message || 'Error al crear ejercicio');
+    const response = await res.json();
+    return response.ejercicio;
+  },
+
+  async crearEjercicioDesdeWger(wgerExercise: WgerExercise, tipoEntrenamiento: string): Promise<Ejercicio> {
+    const res = await apiRequest(`${base}/ejercicios/wger`, {
+      method: 'POST',
+      body: JSON.stringify({ wgerExercise, tipoEntrenamiento })
+    });
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al crear ejercicio desde wger');
     const response = await res.json();
     return response.ejercicio;
   },

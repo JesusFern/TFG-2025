@@ -11,7 +11,7 @@ import { IconBarbell } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { Ejercicio } from '../../types/training';
 import { EjercicioSesion } from '../../types/trainingCommon';
-import SeleccionEjercicio from './SeleccionEjercicio';
+import SeleccionEjercicioConWger from './SeleccionEjercicioConWger';
 import CrearEjercicioForm from './CrearEjercicioForm';
 
 interface ModalGestionarEjerciciosProps {
@@ -21,6 +21,7 @@ interface ModalGestionarEjerciciosProps {
   onEjercicioCreado?: (ejercicio: Ejercicio) => void;
   ejerciciosExistentes: Ejercicio[];
   siguienteOrden: number;
+  tipoEntrenamiento: string;
 }
 
 const ModalGestionarEjercicios: React.FC<ModalGestionarEjerciciosProps> = ({
@@ -29,7 +30,8 @@ const ModalGestionarEjercicios: React.FC<ModalGestionarEjerciciosProps> = ({
   onAddEjercicio,
   onEjercicioCreado,
   ejerciciosExistentes,
-  siguienteOrden
+  siguienteOrden,
+  tipoEntrenamiento
 }) => {
   const [activeTab, setActiveTab] = useState<string | null>('seleccionar');
 
@@ -85,10 +87,11 @@ const ModalGestionarEjercicios: React.FC<ModalGestionarEjerciciosProps> = ({
             transition={{ duration: 0.3 }}
           >
             <MantineProvider>
-              <SeleccionEjercicio
+              <SeleccionEjercicioConWger
                 ejerciciosExistentes={ejerciciosExistentes}
                 siguienteOrden={siguienteOrden}
                 onEjercicioSeleccionado={handleEjercicioSeleccionado}
+                tipoEntrenamiento={tipoEntrenamiento}
               />
             </MantineProvider>
           </motion.div>

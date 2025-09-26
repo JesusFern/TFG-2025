@@ -185,3 +185,83 @@ export async function eliminarEjercicioService(ejercicioId: string, creadorId: s
 
   return { message: 'Ejercicio eliminado correctamente' };
 }
+
+export async function crearEjercicioDesdeWgerService(
+  wgerExercise: {
+    id: number;
+    name: string;
+    description: string;
+    category: string;
+    muscles: string[];
+    equipment: string[];
+    videoUrl?: string;
+  },
+  creadorId: string,
+  tipoEntrenamiento: string
+) {
+  // Verificar si ya existe un ejercicio de wger con este ID
+  const ejercicioExistente = await Ejercicio.findOne({ 
+    wgerId: wgerExercise.id,
+    esWger: true,
+    activo: true 
+  });
+
+  if (ejercicioExistente) {
+    return ejercicioExistente;
+  }
+
+  // Crear slug único
+  const baseSlug = wgerExercise.name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .trim();
+
+  let slug = baseSlug;
+  let counter = 1;
+  while (await Ejercicio.findOne({ slug, activo: true })) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+
+  // Mapear categoría de wger a grupo muscular del sistema
+  const mapeoGrupoMuscular: Record<string, string> = {
+    'Abs': 'Core',
+    'Arms': 'Brazos',
+    'Back': 'Espalda',
+    'Calves': 'Pantorrillas',
+    'Cardio': 'Piernas',
+    'Chest': 'Pecho',
+    'Legs': 'Piernas',
+    'Shoulders': 'Hombros'
+  };
+
+  const grupoMuscular = mapeoGrupoMuscular[wgerExercise.category] || 'Core';
+  const tipoEjercicio = tipoEntrenamiento; // Usar el tipo de entrenamiento de la sesión
+
+  // Mapear nivel de dificultad (por defecto Intermedio para ejercicios de wger)
+  const nivelDificultad = 'Intermedio';
+
+  const ejercicio = new Ejercicio({
+    nombre: wgerExercise.name,
+    slug,
+    descripcion: wgerExercise.description,
+    grupoMuscular,
+    equipamiento: wgerExercise.equipment[0] || 'Ninguno',
+    nivelDificultad,
+    tipoEjercicio,
+    instrucciones: wgerExercise.description,
+    videoDemostrativo: wgerExercise.videoUrl,
+    creador: creadorId,
+    arquetipo: false,
+    publico: true,
+    activo: true,
+    esWger: true,
+    wgerId: wgerExercise.id
+  });
+
+  await ejercicio.save();
+  return ejercicio;
+}
