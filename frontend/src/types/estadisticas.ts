@@ -1,15 +1,33 @@
 // Tipos para estadísticas de entrenamiento personal
 
+// Interfaces base para evitar duplicación
+export interface AsistenciaBase {
+  sesionesProgramadas: number;
+  sesionesCompletadas: number;
+  porcentajeAsistencia: number;
+}
+
+export interface TendenciaBase {
+  ejerciciosEnMejora: number;
+  ejerciciosEstables: number;
+  ejerciciosEnBaja: number;
+  tendenciaGeneral: 'mejora' | 'estable' | 'baja';
+}
+
+export interface ComparacionBase {
+  actual: number;
+  anterior: number;
+  diferencia: number;
+  porcentajeCambio: number;
+}
+
 export interface EstadisticasCliente {
   clienteId: string;
   periodo: {
     inicio: Date;
     fin: Date;
   };
-  asistencia: {
-    sesionesProgramadas: number;
-    sesionesCompletadas: number;
-    porcentajeAsistencia: number;
+  asistencia: AsistenciaBase & {
     sesionesAtrasadas: number;
   };
   progresoEjercicios: ProgresoEjercicio[];
@@ -24,12 +42,7 @@ export interface EstadisticasCliente {
     ejerciciosTotal: number;
     porcentajeCompletitud: number;
   };
-  tendencias: {
-    ejerciciosEnMejora: number;
-    ejerciciosEstables: number;
-    ejerciciosEnBaja: number;
-    tendenciaGeneral: 'mejora' | 'estable' | 'baja';
-  };
+  tendencias: TendenciaBase;
 }
 
 export interface EstadisticasSemanal {
@@ -38,11 +51,7 @@ export interface EstadisticasSemanal {
     inicio: Date;
     fin: Date;
   };
-  asistencia: {
-    sesionesProgramadas: number;
-    sesionesCompletadas: number;
-    porcentajeAsistencia: number;
-  };
+  asistencia: AsistenciaBase;
   progreso: {
     ejerciciosRegistrados: number;
     ejerciciosCompletados: number;
@@ -77,37 +86,12 @@ export interface EstadisticasSemanal {
   };
   // Comparación con semana anterior
   comparacionSemanaAnterior: {
-    sesionesCompletadas: {
-      actual: number;
-      anterior: number;
-      diferencia: number;
-      porcentajeCambio: number;
-    };
-    tiempoEntrenamiento: {
-      actual: number;
-      anterior: number;
-      diferencia: number;
-      porcentajeCambio: number;
-    };
-    cargaUtilizada: {
-      actual: number;
-      anterior: number;
-      diferencia: number;
-      porcentajeCambio: number;
-    };
-    ejerciciosCompletados: {
-      actual: number;
-      anterior: number;
-      diferencia: number;
-      porcentajeCambio: number;
-    };
+    sesionesCompletadas: ComparacionBase;
+    tiempoEntrenamiento: ComparacionBase;
+    cargaUtilizada: ComparacionBase;
+    ejerciciosCompletados: ComparacionBase;
   };
-  tendencias: {
-    ejerciciosEnMejora: number;
-    ejerciciosEstables: number;
-    ejerciciosEnBaja: number;
-    tendenciaGeneral: 'mejora' | 'estable' | 'baja';
-  };
+  tendencias: TendenciaBase;
   resumen: {
     tiempoTotalEntrenado: number;
     cargaTotalLevantada: number;

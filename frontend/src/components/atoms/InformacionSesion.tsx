@@ -3,14 +3,12 @@ import { IconCalendar } from '@tabler/icons-react';
 
 interface InformacionSesionProps {
   fecha: string | Date;
-  completada: boolean;
-  showBadge?: boolean;
+  completada?: boolean;
 }
 
 export const InformacionSesion = ({ 
   fecha, 
-  completada, 
-  showBadge = true 
+  completada 
 }: InformacionSesionProps) => {
   return (
     <Paper p="md" withBorder>
@@ -29,6 +27,11 @@ export const InformacionSesion = ({
           day: 'numeric' 
         })}
       </Text>
+      {completada !== undefined && (
+        <Text size="sm" c={completada ? 'green' : 'red'}>
+          Estado: {completada ? 'Completada' : 'No completada'}
+        </Text>
+      )}
     </Paper>
   );
 };
