@@ -1,19 +1,8 @@
 import React from 'react';
-import {
-  Modal,
-  Stack,
-  Text,
-  Group,
-  Paper,
-  ThemeIcon,
-  Divider,
-  ScrollArea
-} from '@mantine/core';
-import { IconClock, IconBarbell } from '@tabler/icons-react';
+import { Modal, Stack, Divider } from '@mantine/core';
 import { SesionDetalle } from '../../types/estadisticas';
-import EstadoBadge from '../atoms/EstadoBadge';
-import TablaEjercicios from '../atoms/TablaEjercicios';
-import EstadoVacioEjercicios from '../atoms/EstadoVacioEjercicios';
+import HeaderSesion from '../atoms/HeaderSesion';
+import SeccionEjercicios from '../atoms/SeccionEjercicios';
 import BotonCerrar from '../atoms/BotonCerrar';
 
 interface ModalDetallesSesionProps {
@@ -39,47 +28,17 @@ export const ModalDetallesSesion: React.FC<ModalDetallesSesionProps> = ({
     >
       <Stack gap="md">
         {/* Información de la sesión */}
-        <Paper p="lg" withBorder>
-          <Group justify="space-between" mb="lg">
-            <Group gap="lg">
-              <ThemeIcon size="xl" radius="md" color="blue" variant="light">
-                <IconClock size={24} />
-              </ThemeIcon>
-              <div>
-                <Text size="xl" fw={600} mb="xs">{sesion.tipoEntrenamiento}</Text>
-                <Text size="md" c="dimmed" mb="xs">
-                  {new Date(sesion.fecha).toLocaleDateString('es-ES', { 
-                    weekday: 'long', 
-                    year: 'numeric', 
-                    month: 'long', 
-                    day: 'numeric' 
-                  })}
-                </Text>
-              </div>
-            </Group>
-            <EstadoBadge completado={sesion.completada} size="lg" />
-          </Group>
-        </Paper>
+        <HeaderSesion 
+          tipoEntrenamiento={sesion.tipoEntrenamiento}
+          fecha={sesion.fecha}
+          completada={sesion.completada}
+          size="lg"
+        />
 
         <Divider />
 
         {/* Lista de ejercicios */}
-        <Paper p="md" withBorder>
-          <Group gap="md" mb="md">
-            <ThemeIcon size="lg" radius="md" color="purple">
-              <IconBarbell size={20} />
-            </ThemeIcon>
-            <Text size="lg" fw={600}>Ejercicios de la Sesión</Text>
-          </Group>
-          
-          {sesion.ejercicios.length > 0 ? (
-            <ScrollArea h={400}>
-              <TablaEjercicios ejercicios={sesion.ejercicios} />
-            </ScrollArea>
-          ) : (
-            <EstadoVacioEjercicios />
-          )}
-        </Paper>
+        <SeccionEjercicios ejercicios={sesion.ejercicios} />
 
         <BotonCerrar onClose={onClose} />
       </Stack>

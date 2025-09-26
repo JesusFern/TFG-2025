@@ -1,6 +1,6 @@
 import { Table, ScrollArea, Text, Button } from '@mantine/core';
-import FormatoPeso from './FormatoPeso';
 import { RegistroEjercicioDetalle } from '../../types/estadisticas';
+import FilaEjercicio from './FilaEjercicio';
 
 interface Ejercicio {
   id: string;
@@ -52,38 +52,23 @@ export const TablaEjerciciosConAcciones = ({
             );
 
             return (
-              <Table.Tr key={ejercicio.id}>
-                <Table.Td>
-                  <Text fw={500}>{ejercicio.nombre}</Text>
-                </Table.Td>
-                <Table.Td>
-                  <Text size="sm">{ejercicio.series}</Text>
-                </Table.Td>
-                <Table.Td>
-                  <Text size="sm">{ejercicio.repeticiones}</Text>
-                </Table.Td>
-                <Table.Td>
-                  <Text size="sm">
-                    <FormatoPeso peso={ejercicio.peso} />
-                  </Text>
-                </Table.Td>
-                <Table.Td>
-                  <Text size="sm">{ejercicio.tiempoDescanso}s</Text>
-                </Table.Td>
-                <Table.Td>
-                  {registroExistente ? (
-                    <Button 
-                      variant="light" 
-                      size="xs"
-                      onClick={() => onRegistroClick(registroExistente)}
-                    >
-                      Ver Registro
-                    </Button>
-                  ) : (
-                    <Text size="sm" c="dimmed">Sin registro</Text>
-                  )}
-                </Table.Td>
-              </Table.Tr>
+              <FilaEjercicio 
+                key={ejercicio.id} 
+                ejercicio={ejercicio} 
+                showAcciones={true}
+              >
+                {registroExistente ? (
+                  <Button 
+                    variant="light" 
+                    size="xs"
+                    onClick={() => onRegistroClick(registroExistente)}
+                  >
+                    Ver Registro
+                  </Button>
+                ) : (
+                  <Text size="sm" c="dimmed">Sin registro</Text>
+                )}
+              </FilaEjercicio>
             );
           })}
         </Table.Tbody>

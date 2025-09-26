@@ -601,14 +601,26 @@ const ClientTrainingSessionPage: React.FC = () => {
             setModalDetallesOpened(false);
             setSelectedRegistro(null);
           }}
-          registro={selectedRegistro}
-          ejercicio={typeof selectedRegistro.ejercicio === 'string' 
-            ? getEjercicioById(selectedRegistro.ejercicio) || {} as Ejercicio
-            : selectedRegistro.ejercicio as Ejercicio
-          }
-          onEditar={() => {
-            setModalDetallesOpened(false);
-            handleEditarRegistro(selectedRegistro);
+          registro={{
+            id: selectedRegistro._id || '',
+            ejercicio: {
+              id: selectedRegistro.ejercicio,
+              nombre: getEjercicioById(selectedRegistro.ejercicio)?.nombre || 'Ejercicio'
+            },
+            sesion: {
+              id: selectedRegistro.sesion,
+              nombre: 'Sesión',
+              tipoEntrenamiento: sesion?.tipoEntrenamiento || 'Fuerza',
+              fecha: sesion?.fecha || new Date().toISOString()
+            },
+            cargaUtilizada: selectedRegistro.cargaUtilizada || 0,
+            repeticionesRealizadas: selectedRegistro.repeticionesRealizadas,
+            seriesCompletadas: selectedRegistro.seriesCompletadas,
+            tiempoDescanso: selectedRegistro.tiempoDescanso || 0,
+            nivelEsfuerzo: selectedRegistro.nivelEsfuerzo,
+            completado: selectedRegistro.completado,
+            notas: selectedRegistro.notas || '',
+            fecha: selectedRegistro.fecha
           }}
         />
       )}

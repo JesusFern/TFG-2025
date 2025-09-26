@@ -8,8 +8,9 @@ import {
   obtenerClientesTrabajadorService,
   obtenerDetallesClienteService
 } from '../../service/training/estadisticasService';
-import logger from '../../utils/logger';
+import { sendSuccessResponse, sendErrorResponse, convertDates, parseWeekAndYear } from '../../helpers/responseHelper';
 import { matchedData } from 'express-validator';
+import logger from '../../utils/logger';
 export const obtenerEstadisticasCliente = async (req: AuthenticatedRequest, res: Response) => {
   try {
     const { clienteId } = matchedData(req, { locations: ['params'] }) as { clienteId: string };
@@ -24,43 +25,17 @@ export const obtenerEstadisticasCliente = async (req: AuthenticatedRequest, res:
       return;
     }
 
-    // Convertir fechas si se proporcionan
-    const fechaInicioDate = fechaInicio ? new Date(fechaInicio) : undefined;
-    const fechaFinDate = fechaFin ? new Date(fechaFin) : undefined;
-
-    logger.debug('Obteniendo estadísticas del cliente', {
-      clienteId,
-      fechaInicio: fechaInicioDate,
-      fechaFin: fechaFinDate
-    });
-
-    const estadisticas = await obtenerEstadisticasClienteService(
-      clienteId,
-      fechaInicioDate,
-      fechaFinDate
-    );
-
-    logger.info('Estadísticas del cliente obtenidas correctamente', { clienteId });
-    res.status(200).json({ 
-      success: true,
-      message: 'Estadísticas obtenidas correctamente', 
-      estadisticas 
-    });
+    const { fechaInicioDate, fechaFinDate } = convertDates(fechaInicio, fechaFin);
+    const estadisticas = await obtenerEstadisticasClienteService(clienteId, fechaInicioDate, fechaFinDate);
+    
+    sendSuccessResponse(res, 'Estadísticas obtenidas correctamente', estadisticas);
 
   } catch (error) {
-    logger.error('Error al obtener estadísticas del cliente', {
-      error: error instanceof Error ? error.message : String(error),
-      clienteId: req.params.clienteId
-    });
-    res.status(400).json({ 
-      message: 'Error al obtener estadísticas del cliente', 
-      error: (error as Error).message 
-    });
+    sendErrorResponse(res, 'Error al obtener estadísticas del cliente', error);
   }
 };
 
 export const obtenerEstadisticasSemanal = async (req: AuthenticatedRequest, res: Response) => {
-  console.log('obtenerEstadisticasSemanal called with:', req.params);
   try {
     const { clienteId, numeroSemana, anio } = matchedData(req, { locations: ['params'] }) as {
       clienteId: string;
@@ -74,40 +49,13 @@ export const obtenerEstadisticasSemanal = async (req: AuthenticatedRequest, res:
       return;
     }
 
-    const numeroSemanaNum = parseInt(numeroSemana);
-    const anioNum = parseInt(anio);
-
-    logger.debug('Obteniendo estadísticas semanales', {
-      clienteId,
-      numeroSemana: numeroSemanaNum,
-      año: anioNum
-    });
-
-    const estadisticas = await obtenerEstadisticasSemanalService(
-      clienteId,
-      numeroSemanaNum,
-      anioNum
-    );
-
-    logger.info('Estadísticas semanales obtenidas correctamente', { 
-      clienteId, 
-      numeroSemana: numeroSemanaNum 
-    });
-    res.status(200).json({ 
-      success: true,
-      message: 'Estadísticas semanales obtenidas correctamente', 
-      estadisticas 
-    });
+    const { numeroSemanaNum, anioNum } = parseWeekAndYear(numeroSemana, anio);
+    const estadisticas = await obtenerEstadisticasSemanalService(clienteId, numeroSemanaNum, anioNum);
+    
+    sendSuccessResponse(res, 'Estadísticas semanales obtenidas correctamente', estadisticas);
 
   } catch (error) {
-    logger.error('Error al obtener estadísticas semanales', {
-      error: error instanceof Error ? error.message : String(error),
-      clienteId: req.params.clienteId
-    });
-    res.status(400).json({ 
-      message: 'Error al obtener estadísticas semanales', 
-      error: (error as Error).message 
-    });
+    sendErrorResponse(res, 'Error al obtener estadísticas semanales', error);
   }
 };
 
@@ -167,39 +115,13 @@ export const obtenerMiProgreso = async (req: AuthenticatedRequest, res: Response
       fechaFin?: string;
     };
 
-    // Convertir fechas si se proporcionan
-    const fechaInicioDate = fechaInicio ? new Date(fechaInicio) : undefined;
-    const fechaFinDate = fechaFin ? new Date(fechaFin) : undefined;
-
-    logger.debug('Obteniendo progreso personal del cliente', {
-      clienteId,
-      fechaInicio: fechaInicioDate,
-      fechaFin: fechaFinDate
-    });
-
-    const estadisticas = await obtenerEstadisticasClienteService(
-      clienteId,
-      fechaInicioDate,
-      fechaFinDate
-    );
-
-
-    logger.info('Progreso personal obtenido correctamente', { clienteId });
-    res.status(200).json({ 
-      success: true,
-      message: 'Progreso personal obtenido correctamente', 
-      estadisticas 
-    });
+    const { fechaInicioDate, fechaFinDate } = convertDates(fechaInicio, fechaFin);
+    const estadisticas = await obtenerEstadisticasClienteService(clienteId, fechaInicioDate, fechaFinDate);
+    
+    sendSuccessResponse(res, 'Progreso personal obtenido correctamente', estadisticas);
 
   } catch (error) {
-    logger.error('Error al obtener progreso personal', {
-      error: error instanceof Error ? error.message : String(error),
-      clienteId: req.user?.id
-    });
-    res.status(400).json({ 
-      message: 'Error al obtener progreso personal', 
-      error: (error as Error).message 
-    });
+    sendErrorResponse(res, 'Error al obtener progreso personal', error);
   }
 };
 
@@ -216,40 +138,13 @@ export const obtenerMiProgresoSemanal = async (req: AuthenticatedRequest, res: R
       anio: string;
     };
 
-    const numeroSemanaNum = parseInt(numeroSemana);
-    const anioNum = parseInt(anio);
-
-    logger.debug('Obteniendo progreso semanal personal', {
-      clienteId,
-      numeroSemana: numeroSemanaNum,
-      año: anioNum
-    });
-
-    const estadisticas = await obtenerEstadisticasSemanalService(
-      clienteId,
-      numeroSemanaNum,
-      anioNum
-    );
-
-    logger.info('Progreso semanal personal obtenido correctamente', { 
-      clienteId, 
-      numeroSemana: numeroSemanaNum 
-    });
-    res.status(200).json({ 
-      success: true,
-      message: 'Progreso semanal personal obtenido correctamente', 
-      estadisticas 
-    });
+    const { numeroSemanaNum, anioNum } = parseWeekAndYear(numeroSemana, anio);
+    const estadisticas = await obtenerEstadisticasSemanalService(clienteId, numeroSemanaNum, anioNum);
+    
+    sendSuccessResponse(res, 'Progreso semanal personal obtenido correctamente', estadisticas);
 
   } catch (error) {
-    logger.error('Error al obtener progreso semanal personal', {
-      error: error instanceof Error ? error.message : String(error),
-      clienteId: req.user?.id
-    });
-    res.status(400).json({ 
-      message: 'Error al obtener progreso semanal personal', 
-      error: (error as Error).message 
-    });
+    sendErrorResponse(res, 'Error al obtener progreso semanal personal', error);
   }
 };
 
