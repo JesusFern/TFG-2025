@@ -191,6 +191,45 @@ function mapMuscles(wgerMuscles: Array<{name: string; name_en: string}>): string
   return 'General';
 }
 
+function processWgerExercise(exercise: WgerExerciseInfo): {
+  id: number;
+  name: string;
+  description: string;
+  category: string;
+  muscles: string[];
+  equipment: string[];
+  videoUrl?: string;
+} | null {
+  // Buscar traducción en español
+  const spanishTranslation = exercise.translations.find(t => t.language === LANGUAGE_ID);
+  if (!spanishTranslation) {
+    return null;
+  }
+  
+  // Mapear equipamiento
+  const mappedEquipment = exercise.equipment.length > 0 
+    ? mapEquipment(exercise.equipment[0].name)
+    : 'Ninguno';
+  
+  // Mapear músculos
+  const allMuscles = [...exercise.muscles, ...exercise.muscles_secondary];
+  const mappedMuscle = mapMuscles(allMuscles);
+  
+  // Obtener video principal si existe
+  const mainVideo = exercise.videos.find(v => v.is_main);
+  const videoUrl = mainVideo?.video || (exercise.videos.length > 0 ? exercise.videos[0].video : undefined);
+  
+  return {
+    id: exercise.id,
+    name: spanishTranslation.name,
+    description: cleanHtmlDescription(spanishTranslation.description),
+    category: exercise.category.name,
+    muscles: [mappedMuscle],
+    equipment: [mappedEquipment],
+    videoUrl
+  };
+}
+
 export async function searchWgerExercises(query: string, limit = 20): Promise<{
   id: number;
   name: string;
@@ -224,41 +263,17 @@ export async function searchWgerExercises(query: string, limit = 20): Promise<{
     }).slice(0, limit);
     
     // Procesar ejercicios filtrados
-    const processedExercises = filteredExercises.map(exercise => {
-      const spanishTranslation = exercise.translations.find(t => t.language === LANGUAGE_ID);
-      if (!spanishTranslation) return null;
-      
-      // Mapear equipamiento
-      const mappedEquipment = exercise.equipment.length > 0 
-        ? mapEquipment(exercise.equipment[0].name)
-        : 'Ninguno';
-      
-      // Mapear músculos
-      const allMuscles = [...exercise.muscles, ...exercise.muscles_secondary];
-      const mappedMuscle = mapMuscles(allMuscles);
-      
-      // Obtener video principal si existe
-      const mainVideo = exercise.videos.find(v => v.is_main);
-      const videoUrl = mainVideo?.video || (exercise.videos.length > 0 ? exercise.videos[0].video : undefined);
-      
-      return {
-        id: exercise.id,
-        name: spanishTranslation.name,
-        description: cleanHtmlDescription(spanishTranslation.description),
-        category: exercise.category.name,
-        muscles: [mappedMuscle],
-        equipment: [mappedEquipment],
-        videoUrl
-      };
-    }).filter(Boolean) as Array<{
-      id: number;
-      name: string;
-      description: string;
-      category: string;
-      muscles: string[];
-      equipment: string[];
-      videoUrl?: string;
-    }>;
+    const processedExercises = filteredExercises
+      .map(exercise => processWgerExercise(exercise))
+      .filter(Boolean) as Array<{
+        id: number;
+        name: string;
+        description: string;
+        category: string;
+        muscles: string[];
+        equipment: string[];
+        videoUrl?: string;
+      }>;
     
     return processedExercises;
     
@@ -282,34 +297,7 @@ export async function getWgerExerciseDetails(exerciseId: number): Promise<{
     const exerciseResponse = await fetchJson(`${WGER_BASE}/exerciseinfo/${exerciseId}/`) as WgerExerciseInfo;
     const exercise: WgerExerciseInfo = exerciseResponse;
     
-    // Buscar traducción en español
-    const spanishTranslation = exercise.translations.find(t => t.language === LANGUAGE_ID);
-    if (!spanishTranslation) {
-      return null;
-    }
-    
-    // Mapear equipamiento
-    const mappedEquipment = exercise.equipment.length > 0 
-      ? mapEquipment(exercise.equipment[0].name)
-      : 'Ninguno';
-    
-    // Mapear músculos
-    const allMuscles = [...exercise.muscles, ...exercise.muscles_secondary];
-    const mappedMuscle = mapMuscles(allMuscles);
-    
-    // Obtener video principal si existe
-    const mainVideo = exercise.videos.find(v => v.is_main);
-    const videoUrl = mainVideo?.video || (exercise.videos.length > 0 ? exercise.videos[0].video : undefined);
-    
-    return {
-      id: exercise.id,
-      name: spanishTranslation.name,
-      description: cleanHtmlDescription(spanishTranslation.description),
-      category: exercise.category.name,
-      muscles: [mappedMuscle],
-      equipment: [mappedEquipment],
-      videoUrl
-    };
+    return processWgerExercise(exercise);
     
   } catch (error) {
     console.error('Error getting wger exercise details:', error);

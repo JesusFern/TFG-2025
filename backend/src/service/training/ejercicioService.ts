@@ -216,10 +216,21 @@ export async function crearEjercicioDesdeWgerService(
     throw new Error('Tipo de entrenamiento inválido');
   }
 
+  // Validar que el creadorId sea un ObjectId válido
+  if (!/^[0-9a-fA-F]{24}$/.test(creadorId.trim())) {
+    throw new Error('ID de creador no es un ObjectId válido');
+  }
+
   // Sanitizar datos
   const sanitizedWgerId = Math.floor(wgerExercise.id); // Asegurar que sea un entero
   const sanitizedCreadorId = creadorId.trim();
   const sanitizedTipoEntrenamiento = tipoEntrenamiento.trim();
+
+  // Verificar que el creador existe y es un worker
+  const creadorUser = await User.findById(sanitizedCreadorId);
+  if (!creadorUser || creadorUser.role !== 'worker') {
+    throw new Error('El creador debe ser un usuario con rol worker');
+  }
 
   // Verificar si ya existe un ejercicio de wger con este ID (usando datos sanitizados)
   const ejercicioExistente = await Ejercicio.findOne({ 

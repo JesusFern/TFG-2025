@@ -173,7 +173,10 @@ export const trainingService = {
       method: 'PUT',
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error((await res.json()).message || 'Error al actualizar sesión');
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || errorData.message || 'Error al actualizar sesión');
+    }
     return await res.json();
   },
 
