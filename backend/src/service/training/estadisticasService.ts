@@ -6,6 +6,22 @@ import PlanEntrenamiento from '../../models/training/planEntrenamiento';
 import User from '../../models/users/user';
 import logger from '../../utils/logger';
 
+// Funciones de validación y sanitización para prevenir inyección NoSQL
+function validateAndSanitizeObjectId(id: string, fieldName: string): mongoose.Types.ObjectId {
+  if (!id || typeof id !== 'string' || id.trim().length === 0) {
+    throw new Error(`${fieldName} no puede estar vacío`);
+  }
+  
+  const trimmedId = id.trim();
+  
+  if (!mongoose.Types.ObjectId.isValid(trimmedId)) {
+    throw new Error(`${fieldName} no es un ObjectId válido`);
+  }
+  
+  return new mongoose.Types.ObjectId(trimmedId);
+}
+
+
 // Interfaces para las estadísticas
 export interface EstadisticasCliente {
   clienteId: string;
@@ -160,7 +176,10 @@ export async function obtenerEstadisticasClienteService(
   fechaFin?: Date
 ): Promise<EstadisticasCliente> {
   try {
-    logger.info('Obteniendo estadísticas del cliente', { clienteId, fechaInicio, fechaFin });
+    // Validar y sanitizar el clienteId
+    const sanitizedClienteId = validateAndSanitizeObjectId(clienteId, 'clienteId');
+    
+    logger.info('Obteniendo estadísticas del cliente', { clienteId: sanitizedClienteId.toString(), fechaInicio, fechaFin });
 
     // Establecer fechas por defecto (mes actual completo)
     const fin = fechaFin || new Date();
@@ -170,13 +189,13 @@ export async function obtenerEstadisticasClienteService(
 
     // Obtener sesiones del cliente en el período
     const sesiones = await Sesion.find({
-      cliente: clienteId,
+      cliente: sanitizedClienteId,
       fecha: { $gte: inicio, $lte: finMesCompleto }
     }).populate('ejercicios.ejercicio');
 
     // Obtener registros de ejercicios del cliente en el período
     const registros = await RegistroEjercicio.find({
-      cliente: clienteId,
+      cliente: sanitizedClienteId,
       fecha: { $gte: inicio, $lte: finMesCompleto }
     }).populate('ejercicio');
 
@@ -246,7 +265,19 @@ export async function obtenerEstadisticasSemanalService(
   año: number
 ): Promise<EstadisticasSemanal> {
   try {
-    logger.info('Obteniendo estadísticas semanales', { clienteId, numeroSemana, año });
+    // Validar y sanitizar el clienteId
+    const sanitizedClienteId = validateAndSanitizeObjectId(clienteId, 'clienteId');
+    
+    // Validar parámetros numéricos
+    if (!Number.isInteger(numeroSemana) || numeroSemana < 1 || numeroSemana > 53) {
+      throw new Error('Número de semana debe ser un entero entre 1 y 53');
+    }
+    
+    if (!Number.isInteger(año) || año < 1900 || año > 2100) {
+      throw new Error('Año debe ser un entero entre 1900 y 2100');
+    }
+    
+    logger.info('Obteniendo estadísticas semanales', { clienteId: sanitizedClienteId.toString(), numeroSemana, año });
 
     // Calcular fechas de la semana actual
     const inicioSemana = new Date(año, 0, 1);
@@ -260,19 +291,19 @@ export async function obtenerEstadisticasSemanalService(
 
     // Obtener sesiones de la semana actual
     const sesiones = await Sesion.find({
-      cliente: clienteId,
+      cliente: sanitizedClienteId,
       fecha: { $gte: inicio, $lte: fin }
     });
 
     // Obtener registros de la semana actual
     const registros = await RegistroEjercicio.find({
-      cliente: clienteId,
+      cliente: sanitizedClienteId,
       fecha: { $gte: inicio, $lte: fin }
     }).populate('ejercicio');
 
     // Obtener registros de la semana anterior para comparación
     const registrosSemanaAnterior = await RegistroEjercicio.find({
-      cliente: clienteId,
+      cliente: sanitizedClienteId,
       fecha: { $gte: inicioSemanaAnterior, $lte: finSemanaAnterior }
     });
 
@@ -416,9 +447,12 @@ export async function obtenerEstadisticasSemanalService(
 // Función para calcular rachas de entrenamiento
 export async function obtenerRachasEntrenamientoService(clienteId: string): Promise<RachasEntrenamiento> {
   try {
+    // Validar y sanitizar el clienteId
+    const sanitizedClienteId = validateAndSanitizeObjectId(clienteId, 'clienteId');
+    
     // Obtener todos los registros del cliente ordenados por fecha
     const registros = await RegistroEjercicio.find({
-      cliente: clienteId,
+      cliente: sanitizedClienteId,
       completado: true
     }).sort({ fecha: 1 });
 
@@ -441,7 +475,9 @@ export async function obtenerRachasEntrenamientoService(clienteId: string): Prom
       registrosPorFecha.get(fecha)!.push(r);
     });
 
-    const fechasEntrenamiento = Array.from(registrosPorFecha.keys()).sort();
+    const fechasEntrenamiento = Array.from(registrosPorFecha.keys()).sort((a, b) => {
+      return new Date(a).getTime() - new Date(b).getTime();
+    });
     const ultimaSesion = new Date(registros[registros.length - 1].fecha);
     const hoy = new Date();
     hoy.setHours(0, 0, 0, 0);
@@ -857,15 +893,14 @@ export const obtenerClientesTrabajadorService = async (trabajadorId: string, sem
 // Obtener detalles completos de un cliente específico
 export const obtenerDetallesClienteService = async (trabajadorId: string, clienteId: string) => {
   try {
-    // Validar IDs
-    if (!mongoose.Types.ObjectId.isValid(trabajadorId) || !mongoose.Types.ObjectId.isValid(clienteId)) {
-      throw new Error('IDs no válidos');
-    }
+    // Validar y sanitizar los IDs
+    const sanitizedTrabajadorId = validateAndSanitizeObjectId(trabajadorId, 'trabajadorId');
+    const sanitizedClienteId = validateAndSanitizeObjectId(clienteId, 'clienteId');
 
     // Verificar que el trabajador tiene acceso al cliente
     const planes = await PlanEntrenamiento.find({ 
-      entrenador: new mongoose.Types.ObjectId(trabajadorId),
-      clientes: new mongoose.Types.ObjectId(clienteId),
+      entrenador: sanitizedTrabajadorId,
+      clientes: sanitizedClienteId,
       activo: true,
       draftMode: false // Solo planes publicados
     }).populate('sesiones');
@@ -875,7 +910,7 @@ export const obtenerDetallesClienteService = async (trabajadorId: string, client
     }
 
     // Obtener información del cliente
-    const cliente = await User.findById(clienteId).select('fullName email');
+    const cliente = await User.findById(sanitizedClienteId).select('fullName email');
     if (!cliente) {
       throw new Error('Cliente no encontrado');
     }
@@ -888,7 +923,7 @@ export const obtenerDetallesClienteService = async (trabajadorId: string, client
     cincoDiasAdelante.setDate(hoy.getDate() + 5);
     
     const sesiones = await Sesion.find({ 
-      cliente: clienteId,
+      cliente: sanitizedClienteId,
       fecha: {
         $gte: cincoDiasAtras,
         $lte: cincoDiasAdelante
@@ -898,17 +933,17 @@ export const obtenerDetallesClienteService = async (trabajadorId: string, client
       .sort({ fecha: 1 }); // Ordenar por fecha ascendente (más antiguas primero)
 
     // Obtener todos los registros de ejercicios del cliente
-    const registros = await RegistroEjercicio.find({ cliente: clienteId })
+    const registros = await RegistroEjercicio.find({ cliente: sanitizedClienteId })
       .populate('ejercicio')
       .populate('sesion')
       .sort({ fecha: -1 });
 
     // Obtener estadísticas del cliente
-    const estadisticasGenerales = await obtenerEstadisticasClienteService(clienteId);
+    const estadisticasGenerales = await obtenerEstadisticasClienteService(sanitizedClienteId.toString());
     const semanaActual = getCurrentWeekNumber();
     const añoActual = new Date().getFullYear();
-    const estadisticasSemanales = await obtenerEstadisticasSemanalService(clienteId, semanaActual, añoActual);
-    const rachas = await obtenerRachasEntrenamientoService(clienteId);
+    const estadisticasSemanales = await obtenerEstadisticasSemanalService(sanitizedClienteId.toString(), semanaActual, añoActual);
+    const rachas = await obtenerRachasEntrenamientoService(sanitizedClienteId.toString());
 
     // Calcular alertas
     const alertas = [];

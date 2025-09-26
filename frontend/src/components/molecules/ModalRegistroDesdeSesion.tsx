@@ -11,7 +11,7 @@ import {
   ThemeIcon,
   Divider
 } from '@mantine/core';
-import { IconBarbell, IconCalendar, IconCheck, IconX } from '@tabler/icons-react';
+import { IconBarbell, IconCalendar } from '@tabler/icons-react';
 import { RegistroEjercicioDetalle } from '../../types/estadisticas';
 
 interface ModalRegistroDesdeSesionProps {
@@ -127,3 +127,5 @@ export const ModalRegistroDesdeSesion: React.FC<ModalRegistroDesdeSesionProps> =
     </Modal>
   );
 };
+
+export default ModalRegistroDesdeSesion;

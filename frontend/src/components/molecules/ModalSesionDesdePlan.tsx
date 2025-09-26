@@ -169,3 +169,5 @@ export const ModalSesionDesdePlan: React.FC<ModalSesionDesdePlanProps> = ({
     </Modal>
   );
 };
+
+export default ModalSesionDesdePlan;

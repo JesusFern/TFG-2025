@@ -17,7 +17,8 @@ import {
   progresoEjerciciosValidator,
   miProgresoValidator,
   miProgresoSemanalValidator,
-  miProgresoEjerciciosValidator
+  miProgresoEjerciciosValidator,
+  detallesClienteValidator
 } from '../../validators/estadisticasValidators';
 import { validateRequest } from '../../middlewares/validationMiddleware';
 
@@ -92,6 +93,8 @@ router.get(
 router.get(
   '/trabajador/cliente/:clienteId',
   authenticateToken,
+  detallesClienteValidator,
+  validateRequest,
   obtenerDetallesCliente
 );
 

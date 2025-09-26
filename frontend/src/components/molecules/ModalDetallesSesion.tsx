@@ -137,3 +137,5 @@ export const ModalDetallesSesion: React.FC<ModalDetallesSesionProps> = ({
     </Modal>
   );
 };
+
+export default ModalDetallesSesion;

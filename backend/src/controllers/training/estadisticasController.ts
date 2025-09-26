@@ -373,7 +373,7 @@ export const obtenerClientesTrabajador = async (req: AuthenticatedRequest, res: 
 // Obtener detalles completos de un cliente específico
 export const obtenerDetallesCliente = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { clienteId } = req.params;
+    const { clienteId } = matchedData(req, { locations: ['params'] }) as { clienteId: string };
     const trabajadorId = req.user?.id;
 
     if (!trabajadorId) {
@@ -391,7 +391,7 @@ export const obtenerDetallesCliente = async (req: AuthenticatedRequest, res: Res
       });
       return;
     }
-
+    
     const resultado = await obtenerDetallesClienteService(trabajadorId, clienteId);
 
     res.status(200).json({

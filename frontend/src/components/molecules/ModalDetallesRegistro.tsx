@@ -124,3 +124,5 @@ export const ModalDetallesRegistro: React.FC<ModalDetallesRegistroProps> = ({
     </Modal>
   );
 };
+
+export default ModalDetallesRegistro;

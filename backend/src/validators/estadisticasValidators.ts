@@ -36,3 +36,8 @@ export const miProgresoSemanalValidator = [
 export const miProgresoEjerciciosValidator = [
   query('ejercicioId').optional().isMongoId().withMessage('ID de ejercicio no válido')
 ];
+
+// Validador para detalles del cliente (trabajador)
+export const detallesClienteValidator = [
+  param('clienteId').isMongoId().withMessage('ID de cliente no válido')
+];

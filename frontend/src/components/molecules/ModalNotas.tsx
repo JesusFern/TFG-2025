@@ -42,6 +42,7 @@ export const ModalNotas: React.FC<ModalNotasProps> = ({
       onClose={onClose}
       title={`Notas de ${cliente.nombre}`}
       size="lg"
+      zIndex={1000}
     >
       <Stack gap="md">
         {/* Información del cliente */}
@@ -131,3 +132,5 @@ export const ModalNotas: React.FC<ModalNotasProps> = ({
     </Modal>
   );
 };
+
+export default ModalNotas;

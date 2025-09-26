@@ -149,3 +149,5 @@ export const ModalDetallesPlan: React.FC<ModalDetallesPlanProps> = ({
     </Modal>
   );
 };
+
+export default ModalDetallesPlan;
