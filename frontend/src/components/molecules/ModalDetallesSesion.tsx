@@ -4,16 +4,17 @@ import {
   Stack,
   Text,
   Group,
-  Badge,
   Paper,
-  Button,
-  ScrollArea,
-  Table,
   ThemeIcon,
-  Divider
+  Divider,
+  ScrollArea
 } from '@mantine/core';
 import { IconClock, IconBarbell } from '@tabler/icons-react';
 import { SesionDetalle } from '../../types/estadisticas';
+import EstadoBadge from '../atoms/EstadoBadge';
+import TablaEjercicios from '../atoms/TablaEjercicios';
+import EstadoVacioEjercicios from '../atoms/EstadoVacioEjercicios';
+import BotonCerrar from '../atoms/BotonCerrar';
 
 interface ModalDetallesSesionProps {
   opened: boolean;
@@ -56,13 +57,7 @@ export const ModalDetallesSesion: React.FC<ModalDetallesSesionProps> = ({
                 </Text>
               </div>
             </Group>
-            <Badge 
-              color={sesion.completada ? 'green' : 'red'}
-              variant="light"
-              size="lg"
-            >
-              {sesion.completada ? 'Completada' : 'Pendiente'}
-            </Badge>
+            <EstadoBadge completado={sesion.completada} size="lg" />
           </Group>
         </Paper>
 
@@ -79,60 +74,14 @@ export const ModalDetallesSesion: React.FC<ModalDetallesSesionProps> = ({
           
           {sesion.ejercicios.length > 0 ? (
             <ScrollArea h={400}>
-              <Table>
-                <Table.Thead>
-                  <Table.Tr>
-                    <Table.Th>Ejercicio</Table.Th>
-                    <Table.Th>Series</Table.Th>
-                    <Table.Th>Repeticiones</Table.Th>
-                    <Table.Th>Peso</Table.Th>
-                    <Table.Th>Descanso</Table.Th>
-                  </Table.Tr>
-                </Table.Thead>
-                <Table.Tbody>
-                  {sesion.ejercicios.map((ejercicio) => (
-                    <Table.Tr key={ejercicio.id}>
-                      <Table.Td>
-                        <Text fw={500}>{ejercicio.nombre}</Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size="sm">{ejercicio.series}</Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size="sm">{ejercicio.repeticiones}</Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size="sm">
-                          {ejercicio.peso > 0 ? `${ejercicio.peso}kg` : 'Sin peso'}
-                        </Text>
-                      </Table.Td>
-                      <Table.Td>
-                        <Text size="sm">{ejercicio.tiempoDescanso}s</Text>
-                      </Table.Td>
-                    </Table.Tr>
-                  ))}
-                </Table.Tbody>
-              </Table>
+              <TablaEjercicios ejercicios={sesion.ejercicios} />
             </ScrollArea>
           ) : (
-            <Paper p="xl" withBorder>
-              <Group justify="center">
-                <ThemeIcon size="xl" radius="md" color="gray" variant="light">
-                  <IconBarbell size={32} />
-                </ThemeIcon>
-              </Group>
-              <Text size="lg" ta="center" c="dimmed" mt="md">
-                No hay ejercicios en esta sesión
-              </Text>
-            </Paper>
+            <EstadoVacioEjercicios />
           )}
         </Paper>
 
-        <Group justify="flex-end" mt="md">
-          <Button variant="light" onClick={onClose}>
-            Cerrar
-          </Button>
-        </Group>
+        <BotonCerrar onClose={onClose} />
       </Stack>
     </Modal>
   );
