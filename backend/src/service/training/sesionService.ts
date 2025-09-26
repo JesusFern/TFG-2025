@@ -121,7 +121,7 @@ export async function crearSesionService({
     }
   }
 
-  // PRIMERO: Validar que no hay ejercicios duplicados en la sesión
+  // Validar que no hay ejercicios duplicados en la sesión
   const todosEjerciciosIds = ejercicios.map(e => e.ejercicio);
   const ejerciciosUnicos = new Set(todosEjerciciosIds);
   if (todosEjerciciosIds.length !== ejerciciosUnicos.size) {
@@ -130,17 +130,17 @@ export async function crearSesionService({
     throw new Error(`No se puede agregar el mismo ejercicio múltiples veces. Ejercicios duplicados: ${nombresDuplicados.join(', ')}`);
   }
 
-  // SEGUNDO: Validar que no hay ejercicios duplicados en el mismo orden
+  // Validar que no hay ejercicios duplicados en el mismo orden
   const ordenes = ejercicios.map(e => e.orden);
   const ordenesUnicos = new Set(ordenes);
   if (ordenes.length !== ordenesUnicos.size) {
     throw new Error('No puede haber ejercicios con el mismo orden');
   }
 
-  // TERCERO: Separar ejercicios de la BD de ejercicios de wger
+  // Separar ejercicios de la BD de ejercicios de wger
   const ejerciciosBD = todosEjerciciosIds.filter(id => !id.startsWith('wger_'));
   
-  // CUARTO: Validar que todos los ejercicios de la BD existen
+  // Validar que todos los ejercicios de la BD existen
   await validarExistenciaEjercicios(ejerciciosBD);
   
   // Los ejercicios de wger no necesitan validación en la BD
