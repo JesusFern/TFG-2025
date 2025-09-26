@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import {
   Select,
-  NumberInput,
-  Switch,
   Stack,
   Group,
-  Button,
   Text,
   Divider,
   Card,
   Badge,
-  Grid,
   Alert,
   Tabs,
   TextInput,
@@ -25,6 +21,7 @@ import type { WgerExercise } from '../../types/wger';
 import { OPCIONES_PROGRESION_DEFAULT } from '../../constants/training';
 import { wgerService } from '../../services/wgerService';
 import { trainingService } from '../../services/trainingService';
+import ConfiguracionEjercicioForm from './ConfiguracionEjercicioForm';
 
 interface SeleccionEjercicioConWgerProps {
   ejerciciosExistentes: Ejercicio[];
@@ -387,103 +384,27 @@ const SeleccionEjercicioConWger: React.FC<SeleccionEjercicioConWgerProps> = ({
         </Alert>
       )}
 
-      <Grid>
-        <Grid.Col span={6}>
-          <NumberInput
-            label="Series"
-            value={series}
-            onChange={(value) => setSeries(Number(value) || 3)}
-            min={1}
-            max={20}
-          />
-        </Grid.Col>
-        <Grid.Col span={6}>
-          <NumberInput
-            label="Repeticiones"
-            value={repeticiones}
-            onChange={(value) => setRepeticiones(Number(value) || 10)}
-            min={1}
-            max={100}
-          />
-        </Grid.Col>
-        <Grid.Col span={6}>
-          <NumberInput
-            label="Peso (kg)"
-            value={peso}
-            onChange={(value) => setPeso(Number(value) || undefined)}
-            min={0}
-            decimalScale={1}
-            placeholder={pesoEsObligatorio ? "Requerido" : "Opcional"}
-            required={pesoEsObligatorio}
-            description={pesoEsObligatorio ? 
-              `Este ejercicio requiere especificar el peso (${getEquipamiento(ejercicioSeleccionadoData || null)})` : 
-              undefined
-            }
-          />
-        </Grid.Col>
-        <Grid.Col span={6}>
-          <NumberInput
-            label="Descanso (seg)"
-            value={tiempoDescanso}
-            onChange={(value) => setTiempoDescanso(Number(value) || 60)}
-            min={0}
-            max={600}
-          />
-        </Grid.Col>
-        <Grid.Col span={12}>
-          <Select
-            label="Nivel de Intensidad"
-            data={[
-              { value: 'Baja', label: 'Baja' },
-              { value: 'Media', label: 'Media' },
-              { value: 'Alta', label: 'Alta' }
-            ]}
-            value={nivelIntensidad}
-            onChange={(value) => setNivelIntensidad(value || 'Media')}
-            styles={{
-              dropdown: {
-                zIndex: 2000
-              }
-            }}
-          />
-        </Grid.Col>
-      </Grid>
-
-      <Divider label="Opciones de progresión" labelPosition="center" />
-
-      <Stack gap="xs">
-        <Switch
-          label="Aumentar peso progresivamente"
-          checked={opcionesProgresion.aumentarPeso}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-            handleProgresionChange('aumentarPeso', e.target.checked)
-          }
-        />
-        <Switch
-          label="Aumentar repeticiones"
-          checked={opcionesProgresion.masRepeticiones}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-            handleProgresionChange('masRepeticiones', e.target.checked)
-          }
-        />
-        <Switch
-          label="Mayor intensidad"
-          checked={opcionesProgresion.mayorIntensidad}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => 
-            handleProgresionChange('mayorIntensidad', e.target.checked)
-          }
-        />
-      </Stack>
-
-      <Group justify="flex-end" mt="md">
-        <Button
-          color="nutroos-green"
-          onClick={handleSeleccionarEjercicio}
-          disabled={!botonHabilitado}
-        >
-          Agregar a la Sesión
-        </Button>
-      </Group>
+      <ConfiguracionEjercicioForm
+        series={series}
+        repeticiones={repeticiones}
+        peso={peso}
+        tiempoDescanso={tiempoDescanso}
+        nivelIntensidad={nivelIntensidad}
+        opcionesProgresion={opcionesProgresion}
+        onSeriesChange={setSeries}
+        onRepeticionesChange={setRepeticiones}
+        onPesoChange={setPeso}
+        onTiempoDescansoChange={setTiempoDescanso}
+        onNivelIntensidadChange={setNivelIntensidad}
+        onProgresionChange={handleProgresionChange}
+        pesoEsObligatorio={pesoEsObligatorio}
+        equipamiento={getEquipamiento(ejercicioSeleccionadoData || null)}
+        botonHabilitado={botonHabilitado}
+        onButtonClick={handleSeleccionarEjercicio}
+        buttonText="Agregar a la Sesión"
+        buttonColor="nutroos-green"
+        showButton={true}
+      />
     </Stack>
   );
 };

@@ -3,24 +3,21 @@ import {
   TextInput,
   Textarea,
   Select,
-  NumberInput,
   Switch,
-  Button,
   Stack,
   Text,
   Alert,
-  Group,
   Grid,
   Divider,
-  Checkbox,
   FileInput
 } from '@mantine/core';
-import { IconAlertCircle, IconPlus } from '@tabler/icons-react';
+import { IconAlertCircle } from '@tabler/icons-react';
 import type { Ejercicio, CrearEjercicioDTO } from '../../types/training';
 import type { EjercicioSesion, OpcionesProgresion } from '../../types/trainingCommon';
 import { trainingService } from '../../services/trainingService';
 import { useExerciseOptions, generateSlugFromName } from '../../hooks/useExerciseOptions';
 import { OPCIONES_PROGRESION_DEFAULT } from '../../constants/training';
+import ConfiguracionEjercicioForm from './ConfiguracionEjercicioForm';
 
 interface CrearEjercicioFormProps {
   onEjercicioCreado: (ejercicio: Ejercicio) => void;
@@ -46,7 +43,6 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
     publico: false
   });
   const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [creandoEjercicio, setCreandoEjercicio] = useState(false);
   const [error, setError] = useState<string | null>(null);
   
   // Estados adicionales para la sesión
@@ -58,7 +54,7 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
   const [opcionesProgresion, setOpcionesProgresion] = useState<OpcionesProgresion>(OPCIONES_PROGRESION_DEFAULT);
 
   // Usar el hook para las opciones de los Selects
-  const { gruposMusculares, equipamientos, nivelesDificultad, nivelesIntensidad, tiposEjercicio } = useExerciseOptions();
+  const { gruposMusculares, equipamientos, nivelesDificultad, tiposEjercicio } = useExerciseOptions();
 
   // Función para determinar si el equipamiento requiere peso obligatorio
   const equipamientoRequierePeso = (equipamiento: string): boolean => {
@@ -86,7 +82,6 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
       return;
     }
 
-    setCreandoEjercicio(true);
     setError(null);
 
     try {
@@ -144,9 +139,8 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
       setNivelIntensidad('Media');
       setOpcionesProgresion(OPCIONES_PROGRESION_DEFAULT);
     } catch (error) {
+      console.error('Error al crear ejercicio:', error);
       setError('Error al crear el ejercicio: ' + (error as Error).message);
-    } finally {
-      setCreandoEjercicio(false);
     }
   };
 
@@ -286,101 +280,29 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
         </Alert>
       )}
 
-      <Grid>
-        <Grid.Col span={4}>
-          <NumberInput
-            label="Series"
-            value={series}
-            onChange={(value) => setSeries(Number(value) || 3)}
-            min={1}
-            max={20}
-          />
-        </Grid.Col>
-        <Grid.Col span={4}>
-          <NumberInput
-            label="Repeticiones"
-            value={repeticiones}
-            onChange={(value) => setRepeticiones(Number(value) || 10)}
-            min={1}
-            max={100}
-          />
-        </Grid.Col>
-        <Grid.Col span={4}>
-          <NumberInput
-            label="Descanso (seg)"
-            value={tiempoDescanso}
-            onChange={(value) => setTiempoDescanso(Number(value) || 60)}
-            min={0}
-            max={600}
-          />
-        </Grid.Col>
-        <Grid.Col span={6}>
-          <NumberInput
-            label="Peso (kg)"
-            value={peso}
-            onChange={(value) => setPeso(Number(value) || undefined)}
-            min={0}
-            decimalScale={1}
-            placeholder={pesoEsObligatorio ? "Requerido" : "Opcional"}
-            required={pesoEsObligatorio}
-            description={pesoEsObligatorio ? 
-              `Este ejercicio requiere especificar el peso (${nuevoEjercicio.equipamiento})` : 
-              undefined
-            }
-          />
-        </Grid.Col>
-        <Grid.Col span={6}>
-          <Select
-            label="Nivel de Intensidad"
-            data={nivelesIntensidad}
-            value={nivelIntensidad}
-            onChange={(value) => setNivelIntensidad(value || 'Media')}
-            styles={{
-              dropdown: {
-                zIndex: 2000
-              }
-            }}
-          />
-        </Grid.Col>
-      </Grid>
-
-      <Divider label="Opciones de Progresión" labelPosition="center" />
-
-      <Checkbox
-        label="Aumentar peso"
-        checked={opcionesProgresion.aumentarPeso}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          setOpcionesProgresion(prev => ({ ...prev, aumentarPeso: e.target.checked }));
+      <ConfiguracionEjercicioForm
+        series={series}
+        repeticiones={repeticiones}
+        peso={peso}
+        tiempoDescanso={tiempoDescanso}
+        nivelIntensidad={nivelIntensidad}
+        opcionesProgresion={opcionesProgresion}
+        onSeriesChange={setSeries}
+        onRepeticionesChange={setRepeticiones}
+        onPesoChange={setPeso}
+        onTiempoDescansoChange={setTiempoDescanso}
+        onNivelIntensidadChange={setNivelIntensidad}
+        onProgresionChange={(key, value) => {
+          setOpcionesProgresion(prev => ({ ...prev, [key]: value }));
         }}
+        pesoEsObligatorio={pesoEsObligatorio}
+        equipamiento={nuevoEjercicio.equipamiento}
+        botonHabilitado={!!formularioCompleto}
+        onButtonClick={handleCrearEjercicio}
+        buttonText="Crear y Agregar"
+        buttonColor="nutroos-green"
+        showButton={true}
       />
-      
-      <Checkbox
-        label="Más repeticiones"
-        checked={opcionesProgresion.masRepeticiones}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          setOpcionesProgresion(prev => ({ ...prev, masRepeticiones: e.target.checked }));
-        }}
-      />
-      
-      <Checkbox
-        label="Mayor intensidad"
-        checked={opcionesProgresion.mayorIntensidad}
-        onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
-          setOpcionesProgresion(prev => ({ ...prev, mayorIntensidad: e.target.checked }));
-        }}
-      />
-
-      <Group justify="flex-end" mt="md">
-        <Button 
-          color="nutroos-green" 
-          onClick={handleCrearEjercicio}
-          loading={creandoEjercicio}
-          disabled={!formularioCompleto}
-          leftSection={<IconPlus size={16} />}
-        >
-          Crear y Agregar
-        </Button>
-      </Group>
     </Stack>
   );
 };

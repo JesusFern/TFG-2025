@@ -1,5 +1,72 @@
 import { body, param, query } from 'express-validator';
 
+// Validadores reutilizables para ejercicios
+const validarIdEjercicio = (value: unknown) => {
+  // Permitir ObjectId válido o ID de wger (wger_XXXX)
+  if (typeof value === 'string') {
+    if (value.startsWith('wger_')) {
+      const wgerId = value.replace('wger_', '');
+      if (/^\d+$/.test(wgerId)) {
+        return true;
+      }
+    }
+    // Validar ObjectId
+    if (/^[0-9a-fA-F]{24}$/.test(value)) {
+      return true;
+    }
+  }
+  throw new Error('Cada ejercicio debe tener un ID válido (ObjectId o wger_ID)');
+};
+
+const validarIdEjercicioAlternativo = (value: unknown) => {
+  // Permitir ObjectId válido o ID de wger (wger_XXXX)
+  if (typeof value === 'string') {
+    if (value.startsWith('wger_')) {
+      const wgerId = value.replace('wger_', '');
+      if (/^\d+$/.test(wgerId)) {
+        return true;
+      }
+    }
+    // Validar ObjectId
+    if (/^[0-9a-fA-F]{24}$/.test(value)) {
+      return true;
+    }
+  }
+  throw new Error('Cada ejercicio alternativo debe tener un ID válido (ObjectId o wger_ID)');
+};
+
+// Validadores comunes para ejercicios en sesiones
+const validadoresEjerciciosSesion = [
+  body('ejercicios.*.ejercicio').custom(validarIdEjercicio),
+  body('ejercicios.*.orden').isInt({ min: 1 }).toInt().withMessage('El orden debe ser un número entero positivo'),
+  body('ejercicios.*.series').isInt({ min: 1, max: 20 }).toInt().withMessage('Las series deben ser un número entero entre 1 y 20'),
+  body('ejercicios.*.repeticiones').isInt({ min: 1, max: 100 }).toInt().withMessage('Las repeticiones deben ser un número entero entre 1 y 100'),
+  body('ejercicios.*.peso').optional().isFloat({ min: 0 }).toFloat().withMessage('El peso debe ser un número positivo'),
+  body('ejercicios.*.tiempoDescanso').isInt({ min: 0, max: 600 }).toInt().withMessage('El tiempo de descanso debe ser un número entero entre 0 y 600 segundos'),
+  body('ejercicios.*.nivelIntensidad').isIn(['Baja', 'Media', 'Alta']).withMessage('Nivel de intensidad no válido'),
+  body('ejercicios.*.ejerciciosAlternativos').optional().isArray().withMessage('Los ejercicios alternativos deben ser un array'),
+  body('ejercicios.*.ejerciciosAlternativos.*').optional().custom(validarIdEjercicioAlternativo),
+  body('ejercicios.*.opcionesProgresion.aumentarPeso').optional().isBoolean().toBoolean().withMessage('Aumentar peso debe ser un booleano'),
+  body('ejercicios.*.opcionesProgresion.masRepeticiones').optional().isBoolean().toBoolean().withMessage('Más repeticiones debe ser un booleano'),
+  body('ejercicios.*.opcionesProgresion.mayorIntensidad').optional().isBoolean().toBoolean().withMessage('Mayor intensidad debe ser un booleano')
+];
+
+// Validadores comunes para ejercicios en sesiones (versión opcional para actualización)
+const validadoresEjerciciosSesionOpcional = [
+  body('ejercicios.*.ejercicio').optional().custom(validarIdEjercicio),
+  body('ejercicios.*.orden').optional().isInt({ min: 1 }).toInt().withMessage('El orden debe ser un número entero positivo'),
+  body('ejercicios.*.series').optional().isInt({ min: 1, max: 20 }).toInt().withMessage('Las series deben ser un número entero entre 1 y 20'),
+  body('ejercicios.*.repeticiones').optional().isInt({ min: 1, max: 100 }).toInt().withMessage('Las repeticiones deben ser un número entero entre 1 y 100'),
+  body('ejercicios.*.peso').optional().isFloat({ min: 0 }).toFloat().withMessage('El peso debe ser un número positivo'),
+  body('ejercicios.*.tiempoDescanso').optional().isInt({ min: 0, max: 600 }).toInt().withMessage('El tiempo de descanso debe ser un número entero entre 0 y 600 segundos'),
+  body('ejercicios.*.nivelIntensidad').optional().isIn(['Baja', 'Media', 'Alta']).withMessage('Nivel de intensidad no válido'),
+  body('ejercicios.*.ejerciciosAlternativos').optional().isArray().withMessage('Los ejercicios alternativos deben ser un array'),
+  body('ejercicios.*.ejerciciosAlternativos.*').optional().custom(validarIdEjercicioAlternativo),
+  body('ejercicios.*.opcionesProgresion.aumentarPeso').optional().isBoolean().toBoolean().withMessage('Aumentar peso debe ser un booleano'),
+  body('ejercicios.*.opcionesProgresion.masRepeticiones').optional().isBoolean().toBoolean().withMessage('Más repeticiones debe ser un booleano'),
+  body('ejercicios.*.opcionesProgresion.mayorIntensidad').optional().isBoolean().toBoolean().withMessage('Mayor intensidad debe ser un booleano')
+];
+
 // Validadores para ejercicios
 export const crearEjercicioValidator = [
   body('nombre').isString().trim().isLength({ min: 1, max: 100 }).withMessage('El nombre es obligatorio y debe tener entre 1 y 100 caracteres'),
@@ -73,48 +140,7 @@ export const crearSesionValidator = [
   body('tipoEntrenamiento').isIn(['Fuerza', 'Resistencia', 'Cardio', 'HIIT', 'Movilidad', 'Flexibilidad', 'Potencia', 'Estabilidad']).withMessage('Tipo de entrenamiento no válido'),
   body('duracion').isInt({ min: 1, max: 480 }).toInt().withMessage('La duración debe ser un número entero entre 1 y 480 minutos'),
   body('ejercicios').isArray({ min: 0 }).withMessage('Los ejercicios deben ser un array'),
-  body('ejercicios.*.ejercicio').custom((value) => {
-    // Permitir ObjectId válido o ID de wger (wger_XXXX)
-    if (typeof value === 'string') {
-      if (value.startsWith('wger_')) {
-        const wgerId = value.replace('wger_', '');
-        if (/^\d+$/.test(wgerId)) {
-          return true;
-        }
-      }
-      // Validar ObjectId
-      if (/^[0-9a-fA-F]{24}$/.test(value)) {
-        return true;
-      }
-    }
-    throw new Error('Cada ejercicio debe tener un ID válido (ObjectId o wger_ID)');
-  }),
-  body('ejercicios.*.orden').isInt({ min: 1 }).toInt().withMessage('El orden debe ser un número entero mayor que 0'),
-  body('ejercicios.*.series').isInt({ min: 1, max: 20 }).toInt().withMessage('Las series deben ser un número entero entre 1 y 20'),
-  body('ejercicios.*.repeticiones').isInt({ min: 1, max: 100 }).toInt().withMessage('Las repeticiones deben ser un número entero entre 1 y 100'),
-  body('ejercicios.*.peso').optional().isFloat({ min: 0 }).toFloat().withMessage('El peso debe ser un número positivo'),
-  body('ejercicios.*.tiempoDescanso').isInt({ min: 0, max: 600 }).toInt().withMessage('El tiempo de descanso debe ser un número entero entre 0 y 600 segundos'),
-  body('ejercicios.*.nivelIntensidad').isIn(['Baja', 'Media', 'Alta']).withMessage('Nivel de intensidad no válido'),
-  body('ejercicios.*.ejerciciosAlternativos').optional().isArray().withMessage('Los ejercicios alternativos deben ser un array'),
-  body('ejercicios.*.ejerciciosAlternativos.*').optional().custom((value) => {
-    // Permitir ObjectId válido o ID de wger (wger_XXXX)
-    if (typeof value === 'string') {
-      if (value.startsWith('wger_')) {
-        const wgerId = value.replace('wger_', '');
-        if (/^\d+$/.test(wgerId)) {
-          return true;
-        }
-      }
-      // Validar ObjectId
-      if (/^[0-9a-fA-F]{24}$/.test(value)) {
-        return true;
-      }
-    }
-    throw new Error('Cada ejercicio alternativo debe tener un ID válido (ObjectId o wger_ID)');
-  }),
-  body('ejercicios.*.opcionesProgresion.aumentarPeso').optional().isBoolean().toBoolean().withMessage('Aumentar peso debe ser un booleano'),
-  body('ejercicios.*.opcionesProgresion.masRepeticiones').optional().isBoolean().toBoolean().withMessage('Más repeticiones debe ser un booleano'),
-  body('ejercicios.*.opcionesProgresion.mayorIntensidad').optional().isBoolean().toBoolean().withMessage('Mayor intensidad debe ser un booleano')
+  ...validadoresEjerciciosSesion
 ];
 
 export const actualizarSesionValidator = [
@@ -124,48 +150,7 @@ export const actualizarSesionValidator = [
   body('tipoEntrenamiento').optional().isIn(['Fuerza', 'Resistencia', 'Cardio', 'HIIT', 'Movilidad', 'Flexibilidad', 'Potencia', 'Estabilidad']).withMessage('Tipo de entrenamiento no válido'),
   body('duracion').optional().isInt({ min: 1, max: 480 }).toInt().withMessage('La duración debe ser un número entero entre 1 y 480 minutos'),
   body('ejercicios').optional().isArray({ min: 0 }).withMessage('Los ejercicios deben ser un array'),
-  body('ejercicios.*.ejercicio').optional().custom((value) => {
-    // Permitir ObjectId válido o ID de wger (wger_XXXX)
-    if (typeof value === 'string') {
-      if (value.startsWith('wger_')) {
-        const wgerId = value.replace('wger_', '');
-        if (/^\d+$/.test(wgerId)) {
-          return true;
-        }
-      }
-      // Validar ObjectId
-      if (/^[0-9a-fA-F]{24}$/.test(value)) {
-        return true;
-      }
-    }
-    throw new Error('Cada ejercicio debe tener un ID válido (ObjectId o wger_ID)');
-  }),
-  body('ejercicios.*.orden').optional().isInt({ min: 1 }).toInt().withMessage('El orden debe ser un número entero mayor que 0'),
-  body('ejercicios.*.series').optional().isInt({ min: 1, max: 20 }).toInt().withMessage('Las series deben ser un número entero entre 1 y 20'),
-  body('ejercicios.*.repeticiones').optional().isInt({ min: 1, max: 100 }).toInt().withMessage('Las repeticiones deben ser un número entero entre 1 y 100'),
-  body('ejercicios.*.peso').optional().isFloat({ min: 0 }).toFloat().withMessage('El peso debe ser un número positivo'),
-  body('ejercicios.*.tiempoDescanso').optional().isInt({ min: 0, max: 600 }).toInt().withMessage('El tiempo de descanso debe ser un número entero entre 0 y 600 segundos'),
-  body('ejercicios.*.nivelIntensidad').optional().isIn(['Baja', 'Media', 'Alta']).withMessage('Nivel de intensidad no válido'),
-  body('ejercicios.*.ejerciciosAlternativos').optional().isArray().withMessage('Los ejercicios alternativos deben ser un array'),
-  body('ejercicios.*.ejerciciosAlternativos.*').optional().custom((value) => {
-    // Permitir ObjectId válido o ID de wger (wger_XXXX)
-    if (typeof value === 'string') {
-      if (value.startsWith('wger_')) {
-        const wgerId = value.replace('wger_', '');
-        if (/^\d+$/.test(wgerId)) {
-          return true;
-        }
-      }
-      // Validar ObjectId
-      if (/^[0-9a-fA-F]{24}$/.test(value)) {
-        return true;
-      }
-    }
-    throw new Error('Cada ejercicio alternativo debe tener un ID válido (ObjectId o wger_ID)');
-  }),
-  body('ejercicios.*.opcionesProgresion.aumentarPeso').optional().isBoolean().toBoolean().withMessage('Aumentar peso debe ser un booleano'),
-  body('ejercicios.*.opcionesProgresion.masRepeticiones').optional().isBoolean().toBoolean().withMessage('Más repeticiones debe ser un booleano'),
-  body('ejercicios.*.opcionesProgresion.mayorIntensidad').optional().isBoolean().toBoolean().withMessage('Mayor intensidad debe ser un booleano'),
+  ...validadoresEjerciciosSesionOpcional,
   body('notas').optional().isString().trim().isLength({ max: 1000 }).withMessage('Las notas deben tener máximo 1000 caracteres')
 ];
 

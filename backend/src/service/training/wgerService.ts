@@ -149,9 +149,10 @@ function normalizeText(text: string): string {
 function cleanHtmlDescription(html: string): string {
   if (!html) return '';
   
-  // Remover tags HTML básicos
+  // Remover tags HTML básicos de forma segura
+  // Usar una regex más específica para evitar backtracking catastrófico
   const cleaned = html
-    .replace(/<[^>]*>/g, '') // Remove all HTML tags
+    .replace(/<[^<>]*>/g, '') // Remove all HTML tags (más específico)
     .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
     .replace(/&amp;/g, '&') // Replace &amp; with &
     .replace(/&lt;/g, '<') // Replace &lt; with <
