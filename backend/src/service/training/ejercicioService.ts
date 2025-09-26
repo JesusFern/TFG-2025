@@ -238,6 +238,11 @@ export async function crearEjercicioDesdeWgerService(
   }
 
   // Verificar si ya existe un ejercicio de wger con este ID (usando datos sanitizados)
+  // Validación adicional para asegurar que sanitizedWgerId es seguro
+  if (!Number.isInteger(sanitizedWgerId) || sanitizedWgerId < 1 || sanitizedWgerId > 999999) {
+    throw new Error('ID de ejercicio wger sanitizado inválido');
+  }
+  
   const ejercicioExistente = await Ejercicio.findOne({ 
     wgerId: sanitizedWgerId,
     esWger: true,
