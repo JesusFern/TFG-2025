@@ -3,6 +3,64 @@ import PlanEntrenamiento from '../../models/training/planEntrenamiento';
 import User from '../../models/users/user';
 import Ejercicio from '../../models/training/ejercicio';
 
+// Función auxiliar para obtener nombres de ejercicios duplicados
+async function obtenerNombresEjerciciosDuplicados(idsDuplicados: string[]): Promise<string[]> {
+  const idsDuplicadosUnicos = [...new Set(idsDuplicados)];
+  
+  // Obtener nombres de ejercicios duplicados
+  const ejerciciosBDDuplicados = idsDuplicadosUnicos.filter(id => !id.startsWith('wger_'));
+  let nombresDuplicados: string[] = [];
+  
+  if (ejerciciosBDDuplicados.length > 0) {
+    const ejerciciosEncontrados = await Ejercicio.find({ 
+      _id: { $in: ejerciciosBDDuplicados },
+      activo: true 
+    });
+    nombresDuplicados = ejerciciosEncontrados.map(e => e.nombre);
+  }
+  
+  // Para ejercicios de wger, usar el ID como fallback
+  const ejerciciosWgerDuplicados = idsDuplicadosUnicos.filter(id => id.startsWith('wger_'));
+  const nombresWger = ejerciciosWgerDuplicados.map(id => `Ejercicio wger (${id})`);
+  
+  return [...nombresDuplicados, ...nombresWger];
+}
+
+// Función auxiliar para validar existencia de ejercicios con reintentos
+async function validarExistenciaEjercicios(ejerciciosBD: string[]): Promise<void> {
+  if (ejerciciosBD.length === 0) return;
+  
+  // Buscar ejercicios existentes con un pequeño retraso para ejercicios recién creados
+  let ejerciciosExistentes = await Ejercicio.find({ 
+    _id: { $in: ejerciciosBD },
+    activo: true 
+  });
+  
+  // Si no se encuentran todos los ejercicios, esperar un poco y volver a intentar
+  if (ejerciciosExistentes.length !== ejerciciosBD.length) {
+    await new Promise(resolve => setTimeout(resolve, 200));
+    ejerciciosExistentes = await Ejercicio.find({ 
+      _id: { $in: ejerciciosBD },
+      activo: true 
+    });
+    
+    // Si aún no se encuentran, intentar una vez más con más tiempo
+    if (ejerciciosExistentes.length !== ejerciciosBD.length) {
+      await new Promise(resolve => setTimeout(resolve, 500));
+      ejerciciosExistentes = await Ejercicio.find({ 
+        _id: { $in: ejerciciosBD },
+        activo: true 
+      });
+      
+      if (ejerciciosExistentes.length !== ejerciciosBD.length) {
+        const ejerciciosEncontrados = ejerciciosExistentes.map(e => e._id.toString());
+        const ejerciciosNoEncontrados = ejerciciosBD.filter(id => !ejerciciosEncontrados.includes(id));
+        throw new Error(`Los siguientes ejercicios no existen o no están activos: ${ejerciciosNoEncontrados.join(', ')}`);
+      }
+    }
+  }
+}
+
 
 export async function crearSesionService({
   entrenadorId,
@@ -68,26 +126,8 @@ export async function crearSesionService({
   const ejerciciosUnicos = new Set(todosEjerciciosIds);
   if (todosEjerciciosIds.length !== ejerciciosUnicos.size) {
     const duplicados = todosEjerciciosIds.filter((id, index) => todosEjerciciosIds.indexOf(id) !== index);
-    const idsDuplicadosUnicos = [...new Set(duplicados)];
-    
-    // Obtener nombres de ejercicios duplicados
-    const ejerciciosBDDuplicados = idsDuplicadosUnicos.filter(id => !id.startsWith('wger_'));
-    let nombresDuplicados: string[] = [];
-    
-    if (ejerciciosBDDuplicados.length > 0) {
-      const ejerciciosEncontrados = await Ejercicio.find({ 
-        _id: { $in: ejerciciosBDDuplicados },
-        activo: true 
-      });
-      nombresDuplicados = ejerciciosEncontrados.map(e => e.nombre);
-    }
-    
-    // Para ejercicios de wger, usar el ID como fallback
-    const ejerciciosWgerDuplicados = idsDuplicadosUnicos.filter(id => id.startsWith('wger_'));
-    const nombresWger = ejerciciosWgerDuplicados.map(id => `Ejercicio wger (${id})`);
-    
-    const todosNombres = [...nombresDuplicados, ...nombresWger];
-    throw new Error(`No se puede agregar el mismo ejercicio múltiples veces. Ejercicios duplicados: ${todosNombres.join(', ')}`);
+    const nombresDuplicados = await obtenerNombresEjerciciosDuplicados(duplicados);
+    throw new Error(`No se puede agregar el mismo ejercicio múltiples veces. Ejercicios duplicados: ${nombresDuplicados.join(', ')}`);
   }
 
   // SEGUNDO: Validar que no hay ejercicios duplicados en el mismo orden
@@ -101,36 +141,7 @@ export async function crearSesionService({
   const ejerciciosBD = todosEjerciciosIds.filter(id => !id.startsWith('wger_'));
   
   // CUARTO: Validar que todos los ejercicios de la BD existen
-  if (ejerciciosBD.length > 0) {
-    let ejerciciosExistentes = await Ejercicio.find({ 
-      _id: { $in: ejerciciosBD },
-      activo: true 
-    });
-    
-    // Si no se encuentran todos los ejercicios, esperar un poco y volver a intentar
-    if (ejerciciosExistentes.length !== ejerciciosBD.length) {
-      await new Promise(resolve => setTimeout(resolve, 200));
-      ejerciciosExistentes = await Ejercicio.find({ 
-        _id: { $in: ejerciciosBD },
-        activo: true 
-      });
-      
-      // Si aún no se encuentran, intentar una vez más con más tiempo
-      if (ejerciciosExistentes.length !== ejerciciosBD.length) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-        ejerciciosExistentes = await Ejercicio.find({ 
-          _id: { $in: ejerciciosBD },
-          activo: true 
-        });
-        
-        if (ejerciciosExistentes.length !== ejerciciosBD.length) {
-          const ejerciciosEncontrados = ejerciciosExistentes.map(e => e._id.toString());
-          const ejerciciosNoEncontrados = ejerciciosBD.filter(id => !ejerciciosEncontrados.includes(id));
-          throw new Error(`Los siguientes ejercicios no existen o no están activos: ${ejerciciosNoEncontrados.join(', ')}`);
-        }
-      }
-    }
-  }
+  await validarExistenciaEjercicios(ejerciciosBD);
   
   // Los ejercicios de wger no necesitan validación en la BD
 
@@ -264,70 +275,22 @@ export async function actualizarSesionService(
     const ejerciciosUnicos = new Set(todosEjerciciosIdsActualizacion);
     if (todosEjerciciosIdsActualizacion.length !== ejerciciosUnicos.size) {
       const duplicados = todosEjerciciosIdsActualizacion.filter((id, index) => todosEjerciciosIdsActualizacion.indexOf(id) !== index);
-      const idsDuplicadosUnicos = [...new Set(duplicados)];
-      
-      // Obtener nombres de ejercicios duplicados
-      const ejerciciosBDDuplicados = idsDuplicadosUnicos.filter(id => !id.startsWith('wger_'));
-      let nombresDuplicados: string[] = [];
-      
-      if (ejerciciosBDDuplicados.length > 0) {
-        const ejerciciosEncontrados = await Ejercicio.find({ 
-          _id: { $in: ejerciciosBDDuplicados },
-          activo: true 
-        });
-        nombresDuplicados = ejerciciosEncontrados.map(e => e.nombre);
-      }
-      
-      // Para ejercicios de wger, usar el ID como fallback
-      const ejerciciosWgerDuplicados = idsDuplicadosUnicos.filter(id => id.startsWith('wger_'));
-      const nombresWger = ejerciciosWgerDuplicados.map(id => `Ejercicio wger (${id})`);
-      
-      const todosNombres = [...nombresDuplicados, ...nombresWger];
-      throw new Error(`No se puede agregar el mismo ejercicio múltiples veces. Ejercicios duplicados: ${todosNombres.join(', ')}`);
+      const nombresDuplicados = await obtenerNombresEjerciciosDuplicados(duplicados);
+      throw new Error(`No se puede agregar el mismo ejercicio múltiples veces. Ejercicios duplicados: ${nombresDuplicados.join(', ')}`);
     }
 
-    // SEGUNDO: Validar que no hay ejercicios duplicados en el mismo orden
+    // Validar que no hay ejercicios duplicados en el mismo orden
     const ordenes = datosActualizacion.ejercicios.map(e => e.orden);
     const ordenesUnicos = new Set(ordenes);
     if (ordenes.length !== ordenesUnicos.size) {
       throw new Error('No puede haber ejercicios con el mismo orden');
     }
     
-    // TERCERO: Separar ejercicios de la BD de ejercicios de wger
+    // Separar ejercicios de la BD de ejercicios de wger
     const ejerciciosBD = todosEjerciciosIdsActualizacion.filter(id => !id.startsWith('wger_'));
     
-    // CUARTO: Validar que todos los ejercicios de la BD existen
-    if (ejerciciosBD.length > 0) {
-      // Buscar ejercicios existentes con un pequeño retraso para ejercicios recién creados
-      let ejerciciosExistentes = await Ejercicio.find({ 
-        _id: { $in: ejerciciosBD },
-        activo: true 
-      });
-      
-      // Si no se encuentran todos los ejercicios, esperar un poco y volver a intentar
-      if (ejerciciosExistentes.length !== ejerciciosBD.length) {
-        await new Promise(resolve => setTimeout(resolve, 200));
-        ejerciciosExistentes = await Ejercicio.find({ 
-          _id: { $in: ejerciciosBD },
-          activo: true 
-        });
-        
-        // Si aún no se encuentran, intentar una vez más con más tiempo
-        if (ejerciciosExistentes.length !== ejerciciosBD.length) {
-          await new Promise(resolve => setTimeout(resolve, 500));
-          ejerciciosExistentes = await Ejercicio.find({ 
-            _id: { $in: ejerciciosBD },
-            activo: true 
-          });
-          
-          if (ejerciciosExistentes.length !== ejerciciosBD.length) {
-            const ejerciciosEncontrados = ejerciciosExistentes.map(e => e._id.toString());
-            const ejerciciosNoEncontrados = ejerciciosBD.filter(id => !ejerciciosEncontrados.includes(id));
-            throw new Error(`Los siguientes ejercicios no existen o no están activos: ${ejerciciosNoEncontrados.join(', ')}`);
-          }
-        }
-      }
-    }
+    // Validar que todos los ejercicios de la BD existen
+    await validarExistenciaEjercicios(ejerciciosBD);
     
     // Los ejercicios de wger no necesitan validación en la BD
   }

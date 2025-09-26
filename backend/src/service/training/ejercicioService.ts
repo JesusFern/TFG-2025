@@ -221,6 +221,11 @@ export async function crearEjercicioDesdeWgerService(
     throw new Error('ID de creador no es un ObjectId válido');
   }
 
+  // Validar que el wgerId sea un número entero válido y dentro de un rango razonable
+  if (!Number.isInteger(wgerExercise.id) || wgerExercise.id < 1 || wgerExercise.id > 999999) {
+    throw new Error('ID de ejercicio wger debe ser un número entero válido entre 1 y 999999');
+  }
+
   // Sanitizar datos
   const sanitizedWgerId = Math.floor(wgerExercise.id); // Asegurar que sea un entero
   const sanitizedCreadorId = creadorId.trim();
