@@ -16,6 +16,7 @@ import videoRoutes from './routes/video';
 import citasRoutes from './routes/citas';
 import alimentosHibridoRoutes from './routes/alimentos/alimentosHibridoRoutes';
 import ingredientesRoutes from './routes/alimentos/ingredientesRoutes';
+import wgerRoutes from './routes/training/wgerRoutes';
 import { SocketServer } from './socket/socketServer';
 
 dotenv.config();
@@ -62,6 +63,7 @@ app.use('/api', videoRoutes);
 app.use('/api', citasRoutes);
 app.use('/api/alimentos', alimentosHibridoRoutes);
 app.use('/api/ingredientes', ingredientesRoutes);
+app.use('/api/wger', wgerRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("API corriendo...");

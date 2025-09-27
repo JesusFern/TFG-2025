@@ -185,3 +185,133 @@ export async function eliminarEjercicioService(ejercicioId: string, creadorId: s
 
   return { message: 'Ejercicio eliminado correctamente' };
 }
+
+export async function crearEjercicioDesdeWgerService(
+  wgerExercise: {
+    id: number;
+    name: string;
+    description: string;
+    category: string;
+    muscles: string[];
+    equipment: string[];
+    videoUrl?: string;
+  },
+  creadorId: string,
+  tipoEntrenamiento: string
+) {
+  // Validar y sanitizar datos de entrada
+  if (!wgerExercise || typeof wgerExercise.id !== 'number' || wgerExercise.id <= 0) {
+    throw new Error('ID de ejercicio wger inválido');
+  }
+  
+  if (!wgerExercise.name || typeof wgerExercise.name !== 'string' || wgerExercise.name.trim().length === 0) {
+    throw new Error('Nombre de ejercicio wger inválido');
+  }
+  
+  if (!creadorId || typeof creadorId !== 'string' || creadorId.trim().length === 0) {
+    throw new Error('ID de creador inválido');
+  }
+  
+  if (!tipoEntrenamiento || typeof tipoEntrenamiento !== 'string' || tipoEntrenamiento.trim().length === 0) {
+    throw new Error('Tipo de entrenamiento inválido');
+  }
+
+  // Validar que el creadorId sea un ObjectId válido
+  if (!/^[0-9a-fA-F]{24}$/.test(creadorId.trim())) {
+    throw new Error('ID de creador no es un ObjectId válido');
+  }
+
+  // Validar que el wgerId sea un número entero válido y dentro de un rango razonable
+  if (!Number.isInteger(wgerExercise.id) || wgerExercise.id < 1 || wgerExercise.id > 999999) {
+    throw new Error('ID de ejercicio wger debe ser un número entero válido entre 1 y 999999');
+  }
+
+  // Sanitizar datos
+  const sanitizedWgerId = Math.floor(wgerExercise.id); // Asegurar que sea un entero
+  const sanitizedCreadorId = creadorId.trim();
+  const sanitizedTipoEntrenamiento = tipoEntrenamiento.trim();
+
+  // Verificar que el creador existe y es un worker
+  const creadorUser = await User.findById(sanitizedCreadorId);
+  if (!creadorUser || creadorUser.role !== 'worker') {
+    throw new Error('El creador debe ser un usuario con rol worker');
+  }
+
+  // Verificar si ya existe un ejercicio de wger con este ID (usando datos sanitizados)
+  // Validación adicional para asegurar que sanitizedWgerId es seguro
+  if (!Number.isInteger(sanitizedWgerId) || sanitizedWgerId < 1 || sanitizedWgerId > 999999) {
+    throw new Error('ID de ejercicio wger sanitizado inválido');
+  }
+  
+  const ejercicioExistente = await Ejercicio.findOne()
+    .where('wgerId').equals(sanitizedWgerId)
+    .where('esWger').equals(true)
+    .where('activo').equals(true)
+    .setOptions({ sanitizeFilter: true });
+
+  if (ejercicioExistente) {
+    return ejercicioExistente;
+  }
+
+  // Crear slug único (usando datos sanitizados)
+  const sanitizedName = wgerExercise.name.trim();
+  const baseSlug = sanitizedName
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .trim();
+
+  let slug = baseSlug;
+  let counter = 1;
+  while (await Ejercicio.findOne({ slug, activo: true })) {
+    slug = `${baseSlug}-${counter}`;
+    counter++;
+  }
+
+  // Mapear categoría de wger a grupo muscular del sistema
+  const mapeoGrupoMuscular: Record<string, string> = {
+    'Abs': 'Core',
+    'Arms': 'Brazos',
+    'Back': 'Espalda',
+    'Calves': 'Pantorrillas',
+    'Cardio': 'Piernas',
+    'Chest': 'Pecho',
+    'Legs': 'Piernas',
+    'Shoulders': 'Hombros'
+  };
+
+  const grupoMuscular = mapeoGrupoMuscular[wgerExercise.category] || 'Core';
+
+  // Mapear nivel de dificultad (por defecto Intermedio para ejercicios de wger)
+  const nivelDificultad = 'Intermedio';
+
+  // Sanitizar datos adicionales
+  const sanitizedDescription = wgerExercise.description ? wgerExercise.description.trim() : '';
+  const sanitizedEquipment = Array.isArray(wgerExercise.equipment) && wgerExercise.equipment.length > 0 
+    ? wgerExercise.equipment[0].trim() 
+    : 'Ninguno';
+  const sanitizedVideoUrl = wgerExercise.videoUrl ? wgerExercise.videoUrl.trim() : undefined;
+
+  const ejercicio = new Ejercicio({
+    nombre: sanitizedName,
+    slug,
+    descripcion: sanitizedDescription,
+    grupoMuscular,
+    equipamiento: sanitizedEquipment,
+    nivelDificultad,
+    tipoEjercicio: sanitizedTipoEntrenamiento,
+    instrucciones: sanitizedDescription,
+    videoDemostrativo: sanitizedVideoUrl,
+    creador: sanitizedCreadorId,
+    arquetipo: false,
+    publico: true,
+    activo: true,
+    esWger: true,
+    wgerId: sanitizedWgerId
+  });
+
+  await ejercicio.save();
+  return ejercicio;
+}

@@ -5,7 +5,8 @@ import {
   obtenerEjercicioPorId,
   obtenerEjercicioPorSlug,
   actualizarEjercicio, 
-  eliminarEjercicio 
+  eliminarEjercicio,
+  crearEjercicioDesdeWger
 } from '../../controllers/training/ejercicioController';
 import { authenticateToken, authorizeWorker } from '../../middlewares/authMiddleware';
 import { 
@@ -23,6 +24,7 @@ const router = Router();
 
 // Rutas para ejercicios
 router.post('/', uploadVideo.single('video'), createUploadErrorHandler('video'), authenticateToken, authorizeWorker, crearEjercicioValidator, validateRequest, crearEjercicio);
+router.post('/wger', authenticateToken, authorizeWorker, crearEjercicioDesdeWger);
 router.get('/', authenticateToken, filtrosEjerciciosValidator, validateRequest, obtenerEjercicios);
 router.get('/slug/:slug', authenticateToken, slugValidator, validateRequest, obtenerEjercicioPorSlug);
 router.get('/:id', authenticateToken, idValidator, validateRequest, obtenerEjercicioPorId);

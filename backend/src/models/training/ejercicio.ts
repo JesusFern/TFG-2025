@@ -29,7 +29,9 @@ const EjercicioSchema = new mongoose.Schema({
   creador: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
   arquetipo: { type: Boolean, default: false }, // true para ejercicios predefinidos del sistema
   publico: { type: Boolean, default: true },
-  activo: { type: Boolean, default: true }
+  activo: { type: Boolean, default: true },
+  esWger: { type: Boolean, default: false }, // true para ejercicios creados desde wger
+  wgerId: { type: Number } // ID original de wger
 }, {
   timestamps: true
 });
