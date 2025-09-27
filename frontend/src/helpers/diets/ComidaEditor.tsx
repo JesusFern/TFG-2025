@@ -38,17 +38,20 @@ interface ComidaEditorProps {
   comida: Comida;
   comidaIndex: number;
   diaIndex: number;
-  onUpdate: (updatedComida: Comida, markAsChanged?: boolean) => void;
+  onUpdate: (updatedComida: Comida) => void;
   dietaId?: string;
   diaCompleto?: DiaDieta; // Para tener acceso a todas las comidas del día
+  onRecalcularCalorias?: () => void;
 }
 
-const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaIndex, onUpdate, dietaId, diaCompleto }) => {
+const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaIndex, onUpdate, dietaId, diaCompleto, onRecalcularCalorias }) => {
+  
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
   const [opened, { toggle }] = useDisclosure(true);
   const [editingPlato, setEditingPlato] = useState<Plato | null>(null);
   const [editingPlatoIndex, setEditingPlatoIndex] = useState<number | null>(null);
+  const [formKey, setFormKey] = useState<number>(Date.now()); // Key para forzar re-montaje del formulario
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
   const [isLoading, setIsLoading] = useState(false);
   const [horaTemporal, setHoraTemporal] = useState(comida.horaEstimada);
@@ -63,6 +66,7 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
     message: '',
     type: 'success'
   });
+
 
   const tiposComida = [
     { index: 0, nombre: 'Desayuno', hora: '08:00' },
@@ -126,6 +130,18 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
     setEditandoHora(false);
   };
 
+  const showNotification = (message: string, type: 'success' | 'error') => {
+    setNotification({
+      show: true,
+      message,
+      type
+    });
+
+    setTimeout(() => {
+      setNotification(prev => ({ ...prev, show: false }));
+    }, 5000);
+  };
+
   const handleUpdateHora = async (hora: string) => {
     try {
       // Actualizar localmente primero
@@ -134,11 +150,10 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
         horaEstimada: hora
       };
       
-      onUpdate(comidaActualizada, false);
+      onUpdate(comidaActualizada);
       
       // Si tenemos dietaId y diaCompleto, guardar en el backend
       if (dietaId && diaCompleto && diaCompleto.comidas) {
-        console.log('Actualizando hora en el backend:', { diaIndex, comidaIndex, hora });
         
         // Crear el array de comidas con la hora actualizada
         const comidasActualizadas = diaCompleto.comidas.map((comidaDelDia: Comida, index: number) => {
@@ -160,8 +175,6 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
         });
         
         showNotification(`Hora actualizada a ${hora}`, 'success');
-      } else {
-        console.log('Actualizando hora solo localmente (sin dietaId o diaCompleto)');
       }
     } catch (error) {
       console.error('Error al actualizar la hora:', error);
@@ -169,80 +182,106 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
     }
   };
 
-  const showNotification = (message: string, type: 'success' | 'error') => {
-    setNotification({
-      show: true,
-      message,
-      type
-    });
-
-    setTimeout(() => {
-      setNotification(prev => ({ ...prev, show: false }));
-    }, 5000);
-  };
-
   const handleSavePlato = async (plato: Plato) => {
     setIsLoading(true);
 
     try {
-      let updatedPlatos;
-      let platoToUpdate: Plato;
+      const updatedPlatos = [...comida.platos];
+      let platoFinal: Plato;
       
       if (editingPlatoIndex !== null) {
-        // Editando un plato existente
-        platoToUpdate = { ...comida.platos[editingPlatoIndex], ...plato };
-        platoToUpdate.orden = editingPlatoIndex + 1;
-        updatedPlatos = [...comida.platos];
-        updatedPlatos[editingPlatoIndex] = platoToUpdate;
+        // Editando un plato existente - USAR DATOS REACTIVOS MÁS RECIENTES
+        platoFinal = {
+          ...comida.platos[editingPlatoIndex], // Datos base originales
+          ...editingPlato, // ✅ Datos reactivos más recientes (con pesos actualizados)
+          ...plato, // Datos del formulario (nombre, etc.)
+          orden: editingPlatoIndex + 1 // Mantener orden
+        };
         
-        if (dietaId && (platoToUpdate._id || platoToUpdate.idPlato)) {
-          console.log('Actualizando plato existente:', platoToUpdate);
-          await actualizarPlatos([platoToUpdate]);
-          showNotification(`Plato "${platoToUpdate.nombre}" actualizado correctamente`, 'success');
+        
+        updatedPlatos[editingPlatoIndex] = platoFinal;
+        
+        
+        // Guardar en backend si hay ID
+        if (dietaId && (platoFinal._id || platoFinal.idPlato)) {
+          const respuestaBackend = await actualizarPlatos([platoFinal]);
+          
+          // IMPORTANTE: Usar los datos devueltos por el backend para asegurar consistencia
+          // respuestaBackend es un array de platos directamente (ver platoService.ts línea 80)
+          if (respuestaBackend && Array.isArray(respuestaBackend) && respuestaBackend[0]) {
+            const platoActualizadoBackend = respuestaBackend[0];
+            
+            // FUERZA LA ACTUALIZACIÓN con los datos del backend
+            platoFinal = { 
+              ...platoFinal, 
+              ...platoActualizadoBackend,
+              // Asegurar que se copien correctamente los ingredientes
+              ingredientesPersonalizados: platoActualizadoBackend.ingredientesPersonalizados || platoFinal.ingredientesPersonalizados
+            };
+            updatedPlatos[editingPlatoIndex] = platoFinal;
+          }
+          
+          showNotification(`Plato "${platoFinal.nombre}" actualizado correctamente`, 'success');
         } else if (dietaId) {
-          console.log('Creando plato nuevo (caso de edición sin ID)');
-          const platoCreado = await crearPlato(dietaId, diaIndex, comidaIndex, platoToUpdate);
-          platoToUpdate = { ...platoToUpdate, _id: platoCreado._id };
-          updatedPlatos[editingPlatoIndex] = platoToUpdate;
-          showNotification(`Plato "${platoToUpdate.nombre}" creado correctamente`, 'success');
-        } else {
-          console.log('Sin dietaId - guardando solo localmente');
-          showNotification(`Plato "${platoToUpdate.nombre}" guardado localmente`, 'success');
+          const platoCreado = await crearPlato(dietaId, diaIndex, comidaIndex, platoFinal);
+          platoFinal = { ...platoFinal, _id: platoCreado._id };
+          updatedPlatos[editingPlatoIndex] = platoFinal;
+          showNotification(`Plato "${platoFinal.nombre}" creado correctamente`, 'success');
         }
       } else {
         // Creando un plato nuevo
-        platoToUpdate = { 
+        platoFinal = { 
           ...plato,
           orden: comida.platos.length + 1
         };
-        updatedPlatos = [...comida.platos, platoToUpdate];
         
         if (dietaId) {
-          console.log('Creando plato nuevo:', platoToUpdate);
-          try {
-            const platoCreado = await crearPlato(dietaId, diaIndex, comidaIndex, platoToUpdate);
-            platoToUpdate = { ...platoToUpdate, _id: platoCreado._id };
-            updatedPlatos[updatedPlatos.length - 1] = platoToUpdate;
-            showNotification(`Plato "${platoToUpdate.nombre}" añadido correctamente`, 'success');
-          } catch (error) {
-            console.error('Error al crear el plato:', error);
-            showNotification('Error al crear el plato. Se guardará localmente.', 'error');
-          }
-        } else {
-          console.log('Sin dietaId - guardando solo localmente');
-          showNotification(`Plato "${platoToUpdate.nombre}" guardado localmente`, 'success');
+          const platoCreado = await crearPlato(dietaId, diaIndex, comidaIndex, platoFinal);
+          platoFinal = { ...platoFinal, _id: platoCreado._id };
+          showNotification(`Plato "${platoFinal.nombre}" añadido correctamente`, 'success');
         }
+        
+        updatedPlatos.push(platoFinal);
       }
       
-      console.log('handleSavePlato en ComidaEditor, pasando markAsChanged: false');
-      onUpdate({
-        ...comida,
-        platos: updatedPlatos
-      }, false);
+      // UNA SOLA ACTUALIZACIÓN con el estado final completo
       
-      setEditingPlato(null);
-      setEditingPlatoIndex(null);
+      // Crear comida completamente nueva para forzar re-render
+      const comidaActualizada = {
+        ...comida,
+        platos: updatedPlatos,
+        // Timestamp para forzar detección de cambios
+        _lastSaved: Date.now(),
+        // Forzar propagación con ID único
+        _forceUpdate: `guardado-${Date.now()}-${Math.random()}`
+      };
+      
+      
+      // Log detallado de CADA PLATO que se está propagando
+      
+        // FORZAR propagación tras guardado exitoso
+        onUpdate(comidaActualizada);
+      
+      // FORZAR actualización del editingPlato con los datos más recientes
+      if (editingPlatoIndex !== null && updatedPlatos[editingPlatoIndex]) {
+        const platoActualizadoLocal = updatedPlatos[editingPlatoIndex];
+        setEditingPlato(platoActualizadoLocal);
+      }
+      
+      // Recalcular calorías inmediatamente
+      if (onRecalcularCalorias) {
+        onRecalcularCalorias();
+      }
+      
+      // Cerrar modal y limpiar estado INMEDIATAMENTE
       closeModal();
+      
+      // Limpiar estado con delay mínimo para evitar renders con datos vacíos
+      setTimeout(() => {
+        setEditingPlato(null);
+        setEditingPlatoIndex(null);
+      }, 0);
+      
     } catch (error) {
       console.error('Error al guardar el plato:', error);
       showNotification(error instanceof Error ? error.message : 'Error al guardar el plato', 'error');
@@ -261,14 +300,12 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
         // Si el plato tiene ID, eliminarlo del backend
         const platoId = platoToDelete._id || platoToDelete.idPlato;
         if (platoId) {
-          console.log('Eliminando plato del backend:', platoId);
           
           await eliminarPlato(platoId);
           showNotification(`Plato "${platoToDelete.nombre}" eliminado correctamente`, 'success');
         }
       } else {
         // Si no tiene ID, solo eliminar localmente
-        console.log('Plato sin ID - eliminando solo localmente');
         showNotification(`Plato "${platoToDelete.nombre}" eliminado localmente`, 'success');
       }
       
@@ -281,11 +318,17 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
         orden: i + 1 
       }));
       
-      console.log('handleDeletePlato en ComidaEditor, pasando markAsChanged: false');
       onUpdate({
         ...comida,
         platos: updatedPlatos
-      }, false);
+      });
+      
+      // Ejecutar recálculo de calorías después de eliminar el plato
+      if (onRecalcularCalorias) {
+        setTimeout(() => {
+          onRecalcularCalorias();
+        }, 100);
+      }
     } catch (error) {
       console.error('Error al eliminar el plato:', error);
       showNotification(error instanceof Error ? error.message : 'Error al eliminar el plato', 'error');
@@ -295,8 +338,10 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
   };
 
   const handleEditPlato = (plato: Plato, index: number) => {
+    
     setEditingPlato(plato);
     setEditingPlatoIndex(index);
+    setFormKey(Date.now()); // Nueva key para forzar re-montaje del formulario
     openModal();
   };
 
@@ -449,7 +494,7 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
                 </Table.Thead>
                 <Table.Tbody>
                   {comida.platos.map((plato, index) => (
-                    <Table.Tr key={index}>
+                    <Table.Tr key={plato._id || `plato-${index}-${plato.nombre || 'unnamed'}`}>
                       <Table.Td style={{ overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         <Group gap="xs" wrap="nowrap">
                           <IconBowl size={16} color="var(--app-accent)" />
@@ -492,7 +537,12 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
             variant="light"
             color="nutroos-green"
             size="sm"
-            onClick={openModal}
+            onClick={() => {
+              setEditingPlato(null);
+              setEditingPlatoIndex(null);
+              setFormKey(Date.now()); // Nueva key para forzar re-montaje del formulario
+              openModal();
+            }}
           >
             Añadir Plato
           </Button>
@@ -501,7 +551,11 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
       
       <Modal 
         opened={modalOpened} 
-        onClose={closeModal}
+        onClose={() => {
+          setEditingPlato(null);
+          setEditingPlatoIndex(null);
+          closeModal();
+        }}
         title={
           <Text fw={600} c="nutroos-green.6">
             {editingPlato ? "Editar Plato" : "Añadir Plato"}
@@ -532,6 +586,7 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
       >
         <Box p="md">
           <PlatoFormConIngredientes 
+            key={`plato-form-${formKey}`} // Key controlada para forzar re-montaje cuando sea necesario
             plato={editingPlato || {
               nombre: '',
               orden: comida.platos.length + 1,
@@ -539,7 +594,42 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
               ingredientesPersonalizados: []
             }}
             onSave={handleSavePlato}
-            onCancel={closeModal}
+            onCancel={() => {
+              setEditingPlato(null);
+              setEditingPlatoIndex(null);
+              closeModal();
+            }}
+            onUpdate={(platoActualizado) => {
+              // Actualizar la vista previa del plato
+              setEditingPlato(platoActualizado);
+              
+              // TAMBIÉN actualizar el plato en la lista real para cambios reactivos inmediatos
+              if (editingPlatoIndex !== null) {
+                const updatedPlatos = [...comida.platos];
+                updatedPlatos[editingPlatoIndex] = {
+                  ...updatedPlatos[editingPlatoIndex],
+                  ...platoActualizado
+                };
+                
+                
+                // Actualizar la comida con el plato modificado
+                const comidaActualizada = {
+                  ...comida,
+                  platos: updatedPlatos,
+                  // Timestamp para forzar re-render
+                  _lastUpdated: Date.now()
+                };
+                
+                onUpdate(comidaActualizada); // Guardar los cambios permanentemente
+                
+                // Recalcular calorías con delay para asegurar propagación
+                if (onRecalcularCalorias) {
+                  setTimeout(() => {
+                    onRecalcularCalorias();
+                  }, 100);
+                }
+              }
+            }}
           />
         </Box>
       </Modal>

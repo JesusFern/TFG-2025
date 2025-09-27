@@ -117,10 +117,10 @@ export const actualizarDiaDieta = async (
     
     const datosFormateados = {
       caloriasTotales: datosDia.caloriasTotales,
-      macronutrientes: datosDia.macronutrientes,
-      micronutrientes: datosDia.micronutrientes,
+      proteinas: datosDia.proteinas,
+      hidratosCarbono: datosDia.hidratosCarbono,
+      grasas: datosDia.grasas,
       numeroComidas: datosDia.numeroComidas,
-      requerimientosHidratacion: datosDia.requerimientosHidratacion,
       cumplimiento: datosDia.cumplimiento,
       comidas: datosDia.comidas ? datosDia.comidas.map(comida => ({
         horaEstimada: comida.horaEstimada,
@@ -209,6 +209,33 @@ export const getMyDiets = async (): Promise<{ dietas: DietaResponse[], count: nu
     return data;
   } catch (error) {
     console.error('Error al obtener mis dietas:', error);
+    throw error;
+  }
+};
+
+export const getMyCreatedDiets = async (): Promise<{ dietas: DietaResponse[], count: number, message: string }> => {
+  try {
+    console.log('🔍 Debug getMyCreatedDiets - Iniciando llamada a /api/diets/my-created-diets');
+    const response = await apiRequest('/api/diets/my-created-diets', {
+      method: 'GET'
+    });
+    
+    console.log('🔍 Debug getMyCreatedDiets - Respuesta del servidor:', {
+      status: response.status,
+      ok: response.ok,
+      statusText: response.statusText
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al obtener mis dietas creadas');
+    }
+    
+    const data = await response.json();
+    console.log('🔍 Debug getMyCreatedDiets - Datos recibidos:', data);
+    return data;
+  } catch (error) {
+    console.error('Error al obtener mis dietas creadas:', error);
     throw error;
   }
 };

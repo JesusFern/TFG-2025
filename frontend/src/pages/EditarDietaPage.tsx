@@ -27,7 +27,8 @@ import { motion } from 'framer-motion';
 import { format, getDay } from 'date-fns';
 import DietaDayEditor from '../helpers/diets/DietaDayEditor';
 import { obtenerDieta, publicarDieta } from '../services/dietService';
-import { Dieta, DiaDieta } from '../types';
+import { obtenerIngredientesPorIds } from '../services/ingredienteService';
+import { Dieta, DiaDieta, Ingrediente } from '../types';
 import { 
   DIAS_SEMANA, 
   convertirDiaSemana, 
@@ -35,6 +36,7 @@ import {
   formatearFecha, 
   crearDatoDia 
 } from '../helpers/diets/DietaHelper';
+import { actualizarNutricionDia } from '../helpers/calculoNutricionalHelper';
 
 // Las utilidades se han movido a DietaHelper.ts
 
@@ -46,6 +48,7 @@ const EditarDietaPage: React.FC = () => {
   const isDark = colorScheme === 'dark';
   
   const [dieta, setDieta] = useState<Dieta | null>(null);
+  const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
   const [activeTab, setActiveTab] = useState<string | null>("0");
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
@@ -76,6 +79,20 @@ const EditarDietaPage: React.FC = () => {
     }
   };
 
+  const recalcularCaloriasDia = (dayIndex: number) => {
+    if (!dieta || !ingredientes.length) return;
+    
+    const diaActualizado = actualizarNutricionDia(dieta.dias[dayIndex], ingredientes);
+    
+    const diasActualizados = [...dieta.dias];
+    diasActualizados[dayIndex] = diaActualizado;
+    
+    setDieta({
+      ...dieta,
+      dias: diasActualizados
+    });
+  };
+
   const daysRange = useMemo(() => {
     if (!dieta || !fechaInicio) return { days: [], totalWeeks: 0 };
     
@@ -100,7 +117,38 @@ const EditarDietaPage: React.FC = () => {
       
       try {
         setLoading(true);
+        
+        // Cargar solo la dieta primero
         const data = await obtenerDieta(dietaId);
+        
+        // Extraer IDs únicos de ingredientes de la dieta
+        const ingredientesIds = new Set<string>();
+        data.dias.forEach(dia => {
+          dia.comidas.forEach(comida => {
+            comida.platos.forEach(plato => {
+              if (plato.ingredientesPersonalizados) {
+                plato.ingredientesPersonalizados.forEach(ing => {
+                  const ingredienteId = typeof ing.ingrediente === 'string' 
+                    ? ing.ingrediente 
+                    : (ing.ingrediente as { _id?: string; id?: string })._id || (ing.ingrediente as { _id?: string; id?: string }).id || '';
+                  if (ingredienteId) {
+                    ingredientesIds.add(ingredienteId);
+                  }
+                });
+              }
+            });
+          });
+        });
+        
+        // Cargar solo los ingredientes necesarios
+        if (ingredientesIds.size > 0) {
+          console.log('Cargando ingredientes por IDs:', Array.from(ingredientesIds));
+          const ingredientesData = await obtenerIngredientesPorIds(Array.from(ingredientesIds));
+          console.log('Ingredientes cargados:', ingredientesData);
+          setIngredientes(ingredientesData);
+        } else {
+          console.log('No se encontraron ingredientes en la dieta');
+        }
         
         if (!data.draftMode) {
           console.log('Dieta publicada. Redirigiendo a vista de solo lectura...');
@@ -113,8 +161,6 @@ const EditarDietaPage: React.FC = () => {
           for (let i = 0; i < data.duracion; i++) {
             diasInicializados.push({
               caloriasTotales: 0,
-              macronutrientes: '',
-              micronutrientes: '',
               numeroComidas: data.comidasDiarias,
               comidas: Array(data.comidasDiarias).fill(null).map(() => ({
                 horaEstimada: '',
@@ -167,23 +213,63 @@ const EditarDietaPage: React.FC = () => {
     }
   }, [daysRange.days, activeTab]);
 
-  const handleUpdateDay = (dayIndex: number, updatedDay: DiaDieta, markAsChanged: boolean = true) => {
+  const handleUpdateDay = async (dayIndex: number, updatedDay: DiaDieta) => {
     if (!dieta) return;
     
-    const updatedDias = [...dieta.dias];
-    updatedDias[dayIndex] = updatedDay;
-    
-    setDieta({
-      ...dieta,
-      dias: updatedDias
+    // Extraer IDs de ingredientes del día actualizado
+    const nuevosIngredientesIds = new Set<string>();
+    updatedDay.comidas.forEach(comida => {
+      comida.platos.forEach(plato => {
+        if (plato.ingredientesPersonalizados) {
+          plato.ingredientesPersonalizados.forEach(ing => {
+            const ingredienteId = typeof ing.ingrediente === 'string' 
+              ? ing.ingrediente 
+              : (ing.ingrediente as { _id?: string; id?: string })._id || (ing.ingrediente as { _id?: string; id?: string }).id || '';
+            if (ingredienteId) {
+              nuevosIngredientesIds.add(ingredienteId);
+            }
+          });
+        }
+      });
     });
     
-    if (markAsChanged) {
-      console.log('Marcando día como con cambios:', { dayIndex, markAsChanged });
-      setDayHasChanges(true);
-    } else {
-      console.log('NO marcando día como con cambios:', { dayIndex, markAsChanged });
+    // Verificar si hay ingredientes nuevos que no están cargados
+    const ingredientesActualesIds = new Set(ingredientes.map(ing => ing.id));
+    const ingredientesFaltantes = Array.from(nuevosIngredientesIds).filter(id => !ingredientesActualesIds.has(id));
+    
+    let ingredientesActualizados = ingredientes;
+    
+    // Cargar ingredientes faltantes si los hay
+    if (ingredientesFaltantes.length > 0) {
+      try {
+        const nuevosIngredientes = await obtenerIngredientesPorIds(ingredientesFaltantes);
+        ingredientesActualizados = [...ingredientes, ...nuevosIngredientes];
+        setIngredientes(ingredientesActualizados);
+      } catch (error) {
+        console.error('❌ Error al cargar ingredientes faltantes:', error);
+      }
     }
+    
+    // Recalcular valores nutricionales con todos los ingredientes disponibles
+    const diaConNutricion = ingredientesActualizados.length > 0 
+      ? actualizarNutricionDia(updatedDay, ingredientesActualizados)
+      : updatedDay;
+    
+    
+    const updatedDias = [...dieta.dias];
+    updatedDias[dayIndex] = diaConNutricion;
+    
+    const dietaActualizada = {
+      ...dieta,
+      dias: updatedDias,
+      // Forzar re-render con timestamp único
+      _lastUpdated: Date.now(),
+      _forceUpdate: `dieta-${Date.now()}-${Math.random()}`
+    };
+    
+    
+    setDieta(dietaActualizada);
+    setDayHasChanges(true);
   };
   
   const handleTabChange = (newTabValue: string | null) => {
@@ -429,14 +515,14 @@ const EditarDietaPage: React.FC = () => {
                 <DietaDayEditor 
                   day={dieta.dias[parseInt(activeTab)]}
                   dayNumber={parseInt(activeTab) + 1}
-                  onUpdate={(updatedDay, markAsChanged = true) => {
-                    console.log('onUpdate en DietaDayEditor llamado con markAsChanged:', markAsChanged);
-                    handleUpdateDay(parseInt(activeTab), updatedDay, markAsChanged);
+                  onUpdate={(updatedDay) => {
+                    handleUpdateDay(parseInt(activeTab), updatedDay);
                   }}
                   comidasDiarias={dieta.comidasDiarias}
                   customTitle={currentDayInfo?.nombreCompleto || `Día ${parseInt(activeTab) + 1}`}
                   dietaId={dietaId}
                   hasChanges={dayHasChanges}
+                  onRecalcularCalorias={() => recalcularCaloriasDia(parseInt(activeTab))}
                   onSaveSuccess={() => {
                     setDayHasChanges(false);
                     setSuccessMessage("Día actualizado correctamente");
@@ -495,17 +581,7 @@ const EditarDietaPage: React.FC = () => {
                       </Text>
                     )}
                     
-                    {dieta.dias[parseInt(activeTab)].macronutrientes && (
-                      <Text size="sm" mt="xs">
-                        <strong>Macronutrientes:</strong> {dieta.dias[parseInt(activeTab)].macronutrientes}
-                      </Text>
-                    )}
                     
-                    {dieta.dias[parseInt(activeTab)].micronutrientes && (
-                      <Text size="sm" mt="xs">
-                        <strong>Micronutrientes:</strong> {dieta.dias[parseInt(activeTab)].micronutrientes}
-                      </Text>
-                    )}
                   </Paper>
                 </Box>
               )}

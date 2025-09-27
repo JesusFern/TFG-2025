@@ -23,7 +23,7 @@ export async function actualizarPlatosService(platos: PlatoUpdate[]) {
     throw new Error('Debes enviar una lista de platos a actualizar');
   }
 
-  const actualizados: Array<unknown> = [];
+  const actualizados: unknown[] = [];
   const diasActualizados = new Set<number>(); // Para rastrear qué días necesitan recálculo
 
   for (const plato of platos) {

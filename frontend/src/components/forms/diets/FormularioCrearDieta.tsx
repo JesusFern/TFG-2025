@@ -37,6 +37,9 @@ import { crearDieta } from '../../../services/dietService';
 import { CrearDietaDTO, DietaResponse } from '../../../types';
 import { useParams } from 'react-router-dom';
 import { getUserById } from '../../../services/userService';
+import { TIPOS_DIETA, TipoDieta } from '../../../constants/dietTypes';
+import { dietTemplateService } from '../../../services/dietTemplateService';
+import { TipoCreacion } from './TipoCreacionDieta';
 
 interface FormularioCrearDietaProps {
   onSuccess: (dietaData: DietaResponse) => void;
@@ -44,6 +47,23 @@ interface FormularioCrearDietaProps {
   clienteId?: string;
   clienteNombre?: string;
   onClienteNombreLoaded?: (nombre: string) => void;
+  tipoCreacion?: TipoCreacion | null;
+  datosCreacion?: {
+    tipoArquetipo?: string;
+    plantillaInfo?: {
+      tipo: string;
+      nombre: string;
+      descripcion: string;
+      caloriasObjetivo: number;
+    };
+    dietaOrigenId?: string;
+    dietaInfo?: {
+      _id: string;
+      nombre: string;
+      descripcion?: string;
+      tipo: string[];
+    };
+  };
 }
 
 const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({ 
@@ -51,7 +71,9 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
   onError, 
   clienteId,
   clienteNombre: initialClienteNombre,
-  onClienteNombreLoaded
+  onClienteNombreLoaded,
+  tipoCreacion,
+  datosCreacion
 }) => {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
@@ -75,16 +97,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [stepError, setStepError] = useState<string | null>(null);
   
-  const tiposDieta = [
-    'Mediterránea',
-    'Vegetariana',
-    'Vegana',
-    'Keto',
-    'Sin gluten',
-    'Baja en carbohidratos',
-    'Alta en proteínas',
-    'Otras'
-  ];
+  const tiposDieta = TIPOS_DIETA;
 
   const generarHorariosComidas = (numComidas: number): string[] => {
     switch (numComidas) {
@@ -196,7 +209,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
   const handleTipoChange = (value: string[]) => {
     setFormData(prev => ({
       ...prev,
-      tipo: value
+      tipo: value as TipoDieta[]
     }));
     setStepError(null);
   };
@@ -215,7 +228,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
         return { isValid: false, error: 'La duración debe ser un número entero mayor que 0' };
       }
 
-      if (!formData.comidasDiarias || formData.comidasDiarias <= 1 || formData.comidasDiarias >= 7) {
+      if (!formData.comidasDiarias || formData.comidasDiarias <= 1 || formData.comidasDiarias > 6) {
         return { isValid: false, error: 'El número de comidas debe ser entre 2 y 6' };
       }
       
@@ -226,6 +239,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
         return { isValid: false, error: 'La fecha de inicio debe ser posterior al día actual' };
       }
     } else if (activeStep === 3) {
+      // Validar horarios para todos los tipos de creación
       if (!formData.horasComidas || !Array.isArray(formData.horasComidas) || formData.horasComidas.length !== formData.comidasDiarias) {
         return { isValid: false, error: `Debe definir ${formData.comidasDiarias} horarios de comida` };
       }
@@ -248,7 +262,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
       }
     }
     return { isValid: true, error: null };
-  }, [activeStep, formData]);
+  }, [activeStep, formData, tipoCreacion]);
   
   const isCurrentStepValid = useCallback(() => {
     return validateCurrentStep().isValid;
@@ -262,7 +276,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
     const validation = validateCurrentStep();
     if (validation.isValid) {
       setStepError(null);
-      setActiveStep((current) => Math.min(current + 1, 3));
+      setActiveStep((current) => Math.min(current + 1, 4));
     } else {
       setStepError(validation.error);
     }
@@ -302,8 +316,8 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
       return 'La duración debe ser un número entero mayor que 0';
     }
     
-    if (!formData.comidasDiarias || formData.comidasDiarias <= 1 || formData.comidasDiarias >= 10) {
-      return 'El número de comidas debe ser entre 2 y 9';
+    if (!formData.comidasDiarias || formData.comidasDiarias <= 1 || formData.comidasDiarias > 6) {
+      return 'El número de comidas debe ser entre 2 y 6';
     }
     
     const today = new Date();
@@ -313,6 +327,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
       return 'La fecha de inicio debe ser posterior al día actual';
     }
     
+    // Validar horarios para todos los tipos de creación
     if (!formData.horasComidas || !Array.isArray(formData.horasComidas) || formData.horasComidas.length !== formData.comidasDiarias) {
       return `Debe definir ${formData.comidasDiarias} horarios de comida`;
     }
@@ -340,7 +355,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log("Enviando formulario completo");
+    console.log("Enviando formulario completo", { tipoCreacion, datosCreacion });
     
     const errorMessage = validateBeforeSubmit();
     if (errorMessage) {
@@ -352,15 +367,78 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
     setIsSubmitting(true);
     
     try {
-      const fechaArr = formData.fechaInicio.split('-');
-      const fechaFormateada = `${fechaArr[2]}-${fechaArr[1]}-${fechaArr[0]}`;
+      let response;
       
-      const response = await crearDieta({
-        ...formData,
-        fechaInicio: fechaFormateada
-      });
+      // Preparar datos base comunes - usar diferentes formatos según el tipo de creación
+      const datosBase = {
+        nombre: formData.nombre,
+        descripcion: formData.descripcion,
+        tipo: formData.tipo,
+        duracion: formData.duracion,
+        comidasDiarias: formData.comidasDiarias,
+        asignadaA: formData.asignadaA || ''
+      };
+
+      switch (tipoCreacion) {
+        case 'desde-cero': {
+          // Convertir fecha del formato YYYY-MM-DD (del input) al formato DD-MM-YYYY (que espera el backend)
+          const fechaArr = formData.fechaInicio.split('-');
+          const fechaFormateada = `${fechaArr[2]}-${fechaArr[1]}-${fechaArr[0]}`;
+          
+          response = await crearDieta({
+            ...datosBase,
+            fechaInicio: fechaFormateada,
+            horasComidas: formData.horasComidas || [],
+            nombreComidas: formData.nombreComidas || []
+          });
+          break;
+        }
+          
+        case 'desde-plantilla': {
+          // Para plantillas, usar formato ISO que JavaScript puede parsear
+          const fechaISO = new Date(formData.fechaInicio).toISOString();
+          
+          response = await dietTemplateService.crearDietaDesdeTemplate({
+            ...datosBase,
+            fechaInicio: fechaISO,
+            tipoArquetipo: datosCreacion?.tipoArquetipo || '',
+            horasComidas: formData.horasComidas || [],
+            nombreComidas: formData.nombreComidas || []
+          });
+          break;
+        }
+          
+        case 'desde-existente': {
+          // Para dietas existentes, usar formato ISO que JavaScript puede parsear
+          const fechaISO = new Date(formData.fechaInicio).toISOString();
+          
+          response = await dietTemplateService.crearDietaDesdeExistente({
+            ...datosBase,
+            fechaInicio: fechaISO,
+            dietaOrigenId: datosCreacion?.dietaOrigenId || '',
+            horasComidas: formData.horasComidas || [],
+            nombreComidas: formData.nombreComidas || []
+          });
+          break;
+        }
+          
+        default: {
+          // Fallback al método original - usar formato DD-MM-YYYY
+          const fechaArr = formData.fechaInicio.split('-');
+          const fechaFormateada = `${fechaArr[2]}-${fechaArr[1]}-${fechaArr[0]}`;
+          
+          response = await crearDieta({
+            ...datosBase,
+            fechaInicio: fechaFormateada,
+            horasComidas: formData.horasComidas || [],
+            nombreComidas: formData.nombreComidas || []
+          });
+        }
+      }
       
-      onSuccess(response.dieta);
+      // Manejar respuesta según el tipo de creación
+      const dietaData = 'dieta' in response ? response.dieta : response.data as DietaResponse;
+      onSuccess(dietaData);
       
       setFormData({
         nombre: '',
@@ -562,6 +640,55 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
             </Paper>
           </>
         );
+      case 4:
+        return (
+          <>
+            <Title order={4} mb="md" c="nutroos-green.6">Resumen de la dieta</Title>
+            <Text size="sm" mb="md" c="dimmed">
+              Revisa los datos antes de crear la dieta.
+            </Text>
+            
+            <Paper p="md" radius="md" withBorder style={{ backgroundColor: 'var(--app-paper-bg)', borderColor: 'var(--app-border-color)' }} mb="md">
+              <SimpleGrid cols={2} spacing="md">
+                <Box>
+                  <Text fw={500} mb={5}>Nombre</Text>
+                  <Text c="dimmed">{formData.nombre}</Text>
+                </Box>
+                <Box>
+                  <Text fw={500} mb={5}>Duración</Text>
+                  <Text c="dimmed">{formData.duracion} días</Text>
+                </Box>
+                <Box>
+                  <Text fw={500} mb={5}>Comidas diarias</Text>
+                  <Text c="dimmed">{formData.comidasDiarias}</Text>
+                </Box>
+                <Box>
+                  <Text fw={500} mb={5}>Fecha de inicio</Text>
+                  <Text c="dimmed">{new Date(formData.fechaInicio).toLocaleDateString('es-ES')}</Text>
+                </Box>
+                <Box>
+                  <Text fw={500} mb={5}>Tipos de dieta</Text>
+                  <Text c="dimmed">{formData.tipo.join(', ')}</Text>
+                </Box>
+                <Box>
+                  <Text fw={500} mb={5}>Método de creación</Text>
+                  <Text c="dimmed">
+                    {tipoCreacion === 'desde-cero' && 'Desde cero'}
+                    {tipoCreacion === 'desde-plantilla' && `Plantilla: ${datosCreacion?.plantillaInfo?.nombre || ''}`}
+                    {tipoCreacion === 'desde-existente' && `Copia de: ${datosCreacion?.dietaInfo?.nombre || ''}`}
+                  </Text>
+                </Box>
+              </SimpleGrid>
+              
+              {formData.descripcion && (
+                <Box mt="md">
+                  <Text fw={500} mb={5}>Descripción</Text>
+                  <Text c="dimmed">{formData.descripcion}</Text>
+                </Box>
+              )}
+            </Paper>
+          </>
+        );
       default:
         return null;
     }
@@ -591,14 +718,24 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
           </Button>
         )}
         
-        {activeStep === 3 ? (
+        {activeStep === 4 ? (
           <Button 
             type="submit"
             loading={isSubmitting} 
             leftSection={isSubmitting ? undefined : <IconCheck size={rem(18)} />}
             color="nutroos-green"
           >
-            {isSubmitting ? 'Creando...' : 'Crear Dieta'}
+            {isSubmitting ? (
+              tipoCreacion === 'desde-cero' ? 'Creando...' :
+              tipoCreacion === 'desde-plantilla' ? 'Generando desde plantilla...' :
+              tipoCreacion === 'desde-existente' ? 'Copiando dieta...' :
+              'Creando...'
+            ) : (
+              tipoCreacion === 'desde-cero' ? 'Crear Dieta' :
+              tipoCreacion === 'desde-plantilla' ? 'Generar desde Plantilla' :
+              tipoCreacion === 'desde-existente' ? 'Copiar Dieta' :
+              'Crear Dieta'
+            )}
           </Button>
         ) : (
           <Button 
@@ -690,9 +827,14 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
             label="Horarios"
             description="Comidas diarias"
           />
+          <Stepper.Step
+            icon={<IconCheck size="1.5rem" />}
+            label="Resumen"
+            description="Revisar datos"
+          />
         </Stepper>
         
-        {activeStep < 3 ? (
+        {activeStep < 4 ? (
           <>
             {renderStepContent()}
             {renderNavButtons()}

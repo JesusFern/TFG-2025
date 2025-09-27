@@ -4,17 +4,14 @@ import {
   Card, 
   Group, 
   Button, 
-  TextInput, 
   NumberInput, 
   Grid,
   Box,
-  Collapse,
   useMantineColorScheme,
   Paper,
   Alert
 } from '@mantine/core';
-import { useDisclosure } from '@mantine/hooks';
-import { IconPlus, IconChevronDown, IconChevronUp, IconDeviceFloppy } from '@tabler/icons-react';
+import { IconPlus, IconDeviceFloppy } from '@tabler/icons-react';
 import ComidaEditor from './ComidaEditor';
 import { DiaDieta, Comida } from '../../types';
 import { actualizarDiaDieta } from '../../services/dietService';
@@ -22,13 +19,14 @@ import { actualizarDiaDieta } from '../../services/dietService';
 interface DietaDayEditorProps {
   day: DiaDieta;
   dayNumber: number;
-  onUpdate: (updatedDay: DiaDieta, markAsChanged?: boolean) => void;
+  onUpdate: (updatedDay: DiaDieta) => void;
   comidasDiarias: number;
   customTitle?: string;
   hideTitle?: boolean;
   dietaId?: string;
   hasChanges?: boolean;
   onSaveSuccess?: () => void;
+  onRecalcularCalorias?: () => void;
 }
 
 const DietaDayEditor: React.FC<DietaDayEditorProps> = ({ 
@@ -40,11 +38,12 @@ const DietaDayEditor: React.FC<DietaDayEditorProps> = ({
   hideTitle = false,
   dietaId,
   hasChanges = false,
-  onSaveSuccess
+  onSaveSuccess,
+  onRecalcularCalorias
 }) => {
   const { colorScheme } = useMantineColorScheme();
+  
   const isDark = colorScheme === 'dark';
-  const [metadataOpened, { toggle: toggleMetadata }] = useDisclosure(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveSuccess, setSaveSuccess] = useState(false);
@@ -82,20 +81,22 @@ const DietaDayEditor: React.FC<DietaDayEditorProps> = ({
     const updatedComidas = [...day.comidas];
     updatedComidas[comidaIndex] = updatedComida;
     
-    console.log('handleUpdateComida en DietaDayEditor, pasando markAsChanged: false');
     
-    onUpdate({
+    const diaActualizado = {
       ...day,
       comidas: updatedComidas
-    }, false);
+    };
+    
+    onUpdate(diaActualizado);
+    
+    // Recalcular calorías con un pequeño delay para asegurar propagación del estado
+    if (onRecalcularCalorias) {
+      setTimeout(() => {
+        onRecalcularCalorias();
+      }, 50);
+    }
   };
 
-  const handleUpdateDayProperty = <T extends keyof DiaDieta>(property: T, value: DiaDieta[T]) => {
-    onUpdate({
-      ...day,
-      [property]: value
-    }, true);
-  };
 
   return (
     <Box mb="xl">
@@ -127,16 +128,6 @@ const DietaDayEditor: React.FC<DietaDayEditorProps> = ({
                 Guardar cambios
               </Button>
             )}
-            <Button 
-              rightSection={metadataOpened ? <IconChevronUp size={14} /> : <IconChevronDown size={14} />}
-              variant="subtle"
-              color="nutroos-green"
-              size="compact"
-              onClick={toggleMetadata}
-              ml={hideTitle ? 'auto' : undefined}
-            >
-              {metadataOpened ? 'Ocultar detalles' : 'Mostrar detalles'}
-            </Button>
           </Group>
         </Group>
         
@@ -152,71 +143,103 @@ const DietaDayEditor: React.FC<DietaDayEditorProps> = ({
           </Alert>
         )}
         
-        <Collapse in={metadataOpened}>
+        <Box>
           <Grid mt="md">
             <Grid.Col span={{ base: 12, md: 6 }}>
               <NumberInput 
                 label="Calorías totales"
                 placeholder="Ej: 2000"
                 value={day.caloriasTotales}
-                onChange={(val) => handleUpdateDayProperty('caloriasTotales', typeof val === 'number' ? val : 0)}
+                readOnly
                 min={0}
                 step={10}
                 mb="md"
+                styles={{
+                  input: {
+                    backgroundColor: isDark ? 'var(--mantine-color-gray-8)' : 'var(--mantine-color-gray-1)',
+                    cursor: 'not-allowed'
+                  }
+                }}
               />
             </Grid.Col>
-            <Grid.Col span={{ base: 12, md: 6 }}>
-              <TextInput 
-                label="Macronutrientes"
-                placeholder="Ej: Proteínas 30%, Carbohidratos 50%, Grasas 20%"
-                value={day.macronutrientes || ''}
-                onChange={(e) => handleUpdateDayProperty('macronutrientes', e.target.value)}
-                mb="md"
-              />
-            </Grid.Col>
-            <Grid.Col span={{ base: 12, md: 6 }}>
-              <TextInput 
-                label="Micronutrientes"
-                placeholder="Ej: Vitaminas y minerales principales"
-                value={day.micronutrientes || ''}
-                onChange={(e) => handleUpdateDayProperty('micronutrientes', e.target.value)}
-                mb="md"
-              />
-            </Grid.Col>
-            <Grid.Col span={{ base: 12, md: 6 }}>
-              <TextInput 
-                label="Requerimientos de hidratación"
-                placeholder="Ej: 2-3 litros de agua"
-                value={day.requerimientosHidratacion || ''}
-                onChange={(e) => handleUpdateDayProperty('requerimientosHidratacion', e.target.value)}
-              />
-            </Grid.Col>
+    <Grid.Col span={{ base: 12, md: 4 }}>
+      <NumberInput 
+        label="Proteínas (g)"
+        placeholder="Ej: 120"
+        value={day.proteinas || 0}
+        readOnly
+        min={0}
+        decimalScale={2}
+        mb="md"
+        styles={{
+          input: {
+            backgroundColor: isDark ? 'var(--mantine-color-gray-8)' : 'var(--mantine-color-gray-1)',
+            cursor: 'not-allowed'
+          }
+        }}
+      />
+    </Grid.Col>
+    <Grid.Col span={{ base: 12, md: 4 }}>
+      <NumberInput 
+        label="Hidratos de carbono (g)"
+        placeholder="Ej: 250"
+        value={day.hidratosCarbono || 0}
+        readOnly
+        min={0}
+        decimalScale={2}
+        mb="md"
+        styles={{
+          input: {
+            backgroundColor: isDark ? 'var(--mantine-color-gray-8)' : 'var(--mantine-color-gray-1)',
+            cursor: 'not-allowed'
+          }
+        }}
+      />
+    </Grid.Col>
+    <Grid.Col span={{ base: 12, md: 4 }}>
+      <NumberInput 
+        label="Grasas (g)"
+        placeholder="Ej: 80"
+        value={day.grasas || 0}
+        readOnly
+        min={0}
+        decimalScale={2}
+        mb="md"
+        styles={{
+          input: {
+            backgroundColor: isDark ? 'var(--mantine-color-gray-8)' : 'var(--mantine-color-gray-1)',
+            cursor: 'not-allowed'
+          }
+        }}
+      />
+    </Grid.Col>
           </Grid>
-        </Collapse>
+        </Box>
       </Card>
       
-      {day.comidas.map((comida, index) => (
-        <Paper 
-          key={index}
-          withBorder
-          radius="md"
-          p="md"
-          mb="md"
-          style={{ 
-            backgroundColor: 'var(--app-paper-bg)', 
-            borderColor: 'var(--app-border-color)',
-          }}
-        >
-          <ComidaEditor 
-            comida={comida}
-            comidaIndex={index}
-            diaIndex={dayNumber - 1}
-            onUpdate={(updatedComida) => handleUpdateComida(index, updatedComida)}
-            dietaId={dietaId}
-            diaCompleto={day}
-          />
-        </Paper>
-      ))}
+        {day.comidas.map((comida, index) => (
+          <Paper 
+            key={index}
+            withBorder
+            radius="md"
+            p="md"
+            mb="md"
+            style={{ 
+              backgroundColor: 'var(--app-paper-bg)', 
+              borderColor: 'var(--app-border-color)',
+            }}
+          >
+            <ComidaEditor 
+              comida={comida}
+              comidaIndex={index}
+              diaIndex={dayNumber - 1}
+              onUpdate={(updatedComida: Comida) => handleUpdateComida(index, updatedComida)}
+              dietaId={dietaId}
+              diaCompleto={day}
+              onRecalcularCalorias={onRecalcularCalorias}
+            />
+          </Paper>
+        ))}
       
       {day.comidas.length < comidasDiarias && (
         <Group justify="center" mt="xl">
@@ -229,7 +252,14 @@ const DietaDayEditor: React.FC<DietaDayEditorProps> = ({
               onUpdate({
                 ...day,
                 comidas: nuevasComidas
-              }, false);
+              });
+              
+              // Recalcular calorías después de añadir una comida
+              if (onRecalcularCalorias) {
+                setTimeout(() => {
+                  onRecalcularCalorias();
+                }, 100);
+              }
             }}
           >
             Añadir comida

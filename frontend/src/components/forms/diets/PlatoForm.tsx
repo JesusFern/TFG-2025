@@ -13,8 +13,9 @@ import {
   InputBase
 } from '@mantine/core';
 import { IconSearch, IconX } from '@tabler/icons-react';
-import { Plato, Receta } from '../../../types';
+import { Plato, Receta, Ingrediente } from '../../../types';
 import { buscarRecetas } from '../../../services/dietService';
+import { obtenerIngredientes } from '../../../services/ingredienteService';
 
 interface PlatoFormProps {
   plato: Plato;
@@ -28,6 +29,8 @@ const PlatoForm: React.FC<PlatoFormProps> = ({ plato, onSave, onCancel }) => {
   
   const [formData, setFormData] = useState<Plato>(plato);
   const [recetas, setRecetas] = useState<Receta[]>([]);
+  const [ingredientes, setIngredientes] = useState<Ingrediente[]>([]);
+  const [recetaCompleta, setRecetaCompleta] = useState<Receta | null>(null);
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
@@ -71,6 +74,24 @@ const PlatoForm: React.FC<PlatoFormProps> = ({ plato, onSave, onCancel }) => {
     }
   };
 
+  // Función para cargar la receta completa si el plato ya tiene una receta
+  const cargarRecetaCompleta = async (recetaId: string) => {
+    try {
+      setLoading(true);
+      const todasLasRecetas = await buscarRecetas('');
+      const receta = todasLasRecetas.find(r => r._id === recetaId);
+      if (receta) {
+        setRecetaCompleta(receta);
+        setRecetas(todasLasRecetas.slice(0, 5));
+        setHasSearched(true);
+      }
+    } catch (error) {
+      console.error("Error al cargar receta completa:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (searchTerm.length > 0) {
       const timeoutId = setTimeout(() => {
@@ -99,8 +120,20 @@ const PlatoForm: React.FC<PlatoFormProps> = ({ plato, onSave, onCancel }) => {
     
     // Si el plato tiene una receta, cargar los datos de la receta
     if (plato.receta && !hasSearched) {
-      fetchInitialRecetas();
+      cargarRecetaCompleta(plato.receta);
     }
+    
+    // Cargar ingredientes para mostrar los ingredientes del plato
+    const cargarIngredientes = async () => {
+      try {
+        const ingredientesData = await obtenerIngredientes();
+        setIngredientes(ingredientesData);
+      } catch (error) {
+        console.error("Error al cargar ingredientes:", error);
+      }
+    };
+    
+    cargarIngredientes();
   }, [plato]);
 
   const handleSelectReceta = (recetaId: string) => {
@@ -125,7 +158,7 @@ const PlatoForm: React.FC<PlatoFormProps> = ({ plato, onSave, onCancel }) => {
 
   // Obtener la receta seleccionada para mostrar sus detalles
   const recetaSeleccionada = formData.receta ? 
-    safeRecetas.find(r => r._id === formData.receta) || 
+    (recetaCompleta || safeRecetas.find(r => r._id === formData.receta)) || 
     (plato.receta === formData.receta ? { 
       _id: formData.receta, 
       nombreReceta: formData.nombre || 'Receta seleccionada',
@@ -261,41 +294,76 @@ const PlatoForm: React.FC<PlatoFormProps> = ({ plato, onSave, onCancel }) => {
           </Combobox>
         </Grid.Col>
 
-        {/* Mostrar detalles de la receta seleccionada */}
+        {/* Mostrar información de la receta y ingredientes del plato */}
         {recetaSeleccionada && (
           <Grid.Col span={12}>
             <Box
               p="md"
               style={{
-                backgroundColor: 'var(--mantine-color-gray-0)',
-                border: '1px solid var(--mantine-color-gray-3)',
+                backgroundColor: isDark ? 'var(--mantine-color-blue-9)' : 'var(--mantine-color-blue-0)',
+                border: '1px solid var(--mantine-color-blue-3)',
                 borderRadius: 'var(--mantine-radius-md)'
               }}
             >
-              <Text fw={500} mb="xs" c="nutroos-green.6">
+              <Text fw={500} mb="xs" c="blue.6">
                 Receta seleccionada: {recetaSeleccionada.nombreReceta}
               </Text>
               
-              {recetaSeleccionada.ingredientes && recetaSeleccionada.ingredientes.length > 0 && (
-                <Box mb="xs">
-                  <Text size="sm" fw={500} mb={4}>
-                    Ingredientes ({recetaSeleccionada.ingredientes.length}):
-                  </Text>
-                  <Text size="sm" c="dimmed">
-                    {recetaSeleccionada.ingredientes.slice(0, 3).join(', ')}
-                    {recetaSeleccionada.ingredientes.length > 3 && '...'}
-                  </Text>
-                </Box>
-              )}
-
               {recetaSeleccionada.tiempoPreparacion && (
-                <Text size="sm" c="dimmed">
+                <Text size="sm" c="dimmed" mb="md">
                   Tiempo: {recetaSeleccionada.tiempoPreparacion}
                 </Text>
               )}
 
-              <Text size="xs" c="dimmed" mt="xs">
+              <Text size="xs" c="dimmed" mb="md">
                 {recetaSeleccionada.publica ? 'Receta pública' : 'Mi receta privada'}
+              </Text>
+            </Box>
+          </Grid.Col>
+        )}
+
+        {/* Mostrar ingredientes del plato */}
+        {formData.ingredientesPersonalizados && formData.ingredientesPersonalizados.length > 0 && (
+          <Grid.Col span={12}>
+            <Box
+              p="md"
+              style={{
+                backgroundColor: isDark ? 'var(--mantine-color-green-9)' : 'var(--mantine-color-green-0)',
+                border: '1px solid var(--mantine-color-green-3)',
+                borderRadius: 'var(--mantine-radius-md)'
+              }}
+            >
+              <Text fw={500} mb="xs" c="green.6">
+                Ingredientes del plato ({formData.ingredientesPersonalizados.length}):
+              </Text>
+              
+              {formData.ingredientesPersonalizados.map((ingredientePlato, index) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const ingrediente = ingredientes.find(ing => (ing as any)._id === ingredientePlato.ingrediente);
+                return (
+                  <Box key={index} mb="xs" p="xs" style={{
+                    backgroundColor: isDark ? 'var(--mantine-color-green-8)' : 'var(--mantine-color-green-1)',
+                    borderRadius: 'var(--mantine-radius-sm)'
+                  }}>
+                    <Text size="sm" fw={500}>
+                      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                      {ingrediente ? (ingrediente as any).nombre : `Ingrediente ${index + 1}`}
+                    </Text>
+                    <Text size="sm" c="dimmed">
+                      Peso: {ingredientePlato.peso}g
+                    </Text>
+                    {ingrediente && (
+                      <Text size="xs" c="dimmed">
+                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                        Calorías: {Math.round(((ingrediente as any).calorias * ingredientePlato.peso) / 100)} kcal
+                      </Text>
+                    )}
+                  </Box>
+                );
+              })}
+              
+              <Text size="xs" c="dimmed" mt="xs">
+                Este plato está asociado a la receta "{recetaSeleccionada?.nombreReceta || ''}". Puedes modificar los pesos de los ingredientes para este plato específico.
               </Text>
             </Box>
           </Grid.Col>

@@ -37,11 +37,19 @@ const formatearPlatoParaBackend = (plato: Plato) => {
   }
   
   if (plato.receta) {
-    platoFormateado.receta = plato.receta;
+    // Si receta es un objeto (poblado), extraer el _id, si es string usar directamente
+    platoFormateado.receta = typeof plato.receta === 'string' 
+      ? plato.receta 
+      : (plato.receta as { _id?: string; id?: string })._id || (plato.receta as { _id?: string; id?: string }).id || '';
   }
   
   if (plato.ingredientesPersonalizados && plato.ingredientesPersonalizados.length > 0) {
-    platoFormateado.ingredientesPersonalizados = plato.ingredientesPersonalizados;
+    platoFormateado.ingredientesPersonalizados = plato.ingredientesPersonalizados.map(ing => ({
+      ingrediente: typeof ing.ingrediente === 'string' 
+        ? ing.ingrediente 
+        : (ing.ingrediente as { _id?: string; id?: string })._id || (ing.ingrediente as { _id?: string; id?: string }).id || '',
+      peso: ing.peso
+    }));
   }
   
   return platoFormateado;

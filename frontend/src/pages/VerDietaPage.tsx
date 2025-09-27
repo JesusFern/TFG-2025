@@ -18,7 +18,8 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
   IconChevronRight, 
   IconAlertCircle, 
-  IconChevronLeft
+  IconChevronLeft,
+  IconEye
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -35,7 +36,6 @@ import {
   obtenerDiaSemanaAjustado
 } from '../helpers/diets/DietaHelper';
 import DietaHeader from '../components/organisms/DietaHeader';
-import PlatosList from '../components/organisms/PlatosList';
 
 // Las utilidades se han movido a DietaHelper.ts
 
@@ -62,14 +62,9 @@ const VerDietaPage: React.FC = () => {
   const [isMobileState, setIsMobileState] = useState(false);
   const [currentDayIndex, setCurrentDayIndex] = useState(0); // Para navegación de días en móvil
 
-  // Función para navegar a los detalles de una receta
-  const handleVerReceta = (recetaId: string) => {
-    navigate(`/recetas/${recetaId}`, {
-      state: {
-        fromDieta: true,
-        dietaId: dietaId
-      }
-    });
+  // Función para navegar al detalle de un día
+  const handleVerDetalleDia = (dayInfo: DayInfo) => {
+    navigate(`/dieta/${dietaId}/dia/${dayInfo.dietDayIndex + 1}`);
   };
 
   // Efecto para detectar cambios de tamaño de pantalla
@@ -285,7 +280,7 @@ const VerDietaPage: React.FC = () => {
           </Group>
         </Paper>
 
-        {/* Lista de comidas del día */}
+        {/* Lista de comidas del día - SIMPLIFICADA */}
         <Stack gap="md">
           {Array.from({ length: dieta.comidasDiarias }).map((_, comidaIndex) => {
             const comida = currentDay.comidas[comidaIndex];
@@ -304,74 +299,47 @@ const VerDietaPage: React.FC = () => {
                     </Text>
                   </Group>
                   
-                  {comida && comida.platos ? (
-                    <PlatosList 
-                      platos={comida.platos}
-                      isDark={isDark}
-                      isMobile={true}
-                      onVerReceta={handleVerReceta}
-                    />
-                  ) : null}
+                  {/* Mostrar solo nombres de platos, sin acceso a recetas */}
+                  {comida && comida.platos && comida.platos.length > 0 ? (
+                    <Stack gap="xs">
+                      {comida.platos.map((plato, platoIndex) => (
+                        <Text key={platoIndex} size="sm" c={isDark ? "gray.3" : "gray.6"}>
+                          • {plato.nombre || `Plato ${platoIndex + 1}`}
+                        </Text>
+                      ))}
+                    </Stack>
+                  ) : (
+                    <Text size="sm" c="dimmed" fs="italic">
+                      Sin platos asignados
+                    </Text>
+                  )}
                 </Stack>
               </Paper>
             );
           })}
         </Stack>
 
-        {/* Información adicional del día */}
-        {(currentDay.caloriasTotales || currentDay.macronutrientes || currentDay.micronutrientes || currentDay.requerimientosHidratacion) && (
-          <Paper p="md" mt="md" withBorder>
-            <Stack gap="sm">
-              <Text fw={600} size="md" c={isDark ? "gray.1" : "gray.8"}>
-                Información nutricional
-              </Text>
-              
-              {currentDay.caloriasTotales && (
-                <Group gap="sm">
-                  <Text size="sm" fw={500} c={isDark ? "gray.3" : "gray.6"}>
-                    Calorías totales:
-                  </Text>
-                  <Text size="sm" fw={700}>
-                    {currentDay.caloriasTotales} kcal
-                  </Text>
-                </Group>
-              )}
-              
-              {currentDay.macronutrientes && (
-                <Group gap="sm">
-                  <Text size="sm" fw={500} c={isDark ? "gray.3" : "gray.6"}>
-                    Macronutrientes:
-                  </Text>
-                  <Text size="sm">
-                    {currentDay.macronutrientes}
-                  </Text>
-                </Group>
-              )}
-              
-              {currentDay.micronutrientes && (
-                <Group gap="sm">
-                  <Text size="sm" fw={500} c={isDark ? "gray.3" : "gray.6"}>
-                    Micronutrientes:
-                  </Text>
-                  <Text size="sm">
-                    {currentDay.micronutrientes}
-                  </Text>
-                </Group>
-              )}
-              
-              {currentDay.requerimientosHidratacion && (
-                <Group gap="sm">
-                  <Text size="sm" fw={500} c={isDark ? "gray.3" : "gray.6"}>
-                    Hidratación:
-                  </Text>
-                  <Text size="sm">
-                    {currentDay.requerimientosHidratacion}
-                  </Text>
-                </Group>
-              )}
-            </Stack>
-          </Paper>
-        )}
+        {/* Botón para ver detalle del día */}
+        <Paper p="md" mt="md" withBorder>
+          <Group justify="center">
+            <Button
+              leftSection={<IconEye size={16} />}
+              onClick={() => handleVerDetalleDia({
+                weekDayIndex: currentDate.getDay() === 0 ? 6 : currentDate.getDay() - 1,
+                dietDayIndex: currentDayIndex,
+                weekDayName: dayName,
+                fecha: currentDate,
+                fechaFormateada: formattedDate,
+                nombreCompleto: `${dayName} ${formattedDate}`,
+                data: currentDay
+              })}
+              color="nutroos-green"
+              variant="light"
+            >
+              Ver comidas y recetas
+            </Button>
+          </Group>
+        </Paper>
       </Container>
     );
   };
@@ -478,7 +446,7 @@ const VerDietaPage: React.FC = () => {
             ...styles.paperBorder
           }}
         >
-        {/* Selector de semana - Estilo tabla */}
+        {/* Selector de semana */}
         <Box 
           py="md" 
           px="lg" 
@@ -539,7 +507,7 @@ const VerDietaPage: React.FC = () => {
               : 'linear-gradient(135deg, rgba(148, 163, 184, 0.01) 0%, rgba(148, 163, 184, 0.005) 100%)',
             padding: isMobileState ? '12px' : '20px',
             border: '1px solid rgba(148, 163, 184, 0.12)',
-            maxWidth: isMobileState ? '100%' : '1700px' // Limitar el ancho en desktop
+            maxWidth: isMobileState ? '100%' : '1700px'
           }}
         >
           <table style={styles.tableStyles(isMobileState)}>
@@ -556,6 +524,19 @@ const VerDietaPage: React.FC = () => {
                     <Text size={isMobileState ? "xs" : "sm"} c="dimmed" ta="center">
                       {dayInfo.fechaFormateada}
                     </Text>
+                    <Box mt="xs">
+                      <Button
+                        size="xs"
+                        leftSection={<IconEye size={10} />}
+                        onClick={() => handleVerDetalleDia(dayInfo)}
+                        color="nutroos-green"
+                        variant="light"
+                        fullWidth
+                        style={{ fontSize: '10px' }}
+                      >
+                        Ver comidas y recetas
+                      </Button>
+                    </Box>
                   </th>
                 ))}
               </tr>
@@ -580,8 +561,8 @@ const VerDietaPage: React.FC = () => {
                         <td 
                           key={`day-${dayInfo.dietDayIndex}-comida-${comidaIndex}`}
                           style={{ 
-                            padding: isMobileState ? '8px 6px' : '14px 12px', // Menos padding en móvil
-                            minWidth: isMobileState ? '120px' : '220px', // Mucho más estrecho en móvil
+                            padding: isMobileState ? '8px 6px' : '14px 12px',
+                            minWidth: isMobileState ? '120px' : '220px',
                             ...styles.cellBorders,
                             verticalAlign: 'top',
                             ...styles.rowBg(isDark, comidaIndex % 2 === 0)
@@ -609,89 +590,43 @@ const VerDietaPage: React.FC = () => {
                             </Text>
                           </Tooltip>
                           
-                          {comida.platos && (
-                            <PlatosList 
-                              platos={comida.platos}
-                              isDark={isDark}
-                              isMobile={false}
-                              onVerReceta={handleVerReceta}
-                            />
+                          {/* Mostrar solo nombres de platos, sin acceso a recetas */}
+                          {comida.platos && comida.platos.length > 0 ? (
+                            <Stack gap="xs">
+                              {comida.platos.map((plato, platoIndex) => (
+                                <Text 
+                                  key={platoIndex}
+                                  size={isMobileState ? "xs" : "sm"} 
+                                  c={isDark ? "gray.3" : "gray.6"}
+                                  style={{ 
+                                    padding: isMobileState ? "2px 4px" : "4px 6px",
+                                    backgroundColor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)',
+                                    borderRadius: '4px',
+                                    border: '1px solid rgba(148, 163, 184, 0.1)'
+                                  }}
+                                >
+                                  • {plato.nombre || `Plato ${platoIndex + 1}`}
+                                </Text>
+                              ))}
+                            </Stack>
+                          ) : (
+                            <Text 
+                              size={isMobileState ? "xs" : "sm"} 
+                              c="dimmed" 
+                              fs="italic"
+                              ta="center"
+                              p="8px"
+                            >
+                              Sin platos
+                            </Text>
                           )}
+                          
                         </td>
                       );
                     })}
                   </tr>
                 ))
               }
-              <tr style={styles.calorieFooterRow(isDark)}>
-                {daysRange.days.map((dayInfo: DayInfo) => (
-                  <td 
-                    key={`calories-${dayInfo.dietDayIndex}`}
-                    style={{
-                      ...styles.calorieCellStyle(isDark),
-                      minWidth: isMobileState ? '120px' : '220px' // Responsive: 120px en móvil, 220px en desktop
-                    }}
-                  >
-                    <Stack gap="xs" align="flex-end">
-                      {(dayInfo.data.caloriasTotales && dayInfo.data.caloriasTotales > 0) && (
-                        <Text fw={700} size="xs">
-                          Total: {dayInfo.data.caloriasTotales} kcal
-                        </Text>
-                      )}
-                      {dayInfo.data.macronutrientes && (
-                        <Text size="xs" c="dimmed" ta="right" style={{ maxWidth: '120px' }}>
-                          {dayInfo.data.macronutrientes}
-                        </Text>
-                      )}
-                    </Stack>
-                  </td>
-                ))}
-              </tr>
-              
-              {/* Fila adicional para micronutrientes e hidratación */}
-              {(daysRange.days.some(day => day.data.micronutrientes || day.data.requerimientosHidratacion)) && (
-                <tr style={{ 
-                  backgroundColor: isDark ? 'rgba(148, 163, 184, 0.02)' : 'rgba(148, 163, 184, 0.01)',
-                  borderTop: '1px solid rgba(148, 163, 184, 0.1)'
-                }}>
-                  {daysRange.days.map((dayInfo: DayInfo) => (
-                    <td 
-                      key={`details-${dayInfo.dietDayIndex}`}
-                      style={{
-                        padding: isMobileState ? '8px 10px' : '14px 18px', // Menos padding en móvil
-                        minWidth: isMobileState ? '120px' : '220px', // Mucho más estrecho en móvil
-                        borderLeft: '1px solid rgba(148, 163, 184, 0.15)',
-                        borderRight: '1px solid rgba(148, 163, 184, 0.15)',
-                        borderBottom: '1px solid rgba(148, 163, 184, 0.15)',
-                        verticalAlign: 'top'
-                      }}
-                    >
-                      <Stack gap="xs">
-                        {dayInfo.data.micronutrientes && (
-                          <Box>
-                            <Text size="xs" fw={600} c={isDark ? "gray.3" : "gray.6"} mb="xs">
-                              Micronutrientes:
-                            </Text>
-                            <Text size="xs" c="dimmed" style={{ lineHeight: 1.3 }}>
-                              {dayInfo.data.micronutrientes}
-                            </Text>
-                          </Box>
-                        )}
-                        {dayInfo.data.requerimientosHidratacion && (
-                          <Box>
-                            <Text size="xs" fw={600} c={isDark ? "gray.3" : "gray.6"} mb="xs">
-                              Hidratación:
-                            </Text>
-                            <Text size="xs" c="dimmed" style={{ lineHeight: 1.3 }}>
-                              {dayInfo.data.requerimientosHidratacion}
-                            </Text>
-                          </Box>
-                        )}
-                      </Stack>
-                    </td>
-                  ))}
-                </tr>
-              )}
             </tbody>
           </table>
         </Box>

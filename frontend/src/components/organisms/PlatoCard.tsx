@@ -5,7 +5,7 @@ import { IconChefHat, IconLeaf, IconExternalLink } from '@tabler/icons-react';
 interface PlatoCardProps {
   plato: {
     nombre?: string | null;
-    receta?: string | null;
+    receta?: string | null | { _id: string; nombreReceta?: string; [key: string]: unknown };
   };
   isDark: boolean;
   isMobile?: boolean;
@@ -14,6 +14,7 @@ interface PlatoCardProps {
 
 const PlatoCard: React.FC<PlatoCardProps> = ({ plato, isDark, isMobile = false, onVerReceta }) => {
   const hasReceta = !!plato.receta;
+  const recetaId = typeof plato.receta === 'string' ? plato.receta : plato.receta?._id;
   const size = isMobile ? 'xs' : 'sm';
   const iconSize = isMobile ? 10 : 14;
   const externalIconSize = isMobile ? 8 : 12;
@@ -56,7 +57,7 @@ const PlatoCard: React.FC<PlatoCardProps> = ({ plato, isDark, isMobile = false, 
       align="center"
       p={padding}
       style={baseStyles}
-      onClick={() => hasReceta && plato.receta && onVerReceta(plato.receta)}
+      onClick={() => hasReceta && recetaId && onVerReceta(recetaId)}
       onMouseEnter={hoverEnter}
       onMouseLeave={hoverLeave}
     >
