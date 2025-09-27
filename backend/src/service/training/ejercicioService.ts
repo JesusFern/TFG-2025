@@ -243,11 +243,11 @@ export async function crearEjercicioDesdeWgerService(
     throw new Error('ID de ejercicio wger sanitizado inválido');
   }
   
-  const ejercicioExistente = await Ejercicio.findOne({ 
-    wgerId: sanitizedWgerId,
-    esWger: true,
-    activo: true 
-  });
+  const ejercicioExistente = await Ejercicio.findOne()
+    .where('wgerId').equals(sanitizedWgerId)
+    .where('esWger').equals(true)
+    .where('activo').equals(true)
+    .setOptions({ sanitizeFilter: true });
 
   if (ejercicioExistente) {
     return ejercicioExistente;
