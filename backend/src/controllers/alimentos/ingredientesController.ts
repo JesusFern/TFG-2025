@@ -145,6 +145,120 @@ export const guardarIngredienteOpenFoodFacts = async (req: AuthenticatedRequest,
 };
 
 /**
+ * Obtiene todos los ingredientes
+ */
+export const obtenerTodosLosIngredientes = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = verificarAutenticacion(req, res, 'obtener ingredientes');
+    if (!userId) return;
+
+    const ingredientes = await Ingrediente.find({}).sort({ nombre: 1 });
+
+    logger.info('Ingredientes obtenidos correctamente', { 
+      cantidad: ingredientes.length,
+      userId
+    });
+
+    res.status(200).json({
+      ingredientes,
+      total: ingredientes.length
+    });
+  } catch (error) {
+    logger.error('Error al obtener ingredientes:', error);
+    res.status(500).json({
+      message: 'Error interno del servidor al obtener los ingredientes'
+    });
+  }
+};
+
+/**
+ * Busca ingredientes por término
+ */
+export const buscarIngredientes = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = verificarAutenticacion(req, res, 'buscar ingredientes');
+    if (!userId) return;
+
+    const { q } = req.query;
+    
+    if (!q || typeof q !== 'string' || q.trim().length === 0) {
+      res.status(400).json({ message: 'El término de búsqueda es requerido' });
+      return;
+    }
+
+    const termino = q.trim();
+    const ingredientes = await Ingrediente.find({
+      nombre: { $regex: termino, $options: 'i' }
+    }).sort({ nombre: 1 }).limit(50);
+
+    logger.info('Búsqueda de ingredientes realizada', { 
+      termino,
+      cantidad: ingredientes.length,
+      userId
+    });
+
+    res.status(200).json({
+      ingredientes,
+      total: ingredientes.length,
+      termino
+    });
+  } catch (error) {
+    logger.error('Error al buscar ingredientes:', error);
+    res.status(500).json({
+      message: 'Error interno del servidor al buscar ingredientes'
+    });
+  }
+};
+
+/**
+ * Obtiene ingredientes por sus IDs
+ */
+export const obtenerIngredientesPorIds = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = verificarAutenticacion(req, res, 'obtener ingredientes por IDs');
+    if (!userId) return;
+
+    const { ids } = req.body;
+    
+    if (!Array.isArray(ids) || ids.length === 0) {
+      res.status(400).json({ message: 'Se requiere un array de IDs de ingredientes' });
+      return;
+    }
+
+    // Validar que todos los IDs sean válidos
+    const idsValidos = ids.filter(id => mongoose.Types.ObjectId.isValid(id));
+    
+    if (idsValidos.length === 0) {
+      res.status(400).json({ message: 'No se proporcionaron IDs válidos' });
+      return;
+    }
+
+    const ingredientes = await Ingrediente.find({
+      _id: { $in: idsValidos }
+    }).sort({ nombre: 1 });
+
+    logger.info('Ingredientes obtenidos por IDs', { 
+      cantidadSolicitada: ids.length,
+      cantidadValida: idsValidos.length,
+      cantidadEncontrada: ingredientes.length,
+      userId
+    });
+
+    res.status(200).json({
+      ingredientes,
+      total: ingredientes.length,
+      idsSolicitados: ids.length,
+      idsValidos: idsValidos.length
+    });
+  } catch (error) {
+    logger.error('Error al obtener ingredientes por IDs:', error);
+    res.status(500).json({
+      message: 'Error interno del servidor al obtener los ingredientes'
+    });
+  }
+};
+
+/**
  * Obtiene un ingrediente por su ID
  */
 export const obtenerIngredientePorId = async (req: AuthenticatedRequest, res: Response): Promise<void> => {

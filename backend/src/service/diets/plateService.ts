@@ -1,6 +1,7 @@
 import Dieta from '../../models/diets/dieta';
 import mongoose from 'mongoose';
 import Receta from '../../models/diets/receta';
+import { actualizarNutricionDia } from '../../helpers/calculoNutricionalHelper';
 
 type PlatoUpdate = {
   _id: string;
@@ -23,6 +24,7 @@ export async function actualizarPlatosService(platos: PlatoUpdate[]) {
   }
 
   const actualizados: Array<unknown> = [];
+  const diasActualizados = new Set<number>(); // Para rastrear qué días necesitan recálculo
 
   for (const plato of platos) {
     if (!plato._id) continue;
@@ -31,13 +33,23 @@ export async function actualizarPlatosService(platos: PlatoUpdate[]) {
     if (!dieta) continue;
 
     let platoActualizado = null;
-    for (const dia of dieta.dias) {
+    let diaIndex = -1;
+    
+    for (let d = 0; d < dieta.dias.length; d++) {
+      const dia = dieta.dias[d];
       for (const comida of dia.comidas) {
         const subPlato = comida.platos.id(plato._id);
         if (subPlato) {
           if (typeof plato.nombre !== 'undefined') subPlato.nombre = plato.nombre;
           if (typeof plato.orden !== 'undefined') subPlato.orden = plato.orden;
-          if (typeof plato.receta !== 'undefined') {
+          if (typeof plato.receta !== 'undefined' && plato.receta && plato.receta !== '') {
+            // Validar que el ID de la receta sea válido
+            if (!mongoose.Types.ObjectId.isValid(plato.receta)) {
+              const error: NotFoundError = new Error(`ID de receta inválido: ${plato.receta}`);
+              error.status = 400;
+              throw error;
+            }
+            
             const recetaExiste = await Receta.findById(plato.receta);
             if (!recetaExiste) {
               const error: NotFoundError = new Error(`No se encontró la receta con el id: ${plato.receta}`);
@@ -45,6 +57,9 @@ export async function actualizarPlatosService(platos: PlatoUpdate[]) {
               throw error;
             }
             subPlato.receta = new mongoose.Types.ObjectId(plato.receta);
+          } else if (plato.receta === null || plato.receta === '') {
+            // Si se envía null o string vacío, eliminar la receta
+            subPlato.receta = undefined;
           }
           if (typeof plato.ingredientesPersonalizados !== 'undefined') {
             // Limpiar ingredientes existentes usando el método de Mongoose
@@ -63,12 +78,17 @@ export async function actualizarPlatosService(platos: PlatoUpdate[]) {
             }
           }
           platoActualizado = subPlato;
+          diaIndex = d;
+          break;
         }
       }
+      if (platoActualizado) break;
     }
-    if (platoActualizado) {
+    
+    if (platoActualizado && diaIndex !== -1) {
       await dieta.save();
       actualizados.push(platoActualizado);
+      diasActualizados.add(diaIndex);
     }
   }
 
@@ -77,6 +97,14 @@ export async function actualizarPlatosService(platos: PlatoUpdate[]) {
     const error: NotFoundError = new Error(`No se encontró ningún plato con los ids: ${ids}`);
     error.status = 404;
     throw error;
+  }
+
+  // Recalcular las calorías y macronutrientes para todos los días que fueron modificados
+  for (const diaIndex of diasActualizados) {
+    const dieta = await Dieta.findOne({ 'dias.comidas.platos._id': { $in: platos.map(p => p._id) } });
+    if (dieta) {
+      await actualizarNutricionDia(dieta, diaIndex);
+    }
   }
 
   return actualizados;

@@ -1,10 +1,69 @@
 import { Router } from 'express';
-import { guardarIngredienteOpenFoodFacts, obtenerIngredientePorId } from '../../controllers/alimentos/ingredientesController';
+import { guardarIngredienteOpenFoodFacts, obtenerIngredientePorId, obtenerTodosLosIngredientes, buscarIngredientes, obtenerIngredientesPorIds } from '../../controllers/alimentos/ingredientesController';
 import { authenticateToken } from '../../middlewares/authMiddleware';
 import { validateRequest } from '../../middlewares/validationMiddleware';
-import { body, param } from 'express-validator';
+import { body, param, query } from 'express-validator';
 
 const router = Router();
+
+/**
+ * @route GET /api/ingredientes
+ * @desc Obtiene todos los ingredientes
+ * @access Private
+ */
+router.get(
+  '/',
+  authenticateToken,
+  obtenerTodosLosIngredientes
+);
+
+/**
+ * @route GET /api/ingredientes/buscar
+ * @desc Busca ingredientes por término
+ * @access Private
+ * @query {string} q - Término de búsqueda
+ */
+router.get(
+  '/buscar',
+  authenticateToken,
+  [
+    query('q')
+      .notEmpty()
+      .withMessage('El término de búsqueda es requerido')
+      .isString()
+      .withMessage('El término de búsqueda debe ser una cadena de texto')
+      .trim()
+      .isLength({ min: 1, max: 100 })
+      .withMessage('El término de búsqueda debe tener entre 1 y 100 caracteres')
+  ],
+  validateRequest,
+  buscarIngredientes
+);
+
+/**
+ * @route POST /api/ingredientes/por-ids
+ * @desc Obtiene ingredientes por sus IDs
+ * @access Private
+ * @body {string[]} ids - Array de IDs de ingredientes
+ */
+router.post(
+  '/por-ids',
+  authenticateToken,
+  [
+    body('ids')
+      .isArray()
+      .withMessage('Los IDs deben ser un array')
+      .notEmpty()
+      .withMessage('Se requiere al menos un ID')
+      .custom((ids) => {
+        if (!Array.isArray(ids)) return false;
+        return ids.every(id => typeof id === 'string' && id.trim().length > 0);
+      })
+      .withMessage('Todos los IDs deben ser strings válidos')
+  ],
+  validateRequest,
+  obtenerIngredientesPorIds
+);
 
 // Validaciones para guardar ingrediente de OpenFoodFacts
 const validarGuardarIngrediente = [

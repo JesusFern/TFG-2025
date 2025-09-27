@@ -79,10 +79,10 @@ export async function crearDietaService({
 
   const dias = Array.from({ length: duracion }, () => ({
     caloriasTotales: null,
-    macronutrientes: '',
-    micronutrientes: '',
+    proteinas: null,
+    hidratosCarbono: null,
+    grasas: null,
     numeroComidas: comidasDiarias,
-    requerimientosHidratacion: '',
     cumplimiento: false,
     comidas: Array.from({ length: comidasDiarias }, (_, comidaIndex) => ({
         horaEstimada: horasComidas[comidaIndex],
@@ -128,10 +128,10 @@ export async function actualizarDietaService(
     dias?: Array<{
       _dayIndex?: number;
       caloriasTotales?: number;
-      macronutrientes?: string;
-      micronutrientes?: string;
+      proteinas?: number;
+      hidratosCarbono?: number;
+      grasas?: number;
       numeroComidas?: number;
-      requerimientosHidratacion?: string;
       cumplimiento?: boolean;
       comidas?: Array<{
         horaEstimada?: string;
@@ -169,10 +169,10 @@ export async function actualizarDiaDietaService(
   diaIndex: number,
   datosDia: {
     caloriasTotales?: number;
-    macronutrientes?: string;
-    micronutrientes?: string;
+    proteinas?: number;
+    hidratosCarbono?: number;
+    grasas?: number;
     numeroComidas?: number;
-    requerimientosHidratacion?: string;
     cumplimiento?: boolean;
     comidas?: Array<{
       horaEstimada?: string;

@@ -40,7 +40,11 @@ const RecetaSchema = new mongoose.Schema({
     ref: 'User',
     required: false 
   },
-  publica: { type: Boolean, required: true }
+  publica: { type: Boolean, required: true },
+  categoriasNutricionales: {
+    type: [String],
+    default: []
+  }
 }, {
   timestamps: true,
   collection: 'recetas'

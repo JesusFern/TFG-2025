@@ -17,13 +17,26 @@ export async function buscarDietaYVerificarPermisos(
 
   const dieta = await Dieta.findById(dietaId)
     .populate('creador', 'fullName email')
-    .populate('asignadaA', 'fullName email');
+    .populate('asignadaA', 'fullName email')
+    .populate({
+      path: 'dias.comidas.platos.receta',
+      populate: {
+        path: 'ingredientes.ingrediente',
+        model: 'Ingrediente'
+      }
+    })
+    .populate('dias.comidas.platos.ingredientesPersonalizados.ingrediente');
 
   if (!dieta) {
     throw new Error('Dieta no encontrada');
   }
 
-  // Verificar permisos
+  // Si es una dieta pública, permitir acceso sin restricciones de permisos
+  if (dieta.publica) {
+    return dieta;
+  }
+
+  // Verificar permisos para dietas normales
   if (verificarCreador) {
     const esCreador = dieta.creador && 
       (dieta.creador._id?.toString() === userId || dieta.creador.toString() === userId);
@@ -76,10 +89,10 @@ export function actualizarDatosDiaDieta(
   diaDieta: any,
   datosDia: {
     caloriasTotales?: number;
-    macronutrientes?: string;
-    micronutrientes?: string;
+    proteinas?: number;
+    hidratosCarbono?: number;
+    grasas?: number;
     numeroComidas?: number;
-    requerimientosHidratacion?: string;
     cumplimiento?: boolean;
     comidas?: Partial<IComida>[];
   }
@@ -87,17 +100,17 @@ export function actualizarDatosDiaDieta(
   if (typeof datosDia.caloriasTotales === 'number') 
     diaDieta.caloriasTotales = datosDia.caloriasTotales;
     
-  if (typeof datosDia.macronutrientes === 'string')
-    diaDieta.macronutrientes = datosDia.macronutrientes;
+  if (typeof datosDia.proteinas === 'number')
+    diaDieta.proteinas = datosDia.proteinas;
     
-  if (typeof datosDia.micronutrientes === 'string')
-    diaDieta.micronutrientes = datosDia.micronutrientes;
+  if (typeof datosDia.hidratosCarbono === 'number')
+    diaDieta.hidratosCarbono = datosDia.hidratosCarbono;
+    
+  if (typeof datosDia.grasas === 'number')
+    diaDieta.grasas = datosDia.grasas;
     
   if (typeof datosDia.numeroComidas === 'number')
     diaDieta.numeroComidas = datosDia.numeroComidas;
-    
-  if (typeof datosDia.requerimientosHidratacion === 'string')
-    diaDieta.requerimientosHidratacion = datosDia.requerimientosHidratacion;
     
   if (typeof datosDia.cumplimiento === 'boolean')
     diaDieta.cumplimiento = datosDia.cumplimiento;
