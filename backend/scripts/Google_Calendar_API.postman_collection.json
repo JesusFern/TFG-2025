@@ -1,0 +1,238 @@
+{
+  "info": {
+    "name": "Google Calendar API - Nutroos",
+    "description": "Colección de endpoints para probar la integración con Google Calendar",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "http://localhost:5000",
+      "type": "string"
+    },
+    {
+      "key": "authToken",
+      "value": "TU_JWT_TOKEN_AQUI",
+      "type": "string"
+    },
+    {
+      "key": "eventId",
+      "value": "EVENT_ID_AQUI",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "1. Obtener URL de Autenticación",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/google/auth/url",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "google", "auth", "url"]
+        },
+        "description": "Obtiene la URL para autenticar con Google Calendar"
+      },
+      "response": []
+    },
+    {
+      "name": "2. Callback de Google OAuth",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/google/callback?code=CODIGO_DE_AUTORIZACION",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "google", "callback"],
+          "query": [
+            {
+              "key": "code",
+              "value": "CODIGO_DE_AUTORIZACION",
+              "description": "Código de autorización de Google"
+            }
+          ]
+        },
+        "description": "Maneja el callback de Google OAuth"
+      },
+      "response": []
+    },
+    {
+      "name": "3. Verificar Estado de Conexión",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/google/status",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "google", "status"]
+        },
+        "description": "Verifica si el usuario tiene Google Calendar conectado"
+      },
+      "response": []
+    },
+    {
+      "name": "4. Obtener Eventos",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/google/events?startDate=2024-01-01T00:00:00Z&endDate=2024-12-31T23:59:59Z&maxResults=50",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "google", "events"],
+          "query": [
+            {
+              "key": "startDate",
+              "value": "2024-01-01T00:00:00Z",
+              "description": "Fecha de inicio (opcional)"
+            },
+            {
+              "key": "endDate",
+              "value": "2024-12-31T23:59:59Z",
+              "description": "Fecha de fin (opcional)"
+            },
+            {
+              "key": "maxResults",
+              "value": "50",
+              "description": "Número máximo de eventos (opcional)"
+            }
+          ]
+        },
+        "description": "Obtiene los eventos del calendario del usuario"
+      },
+      "response": []
+    },
+    {
+      "name": "5. Crear Evento",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Evento de Prueba - Nutroos\",\n  \"description\": \"Este es un evento de prueba creado desde la API de Nutroos\",\n  \"start\": \"2024-12-20T10:00:00Z\",\n  \"end\": \"2024-12-20T11:00:00Z\",\n  \"location\": \"Gimnasio Nutroos\",\n  \"attendees\": [\"test@example.com\"]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/google/events",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "google", "events"]
+        },
+        "description": "Crea un nuevo evento en el calendario del usuario"
+      },
+      "response": []
+    },
+    {
+      "name": "6. Actualizar Evento",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Evento ACTUALIZADO - Nutroos\",\n  \"description\": \"Este evento ha sido actualizado desde la API de Nutroos\",\n  \"start\": \"2024-12-20T14:00:00Z\",\n  \"end\": \"2024-12-20T15:30:00Z\",\n  \"location\": \"Gimnasio Nutroos - Sala Principal\",\n  \"attendees\": [\"test@example.com\", \"admin@example.com\"]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/google/events/{{eventId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "google", "events", "{{eventId}}"]
+        },
+        "description": "Actualiza un evento existente en el calendario"
+      },
+      "response": []
+    },
+    {
+      "name": "7. Eliminar Evento",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/google/events/{{eventId}}",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "google", "events", "{{eventId}}"]
+        },
+        "description": "Elimina un evento del calendario"
+      },
+      "response": []
+    },
+    {
+      "name": "8. Desconectar Google Calendar",
+      "request": {
+        "method": "DELETE",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{authToken}}",
+            "type": "text"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/google/disconnect",
+          "host": ["{{baseUrl}}"],
+          "path": ["api", "google", "disconnect"]
+        },
+        "description": "Desconecta la cuenta de Google Calendar del usuario"
+      },
+      "response": []
+    }
+  ]
+}

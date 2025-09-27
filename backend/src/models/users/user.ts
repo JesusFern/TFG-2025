@@ -31,6 +31,14 @@ interface UserDocument extends mongoose.Document {
   datosActividadFisica?: mongoose.Types.ObjectId;
   suscripcion?: mongoose.Types.ObjectId;
   
+  // ===== CAMPOS DE GOOGLE CALENDAR =====
+  google?: {
+    refreshToken?: string;
+    accessToken?: string;
+    tokenExpiry?: Date;
+    calendarConnected?: boolean;
+  };
+  
   // ===== CAMPOS DEL SISTEMA =====
   isNew: boolean;
 }
@@ -120,6 +128,14 @@ const UserSchema = new mongoose.Schema({
   suscripcion: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'UserSuscription'
+  },
+  
+  // ===== CAMPOS DE GOOGLE CALENDAR =====
+  google: {
+    refreshToken: { type: String },
+    accessToken: { type: String },
+    tokenExpiry: { type: Date },
+    calendarConnected: { type: Boolean, default: false }
   }
 }, { timestamps: true });
 
