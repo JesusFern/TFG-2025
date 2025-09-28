@@ -9,6 +9,134 @@ interface AuthenticatedRequest extends Request {
   };
 }
 
+interface ValidationResult {
+  isValid: boolean;
+  error?: {
+    status: number;
+    message: string;
+    error?: string;
+  };
+}
+
+interface UserResult {
+  user: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  error?: {
+    status: number;
+    message: string;
+  };
+}
+
+interface CalendarResult {
+  calendar: any; // eslint-disable-line @typescript-eslint/no-explicit-any
+  error?: {
+    status: number;
+    message: string;
+    error?: string;
+  };
+}
+
+// Función auxiliar para validar autenticación del usuario
+const validateUserAuthentication = (userId: string | undefined): ValidationResult => {
+  if (!userId) {
+    return {
+      isValid: false,
+      error: { status: 401, message: 'Usuario no autenticado' }
+    };
+  }
+  return { isValid: true };
+};
+
+// Función auxiliar para obtener y validar usuario con tokens de Google
+const getUserWithGoogleTokens = async (userId: string): Promise<UserResult> => {
+  try {
+    const user = await User.findById(userId).lean();
+    if (!user?.google?.refreshToken) {
+      return {
+        user: null,
+        error: { status: 400, message: 'Google Calendar no está conectado' }
+      };
+    }
+    return { user };
+  } catch (error) {
+    console.error('Error obteniendo usuario:', error);
+    return {
+      user: null,
+      error: { status: 500, message: 'Error al obtener información del usuario' }
+    };
+  }
+};
+
+// Función auxiliar para crear cliente de calendario con manejo de errores
+const createCalendarClient = async (refreshToken: string, userId: string): Promise<CalendarResult> => {
+  try {
+    const calendar = await GoogleCalendarService.getCalendarClientWithRefresh(refreshToken);
+    return { calendar };
+  } catch (error) {
+    console.error('Error creando cliente de calendario:', error);
+    
+    // Si el refresh token expiró, desconectar al usuario
+    if (error instanceof Error && error.message === 'REFRESH_TOKEN_EXPIRED') {
+      // Limpiar tokens del usuario
+      await User.findByIdAndUpdate(userId, {
+        $unset: {
+          'google.refreshToken': 1,
+          'google.accessToken': 1,
+          'google.tokenExpiry': 1,
+          'google.calendarConnected': 1
+        }
+      });
+      
+      return {
+        calendar: null,
+        error: { 
+          status: 401, 
+          message: 'Tu sesión de Google Calendar ha expirado. Por favor, reconecta tu cuenta.',
+          error: 'refresh_token_expired'
+        }
+      };
+    }
+    
+    return {
+      calendar: null,
+      error: { status: 500, message: 'Error al conectar con Google Calendar' }
+    };
+  }
+};
+
+// Función auxiliar para validar campos requeridos de evento
+const validateEventFields = (title: string, start: string, end: string): ValidationResult => {
+  if (!title || !start || !end) {
+    return {
+      isValid: false,
+      error: { status: 400, message: 'Título, fecha de inicio y fecha de fin son requeridos' }
+    };
+  }
+  return { isValid: true };
+};
+
+// Función auxiliar para manejar errores y enviar respuesta
+const handleError = (res: Response, error: { status: number; message: string; error?: string } | Error | undefined): void => {
+  if (!error) {
+    res.status(500).json({ 
+      message: 'Error interno del servidor',
+      error: 'Error desconocido'
+    });
+    return;
+  }
+  
+  if ('status' in error && 'message' in error) {
+    res.status(error.status).json({ 
+      message: error.message,
+      ...(error.error && { error: error.error })
+    });
+  } else {
+    res.status(500).json({ 
+      message: 'Error interno del servidor',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+};
+
 export const getGoogleAuthUrl = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const authUrl = GoogleCalendarService.getAuthUrl();
@@ -88,51 +216,29 @@ export const getCalendarEvents = async (req: AuthenticatedRequest, res: Response
     const userId = req.user?.id;
     const { startDate, endDate, maxResults = 50 } = req.query;
 
-    if (!userId) {
-      res.status(401).json({ message: 'Usuario no autenticado' });
-      return;
+    // Validar autenticación
+    const authValidation = validateUserAuthentication(userId);
+    if (!authValidation.isValid) {
+      return handleError(res, authValidation.error);
     }
 
     // Obtener usuario con tokens de Google
-    const user = await User.findById(userId).lean();
-    if (!user?.google?.refreshToken) {
-      res.status(400).json({ message: 'Google Calendar no está conectado' });
-      return;
+    const userResult = await getUserWithGoogleTokens(userId!);
+    if (userResult.error) {
+      return handleError(res, userResult.error);
     }
 
-    // Crear cliente de calendario con manejo de errores
-    let calendar;
-    try {
-      calendar = await GoogleCalendarService.getCalendarClientWithRefresh(user.google.refreshToken);
-    } catch (error) {
-      console.error('Error creando cliente de calendario:', error);
-      
-      // Si el refresh token expiró, desconectar al usuario
-      if (error instanceof Error && error.message === 'REFRESH_TOKEN_EXPIRED') {
-        // Limpiar tokens del usuario
-        await User.findByIdAndUpdate(userId, {
-          $unset: {
-            'google.refreshToken': 1,
-            'google.accessToken': 1,
-            'google.tokenExpiry': 1,
-            'google.calendarConnected': 1
-          }
-        });
-        
-        res.status(401).json({ 
-          message: 'Tu sesión de Google Calendar ha expirado. Por favor, reconecta tu cuenta.',
-          error: 'refresh_token_expired'
-        });
-        return;
-      }
-      
-      res.status(500).json({ message: 'Error al conectar con Google Calendar' });
-      return;
+    // Crear cliente de calendario
+    const calendarResult = await createCalendarClient(userResult.user.google.refreshToken, userId!);
+    if (calendarResult.error) {
+      return handleError(res, calendarResult.error);
     }
+
+    const calendar = calendarResult.calendar;
 
     // Primero, obtener la lista de calendarios para verificar acceso
     const calendarList = await calendar.calendarList.list();
-    console.log('Calendarios disponibles para obtener eventos:', calendarList.data.items?.map(cal => ({ id: cal.id, summary: cal.summary })));
+    console.log('Calendarios disponibles para obtener eventos:', calendarList.data.items?.map((cal: any) => ({ id: cal.id, summary: cal.summary }))); // eslint-disable-line @typescript-eslint/no-explicit-any
 
     // Configurar parámetros de consulta
     const queryParams: Record<string, any> = { // eslint-disable-line @typescript-eslint/no-explicit-any
@@ -167,7 +273,7 @@ export const getCalendarEvents = async (req: AuthenticatedRequest, res: Response
     console.log('Eventos obtenidos de Google Calendar:', data.items?.length || 0);
 
     // Formatear eventos para el frontend
-    const formattedEvents = (data.items || []).map(event => ({
+    const formattedEvents = (data.items || []).map((event: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
       id: event.id,
       title: event.summary || 'Sin título',
       description: event.description || '',
@@ -175,7 +281,7 @@ export const getCalendarEvents = async (req: AuthenticatedRequest, res: Response
       end: event.end?.dateTime || event.end?.date,
       allDay: !event.start?.dateTime,
       location: event.location || '',
-      attendees: event.attendees?.map(attendee => ({
+      attendees: event.attendees?.map((attendee: any) => ({ // eslint-disable-line @typescript-eslint/no-explicit-any
         email: attendee.email,
         displayName: attendee.displayName,
         responseStatus: attendee.responseStatus
@@ -210,53 +316,32 @@ export const createCalendarEvent = async (req: AuthenticatedRequest, res: Respon
       attendees = [] 
     } = req.body;
 
-    if (!userId) {
-      res.status(401).json({ message: 'Usuario no autenticado' });
-      return;
+    // Validar autenticación
+    const authValidation = validateUserAuthentication(userId);
+    if (!authValidation.isValid) {
+      return handleError(res, authValidation.error);
     }
 
     // Validar campos requeridos
-    if (!title || !start || !end) {
-      res.status(400).json({ message: 'Título, fecha de inicio y fecha de fin son requeridos' });
-      return;
+    const fieldValidation = validateEventFields(title, start, end);
+    if (!fieldValidation.isValid) {
+      return handleError(res, fieldValidation.error);
     }
 
     // Obtener usuario con tokens de Google
-    const user = await User.findById(userId).lean();
-    if (!user?.google?.refreshToken) {
-      res.status(400).json({ message: 'Google Calendar no está conectado' });
-      return;
+    const userResult = await getUserWithGoogleTokens(userId!);
+    if (userResult.error) {
+      return handleError(res, userResult.error);
     }
 
-    // Crear cliente de calendario con manejo de errores
-    let calendar;
-    try {
-      calendar = await GoogleCalendarService.getCalendarClientWithRefresh(user.google.refreshToken);
-    } catch (error) {
-      console.error('Error creando cliente de calendario:', error);
-      
-      // Si el refresh token expiró, desconectar al usuario
-      if (error instanceof Error && error.message === 'REFRESH_TOKEN_EXPIRED') {
-        // Limpiar tokens del usuario
-        await User.findByIdAndUpdate(userId, {
-          $unset: {
-            'google.refreshToken': 1,
-            'google.accessToken': 1,
-            'google.tokenExpiry': 1,
-            'google.calendarConnected': 1
-          }
-        });
-        
-        res.status(401).json({ 
-          message: 'Tu sesión de Google Calendar ha expirado. Por favor, reconecta tu cuenta.',
-          error: 'refresh_token_expired'
-        });
-        return;
-      }
-      
-      res.status(500).json({ message: 'Error al conectar con Google Calendar' });
-      return;
+    // Crear cliente de calendario
+    const calendarResult = await createCalendarClient(userResult.user.google.refreshToken, userId!);
+    if (calendarResult.error) {
+      return handleError(res, calendarResult.error);
     }
+
+    const calendar = calendarResult.calendar;
+    const user = userResult.user;
 
     // Crear evento con el usuario actual como attendee
     const eventAttendees = [
@@ -292,7 +377,7 @@ export const createCalendarEvent = async (req: AuthenticatedRequest, res: Respon
     try {
       // Primero, obtener la lista de calendarios para verificar que tenemos acceso
       const calendarList = await calendar.calendarList.list();
-      console.log('Calendarios disponibles:', calendarList.data.items?.map(cal => ({ id: cal.id, summary: cal.summary })));
+      console.log('Calendarios disponibles:', calendarList.data.items?.map((cal: any) => ({ id: cal.id, summary: cal.summary }))); // eslint-disable-line @typescript-eslint/no-explicit-any
 
       const { data } = await calendar.events.insert({
         calendarId: 'primary',
@@ -394,58 +479,35 @@ export const updateCalendarEvent = async (req: AuthenticatedRequest, res: Respon
       attendees = [] 
     } = req.body;
 
-    if (!userId) {
-      res.status(401).json({ message: 'Usuario no autenticado' });
-      return;
+    // Validar autenticación
+    const authValidation = validateUserAuthentication(userId);
+    if (!authValidation.isValid) {
+      return handleError(res, authValidation.error);
     }
 
     if (!eventId) {
-      res.status(400).json({ message: 'ID del evento es requerido' });
-      return;
+      return handleError(res, { status: 400, message: 'ID del evento es requerido' });
     }
 
     // Validar campos requeridos
-    if (!title || !start || !end) {
-      res.status(400).json({ message: 'Título, fecha de inicio y fecha de fin son requeridos' });
-      return;
+    const fieldValidation = validateEventFields(title, start, end);
+    if (!fieldValidation.isValid) {
+      return handleError(res, fieldValidation.error);
     }
 
     // Obtener usuario con tokens de Google
-    const user = await User.findById(userId).lean();
-    if (!user?.google?.refreshToken) {
-      res.status(400).json({ message: 'Google Calendar no está conectado' });
-      return;
+    const userResult = await getUserWithGoogleTokens(userId!);
+    if (userResult.error) {
+      return handleError(res, userResult.error);
     }
 
-    // Crear cliente de calendario con manejo de errores
-    let calendar;
-    try {
-      calendar = await GoogleCalendarService.getCalendarClientWithRefresh(user.google.refreshToken);
-    } catch (error) {
-      console.error('Error creando cliente de calendario:', error);
-      
-      // Si el refresh token expiró, desconectar al usuario
-      if (error instanceof Error && error.message === 'REFRESH_TOKEN_EXPIRED') {
-        // Limpiar tokens del usuario
-        await User.findByIdAndUpdate(userId, {
-          $unset: {
-            'google.refreshToken': 1,
-            'google.accessToken': 1,
-            'google.tokenExpiry': 1,
-            'google.calendarConnected': 1
-          }
-        });
-        
-        res.status(401).json({ 
-          message: 'Tu sesión de Google Calendar ha expirado. Por favor, reconecta tu cuenta.',
-          error: 'refresh_token_expired'
-        });
-        return;
-      }
-      
-      res.status(500).json({ message: 'Error al conectar con Google Calendar' });
-      return;
+    // Crear cliente de calendario
+    const calendarResult = await createCalendarClient(userResult.user.google.refreshToken, userId!);
+    if (calendarResult.error) {
+      return handleError(res, calendarResult.error);
     }
+
+    const calendar = calendarResult.calendar;
 
     // Actualizar evento
     const event = {
@@ -502,52 +564,29 @@ export const deleteCalendarEvent = async (req: AuthenticatedRequest, res: Respon
     const userId = req.user?.id;
     const { eventId } = req.params;
 
-    if (!userId) {
-      res.status(401).json({ message: 'Usuario no autenticado' });
-      return;
+    // Validar autenticación
+    const authValidation = validateUserAuthentication(userId);
+    if (!authValidation.isValid) {
+      return handleError(res, authValidation.error);
     }
 
     if (!eventId) {
-      res.status(400).json({ message: 'ID del evento es requerido' });
-      return;
+      return handleError(res, { status: 400, message: 'ID del evento es requerido' });
     }
 
     // Obtener usuario con tokens de Google
-    const user = await User.findById(userId).lean();
-    if (!user?.google?.refreshToken) {
-      res.status(400).json({ message: 'Google Calendar no está conectado' });
-      return;
+    const userResult = await getUserWithGoogleTokens(userId!);
+    if (userResult.error) {
+      return handleError(res, userResult.error);
     }
 
-    // Crear cliente de calendario con manejo de errores
-    let calendar;
-    try {
-      calendar = await GoogleCalendarService.getCalendarClientWithRefresh(user.google.refreshToken);
-    } catch (error) {
-      console.error('Error creando cliente de calendario:', error);
-      
-      // Si el refresh token expiró, desconectar al usuario
-      if (error instanceof Error && error.message === 'REFRESH_TOKEN_EXPIRED') {
-        // Limpiar tokens del usuario
-        await User.findByIdAndUpdate(userId, {
-          $unset: {
-            'google.refreshToken': 1,
-            'google.accessToken': 1,
-            'google.tokenExpiry': 1,
-            'google.calendarConnected': 1
-          }
-        });
-        
-        res.status(401).json({ 
-          message: 'Tu sesión de Google Calendar ha expirado. Por favor, reconecta tu cuenta.',
-          error: 'refresh_token_expired'
-        });
-        return;
-      }
-      
-      res.status(500).json({ message: 'Error al conectar con Google Calendar' });
-      return;
+    // Crear cliente de calendario
+    const calendarResult = await createCalendarClient(userResult.user.google.refreshToken, userId!);
+    if (calendarResult.error) {
+      return handleError(res, calendarResult.error);
     }
+
+    const calendar = calendarResult.calendar;
 
     // Eliminar evento
     await calendar.events.delete({

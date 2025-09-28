@@ -1,60 +1,14 @@
 import { apiRequest } from './api';
-
-// Tipos para Google Calendar
-export interface GoogleCalendarEvent {
-  id: string;
-  title: string;
-  description?: string;
-  start: string;
-  end: string;
-  location?: string;
-  attendees?: Array<{
-    email: string;
-    responseStatus: string;
-  }>;
-  creator?: {
-    email: string;
-  };
-  organizer?: {
-    email: string;
-  };
-  htmlLink?: string;
-}
-
-export interface CreateCalendarEventRequest {
-  title: string;
-  description?: string;
-  start: string;
-  end: string;
-  location?: string;
-  attendees?: string[];
-}
-
-export type UpdateCalendarEventRequest = CreateCalendarEventRequest;
-
-export interface CalendarEventsResponse {
-  events: GoogleCalendarEvent[];
-  total: number;
-}
-
-export interface CalendarStatusResponse {
-  connected: boolean;
-  hasRefreshToken: boolean;
-}
-
-export interface AuthUrlResponse {
-  authUrl: string;
-}
-
-export interface CallbackResponse {
-  message: string;
-  connected: boolean;
-}
-
-export interface DisconnectResponse {
-  message: string;
-  connected: boolean;
-}
+import { 
+  GoogleCalendarEvent,
+  CreateCalendarEventRequest,
+  UpdateCalendarEventRequest,
+  CalendarEventsResponse,
+  CalendarStatusResponse,
+  AuthUrlResponse,
+  CallbackResponse,
+  DisconnectResponse
+} from '../types/googleCalendar';
 
 class GoogleCalendarService {
   private baseEndpoint = '/api/google';

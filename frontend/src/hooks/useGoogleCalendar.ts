@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
+import { googleCalendarService } from '../services/googleCalendarService';
 import { 
-  googleCalendarService,
   GoogleCalendarEvent,
   CreateCalendarEventRequest,
   UpdateCalendarEventRequest
-} from '../services/googleCalendarService';
+} from '../types/googleCalendar';
 
 interface UseGoogleCalendarReturn {
   // Estado

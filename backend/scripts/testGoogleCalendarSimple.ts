@@ -59,11 +59,14 @@ class SimpleGoogleCalendarTester {
     console.log('\n👤 Probando modelo de usuario con campos de Google...');
     
     try {
+      // Usar contraseña de prueba desde variable de entorno o generar una segura
+      const testPassword = process.env.TEST_USER_PASSWORD || 'TestPassword123!@#';
+      
       // Crear usuario de prueba
       const testUser = new User({
         fullName: 'Test Google User',
         email: 'test-google@example.com',
-        password: 'password123',
+        password: testPassword,
         phoneNumber: '+1234567890',
         role: 'user',
         gender: 'Masculino',

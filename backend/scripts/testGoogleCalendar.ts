@@ -35,11 +35,14 @@ class GoogleCalendarTester {
     // Eliminar usuario de prueba existente
     await User.deleteOne({ email: 'test-calendar@example.com' });
     
+    // Usar contraseña de prueba desde variable de entorno o generar una segura
+    const testPassword = process.env.TEST_USER_PASSWORD || 'TestPassword123!@#';
+    
     // Crear nuevo usuario
     const user = new User({
       fullName: 'Test Calendar User',
       email: 'test-calendar@example.com',
-      password: 'password123',
+      password: testPassword,
       phoneNumber: '+1234567890',
       role: 'user',
       gender: 'Masculino',
