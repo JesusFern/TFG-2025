@@ -1,9 +1,14 @@
 import Dieta from '../../models/diets/dieta';
 import mongoose from 'mongoose';
 import Receta from '../../models/diets/receta';
+import { actualizarNutricionDia } from '../../helpers/calculoNutricionalHelper';
 
 type PlatoUpdate = {
-  _id: string;
+  _id?: string; // ID del plato (si existe como subdocumento)
+  dietaId: string; // ID de la dieta (REQUERIDO)
+  diaIndex: number; // Índice del día (REQUERIDO)
+  comidaIndex: number; // Índice de la comida (REQUERIDO)
+  platoIndex: number; // Índice del plato (REQUERIDO)
   nombre?: string;
   orden?: number;
   receta?: string;
@@ -22,54 +27,151 @@ export async function actualizarPlatosService(platos: PlatoUpdate[]) {
     throw new Error('Debes enviar una lista de platos a actualizar');
   }
 
-  const actualizados: Array<unknown> = [];
+  console.log('🚀 INICIO actualizarPlatosService:', {
+    platosRecibidos: platos.map(p => ({
+      _id: p._id,
+      dietaId: p.dietaId,
+      diaIndex: p.diaIndex,
+      comidaIndex: p.comidaIndex,
+      platoIndex: p.platoIndex,
+      nombre: p.nombre,
+      ingredientesPersonalizados: p.ingredientesPersonalizados
+    }))
+  });
+
+  const actualizados: unknown[] = [];
+  const diasActualizados = new Set<number>();
 
   for (const plato of platos) {
-    if (!plato._id) continue;
+    // Validar que tenemos todos los datos necesarios
+    if (!plato.dietaId || typeof plato.diaIndex !== 'number' || typeof plato.comidaIndex !== 'number' || typeof plato.platoIndex !== 'number') {
+      console.warn('❌ Plato sin datos requeridos, omitiendo:', {
+        dietaId: plato.dietaId,
+        diaIndex: plato.diaIndex,
+        comidaIndex: plato.comidaIndex,
+        platoIndex: plato.platoIndex
+      });
+      continue;
+    }
 
-    const dieta = await Dieta.findOne({ 'dias.comidas.platos._id': plato._id });
-    if (!dieta) continue;
+    // Buscar la dieta por ID
+    const dieta = await Dieta.findById(plato.dietaId);
+    if (!dieta) {
+      console.warn('❌ No se encontró dieta con ID:', plato.dietaId);
+      continue;
+    }
 
-    let platoActualizado = null;
-    for (const dia of dieta.dias) {
-      for (const comida of dia.comidas) {
-        const subPlato = comida.platos.id(plato._id);
-        if (subPlato) {
-          if (typeof plato.nombre !== 'undefined') subPlato.nombre = plato.nombre;
-          if (typeof plato.orden !== 'undefined') subPlato.orden = plato.orden;
-          if (typeof plato.receta !== 'undefined') {
-            const recetaExiste = await Receta.findById(plato.receta);
-            if (!recetaExiste) {
-              const error: NotFoundError = new Error(`No se encontró la receta con el id: ${plato.receta}`);
-              error.status = 404;
-              throw error;
-            }
-            subPlato.receta = new mongoose.Types.ObjectId(plato.receta);
-          }
-          if (typeof plato.ingredientesPersonalizados !== 'undefined') {
-            // Limpiar ingredientes existentes usando el método de Mongoose
-            subPlato.ingredientesPersonalizados.splice(0, subPlato.ingredientesPersonalizados.length);
-            // Añadir los nuevos ingredientes uno por uno
-            for (const ing of plato.ingredientesPersonalizados) {
-              // Validar que el ingrediente tenga un ID válido
-              if (ing.ingrediente && mongoose.Types.ObjectId.isValid(ing.ingrediente)) {
-                subPlato.ingredientesPersonalizados.push({
-                  ingrediente: new mongoose.Types.ObjectId(ing.ingrediente),
-                  peso: ing.peso
-                });
-              } else {
-                console.warn(`Ingrediente con ID inválido omitido: ${ing.ingrediente}`);
-              }
-            }
-          }
-          platoActualizado = subPlato;
+    console.log('🔍 Dieta encontrada:', {
+      dietaId: dieta._id,
+      totalDias: dieta.dias.length
+    });
+
+    // Validar que los índices son válidos
+    if (plato.diaIndex < 0 || plato.diaIndex >= dieta.dias.length) {
+      console.warn('❌ Índice de día inválido:', plato.diaIndex);
+      continue;
+    }
+
+    const dia = dieta.dias[plato.diaIndex];
+    if (plato.comidaIndex < 0 || plato.comidaIndex >= dia.comidas.length) {
+      console.warn('❌ Índice de comida inválido:', plato.comidaIndex);
+      continue;
+    }
+
+    const comida = dia.comidas[plato.comidaIndex];
+    if (plato.platoIndex < 0 || plato.platoIndex >= comida.platos.length) {
+      console.warn('❌ Índice de plato inválido:', plato.platoIndex);
+      continue;
+    }
+
+    // Acceder directamente al plato usando los índices
+    const subPlato = comida.platos[plato.platoIndex];
+    
+    console.log('✅ Plato encontrado por índices:', {
+      dietaId: plato.dietaId,
+      diaIndex: plato.diaIndex,
+      comidaIndex: plato.comidaIndex,
+      platoIndex: plato.platoIndex,
+      platoId: subPlato._id
+    });
+
+    // Actualizar propiedades del plato
+    if (typeof plato.nombre !== 'undefined') subPlato.nombre = plato.nombre;
+    if (typeof plato.orden !== 'undefined') subPlato.orden = plato.orden;
+    
+    // Actualizar receta
+    if (typeof plato.receta !== 'undefined' && plato.receta && plato.receta !== '') {
+      if (!mongoose.Types.ObjectId.isValid(plato.receta)) {
+        const error: NotFoundError = new Error(`ID de receta inválido: ${plato.receta}`);
+        error.status = 400;
+        throw error;
+      }
+      
+      const recetaExiste = await Receta.findById(plato.receta);
+      if (!recetaExiste) {
+        const error: NotFoundError = new Error(`No se encontró la receta con el id: ${plato.receta}`);
+        error.status = 404;
+        throw error;
+      }
+      subPlato.receta = new mongoose.Types.ObjectId(plato.receta);
+    } else if (plato.receta === null || plato.receta === '') {
+      subPlato.receta = undefined;
+    }
+    
+    // Actualizar ingredientes personalizados
+    if (typeof plato.ingredientesPersonalizados !== 'undefined') {
+      console.log('🔄 Actualizando ingredientes personalizados:', {
+        platoId: subPlato._id,
+        ingredientesRecibidos: plato.ingredientesPersonalizados,
+        ingredientesActuales: subPlato.ingredientesPersonalizados
+      });
+      
+      // Limpiar ingredientes existentes
+      subPlato.ingredientesPersonalizados.splice(0, subPlato.ingredientesPersonalizados.length);
+      
+      // Añadir los nuevos ingredientes
+      for (const ing of plato.ingredientesPersonalizados) {
+        if (ing.ingrediente && mongoose.Types.ObjectId.isValid(ing.ingrediente)) {
+          const nuevoIngrediente = {
+            ingrediente: new mongoose.Types.ObjectId(ing.ingrediente),
+            peso: ing.peso
+          };
+          subPlato.ingredientesPersonalizados.push(nuevoIngrediente);
+          console.log('✅ Ingrediente añadido:', nuevoIngrediente);
+        } else {
+          console.warn(`❌ Ingrediente con ID inválido omitido: ${ing.ingrediente}`);
         }
       }
+      
+      console.log('📊 Ingredientes finales después de actualizar:', subPlato.ingredientesPersonalizados);
     }
-    if (platoActualizado) {
-      await dieta.save();
-      actualizados.push(platoActualizado);
-    }
+    
+    console.log('💾 Guardando dieta con plato actualizado:', {
+      platoId: subPlato._id,
+      diaIndex: plato.diaIndex,
+      comidaIndex: plato.comidaIndex,
+      platoIndex: plato.platoIndex,
+      ingredientesAntesDeGuardar: subPlato.ingredientesPersonalizados
+    });
+    
+    // Verificar el estado antes de guardar
+    const platoAntesDeGuardar = dieta.dias[plato.diaIndex].comidas[plato.comidaIndex].platos[plato.platoIndex];
+    console.log('🔍 Estado del plato antes de guardar:', {
+      ingredientesPersonalizados: platoAntesDeGuardar?.ingredientesPersonalizados
+    });
+    
+    await dieta.save();
+    
+    // Verificar el estado después de guardar
+    const dietaActualizada = await Dieta.findById(dieta._id);
+    const platoDespuesDeGuardar = dietaActualizada?.dias[plato.diaIndex].comidas[plato.comidaIndex].platos[plato.platoIndex];
+    console.log('🔍 Estado del plato después de guardar:', {
+      ingredientesPersonalizados: platoDespuesDeGuardar?.ingredientesPersonalizados
+    });
+    
+    console.log('✅ Dieta guardada exitosamente');
+    actualizados.push(subPlato);
+    diasActualizados.add(plato.diaIndex);
   }
 
   if (actualizados.length === 0) {
@@ -77,6 +179,14 @@ export async function actualizarPlatosService(platos: PlatoUpdate[]) {
     const error: NotFoundError = new Error(`No se encontró ningún plato con los ids: ${ids}`);
     error.status = 404;
     throw error;
+  }
+
+  // Recalcular las calorías y macronutrientes para todos los días que fueron modificados
+  for (const diaIndex of diasActualizados) {
+    const dieta = await Dieta.findOne({ 'dias.comidas.platos._id': { $in: platos.map(p => p._id) } });
+    if (dieta) {
+      await actualizarNutricionDia(dieta, diaIndex);
+    }
   }
 
   return actualizados;

@@ -8,12 +8,14 @@ import {
   Avatar,
   Breadcrumbs,
   Paper,
-  Box
+  Box,
+  Button
 } from '@mantine/core';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import FormularioCrearDieta from '../components/forms/diets/FormularioCrearDieta';
+import TipoCreacionDieta, { TipoCreacion } from '../components/forms/diets/TipoCreacionDieta';
 import { DietaResponse } from '../types';
-import { IconAlertCircle, IconUser, IconChevronRight } from '@tabler/icons-react';
+import { IconAlertCircle, IconUser, IconChevronRight, IconChevronLeft } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { BREADCRUMBS_DIET_BASE } from '../constants/training';
 import { createBreadcrumbItems, renderClientInfo } from '../components/common/BreadcrumbUtils';
@@ -30,9 +32,45 @@ const CrearDietaPage: React.FC = () => {
   });
   
   const [mensaje, setMensaje] = useState<{ tipo: 'error', texto: string } | null>(null);
+  const [pasoActual, setPasoActual] = useState<'seleccion' | 'formulario'>('seleccion');
+  const [tipoCreacion, setTipoCreacion] = useState<TipoCreacion | null>(null);
+  const [datosCreacion, setDatosCreacion] = useState<{
+    tipoArquetipo?: string;
+    plantillaInfo?: {
+      tipo: string;
+      nombre: string;
+      descripcion: string;
+      caloriasObjetivo: number;
+    };
+    dietaOrigenId?: string;
+    dietaInfo?: DietaResponse;
+  } | undefined>(undefined);
   
   const handleClienteInfoUpdate = (nombre: string) => {
     setClienteInfo(prev => ({ ...prev, nombre }));
+  };
+
+  const handleSeleccionarTipo = (tipo: TipoCreacion, datosExtra?: {
+    tipoArquetipo?: string;
+    plantillaInfo?: {
+      tipo: string;
+      nombre: string;
+      descripcion: string;
+      caloriasObjetivo: number;
+    };
+    dietaOrigenId?: string;
+    dietaInfo?: DietaResponse;
+  }) => {
+    setTipoCreacion(tipo);
+    setDatosCreacion(datosExtra);
+    setPasoActual('formulario');
+  };
+
+  const handleVolverSeleccion = () => {
+    setPasoActual('seleccion');
+    setTipoCreacion(null);
+    setDatosCreacion(undefined);
+    setMensaje(null);
   };
 
   const handleDietaCreada = (dietaData: DietaResponse) => {
@@ -50,13 +88,28 @@ const CrearDietaPage: React.FC = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
     setTimeout(() => setMensaje(null), 5000);
   };
-  
-  // Ya no necesitamos la función handleContinuar
 
   const items = createBreadcrumbItems(BREADCRUMBS_DIET_BASE, [
     { title: 'Detalles del cliente', href: `/clientes/${clienteInfo.id}` },
     { title: 'Crear dieta', href: '#' }
   ]);
+
+  const getTituloPaso = () => {
+    if (pasoActual === 'seleccion') {
+      return 'Seleccionar tipo de creación';
+    }
+    
+    switch (tipoCreacion) {
+      case 'desde-cero':
+        return 'Crear dieta desde cero';
+      case 'desde-plantilla':
+        return `Crear dieta desde plantilla: ${datosCreacion?.plantillaInfo?.nombre || ''}`;
+      case 'desde-existente':
+        return `Crear dieta desde: ${datosCreacion?.dietaInfo?.nombre || ''}`;
+      default:
+        return 'Crear Nueva Dieta';
+    }
+  };
 
   return (
     <Container size="md" py="xl">
@@ -83,19 +136,33 @@ const CrearDietaPage: React.FC = () => {
           borderColor: 'var(--app-border-color)' 
         }}
       >
-        <Group mb="md" align="flex-start">
-          <Avatar 
-            size="lg" 
-            color="nutroos-green" 
-            radius="xl"
-          >
-            <IconUser size="1.5rem" />
-          </Avatar>
-          
-          <Box style={{ flex: 1 }}>
-            <Title order={2} mb={5} c="nutroos-green.6">Crear Nueva Dieta</Title>
-            {renderClientInfo(clienteInfo.nombre, clienteInfo.id)}
-          </Box>
+        <Group mb="md" align="flex-start" justify="space-between">
+          <Group align="flex-start">
+            <Avatar 
+              size="lg" 
+              color="nutroos-green" 
+              radius="xl"
+            >
+              <IconUser size="1.5rem" />
+            </Avatar>
+            
+            <Box style={{ flex: 1 }}>
+              <Title order={2} mb={5} c="nutroos-green.6">{getTituloPaso()}</Title>
+              {renderClientInfo(clienteInfo.nombre, clienteInfo.id)}
+            </Box>
+          </Group>
+
+          {pasoActual === 'formulario' && (
+            <Button
+              variant="outline"
+              color="gray"
+              leftSection={<IconChevronLeft size={16} />}
+              onClick={handleVolverSeleccion}
+              size="sm"
+            >
+              Cambiar tipo
+            </Button>
+          )}
         </Group>
       </Paper>
       
@@ -120,13 +187,22 @@ const CrearDietaPage: React.FC = () => {
         </motion.div>
       )}
         
-      <FormularioCrearDieta 
-        onSuccess={handleDietaCreada}
-        onError={handleError}
-        clienteId={clienteInfo.id}
-        clienteNombre={clienteInfo.nombre}
-        onClienteNombreLoaded={handleClienteInfoUpdate}
-      />
+      {pasoActual === 'seleccion' ? (
+        <TipoCreacionDieta 
+          onSeleccionarTipo={handleSeleccionarTipo}
+          clienteId={clienteInfo.id}
+        />
+      ) : (
+        <FormularioCrearDieta 
+          onSuccess={handleDietaCreada}
+          onError={handleError}
+          clienteId={clienteInfo.id}
+          clienteNombre={clienteInfo.nombre}
+          onClienteNombreLoaded={handleClienteInfoUpdate}
+          tipoCreacion={tipoCreacion}
+          datosCreacion={datosCreacion}
+        />
+      )}
     </Container>
   );
 };

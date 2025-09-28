@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, memo, useRef, useMemo } from 'react';
 import { 
   TextInput, 
   Group, 
@@ -26,12 +26,14 @@ interface PlatoFormConIngredientesProps {
   plato: Plato;
   onSave: (plato: Plato) => void;
   onCancel: () => void;
+  onUpdate?: (plato: Plato) => void;
 }
 
 const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({ 
   plato, 
   onSave, 
-  onCancel 
+  onCancel,
+  onUpdate
 }) => {
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
@@ -45,6 +47,11 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [hasTriedSubmit, setHasTriedSubmit] = useState<boolean>(false);
+  const [forceRender, setForceRender] = useState<number>(0); // Para forzar re-renders cuando sea necesario
+  
+  // Ref para evitar múltiples cargas del mismo plato
+  const lastProcessedPlatoId = useRef<string | null>(null);
+  const isLoadingIngredients = useRef<boolean>(false);
   
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
@@ -136,7 +143,7 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
   const cargarIngredientesDeReceta = useCallback(async (recetaId: string) => {
     try {
       setLoading(true);
-      const resultados = await buscarRecetas(''); // Obtener todas las recetas
+      const resultados = await buscarRecetas('');
       const recetaEncontrada = resultados.find(r => r._id === recetaId);
       
       if (recetaEncontrada) {
@@ -183,18 +190,29 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
     } finally {
       setLoading(false);
     }
-  }, [plato.ingredientesPersonalizados]);
+  }, []);
 
-  const cargarIngredientesPersonalizados = useCallback(async (ingredientesPersonalizados: Array<{ ingrediente: string; peso: number }>) => {
+  const cargarIngredientesPersonalizados = useCallback(async (ingredientesPersonalizados: Array<{ ingrediente: string | { _id: string; nombre: string; calorias: number; proteinas: number; grasas: number; hidratosCarbono: number; }; peso: number }>) => {
+    // Evitar múltiples cargas simultáneas
+    if (isLoadingIngredients.current) {
+      return;
+    }
+    
     try {
+      isLoadingIngredients.current = true;
       setLoading(true);
-      console.log('Cargando ingredientes personalizados del plato:', ingredientesPersonalizados);
+      console.log(`🧄 Cargando ${ingredientesPersonalizados.length} ingredientes personalizados`);
       
       const ingredientesCompletos: Ingrediente[] = [];
       
       for (const ingPersonalizado of ingredientesPersonalizados) {
         try {
-          const response = await fetch(`/api/ingredientes/${ingPersonalizado.ingrediente}`, {
+          const ingredienteId = typeof ingPersonalizado.ingrediente === 'string' 
+            ? ingPersonalizado.ingrediente 
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            : (ingPersonalizado.ingrediente as any)._id || (ingPersonalizado.ingrediente as any).id;
+          
+          const response = await fetch(`/api/ingredientes/${ingredienteId}`, {
             headers: {
               'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             }
@@ -204,7 +222,7 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
             const ingredienteData = await response.json();
             const ingredienteCompleto: Ingrediente = {
               nombre: ingredienteData.nombre,
-              peso: ingPersonalizado.peso,
+              peso: ingPersonalizado.peso, // ✅ USAR EL PESO DEL INGREDIENTE PERSONALIZADO
               informacionNutricional: {
                 calorias: ingredienteData.calorias || 0,
                 proteinas: ingredienteData.proteinas || 0,
@@ -221,39 +239,94 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
               id: ingredienteData._id
             };
             ingredientesCompletos.push(ingredienteCompleto);
-          } else {
-            console.warn(`No se pudo cargar el ingrediente con ID: ${ingPersonalizado.ingrediente}`);
+            console.log(`✅ Ingrediente cargado: ${ingredienteData.nombre} con peso ${ingPersonalizado.peso}g (desde BD)`);
           }
         } catch (error) {
-          console.error(`Error al cargar ingrediente ${ingPersonalizado.ingrediente}:`, error);
+          console.error(`❌ Error al cargar ingrediente:`, error);
         }
       }
       
-      console.log('Ingredientes personalizados cargados:', ingredientesCompletos);
+      console.log(`✅ Ingredientes cargados: ${ingredientesCompletos.length}/${ingredientesPersonalizados.length}`);
       setIngredientes(ingredientesCompletos);
     } catch (error) {
-      console.error("Error al cargar ingredientes personalizados:", error);
+      console.error("❌ Error al cargar ingredientes personalizados:", error);
       setIngredientes([]);
     } finally {
       setLoading(false);
+      isLoadingIngredients.current = false;
     }
   }, []);
 
+  // Memoizar las propiedades estables del plato para evitar renders innecesarios
+  const platoPropiedades = useMemo(() => {
+    const recetaId = plato.receta || null;
+    return {
+      id: plato._id || 'new',
+      nombre: plato.nombre || 'unnamed',
+      recetaId: recetaId || 'no-recipe',
+      numIngredientes: plato.ingredientesPersonalizados?.length || 0,
+      tieneIngredientesPersonalizados: !!(plato.ingredientesPersonalizados && plato.ingredientesPersonalizados.length > 0),
+      tieneReceta: !!plato.receta,
+      // Agregar hash de ingredientes para detectar cambios más específicos
+      ingredientesHash: plato.ingredientesPersonalizados?.map(ing => {
+        const ingredienteId = typeof ing.ingrediente === 'string' ? ing.ingrediente : (ing.ingrediente && typeof ing.ingrediente === 'object' && '_id' in ing.ingrediente) ? ing.ingrediente._id : 'unknown';
+        return `${ingredienteId}-${ing.peso}`;
+      }).join(',') || 'empty'
+    };
+  }, [plato._id, plato.nombre, plato.receta, plato.ingredientesPersonalizados]);
+
   useEffect(() => {
+    // Crear un identificador único usando las propiedades memoizadas incluyendo el hash de ingredientes
+    const platoId = `${platoPropiedades.id}-${platoPropiedades.nombre}-${platoPropiedades.recetaId}-${platoPropiedades.ingredientesHash}`;
+    
+    // No procesar platos con datos por defecto/vacíos
+    if (platoPropiedades.nombre === 'unnamed' && platoPropiedades.recetaId === 'no-recipe' && platoPropiedades.numIngredientes === 0) {
+      console.log('⏭️ Saltando procesamiento de plato con datos por defecto');
+      return;
+    }
+    
+    // Solo procesar si es un plato diferente (pero permitir re-procesamiento si es necesario)
+    if (lastProcessedPlatoId.current === platoId) {
+      console.log('⚪ Plato ya procesado, saltando:', platoId);
+      return;
+    }
+    
+    console.log('🍽️ Procesando plato reactivo:', { 
+      nombre: platoPropiedades.nombre, 
+      receta: platoPropiedades.recetaId !== 'no-recipe' ? 'Sí' : 'No',
+      ingredientes: platoPropiedades.numIngredientes,
+      platoId: platoId
+    });
+    lastProcessedPlatoId.current = platoId;
+    
+    // Actualizar formData solo cuando realmente cambie
     setFormData({
       ...plato,
       nombre: plato.nombre || '',
       ingredientesPersonalizados: plato.ingredientesPersonalizados || []
     });
 
-    // Si el plato tiene una receta asociada, cargar sus ingredientes
-    if (plato.receta) {
-      cargarIngredientesDeReceta(plato.receta);
-    } else if (plato.ingredientesPersonalizados && plato.ingredientesPersonalizados.length > 0) {
-      // Si no hay receta pero hay ingredientes personalizados, cargarlos
+    // Cargar ingredientes según prioridad
+    if (platoPropiedades.tieneIngredientesPersonalizados && plato.ingredientesPersonalizados) {
+      console.log('🔄 Cargando ingredientes personalizados desde plato:', plato.ingredientesPersonalizados);
       cargarIngredientesPersonalizados(plato.ingredientesPersonalizados);
+    } else if (plato.receta) {
+      cargarIngredientesDeReceta(plato.receta);
+    } else {
+      setIngredientes([]);
+      setIngredientesReceta([]);
     }
-  }, [plato, cargarIngredientesDeReceta, cargarIngredientesPersonalizados]);
+  }, [platoPropiedades]);
+
+  // Limpiar el ref cuando se desmonta el componente
+  useEffect(() => {
+    return () => {
+      console.log('🧹 Limpiando componente PlatoFormConIngredientes');
+      lastProcessedPlatoId.current = null;
+      isLoadingIngredients.current = false;
+    };
+  }, []);
+
 
   useEffect(() => {
     if (searchTerm.length > 0) {
@@ -311,7 +384,29 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
       peso: ingrediente.peso || 100 // Peso por defecto
     };
     
-    setIngredientes([...ingredientes, nuevoIngrediente]);
+    const newIngredientes = [...ingredientes, nuevoIngrediente];
+    setIngredientes(newIngredientes);
+    
+    // ✅ ACTUALIZAR INMEDIATAMENTE los ingredientesPersonalizados del plato
+    const ingredientesPersonalizadosActualizados = newIngredientes
+      .filter(ing => ing.id || ing.codigoBarras)
+      .map(ing => ({
+        ingrediente: ing.id || ing.codigoBarras || '',
+        peso: ing.peso || 100
+      }));
+
+    // Actualizar el formData con los nuevos ingredientesPersonalizados
+    const platoActualizado = {
+      ...formData,
+      ingredientesPersonalizados: ingredientesPersonalizadosActualizados
+    };
+    
+    setFormData(platoActualizado);
+    
+    // ✅ PROPAGAR INMEDIATAMENTE al padre para actualizar la vista y recalcular nutrición
+    if (onUpdate) {
+      onUpdate(platoActualizado);
+    }
     
     // Limpiar el error de validación cuando se añade un ingrediente
     if (errors.ingredientes && errors.ingredientes !== 'Este ingrediente ya ha sido añadido') {
@@ -323,7 +418,29 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
   };
 
   const removeIngrediente = (index: number) => {
-    setIngredientes(ingredientes.filter((_, i) => i !== index));
+    const newIngredientes = ingredientes.filter((_, i) => i !== index);
+    setIngredientes(newIngredientes);
+    
+    // ✅ ACTUALIZAR INMEDIATAMENTE los ingredientesPersonalizados del plato
+    const ingredientesPersonalizadosActualizados = newIngredientes
+      .filter(ing => ing.id || ing.codigoBarras)
+      .map(ing => ({
+        ingrediente: ing.id || ing.codigoBarras || '',
+        peso: ing.peso || 100
+      }));
+
+    // Actualizar el formData con los nuevos ingredientesPersonalizados
+    const platoActualizado = {
+      ...formData,
+      ingredientesPersonalizados: ingredientesPersonalizadosActualizados
+    };
+    
+    setFormData(platoActualizado);
+    
+    // ✅ PROPAGAR INMEDIATAMENTE al padre para actualizar la vista y recalcular nutrición
+    if (onUpdate) {
+      onUpdate(platoActualizado);
+    }
   };
 
   const updateIngredientePeso = (index: number, nuevoPeso: number) => {
@@ -333,15 +450,73 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
       peso: nuevoPeso
     };
     setIngredientes(newIngredientes);
+
+    // ✅ ACTUALIZAR INMEDIATAMENTE los ingredientesPersonalizados del plato
+    const ingredientesPersonalizadosActualizados = newIngredientes
+      .filter(ing => ing.id || ing.codigoBarras)
+      .map(ing => ({
+        ingrediente: ing.id || ing.codigoBarras || '',
+        peso: ing.peso || 100
+      }));
+
+    // Actualizar el formData con los nuevos ingredientesPersonalizados
+    const platoActualizado = {
+      ...formData,
+      ingredientesPersonalizados: ingredientesPersonalizadosActualizados
+    };
+    
+    setFormData(platoActualizado);
+    
+    // ✅ PROPAGAR INMEDIATAMENTE al padre para actualizar la vista y recalcular nutrición
+    if (onUpdate) {
+      onUpdate(platoActualizado);
+    }
   };
 
   const updateIngredienteRecetaPeso = (index: number, nuevoPeso: number) => {
-    const newIngredientes = [...ingredientesReceta];
-    newIngredientes[index] = {
-      ...newIngredientes[index],
-      peso: nuevoPeso
+    console.log('🏋️ Actualizando peso del ingrediente:', { index, nuevoPeso });
+    
+    // Forzar re-render de la interfaz
+    setForceRender(prev => prev + 1);
+    
+    // Actualizar el array de ingredientes con el nuevo peso
+    const newIngredientes = [...ingredientes];
+    if (newIngredientes[index]) {
+      newIngredientes[index] = {
+        ...newIngredientes[index],
+        peso: nuevoPeso
+      };
+      setIngredientes(newIngredientes);
+      setIngredientesReceta(newIngredientes);
+    }
+
+    // ✅ ACTUALIZAR INMEDIATAMENTE los ingredientesPersonalizados del plato
+    const ingredientesPersonalizadosActualizados = newIngredientes
+      .filter(ing => ing.id || ing.codigoBarras)
+      .map(ing => ({
+        ingrediente: ing.id || ing.codigoBarras || '',
+        peso: ing.peso || 100
+      }));
+
+    // Actualizar el formData con los nuevos ingredientesPersonalizados
+    const platoActualizado = {
+      ...formData,
+      ingredientesPersonalizados: ingredientesPersonalizadosActualizados
     };
-    setIngredientesReceta(newIngredientes);
+    
+    setFormData(platoActualizado);
+
+    console.log('🎯 Peso actualizado y propagado:', {
+      index,
+      nuevoPeso,
+      nombreIngrediente: newIngredientes[index]?.nombre,
+      ingredientesPersonalizados: ingredientesPersonalizadosActualizados
+    });
+    
+    // ✅ PROPAGAR INMEDIATAMENTE al padre para actualizar la vista y recalcular nutrición
+    if (onUpdate) {
+      onUpdate(platoActualizado);
+    }
   };
 
   const removeIngredienteReceta = (index: number) => {
@@ -349,25 +524,39 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
   };
 
   const handleSelectReceta = (recetaId: string) => {
+    // Evitar actualizaciones innecesarias si la receta ya está seleccionada
+    if (formData.receta === recetaId) {
+      return;
+    }
+    
     const recetaSeleccionada = recetas.find(r => r._id === recetaId);
     
     if (recetaSeleccionada) {
-      console.log('Receta seleccionada:', recetaSeleccionada);
-      console.log('Ingredientes de la receta:', recetaSeleccionada.ingredientes);
-      
-      setFormData({
-        ...formData,
-        nombre: recetaSeleccionada.nombreReceta,
-        receta: recetaId
-      });
+      console.log(`🎯 Seleccionando receta: "${recetaSeleccionada.nombreReceta}"`);
       
       // Convertir y cargar los ingredientes de la receta
       const ingredientesConvertidos = convertirIngredientesReceta(recetaSeleccionada);
-      console.log('Ingredientes convertidos:', ingredientesConvertidos);
-      setIngredientesReceta(ingredientesConvertidos);
       
-      // Limpiar ingredientes personalizados cuando se selecciona una receta
-      setIngredientes([]);
+      // Crear ingredientes personalizados actualizados
+      const ingredientesPersonalizadosActualizados = ingredientesConvertidos
+        .filter(ing => ing.id || ing.codigoBarras)
+        .map(ing => ({
+          ingrediente: ing.id || ing.codigoBarras || '',
+          peso: ing.peso || 100
+        }));
+      
+      // Actualizar el formData con todos los cambios de una vez
+      const nuevoFormData = {
+        ...formData,
+        nombre: recetaSeleccionada.nombreReceta,
+        receta: recetaId,
+        ingredientesPersonalizados: ingredientesPersonalizadosActualizados
+      };
+      
+      // Actualizar todos los estados internos
+      setFormData(nuevoFormData);
+      setIngredientes(ingredientesConvertidos);
+      setIngredientesReceta(ingredientesConvertidos);
       
       // Limpiar el error de validación cuando se selecciona una receta
       if (errors.ingredientes) {
@@ -376,17 +565,33 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
           ingredientes: ''
         }));
       }
+      
+      console.log(`✅ Formulario actualizado: "${recetaSeleccionada.nombreReceta}" con ${ingredientesConvertidos.length} ingredientes`);
+      
+      // Notificar al padre sobre el cambio de receta para vista previa
+      if (onUpdate) {
+        onUpdate(nuevoFormData);
+      }
     }
   };
 
   const handleClearReceta = () => {
-    setFormData({
+    const nuevoFormData = {
       ...formData,
       receta: null,
-      nombre: '' // Limpiar también el nombre del plato
-    });
-    // Limpiar ingredientes de la receta
+      nombre: '', // Limpiar también el nombre del plato
+      ingredientesPersonalizados: [] // Limpiar ingredientes del plato
+    };
+    
+    // Actualizar todos los estados de una vez para evitar bucles
+    setFormData(nuevoFormData);
     setIngredientesReceta([]);
+    setIngredientes([]);
+    
+    // Notificar al padre sobre el cambio para vista previa
+    if (onUpdate) {
+      onUpdate(nuevoFormData);
+    }
   };
 
   const validateForm = (): boolean => {
@@ -588,18 +793,21 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
               </Text>
             </Alert>
 
-            {/* Ingredientes de la receta con pesos editables */}
-            {ingredientesReceta.length > 0 && (
+            {/* Ingredientes del plato con pesos editables */}
+            {ingredientes.length > 0 ? (
               <Box>
                 <Text size="sm" fw={500} mb="xs">
-                  Ingredientes de la receta
+                  Ingredientes del plato ({ingredientes.length})
                 </Text>
                 <Text size="xs" c="dimmed" mb="sm">
-                  Modifica los pesos según las porciones que deseas para este plato.
+                  {formData.receta 
+                    ? "Modifica los pesos según las porciones que deseas para este plato. No puedes eliminar ingredientes cuando hay una receta seleccionada."
+                    : "Modifica los pesos según las porciones que deseas para este plato."
+                  }
                 </Text>
 
                 <Stack gap="sm">
-                  {ingredientesReceta.map((ingrediente, index) => {
+                  {ingredientes.map((ingrediente, index) => {
                     const infoNutricional = obtenerInfoNutricional(ingrediente);
                     const caloriasPorPeso = Math.round((infoNutricional.calorias * ingrediente.peso) / 100);
                     const proteinasPorPeso = ((infoNutricional.proteinas * ingrediente.peso) / 100).toFixed(1);
@@ -639,6 +847,7 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
                                 Peso (g)
                               </Text>
                               <NumberInput
+                                key={`peso-${index}-${ingrediente.peso}-${ingrediente.id || ingrediente.nombre}-${forceRender}`}
                                 value={ingrediente.peso}
                                 onChange={(value) => updateIngredienteRecetaPeso(index, Number(value) || 0)}
                                 min={1}
@@ -652,7 +861,9 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
                               color="red"
                               variant="subtle"
                               size="sm"
+                              disabled={!!formData.receta}
                               onClick={() => removeIngredienteReceta(index)}
+                              title={formData.receta ? "No se pueden eliminar ingredientes cuando hay una receta seleccionada" : "Eliminar ingrediente"}
                             >
                               <IconTrash size={14} />
                             </ActionIcon>
@@ -664,7 +875,7 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
                 </Stack>
 
                 {/* Resumen nutricional total */}
-                {ingredientesReceta.length > 0 && (
+                {ingredientes.length > 0 && (
                   <Box
                     mt="md"
                     p="sm"
@@ -679,7 +890,7 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
                     </Text>
                     <Text size="xs" c={isDark ? "nutroos-green.2" : "nutroos-green.7"}>
                       {(() => {
-                        const totales = ingredientesReceta.reduce((acc, ing) => {
+                        const totales = ingredientes.reduce((acc, ing) => {
                           const info = obtenerInfoNutricional(ing);
                           const factor = ing.peso / 100;
                           return {
@@ -695,6 +906,12 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
                     </Text>
                   </Box>
                 )}
+              </Box>
+            ) : (
+              <Box>
+                <Text size="sm" c="dimmed" ta="center" py="md">
+                  No hay ingredientes cargados para este plato.
+                </Text>
               </Box>
             )}
           </Box>
@@ -724,4 +941,24 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
   );
 };
 
-export default PlatoFormConIngredientes;
+// Comparador personalizado para memo que compara propiedades relevantes
+const arePropsEqual = (prevProps: PlatoFormConIngredientesProps, nextProps: PlatoFormConIngredientesProps) => {
+  // Comparar plato por propiedades individuales en lugar de referencia del objeto
+  const prevPlato = prevProps.plato;
+  const nextPlato = nextProps.plato;
+  
+  const prevRecetaId = prevPlato.receta || null;
+  const nextRecetaId = nextPlato.receta || null;
+  
+  return (
+    prevPlato._id === nextPlato._id &&
+    prevPlato.nombre === nextPlato.nombre &&
+    prevRecetaId === nextRecetaId &&
+    (prevPlato.ingredientesPersonalizados?.length || 0) === (nextPlato.ingredientesPersonalizados?.length || 0) &&
+    prevProps.onSave === nextProps.onSave &&
+    prevProps.onCancel === nextProps.onCancel &&
+    prevProps.onUpdate === nextProps.onUpdate
+  );
+};
+
+export default memo(PlatoFormConIngredientes, arePropsEqual);

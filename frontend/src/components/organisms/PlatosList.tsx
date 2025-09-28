@@ -6,7 +6,7 @@ import EmptyPlatoCard from './EmptyPlatoCard';
 interface PlatosListProps {
   platos: Array<{
     nombre?: string | null;
-    receta?: string | null;
+    receta?: string | null | { _id: string; nombreReceta?: string; [key: string]: unknown };
   }>;
   isDark: boolean;
   isMobile?: boolean;

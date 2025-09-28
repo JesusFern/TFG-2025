@@ -5,9 +5,10 @@ import { apiRequest } from './api';
 const formatearPlatoParaBackend = (plato: Plato) => {
   const platoFormateado: {
     _id?: string;
-    dietaId?: string;
-    diaIndex?: number;
-    comidaIndex?: number;
+    dietaId: string;
+    diaIndex: number;
+    comidaIndex: number;
+    platoIndex: number;
     nombre: string;
     orden: number;
     receta?: string | null;
@@ -17,31 +18,31 @@ const formatearPlatoParaBackend = (plato: Plato) => {
     }>;
   } = {
     nombre: plato.nombre || '',
-    orden: plato.orden
+    orden: plato.orden,
+    dietaId: plato.dietaId || '',
+    diaIndex: plato.diaIndex || 0,
+    comidaIndex: plato.comidaIndex || 0,
+    platoIndex: plato.platoIndex || 0
   };
   
   if (plato._id || plato.idPlato) {
     platoFormateado._id = plato._id || plato.idPlato;
   }
   
-  if (plato.dietaId) {
-    platoFormateado.dietaId = plato.dietaId;
-  }
-  
-  if (typeof plato.diaIndex === 'number') {
-    platoFormateado.diaIndex = plato.diaIndex;
-  }
-  
-  if (typeof plato.comidaIndex === 'number') {
-    platoFormateado.comidaIndex = plato.comidaIndex;
-  }
-  
   if (plato.receta) {
-    platoFormateado.receta = plato.receta;
+    // Si receta es un objeto (poblado), extraer el _id, si es string usar directamente
+    platoFormateado.receta = typeof plato.receta === 'string' 
+      ? plato.receta 
+      : (plato.receta as { _id?: string; id?: string })._id || (plato.receta as { _id?: string; id?: string }).id || '';
   }
   
   if (plato.ingredientesPersonalizados && plato.ingredientesPersonalizados.length > 0) {
-    platoFormateado.ingredientesPersonalizados = plato.ingredientesPersonalizados;
+    platoFormateado.ingredientesPersonalizados = plato.ingredientesPersonalizados.map(ing => ({
+      ingrediente: typeof ing.ingrediente === 'string' 
+        ? ing.ingrediente 
+        : (ing.ingrediente as { _id?: string; id?: string })._id || (ing.ingrediente as { _id?: string; id?: string }).id || '',
+      peso: ing.peso
+    }));
   }
   
   return platoFormateado;

@@ -1,7 +1,41 @@
 import { Response } from 'express';
+import { body } from 'express-validator';
 import logger from '../../utils/logger';
 import Dieta from '../../models/diets/dieta';
 import { esIdValido, manejarErrorGenerico } from '../commonValidators';
+import { TIPOS_DIETA } from '../../constants/dietTypes';
+
+// Función reutilizable para validar fechas en formato DD-MM-YYYY
+const validarFechaInicio = (esOpcional = false) => {
+  const validator = body('fechaInicio');
+  
+  if (esOpcional) {
+    validator.optional();
+  }
+  
+  return validator
+    .matches(/^\d{1,2}-\d{1,2}-\d{4}$/)
+    .withMessage('La fecha de inicio debe tener el formato DD-MM-YYYY')
+    .custom((value) => {
+      const [day, month, year] = value.split('-').map(Number);
+      const fecha = new Date(year, month - 1, day);
+      
+      // Verificar que la fecha es válida
+      if (fecha.getDate() !== day || fecha.getMonth() !== month - 1 || fecha.getFullYear() !== year) {
+        throw new Error('Fecha inválida');
+      }
+      
+      // Verificar que la fecha es futura
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      if (fecha <= hoy) {
+        throw new Error('La fecha de inicio debe ser posterior al día actual');
+      }
+      
+      return true;
+    })
+    .withMessage('La fecha de inicio debe ser una fecha válida y futura');
+};
 
 export const verificarDietaExiste = async (
   dietaId: string,
@@ -115,3 +149,92 @@ export const manejarErrorDieta = (
   // Usar el manejador genérico para el resto de errores
   manejarErrorGenerico(error, res, operacion, contexto);
 };
+
+// Validadores de express-validator para dietas
+export const crearDietaValidator = [
+  body('nombre')
+    .isString()
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('El nombre es obligatorio y debe tener entre 1 y 100 caracteres'),
+  
+  body('descripcion')
+    .optional()
+    .isString()
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage('La descripción debe tener máximo 500 caracteres'),
+  
+  body('tipo')
+    .isArray({ min: 1 })
+    .withMessage('Debe seleccionar al menos un tipo de dieta')
+    .custom((value) => {
+      return value.every((tipo: string) => TIPOS_DIETA.includes(tipo as typeof TIPOS_DIETA[number]));
+    })
+    .withMessage('Tipo de dieta inválido. Los tipos válidos son: ' + TIPOS_DIETA.join(', ')),
+  
+  body('duracion')
+    .isInt({ min: 1, max: 365 })
+    .withMessage('La duración debe ser un número entero entre 1 y 365 días'),
+  
+  body('comidasDiarias')
+    .isInt({ min: 1, max: 6 })
+    .withMessage('Las comidas diarias deben ser un número entero entre 1 y 6'),
+  
+  validarFechaInicio(false),
+  
+  body('asignadaA')
+    .optional()
+    .isMongoId()
+    .withMessage('ID de usuario asignado inválido'),
+  
+  body('horasComidas')
+    .isArray()
+    .withMessage('Las horas de comidas deben ser un array'),
+  
+  body('nombreComidas')
+    .isArray()
+    .withMessage('Los nombres de comidas deben ser un array')
+];
+
+export const actualizarDietaValidator = [
+  body('nombre')
+    .optional()
+    .isString()
+    .trim()
+    .isLength({ min: 1, max: 100 })
+    .withMessage('El nombre debe tener entre 1 y 100 caracteres'),
+  
+  body('descripcion')
+    .optional()
+    .isString()
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage('La descripción debe tener máximo 500 caracteres'),
+  
+  body('tipo')
+    .optional()
+    .isArray({ min: 1 })
+    .withMessage('Debe seleccionar al menos un tipo de dieta')
+    .custom((value) => {
+      return value.every((tipo: string) => TIPOS_DIETA.includes(tipo as typeof TIPOS_DIETA[number]));
+    })
+    .withMessage('Tipo de dieta inválido. Los tipos válidos son: ' + TIPOS_DIETA.join(', ')),
+  
+  body('duracion')
+    .optional()
+    .isInt({ min: 1, max: 365 })
+    .withMessage('La duración debe ser un número entero entre 1 y 365 días'),
+  
+  body('comidasDiarias')
+    .optional()
+    .isInt({ min: 1, max: 6 })
+    .withMessage('Las comidas diarias deben ser un número entero entre 1 y 6'),
+  
+  validarFechaInicio(true),
+  
+  body('draftMode')
+    .optional()
+    .isBoolean()
+    .withMessage('El modo borrador debe ser un valor booleano')
+];

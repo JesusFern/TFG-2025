@@ -5,6 +5,7 @@ import LandingPage from '../pages/LandingPage';
 import CrearDietaPage from '../pages/CrearDietaPage';
 import EditarDietaPage from '../pages/EditarDietaPage';
 import VerDietaPage from '../pages/VerDietaPage';
+import DetalleDiaPage from '../pages/DetalleDiaPage';
 import ProfilePage from '../pages/ProfilePage';
 import DashboardPage from '../pages/DashboardPage';
 import { ChatPage } from '../pages/ChatPage';
@@ -210,6 +211,14 @@ const AppRoutes: React.FC = () => {
         <ProtectedRoute>
           <Layout>
             <VerDietaPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+
+      <Route path="/dieta/:dietaId/dia/:diaIndex" element={
+        <ProtectedRoute>
+          <Layout>
+            <DetalleDiaPage />
           </Layout>
         </ProtectedRoute>
       } />

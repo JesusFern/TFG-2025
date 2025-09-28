@@ -2,6 +2,7 @@ import { seedAdminUser, seedUsers } from './users/seedUsers';
 import { seedWorkers } from './users/seedWorkers';
 import { seedSuscriptionPlans } from './suscriptionPlans/seedSuscriptionPlans';
 import { seedIngredientes } from './diets/seedIngredientes';
+import { seedRecetas } from './diets/seedRecetas';
 import { seedEjercicios } from './training/seedEjercicios';
 import mongoose from 'mongoose';
 import User from '../models/users/user';
@@ -21,16 +22,20 @@ async function runSeed() {
     await User.deleteMany({});
     console.log('Colección de usuarios borrada.');
 
-    // Crear usuarios en orden: admin, trabajadores, usuarios regulares
+    // Crear usuarios en orden: admin, usuarios regulares, trabajadores
     await seedAdminUser();
-    await seedWorkers();
     await seedUsers();
+    await seedWorkers();
 
     // Crear planes de suscripción
     await seedSuscriptionPlans();
 
     // Cargar ingredientes (requiere JSON generado previamente)
     await seedIngredientes();
+
+    // Crear recetas reusables
+    await seedRecetas();
+
 
     // Crear ejercicios de entrenamiento
     await seedEjercicios();

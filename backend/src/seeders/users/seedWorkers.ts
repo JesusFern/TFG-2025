@@ -54,8 +54,55 @@ export async function seedWorkers() {
       await worker.save();
       console.log(`Trabajador ${workerData.fullName} creado`);
     }
+
+    // Asignar user1 al nutricionista1
+    await asignarClienteANutricionista();
   } catch (error) {
     console.error('Error al crear trabajadores:', error);
     throw error;  // Propagamos el error para manejo centralizado
+  }
+}
+
+async function asignarClienteANutricionista() {
+  try {
+    // Buscar nutricionista1
+    const nutricionista = await User.findOne({ email: 'nutricionista1@example.com' });
+    if (!nutricionista) {
+      console.log('⚠️ Nutricionista1 no encontrado.');
+      return;
+    }
+
+    // Buscar user1
+    const cliente = await User.findOne({ email: 'user1@example.com' });
+    if (!cliente) {
+      console.log('⚠️ User1 no encontrado.');
+      return;
+    }
+
+    console.log('🔧 Asignando cliente al nutricionista...');
+    console.log('   Nutricionista ID:', nutricionista._id);
+    console.log('   Cliente ID:', cliente._id);
+
+    // Asignar cliente al nutricionista usando updateOne para evitar validaciones
+    await User.updateOne(
+      { _id: nutricionista._id },
+      { 
+        $set: { 
+          clientesAsignados: [{
+            clienteId: cliente._id,
+            tipoAsignacion: 'Nutricionista'
+          }]
+        }
+      }
+    );
+
+    // Verificar la asignación
+    const nutricionistaActualizado = await User.findById(nutricionista._id);
+    console.log(`✅ Cliente ${cliente.fullName} asignado a ${nutricionista.fullName} como Nutricionista`);
+    console.log('   Clientes asignados:', nutricionistaActualizado?.clientesAsignados);
+    
+  } catch (error) {
+    console.error('Error al asignar cliente al nutricionista:', error);
+    throw error;
   }
 }

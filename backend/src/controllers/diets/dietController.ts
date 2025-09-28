@@ -13,6 +13,7 @@ import {
   manejarErrorDieta
 } from '../../validators/diets/dietValidators';
 import { verificarAutenticacion, esIdValido } from '../../validators/commonValidators';
+import { actualizarNutricionDia } from '../../helpers/calculoNutricionalHelper';
 
 export const crearDieta = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -251,6 +252,9 @@ export const crearPlato = async (req: AuthenticatedRequest, res: Response): Prom
     
     await dieta.save();
     
+    // Recalcular las calorías y macronutrientes del día
+    await actualizarNutricionDia(dieta, diaIndex);
+    
     const platoCreado = dieta.dias[diaIndex].comidas[comidaIndex].platos[dieta.dias[diaIndex].comidas[comidaIndex].platos.length - 1];
     
     logger.info('Plato creado correctamente', { dietaId, diaIndex, comidaIndex, platoId: platoCreado._id });
@@ -329,6 +333,9 @@ export const eliminarPlato = async (req: AuthenticatedRequest, res: Response): P
     }
     
     await dieta.save();
+    
+    // Recalcular las calorías y macronutrientes del día
+    await actualizarNutricionDia(dieta, diaIndex);
     
     logger.info('Plato eliminado correctamente', { 
       dietaId: dieta._id, 
@@ -415,5 +422,54 @@ export const getMyDiets = async (req: AuthenticatedRequest, res: Response): Prom
     });
   } catch (error) {
     manejarErrorDieta(error, res, 'obtener mis dietas');
+  }
+};
+
+export const getMyCreatedDiets = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = verificarAutenticacion(req, res, 'obtener dietas creadas');
+    if (!userId) return;
+
+    console.log('🔍 Debug getMyCreatedDiets - Usuario:', {
+      id: userId,
+      role: req.user?.role
+    });
+
+    // Verificar que el usuario es un nutricionista o admin
+    if (req.user?.role !== 'admin' && req.user?.role !== 'worker') {
+      res.status(403).json({ message: 'Solo los nutricionistas pueden acceder a sus dietas creadas' });
+      return;
+    }
+
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      res.status(400).json({ message: 'ID de usuario inválido' });
+      return;
+    }
+
+    console.log('🔍 Debug getMyCreatedDiets - Buscando dietas para creador:', userId);
+
+    // Buscar todas las dietas del creador (incluyendo borradores)
+    const dietas = await Dieta.find({
+      creador: userId
+    })
+    .populate('asignadaA', 'fullName email')
+    .sort({ createdAt: -1 });
+
+    console.log('🔍 Debug getMyCreatedDiets - Total dietas encontradas (incluyendo borradores):', dietas.length);
+    console.log('🔍 Debug getMyCreatedDiets - Detalles de dietas:', dietas.map(d => ({
+      id: d._id,
+      nombre: d.nombre,
+      draftMode: d.draftMode,
+      creador: d.creador
+    })));
+
+    res.status(200).json({
+      message: `Se encontraron ${dietas.length} dietas creadas`,
+      dietas,
+      count: dietas.length
+    });
+  } catch (error) {
+    console.error('🔍 Debug getMyCreatedDiets - Error:', error);
+    manejarErrorDieta(error, res, 'obtener dietas creadas');
   }
 };

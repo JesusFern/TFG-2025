@@ -1,7 +1,9 @@
+import { TipoDieta } from '../constants/dietTypes';
+
 export interface CrearDietaDTO {
   nombre: string;
   descripcion?: string;
-  tipo: string[];
+  tipo: TipoDieta[];
   duracion: number;
   comidasDiarias: number;
   fechaInicio: string;
@@ -14,7 +16,7 @@ export interface DietaResponse {
   _id: string;
   nombre: string;
   descripcion?: string;
-  tipo: string[];
+  tipo: TipoDieta[];
   duracion: number;
   comidasDiarias: number;
   fechaInicio: string;
@@ -22,11 +24,11 @@ export interface DietaResponse {
   asignadaA?: string[];
   dias?: Array<{
     caloriasTotales?: number | null;
-    macronutrientes?: string;
-    micronutrientes?: string;
+    proteinas?: number | null;
+    hidratosCarbono?: number | null;
+    grasas?: number | null;
     numeroComidas?: number | null;
     genero?: string;
-    requerimientosHidratacion?: string;
     cumplimiento?: boolean;
     comidas?: Array<{
       horaEstimada?: string | null;
@@ -117,7 +119,7 @@ export interface Receta {
 export interface DietaActualizacionDTO {
   nombre?: string;
   descripcion?: string;
-  tipo?: string[];
+  tipo?: TipoDieta[];
   duracion?: number;
   comidasDiarias?: number;
   fechaInicio?: string;
@@ -125,10 +127,10 @@ export interface DietaActualizacionDTO {
   dias?: Array<{
     _dayIndex: number;
     caloriasTotales?: number;
-    macronutrientes?: string;
-    micronutrientes?: string;
+    proteinas?: number;
+    hidratosCarbono?: number;
+    grasas?: number;
     numeroComidas?: number;
-    requerimientosHidratacion?: string;
     cumplimiento?: boolean;
     comidas?: Array<{
       horaEstimada?: string;
@@ -144,12 +146,20 @@ export interface Plato {
   orden: number;
   receta: string | null;
   ingredientesPersonalizados?: Array<{
-    ingrediente: string; // ObjectId del ingrediente
+    ingrediente: string | {
+      _id: string;
+      nombre: string;
+      calorias: number;
+      proteinas: number;
+      grasas: number;
+      hidratosCarbono: number;
+    }; // ObjectId del ingrediente o ingrediente poblado
     peso: number;
   }>;
   dietaId?: string;
   diaIndex?: number;
   comidaIndex?: number;
+  platoIndex?: number;
 }
 
 export interface Comida {
@@ -160,10 +170,10 @@ export interface Comida {
 
 export interface DiaDieta {
   caloriasTotales?: number;
-  macronutrientes?: string;
-  micronutrientes?: string;
+  proteinas?: number;
+  hidratosCarbono?: number;
+  grasas?: number;
   numeroComidas?: number;
-  requerimientosHidratacion?: string;
   cumplimiento: boolean;
   comidas: Comida[];
 }

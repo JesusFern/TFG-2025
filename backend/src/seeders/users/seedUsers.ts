@@ -63,3 +63,4 @@ export async function seedUsers() {
     throw error;  // Propagamos el error para manejo centralizado
   }
 }
+

@@ -212,7 +212,7 @@ UserSchema.pre('save', async function (next) {
     try {
       const User = mongoose.model('User');
       const clientesIds = doc.clientesAsignados.map(cliente => cliente.clienteId);
-      const clientesIdsUnicos = [...new Set(clientesIds)]; // Eliminar duplicados
+      const clientesIdsUnicos = Array.from(new Set(clientesIds)); // Eliminar duplicados
       const clientes = await User.find({ _id: { $in: clientesIdsUnicos } });
       
       // Verificar que todos los IDs encontrados corresponden a usuarios con rol 'user'
