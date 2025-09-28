@@ -75,7 +75,7 @@ jest.mock('../../src/service/diets/dietTemplateService', () => ({
     'Alta en proteínas'
   ]),
   obtenerConfiguracionArquetipo: jest.fn().mockImplementation((tipo: string) => {
-    const configuraciones: Record<string, any> = {
+    const configuraciones: Record<string, { nombre: string; descripcion: string; caloriasObjetivo: number }> = {
       'Mediterránea': {
         nombre: "Dieta Mediterránea Tradicional Española",
         descripcion: "Dieta mediterránea tradicional española con 5 comidas diarias.",
@@ -442,8 +442,8 @@ describe('Diet Template Endpoints', () => {
 
     it('debería manejar errores del servicio correctamente', async () => {
       // Mock para simular error del servicio
-      const { crearDietaDesdeTemplate } = require('../../src/service/diets/dietTemplateService');
-      crearDietaDesdeTemplate.mockImplementationOnce(async () => {
+      const { crearDietaDesdeTemplate } = await import('../../src/service/diets/dietTemplateService');
+      (crearDietaDesdeTemplate as jest.Mock).mockImplementationOnce(async () => {
         throw new Error('Tipo de arquetipo no válido');
       });
 
@@ -483,7 +483,7 @@ describe('Diet Template Endpoints', () => {
       expect(res.body.data.length).toBeGreaterThan(0);
       
       // Verificar que cada tipo tiene la estructura correcta
-      res.body.data.forEach((tipo: any) => {
+      res.body.data.forEach((tipo: { tipo: string; nombre: string; descripcion: string; caloriasObjetivo: number }) => {
         expect(tipo).toHaveProperty('tipo');
         expect(tipo).toHaveProperty('nombre');
         expect(tipo).toHaveProperty('descripcion');
@@ -499,7 +499,7 @@ describe('Diet Template Endpoints', () => {
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('success', true);
       
-      const tipos = res.body.data.map((tipo: any) => tipo.tipo);
+      const tipos = res.body.data.map((tipo: { tipo: string; nombre: string; descripcion: string; caloriasObjetivo: number }) => tipo.tipo);
       expect(tipos).toContain('Mediterránea');
       expect(tipos).toContain('Vegetariana');
       expect(tipos).toContain('Vegana');
@@ -511,8 +511,8 @@ describe('Diet Template Endpoints', () => {
 
     it('debería manejar errores correctamente', async () => {
       // Mock para simular error del servicio
-      const { obtenerTiposArquetipoDisponibles } = require('../../src/service/diets/dietTemplateService');
-      obtenerTiposArquetipoDisponibles.mockImplementationOnce(() => {
+      const { obtenerTiposArquetipoDisponibles } = await import('../../src/service/diets/dietTemplateService');
+      (obtenerTiposArquetipoDisponibles as jest.Mock).mockImplementationOnce(() => {
         throw new Error('Error al obtener tipos');
       });
 
@@ -553,8 +553,8 @@ describe('Diet Template Endpoints', () => {
 
     it('debería manejar errores correctamente', async () => {
       // Mock para simular error del servicio
-      const { obtenerConfiguracionArquetipo } = require('../../src/service/diets/dietTemplateService');
-      obtenerConfiguracionArquetipo.mockImplementationOnce(() => {
+      const { obtenerConfiguracionArquetipo } = await import('../../src/service/diets/dietTemplateService');
+      (obtenerConfiguracionArquetipo as jest.Mock).mockImplementationOnce(() => {
         throw new Error('Error al obtener configuración');
       });
 

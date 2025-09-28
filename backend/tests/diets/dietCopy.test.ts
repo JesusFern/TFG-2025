@@ -414,8 +414,8 @@ describe('Diet Copy Endpoints', () => {
 
   it('debería manejar errores del servicio correctamente', async () => {
     // Mock para simular error del servicio
-    const { crearDietaDesdeExistente } = require('../../src/service/diets/dietCopyService');
-    crearDietaDesdeExistente.mockImplementationOnce(async () => {
+    const { crearDietaDesdeExistente } = await import('../../src/service/diets/dietCopyService');
+    (crearDietaDesdeExistente as jest.Mock).mockImplementationOnce(async () => {
       throw new Error('Dieta origen no encontrada');
     });
 
