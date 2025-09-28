@@ -1,57 +1,96 @@
-import axios, { AxiosError } from 'axios';
-import { ApiError } from '../types';
+import { apiRequest } from './api';
 
-const API_URL = '/api';
-
-export interface ClienteAsignado {
+export interface ClienteWorker {
   _id: string;
   fullName: string;
   email: string;
-  role: string;
+  phoneNumber: string;
+  role: 'user';
   gender?: string;
-  phoneNumber?: string;
   birthDate?: string;
-  tipoAsignacion?: 'Nutricionista' | 'Entrenador personal';
-  datosSaludYNutricion?: {
-    peso?: number;
-    altura?: number;
-    imc?: number;
-    objetivosNutricionales?: string[];
-    alergias?: string[];
-    restriccionesDieteticas?: string[];
-  };
-  datosActividadFisica?: {
-    nivelActividad?: string;
-    tipoEjercicio?: string[];
-    frecuenciaEjercicio?: string;
-  };
+  profilePicture?: string;
+  datosSaludYNutricion?: string;
+  datosActividadFisica?: string;
+  suscripcion?: string;
 }
 
-export interface ClientesResponse {
-  message: string;
-  clientes: ClienteAsignado[];
+export interface ClienteAsignado {
+  clienteId: string;
+  tipoAsignacion: 'Nutricionista' | 'Entrenador personal';
+  cliente: ClienteWorker;
 }
 
-export const getClientesAsignados = async (workerId: string): Promise<ClienteAsignado[]> => {
+/**
+ * Obtener los clientes asignados al trabajador actual
+ */
+export const getClientesAsignados = async (): Promise<ClienteAsignado[]> => {
   try {
-    const token = localStorage.getItem('authToken');
-    
-    if (!token) {
-      throw new Error('No hay token de autenticación');
-    }
-    
-    const response = await axios.get<ClienteAsignado[]>(`${API_URL}/users/clients/assigned/${workerId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`
-      }
+    // Usar el endpoint existente que obtiene los clientes asignados al trabajador actual
+    const response = await apiRequest('/api/users/clients/assigned/me', {
+      method: 'GET'
     });
     
-    return response.data;
-  } catch (error: unknown) {
-    if (axios.isAxiosError(error)) {
-      const axiosError = error as AxiosError<ApiError>;
-      throw new Error(axiosError.response?.data.message || 'Error al obtener clientes asignados');
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al obtener clientes asignados');
     }
-    throw new Error('Error de conexión al servidor');
+    
+    const data = await response.json();
+    return data.data || data;
+  } catch (error) {
+    console.error('Error al obtener clientes asignados:', error);
+    throw error;
+  }
+};
+
+/**
+ * Obtener estadísticas nutricionales de un cliente específico
+ */
+export const getEstadisticasNutricionalesCliente = async (clienteId: string, semana?: number, año?: number) => {
+  try {
+    const params = new URLSearchParams();
+    if (semana) params.append('semana', semana.toString());
+    if (año) params.append('año', año.toString());
+    
+    const response = await apiRequest(`/api/users/workers/estadisticas-nutricionales/${clienteId}?${params.toString()}`, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al obtener estadísticas nutricionales del cliente');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error al obtener estadísticas nutricionales del cliente:', error);
+    throw error;
+  }
+};
+
+/**
+ * Obtener estadísticas de entrenamiento de un cliente específico
+ */
+export const getEstadisticasEntrenamientoCliente = async (clienteId: string, semana?: number, año?: number) => {
+  try {
+    const params = new URLSearchParams();
+    if (semana) params.append('semana', semana.toString());
+    if (año) params.append('año', año.toString());
+    
+    const response = await apiRequest(`/api/users/workers/estadisticas-entrenamiento/${clienteId}?${params.toString()}`, {
+      method: 'GET'
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al obtener estadísticas de entrenamiento del cliente');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error al obtener estadísticas de entrenamiento del cliente:', error);
+    throw error;
   }
 };

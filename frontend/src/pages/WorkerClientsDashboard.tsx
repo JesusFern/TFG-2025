@@ -21,6 +21,14 @@ import { IconAlertCircle, IconUser, IconWeight, IconRuler, IconNotes, IconSearch
 import { getClientesAsignados, ClienteAsignado } from '../services/workerService';
 import { getUserData } from '../services/authService';
 
+interface DatosSaludYNutricion {
+	peso?: number;
+	altura?: number;
+	imc?: number;
+	alergias?: string[];
+	restriccionesDieteticas?: string[];
+}
+
 const WorkerClientsDashboard: React.FC = () => {
 	const [clientes, setClientes] = useState<ClienteAsignado[]>([]);
 	const [loading, setLoading] = useState<boolean>(true);
@@ -37,7 +45,7 @@ const WorkerClientsDashboard: React.FC = () => {
 		const fetchClientes = async () => {
 			try {
 				setLoading(true);
-				const clientes = await getClientesAsignados(user._id);
+				const clientes = await getClientesAsignados();
 				setClientes(clientes);
 				setError(null);
 			} catch (err) {
@@ -76,16 +84,10 @@ const WorkerClientsDashboard: React.FC = () => {
 		}
 	};
 
-	const formatDate = (dateString?: string) => {
-		if (!dateString) return 'No disponible';
-		const date = new Date(dateString);
-		return date.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
-	};
   
 	const filteredClients = clientes.filter(cliente => 
-		cliente.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-		cliente.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-		(cliente.phoneNumber && cliente.phoneNumber.includes(searchQuery))
+		(cliente.cliente?.fullName && cliente.cliente.fullName.toLowerCase().includes(searchQuery.toLowerCase())) ||
+		(cliente.cliente?.email && cliente.cliente.email.toLowerCase().includes(searchQuery.toLowerCase()))
 	);
 
 	if (loading) {
@@ -135,7 +137,7 @@ const WorkerClientsDashboard: React.FC = () => {
       
 			{clientes.length > 0 && (
 				<TextInput
-					placeholder="Buscar cliente por nombre, email o teléfono..."
+					placeholder="Buscar cliente por nombre o email..."
 					leftSection={<IconSearch size={16} />}
 					mb="md"
 					value={searchQuery}
@@ -189,7 +191,7 @@ const WorkerClientsDashboard: React.FC = () => {
 			) : (
 				<Grid>
 					{filteredClients.map((cliente) => (
-						<Grid.Col key={cliente._id} span={{ base: 12, md: 6, lg: 4 }}>
+						<Grid.Col key={cliente.clienteId} span={{ base: 12, md: 6, lg: 4 }}>
 							<Card 
 								p="md" 
 								radius="md" 
@@ -208,17 +210,17 @@ const WorkerClientsDashboard: React.FC = () => {
 											color="nutroos-green" 
 											radius="xl"
 										>
-											{cliente.fullName.charAt(0).toUpperCase()}
+											{cliente.cliente?.fullName?.charAt(0).toUpperCase() || '?'}
 										</Avatar>
 										<div>
-											<Text fw={700}>{cliente.fullName}</Text>
-											<Text size="sm" c="dimmed">{cliente.email}</Text>
+											<Text fw={700}>{cliente.cliente?.fullName || 'Sin nombre'}</Text>
+											<Text size="sm" c="dimmed">{cliente.cliente?.email || 'Sin email'}</Text>
 										</div>
 									</Group>
 									<Group gap="xs">
-										{cliente.gender && (
-											<Badge color={getBadgeColor(cliente.gender)} size="sm">
-												{cliente.gender}
+										{cliente.cliente?.gender && (
+											<Badge color={getBadgeColor(cliente.cliente.gender)} size="sm">
+												{cliente.cliente.gender}
 											</Badge>
 										)}
 										{cliente.tipoAsignacion && (
@@ -233,66 +235,54 @@ const WorkerClientsDashboard: React.FC = () => {
 								</Group>
                 
 								<Stack gap="xs" mb="md" style={{ flex: 1 }}>
-									{cliente.phoneNumber && (
-										<Text size="sm">
-											<b>Teléfono:</b> {cliente.phoneNumber}
-										</Text>
-									)}
-                  
-									{cliente.birthDate && (
-										<Text size="sm">
-											<b>Fecha de nacimiento:</b> {formatDate(cliente.birthDate)}
-										</Text>
-									)}
-                  
-									<Group grow gap="xs" mt="xs">
-										{cliente.datosSaludYNutricion?.peso && (
+									<Group grow gap="xs">
+										{(cliente.cliente?.datosSaludYNutricion as DatosSaludYNutricion)?.peso && (
 											<Badge 
 												leftSection={<IconWeight size={14} />}
 												color="blue" 
 												variant="outline"
 											>
-												{cliente.datosSaludYNutricion.peso} kg
+												{(cliente.cliente.datosSaludYNutricion as DatosSaludYNutricion).peso} kg
 											</Badge>
 										)}
                     
-										{cliente.datosSaludYNutricion?.altura && (
+										{(cliente.cliente?.datosSaludYNutricion as DatosSaludYNutricion)?.altura && (
 											<Badge 
 												leftSection={<IconRuler size={14} />}
 												color="cyan" 
 												variant="outline"
 											>
-												{cliente.datosSaludYNutricion.altura} cm
+												{(cliente.cliente.datosSaludYNutricion as DatosSaludYNutricion).altura} cm
 											</Badge>
 										)}
                     
-										{cliente.datosSaludYNutricion?.imc && (
+										{(cliente.cliente?.datosSaludYNutricion as DatosSaludYNutricion)?.imc && (
 											<Badge 
 												leftSection={<IconNotes size={14} />}
 												color="teal" 
 												variant="outline"
 											>
-												IMC: {cliente.datosSaludYNutricion.imc.toFixed(1)}
+												IMC: {(cliente.cliente.datosSaludYNutricion as DatosSaludYNutricion).imc!.toFixed(1)}
 											</Badge>
 										)}
 									</Group>
                   
-									{cliente.datosSaludYNutricion?.alergias && cliente.datosSaludYNutricion.alergias.length > 0 && (
+									{(cliente.cliente?.datosSaludYNutricion as DatosSaludYNutricion)?.alergias && (cliente.cliente.datosSaludYNutricion as DatosSaludYNutricion).alergias!.length > 0 && (
 										<div>
 											<Text size="sm" fw={500} mt="xs">Alergias:</Text>
 											<Group gap="xs">
-												{cliente.datosSaludYNutricion.alergias.map((alergia, index) => (
+												{(cliente.cliente.datosSaludYNutricion as DatosSaludYNutricion).alergias!.map((alergia: string, index: number) => (
 													<Badge key={index} color="red" size="sm">{alergia}</Badge>
 												))}
 											</Group>
 										</div>
 									)}
                   
-									{cliente.datosSaludYNutricion?.restriccionesDieteticas && cliente.datosSaludYNutricion.restriccionesDieteticas.length > 0 && (
+									{(cliente.cliente?.datosSaludYNutricion as DatosSaludYNutricion)?.restriccionesDieteticas && (cliente.cliente.datosSaludYNutricion as DatosSaludYNutricion).restriccionesDieteticas!.length > 0 && (
 										<div>
 											<Text size="sm" fw={500} mt="xs">Restricciones dietéticas:</Text>
 											<Group gap="xs">
-												{cliente.datosSaludYNutricion.restriccionesDieteticas.map((restriccion, index) => (
+												{(cliente.cliente.datosSaludYNutricion as DatosSaludYNutricion).restriccionesDieteticas!.map((restriccion: string, index: number) => (
 													<Badge key={index} color="orange" size="sm">{restriccion}</Badge>
 												))}
 											</Group>
@@ -305,14 +295,14 @@ const WorkerClientsDashboard: React.FC = () => {
 														<>
 															<Button 
 																color="nutroos-green"
-																onClick={() => handleCrearDieta(cliente._id)}
+																onClick={() => handleCrearDieta(cliente.clienteId)}
 															>
 																Crear dieta
 															</Button>
 															<Button 
 																variant="outline"
 																color="nutroos-green"
-																onClick={() => handleVerDietas(cliente._id)}
+																onClick={() => handleVerDietas(cliente.clienteId)}
 															>
 																Ver dietas
 															</Button>
@@ -321,14 +311,14 @@ const WorkerClientsDashboard: React.FC = () => {
 														<>
 															<Button 
 																color="blue"
-																onClick={() => handleCrearPlan(cliente._id)}
+																onClick={() => handleCrearPlan(cliente.clienteId)}
 															>
 																Crear plan
 															</Button>
 															<Button 
 																variant="outline"
 																color="blue"
-																onClick={() => handleVerPlanes(cliente._id)}
+																onClick={() => handleVerPlanes(cliente.clienteId)}
 															>
 																Ver planes
 															</Button>
@@ -338,27 +328,27 @@ const WorkerClientsDashboard: React.FC = () => {
 														<>
 															<Button 
 																color="nutroos-green"
-																onClick={() => handleCrearDieta(cliente._id)}
+																onClick={() => handleCrearDieta(cliente.clienteId)}
 															>
 																Crear dieta
 															</Button>
 															<Button 
 																variant="outline"
 																color="nutroos-green"
-																onClick={() => handleVerDietas(cliente._id)}
+																onClick={() => handleVerDietas(cliente.clienteId)}
 															>
 																Ver dietas
 															</Button>
 															<Button 
 																color="blue"
-																onClick={() => handleCrearPlan(cliente._id)}
+																onClick={() => handleCrearPlan(cliente.clienteId)}
 															>
 																Crear plan
 															</Button>
 															<Button 
 																variant="outline"
 																color="blue"
-																onClick={() => handleVerPlanes(cliente._id)}
+																onClick={() => handleVerPlanes(cliente.clienteId)}
 															>
 																Ver planes
 															</Button>
