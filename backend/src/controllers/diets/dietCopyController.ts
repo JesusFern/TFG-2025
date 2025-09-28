@@ -1,7 +1,6 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../types';
 import { crearDietaDesdeExistente, CrearDietaDesdeExistenteDTO } from '../../service/diets/dietCopyService';
-import { buscarDietaYVerificarPermisos } from '../../helpers/dietHelper';
 import {
   validateAuthentication,
   validateCommonDietFields,
