@@ -29,13 +29,13 @@ export const verificarEsTrabajador = async (
  * Verifica que el trabajador tiene acceso a un cliente específico con un tipo de asignación dado
  */
 export const verificarAccesoCliente = (
-  worker: any,
+  worker: InstanceType<typeof User>,
   clienteId: string,
   tipoAsignacion: 'Nutricionista' | 'Entrenador personal',
   res: Response
 ): boolean => {
   const clienteAsignado = worker.clientesAsignados?.find(
-    (asignacion: any) => 
+    (asignacion) => 
       asignacion.clienteId.toString() === clienteId && 
       asignacion.tipoAsignacion === tipoAsignacion
   );
