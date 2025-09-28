@@ -15,6 +15,7 @@ import {
 } from '@mantine/core';
 import { useAuth } from '../hooks/useAuth';
 import { useThemeDetection } from '../hooks/useThemeDetection';
+import { useAppointmentCalendarSync } from '../hooks/useAppointmentCalendarSync';
 import { CitaService } from '../services/citaService';
 import { Cita, FiltrosCitas as FiltrosCitasType, EstadisticasCitas as EstadisticasCitasType, ReagendarCitaDTO } from '../types/citas';
 import CitaCard from '../components/molecules/CitaCard';
@@ -39,6 +40,9 @@ import {
 const CitasPage: React.FC = () => {
   const { user } = useAuth();
   const isDark = useThemeDetection();
+  
+  // Hook para sincronización con Google Calendar
+  const { syncAppointmentOnConfirm, syncAppointmentOnReschedule, syncAppointmentOnCancel } = useAppointmentCalendarSync();
   
   // Estados principales
   const [citas, setCitas] = useState<Cita[]>([]);
@@ -243,6 +247,15 @@ const CitasPage: React.FC = () => {
     try {
       setLoadingAccion(true);
       await CitaService.cancelarCita(cita._id, { motivo: 'Cancelada por el usuario' });
+      
+      // Sincronizar con Google Calendar
+      try {
+        await syncAppointmentOnCancel(cita._id);
+      } catch (calendarError) {
+        console.error('Error sincronizando cancelación con Google Calendar:', calendarError);
+        // No fallar la cancelación si hay error en el calendario
+      }
+      
       setNotification({
         type: 'success',
         message: 'Cita cancelada exitosamente'
@@ -263,6 +276,15 @@ const CitasPage: React.FC = () => {
     try {
       setLoadingAccion(true);
       await CitaService.reagendarCita(cita._id, datos);
+      
+      // Sincronizar con Google Calendar - eliminar evento anterior
+      try {
+        await syncAppointmentOnReschedule(cita._id);
+      } catch (calendarError) {
+        console.error('Error eliminando evento anterior del Google Calendar:', calendarError);
+        // No fallar el reagendamiento si hay error en el calendario
+      }
+      
       setNotification({
         type: 'success',
         message: 'Cita reagendada exitosamente'
@@ -283,6 +305,18 @@ const CitasPage: React.FC = () => {
     try {
       setLoadingAccion(true);
       await CitaService.confirmarCita(cita._id);
+      
+      // Sincronizar con Google Calendar
+      try {
+        // Obtener emails del cliente y profesional
+        const clientEmail = typeof cita.cliente === 'string' ? cita.cliente : cita.cliente.email;
+        const professionalEmail = typeof cita.profesional === 'string' ? cita.profesional : cita.profesional.email;
+        await syncAppointmentOnConfirm(cita._id, clientEmail, professionalEmail);
+      } catch (calendarError) {
+        console.error('Error sincronizando confirmación con Google Calendar:', calendarError);
+        // No fallar la confirmación si hay error en el calendario
+      }
+      
       setNotification({
         type: 'success',
         message: 'Cita confirmada exitosamente'

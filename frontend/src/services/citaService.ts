@@ -328,6 +328,41 @@ export class CitaService {
     }
     return horarios;
   }
+
+  // Actualizar el ID del evento de Google Calendar en una cita
+  static async actualizarEventoId(citaId: string, googleEventId: string): Promise<void> {
+    try {
+      const response = await apiRequest(`/api/citas/${citaId}/google-event`, {
+        method: 'PUT',
+        body: JSON.stringify({ googleEventId }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al actualizar el evento de Google Calendar');
+      }
+    } catch (error) {
+      console.error('Error al actualizar evento de Google Calendar:', error);
+      throw error;
+    }
+  }
+
+  // Limpiar el ID del evento de Google Calendar de una cita
+  static async limpiarEventoId(citaId: string): Promise<void> {
+    try {
+      const response = await apiRequest(`/api/citas/${citaId}/google-event`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || 'Error al limpiar el evento de Google Calendar');
+      }
+    } catch (error) {
+      console.error('Error al limpiar evento de Google Calendar:', error);
+      throw error;
+    }
+  }
 }
 
 export default CitaService;

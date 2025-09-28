@@ -18,6 +18,8 @@ const mockUser = {
     }))
   })),
   lean: jest.fn(() => Promise.resolve({
+    _id: 'test-user-id',
+    email: 'test@example.com',
     google: { refreshToken: 'test-refresh-token' }
   }))
 };
@@ -38,6 +40,19 @@ jest.mock('../../src/services/google/googleClient', () => ({
       expiry_date: Date.now() + 3600000
     })),
     getCalendarClientWithRefresh: jest.fn(() => ({
+      calendarList: {
+        list: jest.fn(() => Promise.resolve({
+          data: {
+            items: [
+              {
+                id: 'primary',
+                summary: 'Calendario Principal',
+                accessRole: 'owner'
+              }
+            ]
+          }
+        }))
+      },
       events: {
         list: jest.fn(() => Promise.resolve({
           data: {

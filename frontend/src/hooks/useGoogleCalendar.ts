@@ -3,8 +3,7 @@ import {
   googleCalendarService,
   GoogleCalendarEvent,
   CreateCalendarEventRequest,
-  UpdateCalendarEventRequest,
-  CalendarStatusResponse
+  UpdateCalendarEventRequest
 } from '../services/googleCalendarService';
 
 interface UseGoogleCalendarReturn {

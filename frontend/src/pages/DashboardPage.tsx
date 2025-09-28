@@ -199,8 +199,8 @@ const DashboardPage: React.FC = () => {
   };
 
   // Configuración de tarjetas del dashboard según el rol del usuario
-  const getDashboardItems = () => {
-    const baseItems = [
+  const getDashboardItems = (): DashboardCardProps[] => {
+    const baseItems: DashboardCardProps[] = [
       {
         title: 'Progreso Semanal',
         description: 'Visualiza tu progreso en nutrición y entrenamiento de esta semana',
@@ -214,8 +214,8 @@ const DashboardPage: React.FC = () => {
         description: 'Organiza tus sesiones y comidas programadas',
         icon: <IconCalendar size={32} />,
         color: 'cyan',
-        onClick: () => showComingSoon('Calendario', 'Pronto podrás organizar todas tus sesiones de entrenamiento y comidas programadas en un calendario interactivo.'),
-        comingSoon: true
+        onClick: () => navigate('/calendar'),
+        badge: 'Disponible'
       },
       {
         title: 'Mi Perfil',

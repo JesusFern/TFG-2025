@@ -2,7 +2,7 @@ import React from 'react';
 import { Container, Title, Text, Paper, Stack, Group, Button } from '@mantine/core';
 import { IconArrowLeft, IconCalendar } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
-import { GoogleCalendarView } from '../components/organisms/GoogleCalendarView';
+import GoogleCalendarView from '../components/organisms/GoogleCalendarView';
 
 const CalendarPage: React.FC = () => {
   const navigate = useNavigate();
