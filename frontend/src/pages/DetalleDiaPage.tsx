@@ -33,7 +33,8 @@ import {
 } from '../helpers/diets/DietaHelper';
 import IngredientesList from '../components/organisms/IngredientesList';
 import { useAuth } from '../hooks/useAuth';
-import { obtenerSeguimientoPlatos, SeguimientoPlato } from '../services/seguimientoComidaService';
+import { obtenerSeguimientoPlatos } from '../services/seguimientoComidaService';
+import type { SeguimientoPlato } from '../types/seguimientoComida';
 import SeguimientoPlatoModal from '../components/molecules/SeguimientoComidaModal';
 import SeguimientoPlatoDisplay from '../components/molecules/SeguimientoComidaDisplay';
 import ResumenSeguimientoDia from '../components/molecules/ResumenSeguimientoDia';

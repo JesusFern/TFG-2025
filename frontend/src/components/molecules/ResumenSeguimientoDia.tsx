@@ -16,7 +16,7 @@ import {
   IconMinus
 } from '@tabler/icons-react';
 import { useMantineColorScheme } from '@mantine/core';
-import { SeguimientoPlato } from '../../services/seguimientoComidaService';
+import type { SeguimientoPlato } from '../../types/seguimientoComida';
 
 interface ResumenSeguimientoDiaProps {
   seguimientos: { [key: string]: SeguimientoPlato }; // Cambio: key será "comidaIndex-platoIndex"

@@ -11,6 +11,7 @@ import {
   obtenerRachasNutricionalesService
 } from '../../service/diets/seguimientoComidaService';
 import logger from '../../utils/logger';
+import { manejarErrorComun } from '../../utils/errorHandler';
 
 /**
  * Actualizar seguimiento de un plato específico
@@ -62,23 +63,11 @@ export const actualizarSeguimientoPlato = async (req: AuthenticatedRequest, res:
       comidaIndex: req.params.comidaIndex
     });
 
-    if (error instanceof Error) {
-      if (error.message.includes('no encontrada') || error.message.includes('no existe')) {
-        res.status(404).json({ message: error.message });
-        return;
-      }
-      if (error.message.includes('permisos') || error.message.includes('No tienes')) {
-        res.status(403).json({ message: error.message });
-        return;
-      }
-      if (error.message.includes('inválido') || error.message.includes('debe ser')) {
-        res.status(400).json({ message: error.message });
-        return;
-      }
-    }
-
-    res.status(500).json({ 
-      message: 'Error interno del servidor al actualizar seguimiento de plato' 
+    manejarErrorComun(error, res, 'actualizar seguimiento de plato', {
+      userId: req.user?.id,
+      dietaId: req.params.dietaId,
+      diaIndex: req.params.diaIndex,
+      comidaIndex: req.params.comidaIndex
     });
   }
 };
@@ -139,19 +128,9 @@ export const obtenerSeguimientoPlatos = async (req: AuthenticatedRequest, res: R
       dietaId: req.params.dietaId
     });
 
-    if (error instanceof Error) {
-      if (error.message.includes('no encontrada') || error.message.includes('no existe')) {
-        res.status(404).json({ message: error.message });
-        return;
-      }
-      if (error.message.includes('permisos') || error.message.includes('No tienes')) {
-        res.status(403).json({ message: error.message });
-        return;
-      }
-    }
-
-    res.status(500).json({ 
-      message: 'Error interno del servidor al obtener seguimiento de comidas' 
+    manejarErrorComun(error, res, 'obtener seguimiento de comidas', {
+      userId: req.user?.id,
+      dietaId: req.params.dietaId
     });
   }
 };
@@ -199,19 +178,9 @@ export const obtenerEstadisticasSeguimiento = async (req: AuthenticatedRequest, 
       dietaId: req.params.dietaId
     });
 
-    if (error instanceof Error) {
-      if (error.message.includes('no encontrada') || error.message.includes('no existe')) {
-        res.status(404).json({ message: error.message });
-        return;
-      }
-      if (error.message.includes('permisos') || error.message.includes('No tienes')) {
-        res.status(403).json({ message: error.message });
-        return;
-      }
-    }
-
-    res.status(500).json({ 
-      message: 'Error interno del servidor al obtener estadísticas de seguimiento' 
+    manejarErrorComun(error, res, 'obtener estadísticas de seguimiento', {
+      userId: req.user?.id,
+      dietaId: req.params.dietaId
     });
   }
 };
@@ -250,15 +219,9 @@ export const obtenerEstadisticasGenerales = async (req: AuthenticatedRequest, re
       userId: req.user?.id
     });
 
-    if (error instanceof Error) {
-      if (error.message.includes('No tienes permisos')) {
-        res.status(403).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: 'Error interno del servidor al obtener estadísticas generales' });
-      }
-    } else {
-      res.status(500).json({ message: 'Error interno del servidor al obtener estadísticas generales' });
-    }
+    manejarErrorComun(error, res, 'obtener estadísticas generales', {
+      userId: req.user?.id
+    });
   }
 };
 
@@ -296,15 +259,9 @@ export const obtenerEstadisticasSemanal = async (req: AuthenticatedRequest, res:
       userId: req.user?.id
     });
 
-    if (error instanceof Error) {
-      if (error.message.includes('No tienes permisos')) {
-        res.status(403).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: 'Error interno del servidor al obtener estadísticas semanales' });
-      }
-    } else {
-      res.status(500).json({ message: 'Error interno del servidor al obtener estadísticas semanales' });
-    }
+    manejarErrorComun(error, res, 'obtener estadísticas semanales', {
+      userId: req.user?.id
+    });
   }
 };
 
@@ -346,15 +303,9 @@ export const obtenerProgresoComidas = async (req: AuthenticatedRequest, res: Res
       userId: req.user?.id
     });
 
-    if (error instanceof Error) {
-      if (error.message.includes('No tienes permisos')) {
-        res.status(403).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: 'Error interno del servidor al obtener progreso de comidas' });
-      }
-    } else {
-      res.status(500).json({ message: 'Error interno del servidor al obtener progreso de comidas' });
-    }
+    manejarErrorComun(error, res, 'obtener progreso de comidas', {
+      userId: req.user?.id
+    });
   }
 };
 
@@ -388,14 +339,8 @@ export const obtenerRachasNutricionales = async (req: AuthenticatedRequest, res:
       userId: req.user?.id
     });
 
-    if (error instanceof Error) {
-      if (error.message.includes('No tienes permisos')) {
-        res.status(403).json({ message: error.message });
-      } else {
-        res.status(500).json({ message: 'Error interno del servidor al obtener rachas nutricionales' });
-      }
-    } else {
-      res.status(500).json({ message: 'Error interno del servidor al obtener rachas nutricionales' });
-    }
+    manejarErrorComun(error, res, 'obtener rachas nutricionales', {
+      userId: req.user?.id
+    });
   }
 };

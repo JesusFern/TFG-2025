@@ -1,48 +1,10 @@
 import { apiRequest } from './api';
-
-// Interfaces para el seguimiento de platos
-export interface SeguimientoPlato {
-  satisfaccion?: number; // 1-5
-  cumplimiento?: number; // 1-5
-  notaUsuario?: string;
-}
-
-export interface ActualizarSeguimientoPlatoRequest {
-  satisfaccion?: number;
-  cumplimiento?: number;
-  notaUsuario?: string;
-}
-
-export interface EstadisticasSeguimiento {
-  satisfaccionPromedio: number;
-  porcentajeCumplimiento: number;
-  comidasFavoritas: string[];
-  comidasMenosGustadas: string[];
-  ingredientesMasModificados: string[];
-  tendenciaSatisfaccion: 'mejorando' | 'empeorando' | 'estable';
-  tendenciaCumplimiento: 'mejorando' | 'empeorando' | 'estable';
-  totalComidas: number;
-  comidasConsumidas: number;
-  comidasOmitidas: number;
-  comidasParciales: number;
-}
-
-export interface SeguimientoPlatoConInfo extends SeguimientoPlato {
-  diaIndex: number;
-  comidaIndex: number;
-  platoIndex: number;
-  fecha: Date;
-  nombreComida: string;
-  nombrePlato: string;
-}
-
-export interface RespuestaSeguimientoPaginada {
-  seguimientos: SeguimientoPlatoConInfo[];
-  total: number;
-  pagina: number;
-  limite: number;
-  totalPaginas: number;
-}
+import type { 
+  SeguimientoPlato, 
+  ActualizarSeguimientoPlatoRequest, 
+  EstadisticasSeguimiento,
+  RespuestaSeguimientoPaginada
+} from '../types/seguimientoComida';
 
 // Servicio para actualizar seguimiento de un plato específico
 export const actualizarSeguimientoPlato = async (

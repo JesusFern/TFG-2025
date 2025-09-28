@@ -13,7 +13,8 @@ import {
 } from '@mantine/core';
 import { IconStar, IconCheck, IconX, IconAlertCircle } from '@tabler/icons-react';
 import { useMantineColorScheme } from '@mantine/core';
-import { actualizarSeguimientoPlato, SeguimientoPlato } from '../../services/seguimientoComidaService';
+import { actualizarSeguimientoPlato } from '../../services/seguimientoComidaService';
+import type { SeguimientoPlato } from '../../types/seguimientoComida';
 
 interface SeguimientoPlatoModalProps {
   opened: boolean;
