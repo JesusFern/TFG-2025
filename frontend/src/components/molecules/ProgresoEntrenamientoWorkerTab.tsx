@@ -37,9 +37,7 @@ import {
   IconUser,
   IconBarbell
 } from '@tabler/icons-react';
-import { 
-  BarChart
-} from '@mantine/charts';
+import BarChartComponent from './shared/BarChartComponent';
 import { estadisticasService } from '../../services/estadisticasService';
 import { EstadisticasCliente, EstadisticasSemanal, RachasEntrenamiento, ClienteDetalleCompleto, PlanEntrenamientoDetalle, SesionDetalle, RegistroEjercicioDetalle } from '../../types/estadisticas';
 import { ModalNotas } from './ModalNotas';
@@ -605,47 +603,18 @@ const ProgresoEntrenamientoWorkerTab: React.FC = () => {
 
   // Componente para mostrar distribución de tipos de entrenamiento
   const DistribucionTipos = ({ distribucion }: { distribucion: Record<string, number> }) => {
-    const data = Object.entries(distribucion)
-      .filter(([, value]) => value > 0)
-      .map(([tipo, cantidad]) => ({
-        tipo: tipo.charAt(0).toUpperCase() + tipo.slice(1),
-        cantidad: cantidad
-      }));
-
-    if (data.length === 0) {
-      return (
-        <Card p="md" radius="md" withBorder>
-          <Text size="lg" fw={600} mb="md">Distribución de Tipos de Entrenamiento</Text>
-          <Text c="dimmed" ta="center">No hay datos disponibles</Text>
-        </Card>
-      );
-    }
+    const data = Object.entries(distribucion).map(([tipo, cantidad]) => ({
+      tipo,
+      cantidad
+    }));
 
     return (
-      <Card p="md" radius="md" withBorder>
-        <Text size="lg" fw={600} mb="md">Distribución de Tipos de Entrenamiento</Text>
-        <Box h={300}>
-          <BarChart
-            h={300}
-            data={data}
-            dataKey="tipo"
-            series={[{ name: 'cantidad', color: 'blue.6' }]}
-            withLegend
-            legendProps={{ verticalAlign: 'bottom' }}
-            withTooltip
-            tooltipProps={{
-              content: ({ label, payload }) => (
-                <Paper p="sm" withBorder>
-                  <Text size="sm" fw={500}>{label}</Text>
-                  <Text size="sm" c="blue">
-                    {payload?.[0]?.value} ejercicios
-                  </Text>
-                </Paper>
-              ),
-            }}
-          />
-        </Box>
-      </Card>
+      <BarChartComponent
+        title="Distribución de Tipos de Entrenamiento"
+        data={data}
+        tooltipLabel="ejercicios"
+        color="blue.6"
+      />
     );
   };
 

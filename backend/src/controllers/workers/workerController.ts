@@ -1,42 +1,17 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../types';
-import { verificarAutenticacion } from '../../validators/commonValidators';
-import User from '../../models/users/user';
 import logger from '../../utils/logger';
+import { verificarAccesoTrabajadorCliente } from '../../helpers/workerHelpers';
 
 export class WorkerController {
 
   static async getEstadisticasNutricionalesCliente(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const userId = verificarAutenticacion(req, res, 'obtener estadísticas nutricionales del cliente');
-      if (!userId) return;
+      const acceso = await verificarAccesoTrabajadorCliente(req, res, 'Nutricionista');
+      if (!acceso) return;
 
-      const { clienteId } = req.params;
+      const { userId, clienteId } = acceso;
       const { semana, año } = req.query;
-
-      // Verificar que el trabajador tiene acceso a este cliente
-      const worker = await User.findById(userId);
-      if (!worker || worker.role !== 'worker') {
-        res.status(403).json({
-          success: false,
-          message: 'Solo los trabajadores pueden acceder a esta información'
-        });
-        return;
-      }
-
-      // Verificar que el cliente está asignado al trabajador como nutricionista
-      const clienteAsignado = worker.clientesAsignados?.find(
-        asignacion => asignacion.clienteId.toString() === clienteId && 
-        asignacion.tipoAsignacion === 'Nutricionista'
-      );
-
-      if (!clienteAsignado) {
-        res.status(403).json({
-          success: false,
-          message: 'No tienes acceso a las estadísticas nutricionales de este cliente'
-        });
-        return;
-      }
 
       // Obtener estadísticas reales del cliente usando el servicio existente
       const { obtenerEstadisticasGeneralesService, obtenerEstadisticasSemanalService, obtenerProgresoComidasService } = await import('../../service/diets/seguimientoComidaService');
@@ -92,35 +67,11 @@ export class WorkerController {
 
   static async getEstadisticasEntrenamientoCliente(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
-      const userId = verificarAutenticacion(req, res, 'obtener estadísticas de entrenamiento del cliente');
-      if (!userId) return;
+      const acceso = await verificarAccesoTrabajadorCliente(req, res, 'Entrenador personal');
+      if (!acceso) return;
 
-      const { clienteId } = req.params;
+      const { userId, clienteId } = acceso;
       const { semana, año } = req.query;
-
-      // Verificar que el trabajador tiene acceso a este cliente
-      const worker = await User.findById(userId);
-      if (!worker || worker.role !== 'worker') {
-        res.status(403).json({
-          success: false,
-          message: 'Solo los trabajadores pueden acceder a esta información'
-        });
-        return;
-      }
-
-      // Verificar que el cliente está asignado al trabajador como entrenador personal
-      const clienteAsignado = worker.clientesAsignados?.find(
-        asignacion => asignacion.clienteId.toString() === clienteId && 
-        asignacion.tipoAsignacion === 'Entrenador personal'
-      );
-
-      if (!clienteAsignado) {
-        res.status(403).json({
-          success: false,
-          message: 'No tienes acceso a las estadísticas de entrenamiento de este cliente'
-        });
-        return;
-      }
 
       // Aquí deberías implementar la lógica para obtener las estadísticas de entrenamiento
       // Por ahora, devolveremos datos simulados

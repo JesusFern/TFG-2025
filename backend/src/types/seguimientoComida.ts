@@ -1,4 +1,4 @@
-// Interfaces para el seguimiento de platos
+// Interfaces mínimas para el seguimiento de platos (solo las que usa el backend)
 
 export interface SeguimientoPlato {
   satisfaccion?: number; // 1-5
@@ -6,15 +6,6 @@ export interface SeguimientoPlato {
   notaUsuario?: string;
 }
 
-
-// Interface para actualizar el seguimiento de un plato
-export interface ActualizarSeguimientoPlatoRequest {
-  satisfaccion?: number;
-  cumplimiento?: number;
-  notaUsuario?: string;
-}
-
-// Interface para estadísticas de seguimiento
 export interface EstadisticasSeguimiento {
   satisfaccionPromedio: number;
   porcentajeCumplimiento: number;
@@ -29,15 +20,14 @@ export interface EstadisticasSeguimiento {
   comidasParciales: number;
 }
 
-// Interface para filtros de seguimiento
-export interface FiltrosSeguimiento {
-  fechaDesde?: Date;
-  fechaHasta?: Date;
-  satisfaccionMinima?: number;
-  cumplimientoMinimo?: number;
+export interface RespuestaSeguimientoPaginada {
+  seguimientos: SeguimientoPlatoConInfo[];
+  total: number;
+  pagina: number;
+  limite: number;
+  totalPaginas: number;
 }
 
-// Interface para seguimiento de plato con información adicional
 export interface SeguimientoPlatoConInfo extends SeguimientoPlato {
   diaIndex: number;
   comidaIndex: number;
@@ -45,15 +35,6 @@ export interface SeguimientoPlatoConInfo extends SeguimientoPlato {
   fecha: Date;
   nombreComida: string;
   nombrePlato: string;
-}
-
-// Interface para respuesta de seguimiento con paginación
-export interface RespuestaSeguimientoPaginada {
-  seguimientos: SeguimientoPlatoConInfo[];
-  total: number;
-  pagina: number;
-  limite: number;
-  totalPaginas: number;
 }
 
 // Constantes para validación

@@ -63,12 +63,7 @@ export const actualizarSeguimientoPlato = async (req: AuthenticatedRequest, res:
       comidaIndex: req.params.comidaIndex
     });
 
-    manejarErrorComun(error, res, 'actualizar seguimiento de plato', {
-      userId: req.user?.id,
-      dietaId: req.params.dietaId,
-      diaIndex: req.params.diaIndex,
-      comidaIndex: req.params.comidaIndex
-    });
+    manejarErrorComun(error, res, 'actualizar seguimiento de plato');
   }
 };
 
@@ -128,10 +123,7 @@ export const obtenerSeguimientoPlatos = async (req: AuthenticatedRequest, res: R
       dietaId: req.params.dietaId
     });
 
-    manejarErrorComun(error, res, 'obtener seguimiento de comidas', {
-      userId: req.user?.id,
-      dietaId: req.params.dietaId
-    });
+    manejarErrorComun(error, res, 'obtener seguimiento de comidas');
   }
 };
 
@@ -178,10 +170,7 @@ export const obtenerEstadisticasSeguimiento = async (req: AuthenticatedRequest, 
       dietaId: req.params.dietaId
     });
 
-    manejarErrorComun(error, res, 'obtener estadísticas de seguimiento', {
-      userId: req.user?.id,
-      dietaId: req.params.dietaId
-    });
+    manejarErrorComun(error, res, 'obtener estadísticas de seguimiento');
   }
 };
 
@@ -219,9 +208,7 @@ export const obtenerEstadisticasGenerales = async (req: AuthenticatedRequest, re
       userId: req.user?.id
     });
 
-    manejarErrorComun(error, res, 'obtener estadísticas generales', {
-      userId: req.user?.id
-    });
+    manejarErrorComun(error, res, 'obtener estadísticas generales');
   }
 };
 
@@ -259,9 +246,7 @@ export const obtenerEstadisticasSemanal = async (req: AuthenticatedRequest, res:
       userId: req.user?.id
     });
 
-    manejarErrorComun(error, res, 'obtener estadísticas semanales', {
-      userId: req.user?.id
-    });
+    manejarErrorComun(error, res, 'obtener estadísticas semanales');
   }
 };
 
@@ -303,9 +288,7 @@ export const obtenerProgresoComidas = async (req: AuthenticatedRequest, res: Res
       userId: req.user?.id
     });
 
-    manejarErrorComun(error, res, 'obtener progreso de comidas', {
-      userId: req.user?.id
-    });
+    manejarErrorComun(error, res, 'obtener progreso de comidas');
   }
 };
 
@@ -339,8 +322,6 @@ export const obtenerRachasNutricionales = async (req: AuthenticatedRequest, res:
       userId: req.user?.id
     });
 
-    manejarErrorComun(error, res, 'obtener rachas nutricionales', {
-      userId: req.user?.id
-    });
+    manejarErrorComun(error, res, 'obtener rachas nutricionales');
   }
 };
