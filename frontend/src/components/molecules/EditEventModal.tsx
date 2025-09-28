@@ -1,18 +1,13 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
   Modal,
-  TextInput,
-  Textarea,
   Group,
-  Stack,
-  Button,
-  MultiSelect
+  Button
 } from '@mantine/core';
-import { TimeInput } from '@mantine/dates';
-import DatePickerInput from '../atoms/DatePickerInput';
 import { useForm } from '@mantine/form';
 import { IconTrash } from '@tabler/icons-react';
 import { CalendarEventFormData, GoogleCalendarEvent } from '../../types/googleCalendar';
+import EventFormFields from './EventFormFields';
 
 interface EditEventModalProps {
   opened: boolean;
@@ -51,13 +46,17 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
     }
   });
 
+  // Usar useRef para evitar el bucle infinito
+  const formRef = useRef(form);
+  formRef.current = form;
+
   // Actualizar formulario cuando cambie el evento
-  React.useEffect(() => {
+  useEffect(() => {
     if (event) {
       const startDate = new Date(event.start);
       const endDate = new Date(event.end);
       
-      form.setValues({
+      formRef.current.setValues({
         title: event.title,
         description: event.description || '',
         startDate: startDate,
@@ -70,7 +69,7 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
         )
       });
     }
-  }, [event]); // Remover 'form' de las dependencias
+  }, [event]);
 
   const handleSubmit = async (values: CalendarEventFormData) => {
     try {
@@ -107,84 +106,27 @@ const EditEventModal: React.FC<EditEventModalProps> = ({
       zIndex={1000}
     >
       <form onSubmit={form.onSubmit(handleSubmit)}>
-        <Stack gap="md">
-          <TextInput
-            label="Título del evento"
-            placeholder="Ej: Entrenamiento de fuerza"
-            required
-            {...form.getInputProps('title')}
-          />
-          
-          <Textarea
-            label="Descripción"
-            placeholder="Descripción del evento..."
-            {...form.getInputProps('description')}
-          />
-
-          <Group grow>
-            <DatePickerInput
-              label="Fecha de inicio"
-              required
-              zIndex={1000}
-              value={form.values.startDate}
-              {...form.getInputProps('startDate')}
-            />
-            <TimeInput
-              label="Hora de inicio"
-              required
-              {...form.getInputProps('startTime')}
-            />
-          </Group>
-
-          <Group grow>
-            <DatePickerInput
-              label="Fecha de fin"
-              required
-              value={form.values.endDate}
-              zIndex={1000}
-              {...form.getInputProps('endDate')}
-            />
-            <TimeInput
-              label="Hora de fin"
-              required
-              {...form.getInputProps('endTime')}
-            />
-          </Group>
-
-          <TextInput
-            label="Ubicación"
-            placeholder="Ej: Gimnasio, Casa..."
-            {...form.getInputProps('location')}
-          />
-
-          <MultiSelect
-            label="Asistentes (emails)"
-            placeholder="Añadir emails de asistentes"
-            data={[]}
-            searchable
-            {...form.getInputProps('attendees')}
-          />
-
-          <Group justify="space-between">
-            <Button
-              color="red"
-              variant="light"
-              leftSection={<IconTrash size={16} />}
-              onClick={handleDelete}
-              loading={loading}
-            >
-              Eliminar
+        <EventFormFields form={form} />
+        
+        <Group justify="space-between" mt="md">
+          <Button
+            color="red"
+            variant="light"
+            leftSection={<IconTrash size={16} />}
+            onClick={handleDelete}
+            loading={loading}
+          >
+            Eliminar
+          </Button>
+          <Group gap="sm">
+            <Button variant="light" onClick={onClose}>
+              Cancelar
             </Button>
-            <Group gap="sm">
-              <Button variant="light" onClick={onClose}>
-                Cancelar
-              </Button>
-              <Button type="submit" loading={loading}>
-                Actualizar Evento
-              </Button>
-            </Group>
+            <Button type="submit" loading={loading}>
+              Actualizar Evento
+            </Button>
           </Group>
-        </Stack>
+        </Group>
       </form>
     </Modal>
   );

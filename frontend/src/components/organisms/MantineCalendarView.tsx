@@ -10,15 +10,13 @@ import {
   Loader,
   Center
 } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
 import {
   IconPlus,
   IconCalendar,
-  IconCheck,
-  IconX,
   IconAlertCircle
 } from '@tabler/icons-react';
 import { useGoogleCalendar } from '../../hooks/useGoogleCalendar';
+import { useEventHandlers } from '../../hooks/useEventHandlers';
 import { GoogleCalendarEvent, CalendarEventFormData } from '../../types/googleCalendar';
 import { format, startOfMonth, endOfMonth, eachDayOfInterval, addMonths, subMonths, startOfWeek, endOfWeek } from 'date-fns';
 import CreateEventModal from '../molecules/CreateEventModal';
@@ -31,19 +29,18 @@ interface MantineCalendarViewProps {
 }
 
 const MantineCalendarView: React.FC<MantineCalendarViewProps> = ({ className }) => {
-  const {
-    isConnected,
-    isConnecting,
-    events,
-    loading,
-    error,
-    connectToGoogle,
-    disconnectFromGoogle,
-    createEvent,
-    updateEvent,
-    deleteEvent,
-    clearError
+  const { 
+    isConnected, 
+    isConnecting, 
+    events, 
+    loading, 
+    error, 
+    connectToGoogle, 
+    disconnectFromGoogle, 
+    clearError 
   } = useGoogleCalendar();
+
+  const { handleCreateEvent, handleUpdateEvent, handleDeleteEvent } = useEventHandlers();
 
   // Estados para modales y calendario
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -100,112 +97,10 @@ const MantineCalendarView: React.FC<MantineCalendarViewProps> = ({ className }) 
     setShowEditModal(true);
   };
 
-  // Función para crear evento
-  const handleCreateEvent = async (values: CalendarEventFormData) => {
-    try {
-      // Convertir a Date si es necesario
-      const startDateObj = values.startDate instanceof Date ? values.startDate : new Date(values.startDate);
-      const endDateObj = values.endDate instanceof Date ? values.endDate : new Date(values.endDate);
-      
-      // Crear fechas de manera simple y directa
-      const startDateStr = startDateObj.toISOString().split('T')[0];
-      const endDateStr = endDateObj.toISOString().split('T')[0];
-      
-      // Crear fechas usando el constructor Date con parámetros individuales
-      const startDate = new Date(startDateStr + 'T' + values.startTime + ':00');
-      const endDate = new Date(endDateStr + 'T' + values.endTime + ':00');
-
-      await createEvent({
-        title: values.title,
-        description: values.description,
-        start: startDate.toISOString(),
-        end: endDate.toISOString(),
-        location: values.location,
-        attendees: values.attendees.filter((email: string) => email.trim() !== '')
-      });
-
-      notifications.show({
-        title: 'Éxito',
-        message: 'Evento creado correctamente',
-        color: 'green',
-        icon: <IconCheck size={16} />
-      });
-    } catch (error) {
-      console.error('Error creando evento:', error);
-      notifications.show({
-        title: 'Error',
-        message: `No se pudo crear el evento: ${error instanceof Error ? error.message : 'Error desconocido'}`,
-        color: 'red',
-        icon: <IconX size={16} />
-      });
-      throw error; // Re-lanzar para que el modal pueda manejarlo
-    }
-  };
-
-  // Función para editar evento
+  // Función para editar evento (wrapper para el hook)
   const handleEditEvent = async (values: CalendarEventFormData) => {
     if (!editingEvent) return;
-
-    try {
-      // Convertir a Date si es necesario
-      const startDateObj = values.startDate instanceof Date ? values.startDate : new Date(values.startDate);
-      const endDateObj = values.endDate instanceof Date ? values.endDate : new Date(values.endDate);
-      
-      // Crear fechas de manera simple y directa
-      const startDateStr = startDateObj.toISOString().split('T')[0];
-      const endDateStr = endDateObj.toISOString().split('T')[0];
-      
-      // Crear fechas usando el constructor Date con parámetros individuales
-      const startDate = new Date(startDateStr + 'T' + values.startTime + ':00');
-      const endDate = new Date(endDateStr + 'T' + values.endTime + ':00');
-
-      await updateEvent(editingEvent.id, {
-        title: values.title,
-        description: values.description,
-        start: startDate.toISOString(),
-        end: endDate.toISOString(),
-        location: values.location,
-        attendees: values.attendees.filter((email: string) => email.trim() !== '')
-      });
-
-      notifications.show({
-        title: 'Éxito',
-        message: 'Evento actualizado correctamente',
-        color: 'green',
-        icon: <IconCheck size={16} />
-      });
-    } catch (error) {
-      console.error('Error actualizando evento:', error);
-      notifications.show({
-        title: 'Error',
-        message: `No se pudo actualizar el evento: ${error instanceof Error ? error.message : 'Error desconocido'}`,
-        color: 'red',
-        icon: <IconX size={16} />
-      });
-      throw error; // Re-lanzar para que el modal pueda manejarlo
-    }
-  };
-
-  // Función para eliminar evento
-  const handleDeleteEvent = async (eventId: string) => {
-    try {
-      await deleteEvent(eventId);
-      notifications.show({
-        title: 'Éxito',
-        message: 'Evento eliminado correctamente',
-        color: 'green',
-        icon: <IconCheck size={16} />
-      });
-    } catch (error) {
-      console.error('Error eliminando evento:', error);
-      notifications.show({
-        title: 'Error',
-        message: `No se pudo eliminar el evento: ${error instanceof Error ? error.message : 'Error desconocido'}`,
-        color: 'red',
-        icon: <IconX size={16} />
-      });
-      throw error; // Re-lanzar para que el modal pueda manejarlo
-    }
+    await handleUpdateEvent(editingEvent.id, values);
   };
 
   // Si no está conectado, mostrar botón de conexión

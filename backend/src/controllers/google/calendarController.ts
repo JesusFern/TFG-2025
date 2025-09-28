@@ -479,6 +479,11 @@ export const updateCalendarEvent = async (req: AuthenticatedRequest, res: Respon
       attendees = [] 
     } = req.body;
 
+    console.log('=== UPDATE CALENDAR EVENT DEBUG ===');
+    console.log('User ID:', userId);
+    console.log('Event ID:', eventId);
+    console.log('Request body:', { title, description, start, end, location, attendees });
+
     // Validar autenticación
     const authValidation = validateUserAuthentication(userId);
     if (!authValidation.isValid) {
@@ -509,6 +514,8 @@ export const updateCalendarEvent = async (req: AuthenticatedRequest, res: Respon
 
     const calendar = calendarResult.calendar;
 
+    console.log('Calendar client created successfully');
+
     // Actualizar evento
     const event = {
       summary: title,
@@ -532,11 +539,16 @@ export const updateCalendarEvent = async (req: AuthenticatedRequest, res: Respon
       }
     };
 
+    console.log('Event data to update:', JSON.stringify(event, null, 2));
+    console.log('Attempting to update event with ID:', eventId);
+
     const { data } = await calendar.events.update({
       calendarId: 'primary',
       eventId: eventId,
       requestBody: event
     });
+
+    console.log('Event updated successfully:', data.id);
 
     res.json({
       message: 'Evento actualizado exitosamente',
