@@ -307,6 +307,7 @@ export const trainingService = {
     if (!res.ok) throw new Error((await res.json()).message || 'Error al marcar sesión como completada');
     return await res.json();
   },
+
 };
 
 export default trainingService;

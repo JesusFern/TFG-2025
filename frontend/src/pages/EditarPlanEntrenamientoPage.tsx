@@ -72,6 +72,8 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     planId, 
     options: { redirectToView: true, loadExercises: true } 
   });
+
+  // Hook para sincronización con Google Calendar
   
   const [activeTab, setActiveTab] = useState<string | null>("0");
   const [publishLoading, setPublishLoading] = useState<boolean>(false);
@@ -504,6 +506,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     try {
       setPublishLoading(true);
       await trainingService.publicarPlan(planId);
+      
       
       // Redirigir a la vista de ver el plan publicado
       navigateToPlanView(planId);

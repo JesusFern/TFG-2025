@@ -12,12 +12,14 @@
     "test:training:planes": "cross-env NODE_ENV=test jest --testPathPattern=tests/training/planEntrenamiento.test.ts --detectOpenHandles --forceExit",
     "test:training:sesiones": "cross-env NODE_ENV=test jest --testPathPattern=tests/training/sesion.test.ts --detectOpenHandles --forceExit",
     "test:training:integration": "cross-env NODE_ENV=test jest --testPathPattern=tests/training/trainingIntegration.test.ts --detectOpenHandles --forceExit",
+    "test:google-calendar": "cross-env NODE_ENV=test jest --testPathPattern=tests/google/googleCalendarSimple.test.ts --detectOpenHandles --forceExit",
     "seed": "ts-node src/seeders/seeders.ts",
     "extract:pdf": "ts-node scripts/extractPdfAlimentos.ts",
     "wger-sync-videos": "node scripts/wgerSyncVideos.js",
     "cleanup-videos": "node scripts/cleanupVideos.js",
     "test-templates": "ts-node scripts/testTemplateSystem.ts",
-    "test-objetivos": "ts-node scripts/testObjetivos.ts"
+    "test-objetivos": "ts-node scripts/testObjetivos.ts",
+    "test:google-calendar:full": "ts-node scripts/testGoogleCalendar.ts"
   },
   "keywords": [],
   "author": "",
@@ -58,6 +60,7 @@
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
     "express-validator": "^7.2.1",
+    "googleapis": "^160.0.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.12.2",
     "multer": "^2.0.2",
