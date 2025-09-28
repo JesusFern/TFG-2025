@@ -5,6 +5,38 @@ import Dieta from '../../models/diets/dieta';
 import { esIdValido, manejarErrorGenerico } from '../commonValidators';
 import { TIPOS_DIETA } from '../../constants/dietTypes';
 
+// Función reutilizable para validar fechas en formato DD-MM-YYYY
+const validarFechaInicio = (esOpcional = false) => {
+  const validator = body('fechaInicio');
+  
+  if (esOpcional) {
+    validator.optional();
+  }
+  
+  return validator
+    .matches(/^\d{1,2}-\d{1,2}-\d{4}$/)
+    .withMessage('La fecha de inicio debe tener el formato DD-MM-YYYY')
+    .custom((value) => {
+      const [day, month, year] = value.split('-').map(Number);
+      const fecha = new Date(year, month - 1, day);
+      
+      // Verificar que la fecha es válida
+      if (fecha.getDate() !== day || fecha.getMonth() !== month - 1 || fecha.getFullYear() !== year) {
+        throw new Error('Fecha inválida');
+      }
+      
+      // Verificar que la fecha es futura
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      if (fecha <= hoy) {
+        throw new Error('La fecha de inicio debe ser posterior al día actual');
+      }
+      
+      return true;
+    })
+    .withMessage('La fecha de inicio debe ser una fecha válida y futura');
+};
+
 export const verificarDietaExiste = async (
   dietaId: string,
   res: Response
@@ -149,28 +181,7 @@ export const crearDietaValidator = [
     .isInt({ min: 1, max: 6 })
     .withMessage('Las comidas diarias deben ser un número entero entre 1 y 6'),
   
-  body('fechaInicio')
-    .matches(/^\d{1,2}-\d{1,2}-\d{4}$/)
-    .withMessage('La fecha de inicio debe tener el formato DD-MM-YYYY')
-    .custom((value) => {
-      const [day, month, year] = value.split('-').map(Number);
-      const fecha = new Date(year, month - 1, day);
-      
-      // Verificar que la fecha es válida
-      if (fecha.getDate() !== day || fecha.getMonth() !== month - 1 || fecha.getFullYear() !== year) {
-        throw new Error('Fecha inválida');
-      }
-      
-      // Verificar que la fecha es futura
-      const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
-      if (fecha <= hoy) {
-        throw new Error('La fecha de inicio debe ser posterior al día actual');
-      }
-      
-      return true;
-    })
-    .withMessage('La fecha de inicio debe ser una fecha válida y futura'),
+  validarFechaInicio(false),
   
   body('asignadaA')
     .optional()
@@ -220,29 +231,7 @@ export const actualizarDietaValidator = [
     .isInt({ min: 1, max: 6 })
     .withMessage('Las comidas diarias deben ser un número entero entre 1 y 6'),
   
-  body('fechaInicio')
-    .optional()
-    .matches(/^\d{1,2}-\d{1,2}-\d{4}$/)
-    .withMessage('La fecha de inicio debe tener el formato DD-MM-YYYY')
-    .custom((value) => {
-      const [day, month, year] = value.split('-').map(Number);
-      const fecha = new Date(year, month - 1, day);
-      
-      // Verificar que la fecha es válida
-      if (fecha.getDate() !== day || fecha.getMonth() !== month - 1 || fecha.getFullYear() !== year) {
-        throw new Error('Fecha inválida');
-      }
-      
-      // Verificar que la fecha es futura
-      const hoy = new Date();
-      hoy.setHours(0, 0, 0, 0);
-      if (fecha <= hoy) {
-        throw new Error('La fecha de inicio debe ser posterior al día actual');
-      }
-      
-      return true;
-    })
-    .withMessage('La fecha de inicio debe ser una fecha válida y futura'),
+  validarFechaInicio(true),
   
   body('draftMode')
     .optional()

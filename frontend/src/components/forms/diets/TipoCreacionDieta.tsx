@@ -27,6 +27,126 @@ import { DietaResponse } from '../../../types';
 import { useAuth } from '../../../hooks/useAuth';
 import { motion } from 'framer-motion';
 
+// Componente reutilizable para las tarjetas de selección
+interface TipoCardProps {
+  tipo: TipoCreacion;
+  tipoSeleccionado: TipoCreacion | null;
+  color: string;
+  icon: React.ReactNode;
+  titulo: string;
+  descripcion: string;
+  badge?: string;
+  children?: React.ReactNode;
+  onSeleccionar: (tipo: TipoCreacion) => void;
+}
+
+const TipoCard: React.FC<TipoCardProps> = ({
+  tipo,
+  tipoSeleccionado,
+  color,
+  icon,
+  titulo,
+  descripcion,
+  badge,
+  children,
+  onSeleccionar
+}) => {
+  const isSelected = tipoSeleccionado === tipo;
+  
+  return (
+    <Card
+      shadow={isSelected ? 'lg' : 'sm'}
+      padding="xl"
+      radius="lg"
+      withBorder
+      style={{
+        cursor: 'pointer',
+        backgroundColor: isSelected ? `var(--mantine-color-${color}-0)` : 'var(--app-paper-bg)',
+        borderColor: isSelected ? `var(--mantine-color-${color}-4)` : 'var(--app-border-color)',
+        borderWidth: isSelected ? '2px' : '1px',
+        transition: 'all 0.3s ease',
+        transform: isSelected ? 'translateY(-4px)' : 'translateY(0)',
+        position: 'relative',
+        overflow: 'hidden'
+      }}
+      onMouseEnter={(e) => {
+        if (!isSelected) {
+          e.currentTarget.style.transform = 'translateY(-2px)';
+          e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
+        }
+      }}
+      onMouseLeave={(e) => {
+        if (!isSelected) {
+          e.currentTarget.style.transform = 'translateY(0)';
+          e.currentTarget.style.boxShadow = 'var(--mantine-shadow-sm)';
+        }
+      }}
+      onClick={() => onSeleccionar(tipo)}
+    >
+      {isSelected && (
+        <Box
+          style={{
+            position: 'absolute',
+            top: 0,
+            right: 0,
+            width: '60px',
+            height: '60px',
+            background: `linear-gradient(135deg, var(--mantine-color-${color}-4) 0%, var(--mantine-color-${color}-6) 100%)`,
+            clipPath: 'polygon(100% 0, 0 0, 100% 100%)',
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'flex-end',
+            padding: '8px'
+          }}
+        >
+          <IconCheck size={16} color="white" />
+        </Box>
+      )}
+      
+      <Stack align="center" gap="lg">
+        <Box
+          style={{
+            backgroundColor: isSelected ? `var(--mantine-color-${color}-6)` : `var(--mantine-color-${color}-1)`,
+            borderRadius: '50%',
+            padding: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            transition: 'all 0.3s ease'
+          }}
+        >
+          {React.cloneElement(icon as React.ReactElement<{ size?: number; color?: string }>, {
+            size: 36,
+            color: isSelected ? 'white' : `var(--mantine-color-${color}-6)`
+          })}
+        </Box>
+        
+        <Title order={3} ta="center" c={isSelected ? `${color}.7` : 'dark'} fw={600}>
+          {titulo}
+        </Title>
+        
+        <Text ta="center" size="sm" c="dimmed" maw={200}>
+          {descripcion}
+        </Text>
+
+        {badge && (
+          <Badge
+            color={color}
+            variant={isSelected ? 'filled' : 'light'}
+            size="lg"
+            radius="xl"
+            style={{ fontWeight: 500 }}
+          >
+            {badge}
+          </Badge>
+        )}
+
+        {children}
+      </Stack>
+    </Card>
+  );
+};
+
 export type TipoCreacion = 'desde-cero' | 'desde-plantilla' | 'desde-existente';
 
 interface TipoCreacionDietaProps {
@@ -302,327 +422,108 @@ const TipoCreacionDieta: React.FC<TipoCreacionDietaProps> = ({ onSeleccionarTipo
 
       <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="xl">
         {/* Crear desde cero */}
-        <Card
-          shadow={tipoSeleccionado === 'desde-cero' ? 'lg' : 'sm'}
-          padding="xl"
-          radius="lg"
-          withBorder
-          style={{
-            cursor: 'pointer',
-            backgroundColor: tipoSeleccionado === 'desde-cero' ? 'var(--mantine-color-nutroos-green-0)' : 'var(--app-paper-bg)',
-            borderColor: tipoSeleccionado === 'desde-cero' ? 'var(--mantine-color-nutroos-green-4)' : 'var(--app-border-color)',
-            borderWidth: tipoSeleccionado === 'desde-cero' ? '2px' : '1px',
-            transition: 'all 0.3s ease',
-            transform: tipoSeleccionado === 'desde-cero' ? 'translateY(-4px)' : 'translateY(0)',
-            position: 'relative',
-            overflow: 'hidden'
-          }}
-          onMouseEnter={(e) => {
-            if (tipoSeleccionado !== 'desde-cero') {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (tipoSeleccionado !== 'desde-cero') {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'var(--mantine-shadow-sm)';
-            }
-          }}
-          onClick={() => handleSeleccionarTipo('desde-cero')}
+        <TipoCard
+          tipo="desde-cero"
+          tipoSeleccionado={tipoSeleccionado}
+          color="nutroos-green"
+          icon={<IconPlus />}
+          titulo="Desde cero"
+          descripcion="Crear una dieta completamente nueva con tus propias recetas y configuraciones personalizadas"
+          badge="Total control"
+          onSeleccionar={handleSeleccionarTipo}
         >
           {tipoSeleccionado === 'desde-cero' && (
-            <Box
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                width: '60px',
-                height: '60px',
-                background: 'linear-gradient(135deg, var(--mantine-color-nutroos-green-4) 0%, var(--mantine-color-nutroos-green-6) 100%)',
-                clipPath: 'polygon(100% 0, 0 0, 100% 100%)',
-                display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'flex-end',
-                padding: '8px'
-              }}
-            >
-              <IconCheck size={16} color="white" />
-            </Box>
-          )}
-          
-          <Stack align="center" gap="lg">
-            <Box
-              style={{
-                backgroundColor: tipoSeleccionado === 'desde-cero' ? 'var(--mantine-color-nutroos-green-6)' : 'var(--mantine-color-nutroos-green-1)',
-                borderRadius: '50%',
-                padding: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              <IconPlus size={36} color={tipoSeleccionado === 'desde-cero' ? 'white' : 'var(--mantine-color-nutroos-green-6)'} />
-            </Box>
-            
-            <Title order={3} ta="center" c={tipoSeleccionado === 'desde-cero' ? 'nutroos-green.7' : 'dark'} fw={600}>
-              Desde cero
-            </Title>
-            
-            <Text ta="center" size="sm" c="dimmed" maw={200}>
-              Crear una dieta completamente nueva con tus propias recetas y configuraciones personalizadas
-            </Text>
-
-            <Badge
+            <Button
               color="nutroos-green"
-              variant={tipoSeleccionado === 'desde-cero' ? 'filled' : 'light'}
-              size="lg"
+              leftSection={<IconCheck size={16} />}
+              size="md"
+              fullWidth
               radius="xl"
-              style={{ fontWeight: 500 }}
+              style={{ fontWeight: 600 }}
             >
-              Total control
-            </Badge>
-
-            {tipoSeleccionado === 'desde-cero' && (
-              <Button
-                color="nutroos-green"
-                leftSection={<IconCheck size={16} />}
-                size="md"
-                fullWidth
-                radius="xl"
-                style={{ fontWeight: 600 }}
-              >
-                Seleccionado
-              </Button>
-            )}
-          </Stack>
-        </Card>
+              Seleccionado
+            </Button>
+          )}
+        </TipoCard>
 
         {/* Crear desde plantilla */}
-        <Card
-          shadow={tipoSeleccionado === 'desde-plantilla' ? 'lg' : 'sm'}
-          padding="xl"
-          radius="lg"
-          withBorder
-          style={{
-            cursor: 'pointer',
-            backgroundColor: tipoSeleccionado === 'desde-plantilla' ? 'var(--mantine-color-blue-0)' : 'var(--app-paper-bg)',
-            borderColor: tipoSeleccionado === 'desde-plantilla' ? 'var(--mantine-color-blue-4)' : 'var(--app-border-color)',
-            borderWidth: tipoSeleccionado === 'desde-plantilla' ? '2px' : '1px',
-            transition: 'all 0.3s ease',
-            transform: tipoSeleccionado === 'desde-plantilla' ? 'translateY(-4px)' : 'translateY(0)',
-            position: 'relative',
-            overflow: 'hidden'
-          }}
-          onMouseEnter={(e) => {
-            if (tipoSeleccionado !== 'desde-plantilla') {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (tipoSeleccionado !== 'desde-plantilla') {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'var(--mantine-shadow-sm)';
-            }
-          }}
-          onClick={() => handleSeleccionarTipo('desde-plantilla')}
+        <TipoCard
+          tipo="desde-plantilla"
+          tipoSeleccionado={tipoSeleccionado}
+          color="blue"
+          icon={<IconTemplate />}
+          titulo="Desde plantilla"
+          descripcion="Usar una plantilla predefinida como base y personalizarla según las necesidades específicas"
+          badge={`${plantillas.length} plantillas`}
+          onSeleccionar={handleSeleccionarTipo}
         >
           {tipoSeleccionado === 'desde-plantilla' && (
-            <Box
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                width: '60px',
-                height: '60px',
-                background: 'linear-gradient(135deg, var(--mantine-color-blue-4) 0%, var(--mantine-color-blue-6) 100%)',
-                clipPath: 'polygon(100% 0, 0 0, 100% 100%)',
-                display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'flex-end',
-                padding: '8px'
-              }}
-            >
-              <IconCheck size={16} color="white" />
-            </Box>
+            <Stack gap="sm" w="100%">
+              {plantillas.map((plantilla) => (
+                <Button
+                  key={plantilla.tipo}
+                  variant="outline"
+                  color="blue"
+                  size="sm"
+                  fullWidth
+                  radius="lg"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleSeleccionarPlantilla(plantilla);
+                  }}
+                  style={{ fontWeight: 500 }}
+                >
+                  {plantilla.nombre}
+                </Button>
+              ))}
+            </Stack>
           )}
-          
-          <Stack align="center" gap="lg">
-            <Box
-              style={{
-                backgroundColor: tipoSeleccionado === 'desde-plantilla' ? 'var(--mantine-color-blue-6)' : 'var(--mantine-color-blue-1)',
-                borderRadius: '50%',
-                padding: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              <IconTemplate size={36} color={tipoSeleccionado === 'desde-plantilla' ? 'white' : 'var(--mantine-color-blue-6)'} />
-            </Box>
-            
-            <Title order={3} ta="center" c={tipoSeleccionado === 'desde-plantilla' ? 'blue.7' : 'dark'} fw={600}>
-              Desde plantilla
-            </Title>
-            
-            <Text ta="center" size="sm" c="dimmed" maw={200}>
-              Usar una plantilla predefinida como base y personalizarla según las necesidades específicas
-            </Text>
+        </TipoCard>
 
-            <Badge
-              color="blue"
-              variant="light"
-              size="lg"
-              radius="xl"
-              style={{ fontWeight: 500 }}
-            >
-              {plantillas.length} plantillas
-            </Badge>
-
-            {tipoSeleccionado === 'desde-plantilla' && (
-              <Stack gap="sm" w="100%">
-                {plantillas.map((plantilla) => (
+        {/* Crear desde dieta existente */}
+        <TipoCard
+          tipo="desde-existente"
+          tipoSeleccionado={tipoSeleccionado}
+          color="orange"
+          icon={<IconCopy />}
+          titulo="Desde dieta existente"
+          descripcion="Copiar una de tus dietas anteriores como base para crear una nueva versión personalizada"
+          badge={`${dietasExistentes.length} dietas`}
+          onSeleccionar={handleSeleccionarTipo}
+        >
+          {tipoSeleccionado === 'desde-existente' && (
+            <Stack gap="sm" w="100%" style={{ maxHeight: '200px', overflowY: 'auto' }}>
+              {dietasExistentes.length > 0 ? (
+                dietasExistentes.slice(0, 5).map((dieta) => (
                   <Button
-                    key={plantilla.tipo}
+                    key={dieta._id}
                     variant="outline"
-                    color="blue"
+                    color="orange"
                     size="sm"
                     fullWidth
                     radius="lg"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleSeleccionarPlantilla(plantilla);
+                      handleSeleccionarDietaExistente(dieta);
                     }}
                     style={{ fontWeight: 500 }}
                   >
-                    {plantilla.nombre}
+                    <Text truncate>{dieta.nombre}</Text>
                   </Button>
-                ))}
-              </Stack>
-            )}
-          </Stack>
-        </Card>
-
-        {/* Crear desde dieta existente */}
-        <Card
-          shadow={tipoSeleccionado === 'desde-existente' ? 'lg' : 'sm'}
-          padding="xl"
-          radius="lg"
-          withBorder
-          style={{
-            cursor: 'pointer',
-            backgroundColor: tipoSeleccionado === 'desde-existente' ? 'var(--mantine-color-orange-0)' : 'var(--app-paper-bg)',
-            borderColor: tipoSeleccionado === 'desde-existente' ? 'var(--mantine-color-orange-4)' : 'var(--app-border-color)',
-            borderWidth: tipoSeleccionado === 'desde-existente' ? '2px' : '1px',
-            transition: 'all 0.3s ease',
-            transform: tipoSeleccionado === 'desde-existente' ? 'translateY(-4px)' : 'translateY(0)',
-            position: 'relative',
-            overflow: 'hidden'
-          }}
-          onMouseEnter={(e) => {
-            if (tipoSeleccionado !== 'desde-existente') {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(0, 0, 0, 0.15)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            if (tipoSeleccionado !== 'desde-existente') {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'var(--mantine-shadow-sm)';
-            }
-          }}
-          onClick={() => handleSeleccionarTipo('desde-existente')}
-        >
-          {tipoSeleccionado === 'desde-existente' && (
-            <Box
-              style={{
-                position: 'absolute',
-                top: 0,
-                right: 0,
-                width: '60px',
-                height: '60px',
-                background: 'linear-gradient(135deg, var(--mantine-color-orange-4) 0%, var(--mantine-color-orange-6) 100%)',
-                clipPath: 'polygon(100% 0, 0 0, 100% 100%)',
-                display: 'flex',
-                alignItems: 'flex-start',
-                justifyContent: 'flex-end',
-                padding: '8px'
-              }}
-            >
-              <IconCheck size={16} color="white" />
-            </Box>
+                ))
+              ) : (
+                <Alert
+                  icon={<IconInfoCircle size={16} />}
+                  color="blue"
+                  variant="light"
+                  radius="lg"
+                >
+                  No tienes dietas disponibles para copiar
+                </Alert>
+              )}
+            </Stack>
           )}
-          
-          <Stack align="center" gap="lg">
-            <Box
-              style={{
-                backgroundColor: tipoSeleccionado === 'desde-existente' ? 'var(--mantine-color-orange-6)' : 'var(--mantine-color-orange-1)',
-                borderRadius: '50%',
-                padding: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                transition: 'all 0.3s ease'
-              }}
-            >
-              <IconCopy size={36} color={tipoSeleccionado === 'desde-existente' ? 'white' : 'var(--mantine-color-orange-6)'} />
-            </Box>
-            
-            <Title order={3} ta="center" c={tipoSeleccionado === 'desde-existente' ? 'orange.7' : 'dark'} fw={600}>
-              Desde dieta existente
-            </Title>
-            
-            <Text ta="center" size="sm" c="dimmed" maw={200}>
-              Copiar una de tus dietas anteriores como base para crear una nueva versión personalizada
-            </Text>
-
-            <Badge
-              color="orange"
-              variant="light"
-              size="lg"
-              radius="xl"
-              style={{ fontWeight: 500 }}
-            >
-              {dietasExistentes.length} dietas
-            </Badge>
-
-            {tipoSeleccionado === 'desde-existente' && (
-              <Stack gap="sm" w="100%" style={{ maxHeight: '200px', overflowY: 'auto' }}>
-                {dietasExistentes.length > 0 ? (
-                  dietasExistentes.slice(0, 5).map((dieta) => (
-                    <Button
-                      key={dieta._id}
-                      variant="outline"
-                      color="orange"
-                      size="sm"
-                      fullWidth
-                      radius="lg"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleSeleccionarDietaExistente(dieta);
-                      }}
-                      style={{ fontWeight: 500 }}
-                    >
-                      <Text truncate>{dieta.nombre}</Text>
-                    </Button>
-                  ))
-                ) : (
-                  <Alert
-                    icon={<IconInfoCircle size={16} />}
-                    color="blue"
-                    variant="light"
-                    radius="lg"
-                  >
-                    No tienes dietas disponibles para copiar
-                  </Alert>
-                )}
-              </Stack>
-            )}
-          </Stack>
-        </Card>
+        </TipoCard>
       </SimpleGrid>
 
       {tipoSeleccionado && datosExtra && (

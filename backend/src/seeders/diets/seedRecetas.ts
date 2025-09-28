@@ -15,6 +15,49 @@ interface RecetaTemplate {
   categoriasNutricionales: string[];
 }
 
+// Funciones helper para generar pasos de preparación comunes
+const pasosComunes = {
+  cocinar: (ingrediente: string) => `Cocinar ${ingrediente}`,
+  cortar: (ingrediente: string, forma: string = 'cubos') => `Cortar ${ingrediente} en ${forma}`,
+  lavar: (ingrediente: string) => `Lavar ${ingrediente}`,
+  mezclar: (ingredientes: string) => `Mezclar ${ingredientes}`,
+  saltear: (ingredientes: string, conAceite: boolean = true) => 
+    `Saltear ${ingredientes}${conAceite ? ' con aceite de oliva' : ''}`,
+  servir: (temperatura: string = 'caliente') => `Servir ${temperatura}`,
+  añadir: (ingrediente: string, a: string) => `Añadir ${ingrediente} a ${a}`,
+  triturar: (ingredientes: string) => `Triturar ${ingredientes}`,
+  batir: (ingredientes: string) => `Batir ${ingredientes} hasta obtener una mezcla homogénea`
+};
+
+// Plantillas de pasos reutilizables
+const plantillasPasos = {
+  ensalada: (ingredientes: string[]) => [
+    ...ingredientes.map(ing => pasosComunes.lavar(ing)),
+    ...ingredientes.map(ing => pasosComunes.cortar(ing)),
+    pasosComunes.mezclar('todos los ingredientes'),
+    pasosComunes.servir('frío')
+  ],
+  cerealConVerduras: (cereal: string, verduras: string[]) => [
+    pasosComunes.cocinar(cereal),
+    ...verduras.map(verdura => pasosComunes.cortar(verdura)),
+    pasosComunes.saltear(verduras.join(', ')),
+    pasosComunes.mezclar(`con ${cereal} cocida`)
+  ],
+  pastaConSalsa: (pasta: string, ingredientes: string[]) => [
+    pasosComunes.cocinar(pasta),
+    ...ingredientes.map(ing => pasosComunes.cortar(ing)),
+    pasosComunes.saltear(ingredientes.join(', ')),
+    pasosComunes.mezclar(`con ${pasta}`)
+  ],
+  legumbresConVerduras: (legumbre: string, verduras: string[]) => [
+    pasosComunes.cocinar(legumbre),
+    ...verduras.map(verdura => pasosComunes.cortar(verdura)),
+    pasosComunes.saltear(verduras.join(', ')),
+    pasosComunes.añadir(legumbre, 'las verduras'),
+    pasosComunes.servir()
+  ]
+};
+
 const RECETAS_TEMPLATES: RecetaTemplate[] = [
   // DESAYUNOS MEDITERRÁNEOS
   {
@@ -83,9 +126,7 @@ const RECETAS_TEMPLATES: RecetaTemplate[] = [
       { nombreIngrediente: "Aceite de oliva", peso: 15 }
     ],
     pasosPreparacion: [
-      "Lavar y cortar la lechuga",
-      "Cortar tomate y pepino en cubos",
-      "Mezclar todos los ingredientes",
+      ...plantillasPasos.ensalada(["lechuga", "tomate", "pepino"]),
       "Aliñar con aceite de oliva"
     ],
     tiempoPreparacion: "10 minutos",
@@ -101,12 +142,7 @@ const RECETAS_TEMPLATES: RecetaTemplate[] = [
       { nombreIngrediente: "Pimiento rojo", peso: 80 },
       { nombreIngrediente: "Aceite de oliva", peso: 10 }
     ],
-    pasosPreparacion: [
-      "Cocinar la quinoa según instrucciones",
-      "Cortar las verduras en cubos",
-      "Saltear las verduras con aceite de oliva",
-      "Mezclar con la quinoa cocida"
-    ],
+    pasosPreparacion: plantillasPasos.cerealConVerduras("la quinoa", ["calabacín", "pimiento rojo"]),
     tiempoPreparacion: "20 minutos",
     tiposDieta: ["Vegetariana", "Sin gluten"],
     comidas: ["Almuerzo"],
@@ -119,12 +155,7 @@ const RECETAS_TEMPLATES: RecetaTemplate[] = [
       { nombreIngrediente: "Tomate", peso: 120 },
       { nombreIngrediente: "Aceite de oliva", peso: 10 }
     ],
-    pasosPreparacion: [
-      "Cocinar la pasta según instrucciones",
-      "Cortar el tomate en cubos",
-      "Saltear el tomate con aceite de oliva",
-      "Mezclar con la pasta"
-    ],
+    pasosPreparacion: plantillasPasos.pastaConSalsa("la pasta", ["tomate"]),
     tiempoPreparacion: "15 minutos",
     tiposDieta: ["Mediterránea", "Vegetariana"],
     comidas: ["Almuerzo"],
@@ -140,12 +171,7 @@ const RECETAS_TEMPLATES: RecetaTemplate[] = [
       { nombreIngrediente: "Guisante verde", peso: 60 },
       { nombreIngrediente: "Aceite de oliva", peso: 10 }
     ],
-    pasosPreparacion: [
-      "Cocinar el arroz",
-      "Cortar verduras en cubos",
-      "Saltear las verduras con aceite de oliva",
-      "Mezclar con el arroz"
-    ],
+    pasosPreparacion: plantillasPasos.cerealConVerduras("el arroz", ["zanahoria", "guisante verde"]),
     tiempoPreparacion: "25 minutos",
     tiposDieta: ["Vegetariana", "Mediterránea"],
     comidas: ["Cena"],
@@ -160,10 +186,8 @@ const RECETAS_TEMPLATES: RecetaTemplate[] = [
       { nombreIngrediente: "Aceite de oliva", peso: 10 }
     ],
     pasosPreparacion: [
-      "Cocinar las lentejas",
-      "Picar finamente las verduras",
-      "Saltear las verduras con aceite",
-      "Añadir las lentejas y cocinar 10 minutos"
+      ...plantillasPasos.legumbresConVerduras("las lentejas", ["cebolla", "zanahoria"]),
+      "Cocinar 10 minutos más"
     ],
     tiempoPreparacion: "35 minutos",
     tiposDieta: ["Vegetariana", "Mediterránea"],
@@ -270,8 +294,7 @@ const RECETAS_TEMPLATES: RecetaTemplate[] = [
     ],
     pasosPreparacion: [
       "Preparar el cuscús según instrucciones",
-      "Cortar verduras en cubos pequeños",
-      "Mezclar con el cuscús",
+      ...plantillasPasos.ensalada(["tomate", "pepino"]).slice(1, 3), // Cortar y mezclar
       "Servir a temperatura ambiente"
     ],
     tiempoPreparacion: "10 minutos",
@@ -287,10 +310,8 @@ const RECETAS_TEMPLATES: RecetaTemplate[] = [
       { nombreIngrediente: "Pepino", peso: 80 }
     ],
     pasosPreparacion: [
-      "Cocinar las lentejas",
-      "Cortar verduras en cubos",
-      "Mezclar todos los ingredientes",
-      "Servir frío"
+      pasosComunes.cocinar("las lentejas"),
+      ...plantillasPasos.ensalada(["tomate", "pepino"]).slice(1) // Cortar, mezclar y servir frío
     ],
     tiempoPreparacion: "25 minutos",
     tiposDieta: ["Vegetariana", "Vegana"],
@@ -305,10 +326,10 @@ const RECETAS_TEMPLATES: RecetaTemplate[] = [
       { nombreIngrediente: "Tomate", peso: 80 }
     ],
     pasosPreparacion: [
-      "Cocinar los garbanzos",
-      "Lavar las espinacas",
-      "Cortar el tomate",
-      "Mezclar todos los ingredientes"
+      pasosComunes.cocinar("los garbanzos"),
+      pasosComunes.lavar("las espinacas"),
+      pasosComunes.cortar("tomate"),
+      pasosComunes.mezclar("todos los ingredientes")
     ],
     tiempoPreparacion: "30 minutos",
     tiposDieta: ["Vegetariana", "Vegana"],
@@ -323,10 +344,8 @@ const RECETAS_TEMPLATES: RecetaTemplate[] = [
       { nombreIngrediente: "Cebolla", peso: 50 }
     ],
     pasosPreparacion: [
-      "Cocinar las judías blancas",
-      "Cortar verduras en cubos",
-      "Saltear las verduras",
-      "Añadir judías y cocinar 15 minutos"
+      ...plantillasPasos.legumbresConVerduras("las judías blancas", ["zanahoria", "cebolla"]),
+      "Cocinar 15 minutos más"
     ],
     tiempoPreparacion: "45 minutos",
     tiposDieta: ["Vegetariana", "Vegana"],
@@ -340,12 +359,7 @@ const RECETAS_TEMPLATES: RecetaTemplate[] = [
       { nombreIngrediente: "Calabaza", peso: 100 },
       { nombreIngrediente: "Cebolla", peso: 50 }
     ],
-    pasosPreparacion: [
-      "Cocinar el mijo",
-      "Cortar calabaza en cubos",
-      "Saltear con cebolla",
-      "Mezclar con el mijo"
-    ],
+    pasosPreparacion: plantillasPasos.cerealConVerduras("el mijo", ["calabaza", "cebolla"]),
     tiempoPreparacion: "25 minutos",
     tiposDieta: ["Vegetariana", "Vegana"],
     comidas: ["Cena"],
@@ -358,12 +372,7 @@ const RECETAS_TEMPLATES: RecetaTemplate[] = [
       { nombreIngrediente: "Pimiento verde", peso: 80 },
       { nombreIngrediente: "Tomate", peso: 100 }
     ],
-    pasosPreparacion: [
-      "Cocinar la cebada",
-      "Cortar verduras en cubos",
-      "Saltear las verduras",
-      "Mezclar con la cebada"
-    ],
+    pasosPreparacion: plantillasPasos.cerealConVerduras("la cebada", ["pimiento verde", "tomate"]),
     tiempoPreparacion: "30 minutos",
     tiposDieta: ["Vegetariana", "Vegana"],
     comidas: ["Cena"],
@@ -378,9 +387,7 @@ const RECETAS_TEMPLATES: RecetaTemplate[] = [
     ],
     pasosPreparacion: [
       "Cocinar la quinoa según instrucciones",
-      "Cortar tomate y pepino en cubos",
-      "Mezclar todos los ingredientes",
-      "Servir frío"
+      ...plantillasPasos.ensalada(["tomate", "pepino"]).slice(1) // Cortar, mezclar y servir frío
     ],
     tiempoPreparacion: "20 minutos",
     tiposDieta: ["Vegetariana", "Vegana"],
@@ -394,12 +401,7 @@ const RECETAS_TEMPLATES: RecetaTemplate[] = [
       { nombreIngrediente: "Calabacín", peso: 100 },
       { nombreIngrediente: "Tomate", peso: 100 }
     ],
-    pasosPreparacion: [
-      "Cocinar la pasta",
-      "Cortar verduras en cubos",
-      "Saltear las verduras",
-      "Mezclar con la pasta"
-    ],
+    pasosPreparacion: plantillasPasos.pastaConSalsa("la pasta", ["calabacín", "tomate"]),
     tiempoPreparacion: "20 minutos",
     tiposDieta: ["Vegetariana", "Vegana"],
     comidas: ["Cena"],

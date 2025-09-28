@@ -71,86 +71,73 @@ const CONFIGURACIONES_DIETA = {
   }
 };
 
-// Plantillas de comidas por día (extraídas del seeder)
+// Variaciones de snacks con diferentes pesos
+const VARIACIONES_SNACKS = {
+  frutosSecos: [
+    { nombre: "Almendras", peso: 10 }, { nombre: "Nueces", peso: 8 }, { nombre: "Avellanas", peso: 7 },
+    { nombre: "Almendras", peso: 12 }, { nombre: "Nueces", peso: 6 }, { nombre: "Avellanas", peso: 7 },
+    { nombre: "Almendras", peso: 11 }, { nombre: "Nueces", peso: 7 }, { nombre: "Avellanas", peso: 7 },
+    { nombre: "Almendras", peso: 10 }, { nombre: "Nueces", peso: 8 }, { nombre: "Avellanas", peso: 7 },
+    { nombre: "Almendras", peso: 11 }, { nombre: "Nueces", peso: 7 }, { nombre: "Avellanas", peso: 7 }
+  ],
+  ensaladaFrutas: [
+    { nombre: "Manzana", peso: 80 }, { nombre: "Plátano", peso: 60 }, { nombre: "Naranja", peso: 100 },
+    { nombre: "Manzana", peso: 90 }, { nombre: "Plátano", peso: 50 }, { nombre: "Naranja", peso: 110 },
+    { nombre: "Manzana", peso: 85 }, { nombre: "Plátano", peso: 55 }, { nombre: "Naranja", peso: 105 },
+    { nombre: "Manzana", peso: 80 }, { nombre: "Plátano", peso: 60 }, { nombre: "Naranja", peso: 100 },
+    { nombre: "Manzana", peso: 80 }, { nombre: "Plátano", peso: 60 }, { nombre: "Naranja", peso: 100 }
+  ]
+};
+
+// Función helper para crear snacks con variaciones
+const crearSnack = (tipo: 'frutosSecos' | 'ensaladaFrutas', diaIndex: number) => ({
+  tipo: "ingredientes" as const,
+  nombre: tipo === 'frutosSecos' ? "Frutos secos mixtos" : "Ensalada de frutas",
+  ingredientes: tipo === 'frutosSecos' 
+    ? VARIACIONES_SNACKS.frutosSecos.slice(diaIndex * 3, (diaIndex * 3) + 3)
+    : VARIACIONES_SNACKS.ensaladaFrutas.slice(diaIndex * 3, (diaIndex * 3) + 3)
+});
+
+// Plantillas de comidas por día (refactorizadas)
 const PLANTILLAS_COMIDAS = [
   // Lunes - Legumbres + Verduras
   {
     desayuno: ["Tostada con tomate y aceite de oliva", "Avena con frutas"],
-    mediaManana: { tipo: "ingredientes", nombre: "Frutos secos mixtos", ingredientes: [
-      { nombre: "Almendras", peso: 10 },
-      { nombre: "Nueces", peso: 8 },
-      { nombre: "Avellanas", peso: 7 }
-    ]},
+    mediaManana: crearSnack('frutosSecos', 0),
     almuerzo: ["Lentejas con verduras"],
-    merienda: { tipo: "ingredientes", nombre: "Ensalada de frutas", ingredientes: [
-      { nombre: "Manzana", peso: 80 },
-      { nombre: "Plátano", peso: 60 },
-      { nombre: "Naranja", peso: 100 }
-    ]},
+    merienda: crearSnack('ensaladaFrutas', 0),
     cena: ["Arroz con verduras"]
   },
   // Martes - Arroz/Pasta + Verduras
   {
     desayuno: ["Tostada con tomate y aceite de oliva", "Smoothie verde"],
-    mediaManana: { tipo: "ingredientes", nombre: "Frutos secos mixtos", ingredientes: [
-      { nombre: "Almendras", peso: 12 },
-      { nombre: "Nueces", peso: 6 },
-      { nombre: "Avellanas", peso: 7 }
-    ]},
+    mediaManana: crearSnack('frutosSecos', 1),
     almuerzo: ["Pasta con tomate"],
-    merienda: { tipo: "ingredientes", nombre: "Ensalada de frutas", ingredientes: [
-      { nombre: "Manzana", peso: 90 },
-      { nombre: "Plátano", peso: 50 },
-      { nombre: "Naranja", peso: 110 }
-    ]},
+    merienda: crearSnack('ensaladaFrutas', 1),
     cena: ["Quinoa con verduras"]
   },
   // Miércoles - Legumbres + Verduras
   {
     desayuno: ["Tostada con tomate y aceite de oliva", "Avena con frutas"],
-    mediaManana: { tipo: "ingredientes", nombre: "Frutos secos mixtos", ingredientes: [
-      { nombre: "Almendras", peso: 11 },
-      { nombre: "Nueces", peso: 7 },
-      { nombre: "Avellanas", peso: 7 }
-    ]},
+    mediaManana: crearSnack('frutosSecos', 2),
     almuerzo: ["Garbanzos con espinacas"],
-    merienda: { tipo: "ingredientes", nombre: "Ensalada de frutas", ingredientes: [
-      { nombre: "Manzana", peso: 85 },
-      { nombre: "Plátano", peso: 55 },
-      { nombre: "Naranja", peso: 105 }
-    ]},
+    merienda: crearSnack('ensaladaFrutas', 2),
     cena: ["Sopa de verduras"]
   },
   // Jueves - Arroz/Pasta + Verduras
   {
     desayuno: ["Tostada con tomate y aceite de oliva", "Smoothie verde"],
-    mediaManana: { tipo: "ingredientes", nombre: "Frutos secos mixtos", ingredientes: [
-      { nombre: "Almendras", peso: 10 },
-      { nombre: "Nueces", peso: 8 },
-      { nombre: "Avellanas", peso: 7 }
-    ]},
+    mediaManana: crearSnack('frutosSecos', 3),
     almuerzo: ["Ensalada de quinoa con verduras"],
-    merienda: { tipo: "ingredientes", nombre: "Ensalada de frutas", ingredientes: [
-      { nombre: "Manzana", peso: 80 },
-      { nombre: "Plátano", peso: 60 },
-      { nombre: "Naranja", peso: 100 }
-    ]},
+    merienda: crearSnack('ensaladaFrutas', 3),
     cena: ["Mijo con calabaza"]
   },
   // Viernes - Legumbres + Verduras
   {
     desayuno: ["Tostada con tomate y aceite de oliva", "Avena con frutas"],
-    mediaManana: { tipo: "ingredientes", nombre: "Frutos secos mixtos", ingredientes: [
-      { nombre: "Almendras", peso: 11 },
-      { nombre: "Nueces", peso: 7 },
-      { nombre: "Avellanas", peso: 7 }
-    ]},
+    mediaManana: crearSnack('frutosSecos', 4),
     almuerzo: ["Judías blancas con verduras"],
-    merienda: { tipo: "ingredientes", nombre: "Ensalada de frutas", ingredientes: [
-      { nombre: "Manzana", peso: 80 },
-      { nombre: "Plátano", peso: 60 },
-      { nombre: "Naranja", peso: 100 }
-    ]},
+    merienda: crearSnack('ensaladaFrutas', 4),
     cena: ["Sopa de verduras"]
   }
 ];

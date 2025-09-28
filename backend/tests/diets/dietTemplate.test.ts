@@ -522,7 +522,7 @@ describe('Diet Template Endpoints', () => {
 
       expect(res.statusCode).toEqual(500);
       expect(res.body).toHaveProperty('success', false);
-      expect(res.body.message).toContain('Error interno del servidor');
+      expect(res.body.message).toContain('Error al obtener tipos');
     });
   });
 
@@ -564,7 +564,7 @@ describe('Diet Template Endpoints', () => {
 
       expect(res.statusCode).toEqual(500);
       expect(res.body).toHaveProperty('success', false);
-      expect(res.body.message).toContain('Error interno del servidor');
+      expect(res.body.message).toContain('Error al obtener configuración');
     });
   });
 });
