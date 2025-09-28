@@ -29,7 +29,7 @@ export const crearDietaDesdePlantilla = async (req: AuthenticatedRequest, res: R
     }
 
     // Validar campos requeridos
-    if (!nombre || !tipo || !duracion || !comidasDiarias || !fechaInicio || !tipoArquetipo) {
+    if (!nombre || !tipo || duracion === undefined || duracion === null || comidasDiarias === undefined || comidasDiarias === null || !fechaInicio || !tipoArquetipo) {
       res.status(400).json({
         success: false,
         message: 'Faltan campos requeridos: nombre, tipo, duracion, comidasDiarias, fechaInicio, tipoArquetipo'

@@ -120,19 +120,20 @@ function adaptarComidas(comidasOrigen: any[], comidasDiarias: number): any[] {
     platos: comida.platos.map((plato: any) => {
       // Si el plato tiene una receta, copiar sus ingredientes a ingredientes personalizados
       if (plato.receta && plato.receta.ingredientes) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const ingredientesPersonalizados = plato.receta.ingredientes.map((ing: any) => ({
-          ingrediente: ing.ingrediente._id || ing.ingrediente,
-          peso: ing.peso
-        }));
-        
-        return {
-          ...plato,
-          ingredientesPersonalizados: [
-            ...(plato.ingredientesPersonalizados || []),
-            ...ingredientesPersonalizados
-          ]
-        };
+        // Solo copiar ingredientes de la receta si no hay ingredientes personalizados existentes
+        // para evitar duplicaciones
+        if (!plato.ingredientesPersonalizados || plato.ingredientesPersonalizados.length === 0) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const ingredientesDeReceta = plato.receta.ingredientes.map((ing: any) => ({
+            ingrediente: ing.ingrediente._id || ing.ingrediente,
+            peso: ing.peso
+          }));
+          
+          return {
+            ...plato,
+            ingredientesPersonalizados: ingredientesDeReceta
+          };
+        }
       }
       return plato;
     })
@@ -155,22 +156,7 @@ function calcularInfoNutricionalDia(comidas: any[]): { calorias: number; protein
     if (comida.platos) {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       comida.platos.forEach((plato: any) => {
-        // Sumar calorías de ingredientes de receta
-        if (plato.receta && plato.receta.ingredientes) {
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          plato.receta.ingredientes.forEach((ing: any) => {
-            const ingrediente = ing.ingrediente;
-            const peso = ing.peso;
-            if (ingrediente && ingrediente.calorias) {
-              calorias += (ingrediente.calorias * peso) / 100;
-              proteinas += (ingrediente.proteinas * peso) / 100;
-              hidratosCarbono += (ingrediente.hidratosCarbono * peso) / 100;
-              grasas += (ingrediente.grasas * peso) / 100;
-            }
-          });
-        }
-
-        // Sumar calorías de ingredientes personalizados
+        // Solo calcular desde ingredientes personalizados (ya incluyen los de recetas)
         if (plato.ingredientesPersonalizados) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           plato.ingredientesPersonalizados.forEach((ing: any) => {

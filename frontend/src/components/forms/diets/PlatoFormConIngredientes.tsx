@@ -222,7 +222,7 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
             const ingredienteData = await response.json();
             const ingredienteCompleto: Ingrediente = {
               nombre: ingredienteData.nombre,
-              peso: ingPersonalizado.peso,
+              peso: ingPersonalizado.peso, // ✅ USAR EL PESO DEL INGREDIENTE PERSONALIZADO
               informacionNutricional: {
                 calorias: ingredienteData.calorias || 0,
                 proteinas: ingredienteData.proteinas || 0,
@@ -239,6 +239,7 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
               id: ingredienteData._id
             };
             ingredientesCompletos.push(ingredienteCompleto);
+            console.log(`✅ Ingrediente cargado: ${ingredienteData.nombre} con peso ${ingPersonalizado.peso}g (desde BD)`);
           }
         } catch (error) {
           console.error(`❌ Error al cargar ingrediente:`, error);
@@ -307,6 +308,7 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
 
     // Cargar ingredientes según prioridad
     if (platoPropiedades.tieneIngredientesPersonalizados && plato.ingredientesPersonalizados) {
+      console.log('🔄 Cargando ingredientes personalizados desde plato:', plato.ingredientesPersonalizados);
       cargarIngredientesPersonalizados(plato.ingredientesPersonalizados);
     } else if (plato.receta) {
       cargarIngredientesDeReceta(plato.receta);
@@ -382,7 +384,29 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
       peso: ingrediente.peso || 100 // Peso por defecto
     };
     
-    setIngredientes([...ingredientes, nuevoIngrediente]);
+    const newIngredientes = [...ingredientes, nuevoIngrediente];
+    setIngredientes(newIngredientes);
+    
+    // ✅ ACTUALIZAR INMEDIATAMENTE los ingredientesPersonalizados del plato
+    const ingredientesPersonalizadosActualizados = newIngredientes
+      .filter(ing => ing.id || ing.codigoBarras)
+      .map(ing => ({
+        ingrediente: ing.id || ing.codigoBarras || '',
+        peso: ing.peso || 100
+      }));
+
+    // Actualizar el formData con los nuevos ingredientesPersonalizados
+    const platoActualizado = {
+      ...formData,
+      ingredientesPersonalizados: ingredientesPersonalizadosActualizados
+    };
+    
+    setFormData(platoActualizado);
+    
+    // ✅ PROPAGAR INMEDIATAMENTE al padre para actualizar la vista y recalcular nutrición
+    if (onUpdate) {
+      onUpdate(platoActualizado);
+    }
     
     // Limpiar el error de validación cuando se añade un ingrediente
     if (errors.ingredientes && errors.ingredientes !== 'Este ingrediente ya ha sido añadido') {
@@ -394,7 +418,29 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
   };
 
   const removeIngrediente = (index: number) => {
-    setIngredientes(ingredientes.filter((_, i) => i !== index));
+    const newIngredientes = ingredientes.filter((_, i) => i !== index);
+    setIngredientes(newIngredientes);
+    
+    // ✅ ACTUALIZAR INMEDIATAMENTE los ingredientesPersonalizados del plato
+    const ingredientesPersonalizadosActualizados = newIngredientes
+      .filter(ing => ing.id || ing.codigoBarras)
+      .map(ing => ({
+        ingrediente: ing.id || ing.codigoBarras || '',
+        peso: ing.peso || 100
+      }));
+
+    // Actualizar el formData con los nuevos ingredientesPersonalizados
+    const platoActualizado = {
+      ...formData,
+      ingredientesPersonalizados: ingredientesPersonalizadosActualizados
+    };
+    
+    setFormData(platoActualizado);
+    
+    // ✅ PROPAGAR INMEDIATAMENTE al padre para actualizar la vista y recalcular nutrición
+    if (onUpdate) {
+      onUpdate(platoActualizado);
+    }
   };
 
   const updateIngredientePeso = (index: number, nuevoPeso: number) => {
@@ -404,6 +450,27 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
       peso: nuevoPeso
     };
     setIngredientes(newIngredientes);
+
+    // ✅ ACTUALIZAR INMEDIATAMENTE los ingredientesPersonalizados del plato
+    const ingredientesPersonalizadosActualizados = newIngredientes
+      .filter(ing => ing.id || ing.codigoBarras)
+      .map(ing => ({
+        ingrediente: ing.id || ing.codigoBarras || '',
+        peso: ing.peso || 100
+      }));
+
+    // Actualizar el formData con los nuevos ingredientesPersonalizados
+    const platoActualizado = {
+      ...formData,
+      ingredientesPersonalizados: ingredientesPersonalizadosActualizados
+    };
+    
+    setFormData(platoActualizado);
+    
+    // ✅ PROPAGAR INMEDIATAMENTE al padre para actualizar la vista y recalcular nutrición
+    if (onUpdate) {
+      onUpdate(platoActualizado);
+    }
   };
 
   const updateIngredienteRecetaPeso = (index: number, nuevoPeso: number) => {
@@ -423,16 +490,33 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
       setIngredientesReceta(newIngredientes);
     }
 
+    // ✅ ACTUALIZAR INMEDIATAMENTE los ingredientesPersonalizados del plato
+    const ingredientesPersonalizadosActualizados = newIngredientes
+      .filter(ing => ing.id || ing.codigoBarras)
+      .map(ing => ({
+        ingrediente: ing.id || ing.codigoBarras || '',
+        peso: ing.peso || 100
+      }));
 
+    // Actualizar el formData con los nuevos ingredientesPersonalizados
+    const platoActualizado = {
+      ...formData,
+      ingredientesPersonalizados: ingredientesPersonalizadosActualizados
+    };
+    
+    setFormData(platoActualizado);
 
-    console.log('🎯 Peso actualizado localmente:', {
+    console.log('🎯 Peso actualizado y propagado:', {
       index,
       nuevoPeso,
-      nombreIngrediente: newIngredientes[index]?.nombre
+      nombreIngrediente: newIngredientes[index]?.nombre,
+      ingredientesPersonalizados: ingredientesPersonalizadosActualizados
     });
     
-    // NOTA: No actualizar reactivamente - solo al guardar
-    console.log('📝 Peso actualizado solo localmente - se aplicará al guardar');
+    // ✅ PROPAGAR INMEDIATAMENTE al padre para actualizar la vista y recalcular nutrición
+    if (onUpdate) {
+      onUpdate(platoActualizado);
+    }
   };
 
   const removeIngredienteReceta = (index: number) => {

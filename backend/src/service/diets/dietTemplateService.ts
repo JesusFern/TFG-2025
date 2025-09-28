@@ -215,6 +215,7 @@ async function crearPlatoConReceta(
   }
 
   // Crear ingredientes personalizados basados en los ingredientes de la receta
+  // Mantener los pesos originales de la receta sin sumar duplicados
   const ingredientesPersonalizados = receta.ingredientes.map(ing => ({
     ingrediente: ing.ingrediente._id,
     peso: ing.peso
@@ -300,19 +301,36 @@ async function crearDiaTemplate(diaIndex: number, comidasDiarias: number): Promi
     });
   }
 
-  // Calcular totales nutricionales
+  // Calcular totales nutricionales del día
   let totalCalorias = 0;
   let totalProteinas = 0;
   let totalHidratosCarbono = 0;
   let totalGrasas = 0;
 
+  // Obtener todos los IDs de ingredientes únicos del día
+  const ingredientesIds = new Set<string>();
   for (const comida of comidas) {
     for (const plato of comida.platos) {
       if (plato.ingredientesPersonalizados) {
         for (const item of plato.ingredientesPersonalizados) {
-          const ingrediente = await Ingrediente.findById(item.ingrediente);
+          ingredientesIds.add(item.ingrediente.toString());
+        }
+      }
+    }
+  }
+
+  // Obtener todos los ingredientes de una vez
+  const ingredientes = await Ingrediente.find({ _id: { $in: Array.from(ingredientesIds) } });
+  const ingredientesMap = new Map(ingredientes.map(ing => [ing._id.toString(), ing]));
+
+  // Calcular totales nutricionales
+  for (const comida of comidas) {
+    for (const plato of comida.platos) {
+      if (plato.ingredientesPersonalizados) {
+        for (const item of plato.ingredientesPersonalizados) {
+          const ingrediente = ingredientesMap.get(item.ingrediente.toString());
           if (ingrediente) {
-            const factor = item.peso / 100;
+            const factor = item.peso / 100; // Los valores nutricionales están por 100g
             totalCalorias += ingrediente.calorias * factor;
             totalProteinas += ingrediente.proteinas * factor;
             totalHidratosCarbono += ingrediente.hidratosCarbono * factor;

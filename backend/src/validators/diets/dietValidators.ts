@@ -150,8 +150,27 @@ export const crearDietaValidator = [
     .withMessage('Las comidas diarias deben ser un número entero entre 1 y 6'),
   
   body('fechaInicio')
-    .isISO8601()
-    .withMessage('La fecha de inicio debe ser una fecha válida'),
+    .matches(/^\d{1,2}-\d{1,2}-\d{4}$/)
+    .withMessage('La fecha de inicio debe tener el formato DD-MM-YYYY')
+    .custom((value) => {
+      const [day, month, year] = value.split('-').map(Number);
+      const fecha = new Date(year, month - 1, day);
+      
+      // Verificar que la fecha es válida
+      if (fecha.getDate() !== day || fecha.getMonth() !== month - 1 || fecha.getFullYear() !== year) {
+        throw new Error('Fecha inválida');
+      }
+      
+      // Verificar que la fecha es futura
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      if (fecha <= hoy) {
+        throw new Error('La fecha de inicio debe ser posterior al día actual');
+      }
+      
+      return true;
+    })
+    .withMessage('La fecha de inicio debe ser una fecha válida y futura'),
   
   body('asignadaA')
     .optional()
@@ -203,8 +222,27 @@ export const actualizarDietaValidator = [
   
   body('fechaInicio')
     .optional()
-    .isISO8601()
-    .withMessage('La fecha de inicio debe ser una fecha válida'),
+    .matches(/^\d{1,2}-\d{1,2}-\d{4}$/)
+    .withMessage('La fecha de inicio debe tener el formato DD-MM-YYYY')
+    .custom((value) => {
+      const [day, month, year] = value.split('-').map(Number);
+      const fecha = new Date(year, month - 1, day);
+      
+      // Verificar que la fecha es válida
+      if (fecha.getDate() !== day || fecha.getMonth() !== month - 1 || fecha.getFullYear() !== year) {
+        throw new Error('Fecha inválida');
+      }
+      
+      // Verificar que la fecha es futura
+      const hoy = new Date();
+      hoy.setHours(0, 0, 0, 0);
+      if (fecha <= hoy) {
+        throw new Error('La fecha de inicio debe ser posterior al día actual');
+      }
+      
+      return true;
+    })
+    .withMessage('La fecha de inicio debe ser una fecha válida y futura'),
   
   body('draftMode')
     .optional()

@@ -29,7 +29,7 @@ export const crearDietaDesdeExistenteController = async (req: AuthenticatedReque
     }
 
     // Validar campos requeridos
-    if (!nombre || !tipo || !duracion || !comidasDiarias || !fechaInicio || !dietaOrigenId) {
+    if (!nombre || !tipo || duracion === undefined || duracion === null || comidasDiarias === undefined || comidasDiarias === null || !fechaInicio || !dietaOrigenId) {
       res.status(400).json({
         success: false,
         message: 'Faltan campos requeridos: nombre, tipo, duracion, comidasDiarias, fechaInicio, dietaOrigenId'

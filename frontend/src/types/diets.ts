@@ -159,6 +159,7 @@ export interface Plato {
   dietaId?: string;
   diaIndex?: number;
   comidaIndex?: number;
+  platoIndex?: number;
 }
 
 export interface Comida {

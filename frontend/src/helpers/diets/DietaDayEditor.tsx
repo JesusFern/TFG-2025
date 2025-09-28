@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { 
   Title, 
   Card, 
@@ -8,13 +8,11 @@ import {
   Grid,
   Box,
   useMantineColorScheme,
-  Paper,
-  Alert
+  Paper
 } from '@mantine/core';
-import { IconPlus, IconDeviceFloppy } from '@tabler/icons-react';
+import { IconPlus } from '@tabler/icons-react';
 import ComidaEditor from './ComidaEditor';
 import { DiaDieta, Comida } from '../../types';
-import { actualizarDiaDieta } from '../../services/dietService';
 
 interface DietaDayEditorProps {
   day: DiaDieta;
@@ -37,45 +35,14 @@ const DietaDayEditor: React.FC<DietaDayEditorProps> = ({
   customTitle,
   hideTitle = false,
   dietaId,
-  hasChanges = false,
-  onSaveSuccess,
   onRecalcularCalorias
 }) => {
   const { colorScheme } = useMantineColorScheme();
   
   const isDark = colorScheme === 'dark';
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [saveSuccess, setSaveSuccess] = useState(false);
+  // ✅ VARIABLES DE GUARDADO ELIMINADAS - SE ACTUALIZA AUTOMÁTICAMENTE
 
-  const handleSaveDay = async () => {
-    if (!dietaId) {
-      setSaveError('No se pudo guardar: ID de dieta no disponible');
-      return;
-    }
-    
-    try {
-      setSaving(true);
-      setSaveError(null);
-      
-      await actualizarDiaDieta(dietaId, dayNumber - 1, day);
-      
-      setSaveSuccess(true);
-      
-      setTimeout(() => setSaveSuccess(false), 3000);
-      
-      if (onSaveSuccess) {
-        onSaveSuccess();
-      }
-    } catch (error) {
-      console.error('Error al guardar día:', error);
-      setSaveError(error instanceof Error ? error.message : 'Error al guardar los cambios');
-      
-      setTimeout(() => setSaveError(null), 5000);
-    } finally {
-      setSaving(false);
-    }
-  };
+  // ✅ FUNCIÓN DE GUARDAR DÍA ELIMINADA - SE ACTUALIZA AUTOMÁTICAMENTE TRAS GUARDAR CADA PLATO
 
   const handleUpdateComida = (comidaIndex: number, updatedComida: Comida) => {
     const updatedComidas = [...day.comidas];
@@ -117,31 +84,11 @@ const DietaDayEditor: React.FC<DietaDayEditorProps> = ({
               <Title order={3} c="nutroos-green.6">Día {dayNumber}</Title>
           )}
           <Group>
-            {hasChanges && (
-              <Button
-                color="nutroos-green"
-                leftSection={<IconDeviceFloppy size={16} />}
-                loading={saving}
-                onClick={handleSaveDay}
-                size="sm"
-              >
-                Guardar cambios
-              </Button>
-            )}
+            {/* ✅ BOTÓN DE GUARDAR CAMBIOS ELIMINADO - SE ACTUALIZA AUTOMÁTICAMENTE TRAS GUARDAR CADA PLATO */}
           </Group>
         </Group>
         
-        {saveError && (
-          <Alert color="red" title="Error al guardar" mt="sm" withCloseButton onClose={() => setSaveError(null)}>
-            {saveError}
-          </Alert>
-        )}
-        
-        {saveSuccess && (
-          <Alert color="green" title="Guardado exitoso" mt="sm" withCloseButton onClose={() => setSaveSuccess(false)}>
-            Los cambios han sido guardados correctamente.
-          </Alert>
-        )}
+        {/* ✅ ALERTAS DE GUARDADO ELIMINADAS - SE ACTUALIZA AUTOMÁTICAMENTE */}
         
         <Box>
           <Grid mt="md">

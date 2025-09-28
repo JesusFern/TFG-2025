@@ -204,7 +204,16 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
         
         // Guardar en backend si hay ID
         if (dietaId && (platoFinal._id || platoFinal.idPlato)) {
-          const respuestaBackend = await actualizarPlatos([platoFinal]);
+          // Agregar los índices necesarios para el backend
+          const platoConIndices = {
+            ...platoFinal,
+            dietaId,
+            diaIndex,
+            comidaIndex,
+            platoIndex: editingPlatoIndex
+          };
+          
+          const respuestaBackend = await actualizarPlatos([platoConIndices]);
           
           // IMPORTANTE: Usar los datos devueltos por el backend para asegurar consistencia
           // respuestaBackend es un array de platos directamente (ver platoService.ts línea 80)
@@ -222,11 +231,23 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
           }
           
           showNotification(`Plato "${platoFinal.nombre}" actualizado correctamente`, 'success');
+          
+          // ✅ ACTUALIZAR AUTOMÁTICAMENTE EL DÍA DE DIETA TRAS GUARDAR EL PLATO
+          if (diaCompleto && onRecalcularCalorias) {
+            console.log('🔄 Actualizando día de dieta automáticamente tras guardar plato...');
+            onRecalcularCalorias();
+          }
         } else if (dietaId) {
           const platoCreado = await crearPlato(dietaId, diaIndex, comidaIndex, platoFinal);
           platoFinal = { ...platoFinal, _id: platoCreado._id };
           updatedPlatos[editingPlatoIndex] = platoFinal;
           showNotification(`Plato "${platoFinal.nombre}" creado correctamente`, 'success');
+          
+          // ✅ ACTUALIZAR AUTOMÁTICAMENTE EL DÍA DE DIETA TRAS CREAR EL PLATO
+          if (diaCompleto && onRecalcularCalorias) {
+            console.log('🔄 Actualizando día de dieta automáticamente tras crear plato...');
+            onRecalcularCalorias();
+          }
         }
       } else {
         // Creando un plato nuevo
@@ -239,6 +260,12 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
           const platoCreado = await crearPlato(dietaId, diaIndex, comidaIndex, platoFinal);
           platoFinal = { ...platoFinal, _id: platoCreado._id };
           showNotification(`Plato "${platoFinal.nombre}" añadido correctamente`, 'success');
+          
+          // ✅ ACTUALIZAR AUTOMÁTICAMENTE EL DÍA DE DIETA TRAS CREAR EL PLATO
+          if (diaCompleto && onRecalcularCalorias) {
+            console.log('🔄 Actualizando día de dieta automáticamente tras crear plato...');
+            onRecalcularCalorias();
+          }
         }
         
         updatedPlatos.push(platoFinal);
@@ -303,10 +330,22 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
           
           await eliminarPlato(platoId);
           showNotification(`Plato "${platoToDelete.nombre}" eliminado correctamente`, 'success');
+          
+          // ✅ ACTUALIZAR AUTOMÁTICAMENTE EL DÍA DE DIETA TRAS ELIMINAR EL PLATO
+          if (diaCompleto && onRecalcularCalorias) {
+            console.log('🔄 Actualizando día de dieta automáticamente tras eliminar plato...');
+            onRecalcularCalorias();
+          }
         }
       } else {
         // Si no tiene ID, solo eliminar localmente
         showNotification(`Plato "${platoToDelete.nombre}" eliminado localmente`, 'success');
+        
+        // ✅ ACTUALIZAR AUTOMÁTICAMENTE EL DÍA DE DIETA TRAS ELIMINAR EL PLATO LOCALMENTE
+        if (diaCompleto && onRecalcularCalorias) {
+          console.log('🔄 Actualizando día de dieta automáticamente tras eliminar plato localmente...');
+          onRecalcularCalorias();
+        }
       }
       
       // Actualizar la lista de platos localmente
@@ -611,6 +650,11 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
                   ...platoActualizado
                 };
                 
+                console.log('🔄 Actualizando plato en ComidaEditor:', {
+                  platoIndex: editingPlatoIndex,
+                  nombre: platoActualizado.nombre,
+                  ingredientesPersonalizados: platoActualizado.ingredientesPersonalizados?.length || 0
+                });
                 
                 // Actualizar la comida con el plato modificado
                 const comidaActualizada = {
@@ -622,11 +666,15 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
                 
                 onUpdate(comidaActualizada); // Guardar los cambios permanentemente
                 
-                // Recalcular calorías con delay para asegurar propagación
+                // ✅ RECALCULAR CALORÍAS INMEDIATAMENTE cuando cambian los ingredientes o receta
                 if (onRecalcularCalorias) {
-                  setTimeout(() => {
-                    onRecalcularCalorias();
-                  }, 100);
+                  console.log('🧮 Recalculando calorías del día tras cambio de plato...', {
+                    platoIndex: editingPlatoIndex,
+                    nombre: platoActualizado.nombre,
+                    receta: platoActualizado.receta,
+                    ingredientesPersonalizados: platoActualizado.ingredientesPersonalizados?.length || 0
+                  });
+                  onRecalcularCalorias();
                 }
               }
             }}

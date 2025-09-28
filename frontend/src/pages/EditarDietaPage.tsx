@@ -13,7 +13,6 @@ import {
   Loader,
   Divider,
   Pagination,
-  Modal,
   Badge,
   Select
 } from '@mantine/core';
@@ -58,9 +57,7 @@ const EditarDietaPage: React.FC = () => {
   const [startDayOfWeek, setStartDayOfWeek] = useState<number>(0);
   const [fechaInicio, setFechaInicio] = useState<Date | null>(null);
   
-  const [dayHasChanges, setDayHasChanges] = useState<boolean>(false);
-  const [targetDayIndex, setTargetDayIndex] = useState<number | null>(null);
-  const [showSaveModal, setShowSaveModal] = useState<boolean>(false);
+  // ✅ VARIABLES DE CAMBIOS PENDIENTES ELIMINADAS - SE ACTUALIZA AUTOMÁTICAMENTE
   const [publishLoading, setPublishLoading] = useState<boolean>(false);
 
   const handlePublicarDieta = async () => {
@@ -269,26 +266,18 @@ const EditarDietaPage: React.FC = () => {
     
     
     setDieta(dietaActualizada);
-    setDayHasChanges(true);
+    // ✅ NO MARCAR CAMBIOS PENDIENTES - SE ACTUALIZA AUTOMÁTICAMENTE
   };
   
   const handleTabChange = (newTabValue: string | null) => {
     if (newTabValue === activeTab) return;
     
-    if (dayHasChanges) {
-      setTargetDayIndex(newTabValue !== null ? parseInt(newTabValue) : null);
-      setShowSaveModal(true);
-    } else {
-      setActiveTab(newTabValue);
-    }
+    // ✅ CAMBIO DE TAB DIRECTO - NO HAY CAMBIOS PENDIENTES
+    setActiveTab(newTabValue);
   };
 
   const handleWeekChange = (newWeek: number) => {
-    if (dayHasChanges) {
-      setShowSaveModal(true);
-      return;
-    }
-    
+    // ✅ CAMBIO DE SEMANA DIRECTO - NO HAY CAMBIOS PENDIENTES
     setCurrentWeek(newWeek);
     
     if (dieta && daysRange.days.length > 0) {
@@ -498,11 +487,6 @@ const EditarDietaPage: React.FC = () => {
               <Tabs.Tab 
                 key={dayInfo.dietDayIndex} 
                 value={dayInfo.dietDayIndex.toString()}
-                rightSection={dayHasChanges && activeTab === dayInfo.dietDayIndex.toString() ? 
-                  <Box ml={5} style={{ position: 'relative', top: -2 }}>
-                    <Badge color="orange" size="xs" variant="filled" p={4} />
-                  </Box> : null
-                }
               >
                 {dayInfo.weekDayName} {dayInfo.fecha.getDate()}
               </Tabs.Tab>
@@ -521,18 +505,12 @@ const EditarDietaPage: React.FC = () => {
                   comidasDiarias={dieta.comidasDiarias}
                   customTitle={currentDayInfo?.nombreCompleto || `Día ${parseInt(activeTab) + 1}`}
                   dietaId={dietaId}
-                  hasChanges={dayHasChanges}
+                  hasChanges={false}
                   onRecalcularCalorias={() => recalcularCaloriasDia(parseInt(activeTab))}
                   onSaveSuccess={() => {
-                    setDayHasChanges(false);
+                    // ✅ NO HAY CAMBIOS PENDIENTES - SE ACTUALIZA AUTOMÁTICAMENTE
                     setSuccessMessage("Día actualizado correctamente");
                     setTimeout(() => setSuccessMessage(null), 3000);
-                    
-                    if (targetDayIndex !== null) {
-                      setActiveTab(targetDayIndex.toString());
-                      setTargetDayIndex(null);
-                      setShowSaveModal(false);
-                    }
                   }}
                 />
               ) : (
@@ -604,37 +582,7 @@ const EditarDietaPage: React.FC = () => {
         )}
       </Paper>
       
-      <Modal
-        opened={showSaveModal}
-        onClose={() => setShowSaveModal(false)}
-        title="Cambios sin guardar"
-        centered
-      >
-        <Text size="sm" mb="md">
-          Tienes cambios sin guardar en el día actual. ¿Qué deseas hacer?
-        </Text>
-        <Group justify="flex-end" mt="xl">
-          <Button
-            variant="outline"
-            onClick={() => {
-              setShowSaveModal(false);
-              if (targetDayIndex !== null) {
-                setActiveTab(targetDayIndex.toString());
-                setTargetDayIndex(null);
-                setDayHasChanges(false);
-              }
-            }}
-          >
-            Descartar cambios
-          </Button>
-          <Button
-            color="nutroos-green"
-            onClick={() => setShowSaveModal(false)}
-          >
-            Cancelar
-          </Button>
-        </Group>
-      </Modal>
+      {/* ✅ MODAL DE CAMBIOS SIN GUARDAR ELIMINADO - SE ACTUALIZA AUTOMÁTICAMENTE */}
     </Container>
   );
 };
