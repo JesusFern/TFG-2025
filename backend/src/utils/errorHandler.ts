@@ -10,8 +10,7 @@ import { Response } from 'express';
 export const manejarErrorComun = (
   error: unknown,
   res: Response,
-  operacion: string,
-  contexto: Record<string, unknown> = {}
+  operacion: string
 ): void => {
   if (error instanceof Error) {
     const mensaje = error.message.toLowerCase();
