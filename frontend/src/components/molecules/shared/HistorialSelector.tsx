@@ -16,8 +16,7 @@ const HistorialSelector: React.FC<HistorialSelectorProps> = ({
   añoSeleccionado,
   onSemanaChange,
   onAñoChange,
-  onVolverActual,
-  getCurrentWeekNumber
+  onVolverActual
 }) => {
   return (
     <Paper p="md" radius="md" withBorder>
