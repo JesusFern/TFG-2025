@@ -10,7 +10,7 @@ export interface NotificacionDocument extends Document {
   leida: boolean;
   enviada: boolean;
   accion?: {
-    tipo: 'navegar' | 'abrir_mensaje' | 'abrir_conversacion' | 'abrir_plan' | 'abrir_dieta';
+    tipo: 'navegar' | 'abrir_mensaje' | 'abrir_conversacion' | 'abrir_plan' | 'abrir_dieta' | 'abrir_sesion' | 'abrir_dia_dieta';
     url?: string;
     metadata?: Record<string, string | number | boolean>;
   };
@@ -18,8 +18,11 @@ export interface NotificacionDocument extends Document {
     mensaje?: mongoose.Types.ObjectId;
     conversacion?: mongoose.Types.ObjectId;
     planEntrenamiento?: mongoose.Types.ObjectId;
+    plan?: mongoose.Types.ObjectId;
     dieta?: mongoose.Types.ObjectId;
     sesion?: mongoose.Types.ObjectId;
+    cita?: mongoose.Types.ObjectId;
+    dia?: number;
     remitente?: mongoose.Types.ObjectId;
   };
   programadaPara?: Date;

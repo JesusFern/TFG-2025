@@ -1,8 +1,9 @@
 import Notificacion from '../../models/chats/notificacion';
 import { INotificacion } from '../../models/chats';
+import mongoose from 'mongoose';
 
 export interface CrearNotificacionData {
-  usuario: string;
+  usuario: string | mongoose.Types.ObjectId;
   tipo: 'mensaje' | 'recordatorio' | 'sistema' | 'entrenamiento' | 'nutricion';
   titulo: string;
   contenido: string;
@@ -13,12 +14,12 @@ export interface CrearNotificacionData {
     metadata?: Record<string, string | number | boolean>;
   };
   metadata?: {
-    mensaje?: string;
-    conversacion?: string;
-    planEntrenamiento?: string;
-    dieta?: string;
-    sesion?: string;
-    remitente?: string;
+    mensaje?: string | mongoose.Types.ObjectId;
+    conversacion?: string | mongoose.Types.ObjectId;
+    planEntrenamiento?: string | mongoose.Types.ObjectId;
+    dieta?: string | mongoose.Types.ObjectId;
+    sesion?: string | mongoose.Types.ObjectId;
+    remitente?: string | mongoose.Types.ObjectId;
   };
   programadaPara?: Date;
   expiraEn?: Date;
@@ -35,15 +36,22 @@ export interface FiltrosNotificaciones {
 
 export async function crearNotificacionService(datos: CrearNotificacionData): Promise<INotificacion> {
   try {
+    console.log('=== CREAR NOTIFICACION SERVICE ===');
+    console.log('Datos recibidos:', JSON.stringify(datos, null, 2));
+    
     const notificacion = new Notificacion({
       ...datos,
       leida: false,
       enviada: false
     });
 
+    console.log('Notificación creada, guardando en BD...');
     const notificacionGuardada = await notificacion.save();
+    console.log('Notificación guardada exitosamente con ID:', notificacionGuardada._id);
+    
     return notificacionGuardada.toObject() as unknown as INotificacion;
   } catch (error) {
+    console.error('Error en crearNotificacionService:', error);
     if (error instanceof Error) {
       throw new Error(`Error al crear notificación: ${error.message}`);
     }
@@ -51,48 +59,73 @@ export async function crearNotificacionService(datos: CrearNotificacionData): Pr
   }
 }
 
-export async function obtenerNotificacionesService(filtros: FiltrosNotificaciones): Promise<{
-  notificaciones: INotificacion[];
+export async function obtenerNotificacionesService(
+  usuarioId: string,
+  filtros: {
+    limit?: number;
+    offset?: number;
+    tipo?: string;
+    prioridad?: string;
+    leida?: boolean;
+    orden?: 'asc' | 'desc';
+  }
+): Promise<{
+  notificaciones: Record<string, unknown>[];
   total: number;
-  limit: number;
-  offset: number;
+  paginacion: {
+    pagina: number;
+    totalPaginas: number;
+    limite: number;
+    offset: number;
+  };
 }> {
   try {
-    const { limit = 50, offset = 0, ...restoFiltros } = filtros;
-    
+    const {
+      limit = 20,
+      offset = 0,
+      tipo,
+      prioridad,
+      leida,
+      orden = 'desc'
+    } = filtros;
+
     // Construir filtros de consulta
-    const filtrosConsulta: Record<string, unknown> = {};
-    
-    if (restoFiltros.usuario) {
-      filtrosConsulta.usuario = restoFiltros.usuario;
-    }
-    
-    if (restoFiltros.tipo) {
-      filtrosConsulta.tipo = restoFiltros.tipo;
-    }
-    
-    if (restoFiltros.leida !== undefined) {
-      filtrosConsulta.leida = restoFiltros.leida;
-    }
-    
-    if (restoFiltros.prioridad) {
-      filtrosConsulta.prioridad = restoFiltros.prioridad;
+    const query: Record<string, unknown> = { usuario: usuarioId };
+
+    if (tipo) {
+      query.tipo = tipo;
     }
 
-    // Contar total de notificaciones
-    const total = await Notificacion.countDocuments(filtrosConsulta);
+    if (prioridad) {
+      query.prioridad = prioridad;
+    }
+
+    if (leida !== undefined) {
+      query.leida = leida;
+    }
+
+    // Obtener total de notificaciones
+    const total = await Notificacion.countDocuments(query);
 
     // Obtener notificaciones con paginación
-    const notificaciones = await Notificacion.find(filtrosConsulta)
-      .sort({ createdAt: -1 })
+    const notificaciones = await Notificacion.find(query)
+      .populate('usuario', 'fullName email')
+      .sort({ createdAt: orden === 'asc' ? 1 : -1 })
       .skip(offset)
       .limit(limit);
 
+    const totalPaginas = Math.ceil(total / limit);
+    const pagina = Math.floor(offset / limit) + 1;
+
     return {
-      notificaciones: notificaciones.map(n => n.toObject() as unknown as INotificacion),
+      notificaciones: notificaciones as unknown as Record<string, unknown>[],
       total,
-      limit,
-      offset
+      paginacion: {
+        pagina,
+        totalPaginas,
+        limite: limit,
+        offset
+      }
     };
   } catch (error) {
     if (error instanceof Error) {
@@ -102,15 +135,21 @@ export async function obtenerNotificacionesService(filtros: FiltrosNotificacione
   }
 }
 
-export async function obtenerNotificacionPorIdService(notificacionId: string): Promise<INotificacion> {
+export async function obtenerNotificacionPorIdService(
+  notificacionId: string,
+  usuarioId: string
+): Promise<Record<string, unknown>> {
   try {
-    const notificacion = await Notificacion.findById(notificacionId);
+    const notificacion = await Notificacion.findOne({
+      _id: notificacionId,
+      usuario: usuarioId
+    }).populate('usuario', 'fullName email');
 
     if (!notificacion) {
       throw new Error('Notificación no encontrada');
     }
 
-    return notificacion.toObject() as unknown as INotificacion;
+    return notificacion as unknown as Record<string, unknown>;
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Error al obtener notificación: ${error.message}`);
@@ -119,21 +158,20 @@ export async function obtenerNotificacionPorIdService(notificacionId: string): P
   }
 }
 
-export async function marcarComoLeidaService(notificacionId: string, usuarioId: string): Promise<void> {
+export async function marcarComoLeidaService(
+  notificacionId: string,
+  usuarioId: string
+): Promise<void> {
   try {
-    const notificacion = await Notificacion.findById(notificacionId);
-    
+    const notificacion = await Notificacion.findOneAndUpdate(
+      { _id: notificacionId, usuario: usuarioId },
+      { leida: true },
+      { new: true }
+    );
+
     if (!notificacion) {
       throw new Error('Notificación no encontrada');
     }
-
-    // Verificar que el usuario sea el propietario de la notificación
-    if (notificacion.usuario.toString() !== usuarioId) {
-      throw new Error('No tienes permisos para marcar esta notificación como leída');
-    }
-
-    notificacion.leida = true;
-    await notificacion.save();
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Error al marcar notificación como leída: ${error.message}`);
@@ -142,12 +180,16 @@ export async function marcarComoLeidaService(notificacionId: string, usuarioId: 
   }
 }
 
-export async function marcarTodasComoLeidasService(usuarioId: string): Promise<void> {
+export async function marcarTodasComoLeidasService(
+  usuarioId: string
+): Promise<{ actualizadas: number }> {
   try {
-    await Notificacion.updateMany(
+    const resultado = await Notificacion.updateMany(
       { usuario: usuarioId, leida: false },
       { leida: true }
     );
+
+    return { actualizadas: resultado.modifiedCount };
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Error al marcar todas las notificaciones como leídas: ${error.message}`);
@@ -156,20 +198,19 @@ export async function marcarTodasComoLeidasService(usuarioId: string): Promise<v
   }
 }
 
-export async function eliminarNotificacionService(notificacionId: string, usuarioId: string): Promise<void> {
+export async function eliminarNotificacionService(
+  notificacionId: string,
+  usuarioId: string
+): Promise<void> {
   try {
-    const notificacion = await Notificacion.findById(notificacionId);
-    
+    const notificacion = await Notificacion.findOneAndDelete({
+      _id: notificacionId,
+      usuario: usuarioId
+    });
+
     if (!notificacion) {
       throw new Error('Notificación no encontrada');
     }
-
-    // Verificar que el usuario sea el propietario de la notificación
-    if (notificacion.usuario.toString() !== usuarioId) {
-      throw new Error('No tienes permisos para eliminar esta notificación');
-    }
-
-    await Notificacion.findByIdAndDelete(notificacionId);
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Error al eliminar notificación: ${error.message}`);
@@ -246,5 +287,240 @@ export async function limpiarNotificacionesExpiradasService(): Promise<void> {
       throw new Error(`Error al limpiar notificaciones expiradas: ${error.message}`);
     }
     throw new Error('Error desconocido al limpiar notificaciones expiradas');
+  }
+}
+
+// ===== FUNCIONES ESPECÍFICAS DEL SISTEMA =====
+
+// Notificación de mensaje en chat
+export async function notificarMensajeChatService(
+  destinatarioId: string, 
+  remitenteId: string, 
+  remitenteNombre: string, 
+  mensajeId: string,
+  conversacionId: string,
+  contenido: string
+): Promise<void> {
+  try {
+    const notificacion: CrearNotificacionData = {
+      usuario: destinatarioId,
+      tipo: 'mensaje',
+      titulo: `Nuevo mensaje de ${remitenteNombre}`,
+      contenido: contenido.length > 100 ? `${contenido.substring(0, 100)}...` : contenido,
+      prioridad: 'normal',
+      accion: {
+        tipo: 'abrir_conversacion',
+        metadata: { conversacionId, mensajeId }
+      },
+      metadata: {
+        mensaje: mensajeId,
+        conversacion: conversacionId,
+        remitente: remitenteId
+      }
+    };
+
+    await crearNotificacionService(notificacion);
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Error al crear notificación de mensaje: ${error.message}`);
+    }
+    throw new Error('Error desconocido al crear notificación de mensaje');
+  }
+}
+
+// ===== NOTIFICACIONES PROGRAMADAS Y RECORDATORIOS =====
+
+/**
+ * Crear notificación de seguimiento inactivo (3+ días sin registros)
+ */
+export async function crearNotificacionSeguimientoInactivoService(
+  clienteId: string,
+  profesionalId: string,
+  tipo: 'entrenamiento' | 'nutricion',
+  diasInactivo: number
+): Promise<INotificacion[]> {
+  try {
+    const esEntrenamiento = tipo === 'entrenamiento';
+    const titulo = esEntrenamiento ? 'Seguimiento de entrenamiento inactivo' : 'Seguimiento de dieta inactivo';
+    const contenido = esEntrenamiento 
+      ? `El cliente lleva ${diasInactivo} días sin registrar sus sesiones de entrenamiento.`
+      : `El cliente lleva ${diasInactivo} días sin registrar sus comidas de la dieta.`;
+
+    // Notificación para el profesional
+    const notificacionProfesional: CrearNotificacionData = {
+      usuario: profesionalId,
+      tipo: esEntrenamiento ? 'entrenamiento' : 'nutricion',
+      titulo,
+      contenido,
+      prioridad: 'normal',
+      accion: {
+        tipo: 'navegar',
+        url: '/clientes'
+      },
+      metadata: {
+        remitente: clienteId
+      }
+    };
+
+    // Notificación para el cliente
+    const notificacionCliente: CrearNotificacionData = {
+      usuario: clienteId,
+      tipo: esEntrenamiento ? 'entrenamiento' : 'nutricion',
+      titulo: esEntrenamiento ? 'Recuerda registrar tus entrenamientos' : 'Recuerda registrar tus comidas',
+      contenido: esEntrenamiento 
+        ? 'Llevas varios días sin registrar tus sesiones de entrenamiento. ¡Mantén tu rutina!'
+        : 'Llevas varios días sin registrar tus comidas. ¡No olvides hacer seguimiento de tu dieta!',
+      prioridad: 'normal',
+      accion: {
+        tipo: esEntrenamiento ? 'abrir_plan' : 'abrir_dieta'
+      },
+      metadata: {
+        remitente: profesionalId
+      }
+    };
+
+    const [notifProfesional, notifCliente] = await Promise.all([
+      crearNotificacionService(notificacionProfesional),
+      crearNotificacionService(notificacionCliente)
+    ]);
+
+    return [notifProfesional, notifCliente];
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Error al crear notificación de seguimiento inactivo: ${error.message}`);
+    }
+    throw new Error('Error desconocido al crear notificación de seguimiento inactivo');
+  }
+}
+
+/**
+ * Obtener notificaciones programadas que deben enviarse ahora
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export async function obtenerNotificacionesProgramadasService(): Promise<any[]> {
+  try {
+    const ahora = new Date();
+    
+    const notificaciones = await Notificacion.find({
+      programadaPara: { $lte: ahora },
+      enviada: false,
+      expiraEn: { $gt: ahora } // No expiradas
+    }).populate('usuario', 'fullName email');
+
+    return notificaciones;
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Error al obtener notificaciones programadas: ${error.message}`);
+    }
+    throw new Error('Error desconocido al obtener notificaciones programadas');
+  }
+}
+
+/**
+ * Marcar notificación como enviada
+ */
+export async function marcarNotificacionComoEnviadaService(notificacionId: string): Promise<void> {
+  try {
+    await Notificacion.findByIdAndUpdate(notificacionId, { enviada: true });
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Error al marcar notificación como enviada: ${error.message}`);
+    }
+    throw new Error('Error desconocido al marcar notificación como enviada');
+  }
+}
+
+// ===== FUNCIONES PARA EL CONTROLADOR =====
+
+/**
+ * Obtener estadísticas de notificaciones del usuario
+ */
+export async function obtenerEstadisticasService(usuarioId: string): Promise<{
+  total: number;
+  noLeidas: number;
+  porTipo: {
+    mensaje: number;
+    sistema: number;
+    recordatorio: number;
+    entrenamiento: number;
+    nutricion: number;
+  };
+  porPrioridad: {
+    baja: number;
+    normal: number;
+    alta: number;
+    urgente: number;
+  };
+}> {
+  try {
+    // Total de notificaciones
+    const total = await Notificacion.countDocuments({ usuario: usuarioId });
+
+    // Notificaciones no leídas
+    const noLeidas = await Notificacion.countDocuments({
+      usuario: usuarioId,
+      leida: false
+    });
+
+    // Por tipo
+    const porTipo = await Notificacion.aggregate([
+      { $match: { usuario: usuarioId } },
+      {
+        $group: {
+          _id: '$tipo',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const porTipoResult = {
+      mensaje: 0,
+      sistema: 0,
+      recordatorio: 0,
+      entrenamiento: 0,
+      nutricion: 0
+    };
+
+    porTipo.forEach(item => {
+      if (item._id in porTipoResult) {
+        porTipoResult[item._id as keyof typeof porTipoResult] = item.count;
+      }
+    });
+
+    // Por prioridad
+    const porPrioridad = await Notificacion.aggregate([
+      { $match: { usuario: usuarioId } },
+      {
+        $group: {
+          _id: '$prioridad',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const porPrioridadResult = {
+      baja: 0,
+      normal: 0,
+      alta: 0,
+      urgente: 0
+    };
+
+    porPrioridad.forEach(item => {
+      if (item._id in porPrioridadResult) {
+        porPrioridadResult[item._id as keyof typeof porPrioridadResult] = item.count;
+      }
+    });
+
+    return {
+      total,
+      noLeidas,
+      porTipo: porTipoResult,
+      porPrioridad: porPrioridadResult
+    };
+  } catch (error) {
+    if (error instanceof Error) {
+      throw new Error(`Error al obtener estadísticas: ${error.message}`);
+    }
+    throw new Error('Error desconocido al obtener estadísticas');
   }
 }

@@ -21,6 +21,7 @@ import {
 import { verificarAutenticacion } from '../../validators/commonValidators';
 import logger from '../../utils/logger';
 import { matchedData } from 'express-validator';
+import { notificacionIntegracionService } from '../../service/notificaciones/notificacionIntegracionService';
 
 // Crear una nueva cita
 export const crearCita = async (req: AuthenticatedRequest, res: Response): Promise<void> => {

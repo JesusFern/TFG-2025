@@ -14,6 +14,7 @@ import {
 } from '../../validators/diets/dietValidators';
 import { verificarAutenticacion, esIdValido } from '../../validators/commonValidators';
 import { actualizarNutricionDia } from '../../helpers/calculoNutricionalHelper';
+import { notificacionIntegracionService } from '../../service/notificaciones/notificacionIntegracionService';
 
 export const crearDieta = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
@@ -197,6 +198,22 @@ export const publicarDieta = async (req: AuthenticatedRequest, res: Response): P
     
     if (result.platosEliminados > 0) {
       logger.info(`Se eliminaron ${result.platosEliminados} platos vacíos antes de publicar la dieta`, { dietaId });
+    }
+    
+    // Enviar notificación en tiempo real al cliente
+    try {
+      await notificacionIntegracionService.notificarDietaPublicada(
+        result.dieta.asignadaA,
+        userId,
+        dietaId,
+        result.dieta.nombre
+      );
+      logger.info('Notificación de dieta publicada enviada en tiempo real', { 
+        dietaId, 
+        clienteId: result.dieta.asignadaA 
+      });
+    } catch (error) {
+      logger.error('Error al enviar notificación de dieta publicada:', error);
     }
     
     logger.info('Dieta publicada correctamente', { dietaId, platosEliminados: result.platosEliminados });

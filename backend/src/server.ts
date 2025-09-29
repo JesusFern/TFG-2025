@@ -10,6 +10,7 @@ import recetaRoutes from './routes/diets/recetaRoutes';
 import trainingRoutes from './routes/training';
 import estadisticasRoutes from './routes/training/estadisticasRoutes';
 import messagingRoutes from './routes/chats';
+import notificacionRoutes from './routes/chats/notificacionRoutes';
 import suscriptionPlanRoutes from './routes/suscriptionPlan/suscriptionPlanRoutes';
 import assignmentRequestRoutes from './routes/assignmentRequests/assignmentRequestRoutes';
 import videoRoutes from './routes/video';
@@ -19,6 +20,7 @@ import ingredientesRoutes from './routes/alimentos/ingredientesRoutes';
 import wgerRoutes from './routes/training/wgerRoutes';
 import googleCalendarRoutes from './routes/google/calendarRoutes';
 import { SocketServer } from './socket/socketServer';
+import { cronNotificacionesService } from './service/notificaciones/cronNotificacionesService';
 
 dotenv.config();
 
@@ -58,6 +60,7 @@ app.use('/api/recetas', recetaRoutes);
 app.use('/api/training', trainingRoutes);
 app.use('/api/estadisticas', estadisticasRoutes);
 app.use('/api/messaging', messagingRoutes);
+app.use('/api/notificaciones', notificacionRoutes);
 app.use('/api/suscription-plans', suscriptionPlanRoutes);
 app.use('/api/assignment-requests', assignmentRequestRoutes);
 app.use('/api', videoRoutes);
@@ -87,6 +90,10 @@ if (process.env.NODE_ENV !== "test") {
   httpServer.listen(PORT, () => {
     console.log(`Servidor corriendo en el puerto ${PORT}`);
     console.log('Socket.IO inicializado y listo para conexiones WebSocket');
+    
+    // Iniciar servicio de cron jobs para notificaciones
+    cronNotificacionesService.iniciar();
+    console.log('Servicio de cron jobs de notificaciones iniciado');
   });
 }
 

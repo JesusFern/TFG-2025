@@ -112,6 +112,7 @@ import CrearCitaPage from '../pages/CrearCitaPage';
 import EditarCitaPage from '../pages/EditarCitaPage';
 import ProgresoSemanalPage from '../pages/ProgresoSemanalPage';
 import CalendarPage from '../pages/CalendarPage';
+import NotificacionesPage from '../pages/NotificacionesPage';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -356,6 +357,15 @@ const AppRoutes: React.FC = () => {
         <ProtectedRoute>
           <Layout>
             <CalendarPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+
+      {/* Ruta para notificaciones */}
+      <Route path="/notificaciones" element={
+        <ProtectedRoute>
+          <Layout>
+            <NotificacionesPage />
           </Layout>
         </ProtectedRoute>
       } />

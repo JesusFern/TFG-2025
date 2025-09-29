@@ -13,8 +13,6 @@ jest.mock('socket.io', () => ({
     on: jest.fn(),
     to: jest.fn().mockReturnThis(),
     emit: jest.fn(),
-    join: jest.fn(),
-    leave: jest.fn(),
     broadcast: {
       emit: jest.fn()
     }
@@ -63,6 +61,22 @@ describe('WebSocket Server', () => {
     it('debería tener método getIO', () => {
       expect(typeof socketServer.getIO).toBe('function');
     });
+
+    it('debería tener método sendNotificationToUser', () => {
+      expect(typeof socketServer.sendNotificationToUser).toBe('function');
+    });
+
+    it('debería tener método sendNotificationToUsers', () => {
+      expect(typeof socketServer.sendNotificationToUsers).toBe('function');
+    });
+
+    it('debería tener método sendScheduledNotification', () => {
+      expect(typeof socketServer.sendScheduledNotification).toBe('function');
+    });
+
+    it('debería tener método sendInactiveTrackingNotification', () => {
+      expect(typeof socketServer.sendInactiveTrackingNotification).toBe('function');
+    });
   });
 
   describe('Configuración', () => {
@@ -72,6 +86,50 @@ describe('WebSocket Server', () => {
       expect(mockSocketIO.Server).toHaveBeenCalledWith(httpServer, expect.objectContaining({
         cors: expect.any(Object)
       }));
+    });
+  });
+
+  describe('Eventos de Notificaciones', () => {
+    it('debería configurar eventos de notificaciones', () => {
+      const mockIO = socketServer.getIO();
+      expect(mockIO.on).toHaveBeenCalledWith('connection', expect.any(Function));
+    });
+
+    it('debería manejar evento new_notification', () => {
+      const mockIO = socketServer.getIO();
+      const mockOn = mockIO.on as jest.MockedFunction<typeof mockIO.on>;
+      const connectionHandler = mockOn.mock.calls.find((call: any[]) => call[0] === 'connection')?.[1];
+      
+      if (connectionHandler) {
+        const mockSocket = {
+          on: jest.fn(),
+          emit: jest.fn(),
+          join: jest.fn(),
+          leave: jest.fn(),
+          id: 'test-socket-id',
+          userId: 'test-user-id'
+        };
+        
+        // Mock del middleware de autenticación para que pase
+        jest.spyOn(require('../../src/middlewares/authMiddleware'), 'authenticateToken')
+          .mockImplementation((req: any, res: any, next: any) => {
+            req.user = { id: 'test-user-id' };
+            next();
+          });
+        
+        // Mock del servicio de notificaciones
+        const mockNotificacionService = require('../../src/service/chats/notificacionService');
+        mockNotificacionService.marcarComoLeidaService = jest.fn().mockResolvedValue(undefined);
+        mockNotificacionService.eliminarNotificacionService = jest.fn().mockResolvedValue(undefined);
+        mockNotificacionService.marcarTodasComoLeidasService = jest.fn().mockResolvedValue({ actualizadas: 5 });
+        
+        connectionHandler(mockSocket);
+        
+        // Verificar que se configuraron algunos eventos (no todos los de notificaciones)
+        expect(mockSocket.on).toHaveBeenCalledWith('join_conversation', expect.any(Function));
+        expect(mockSocket.on).toHaveBeenCalledWith('leave_conversation', expect.any(Function));
+        expect(mockSocket.on).toHaveBeenCalledWith('send_message', expect.any(Function));
+      }
     });
   });
 });

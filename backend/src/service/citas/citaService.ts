@@ -9,6 +9,9 @@ import {
   ReagendarCitaData,
   EstadisticasCitas
 } from '../../models/citas';
+import { crearNotificacionService } from '../chats/notificacionService';
+import { socketServer } from '../../server';
+import { recordatorioService } from '../notificaciones/recordatorioService';
 import mongoose from 'mongoose';
 import logger from '../../utils/logger';
 
@@ -44,6 +47,45 @@ export async function crearCitaService(datos: CrearCitaData): Promise<ICita> {
 
     await cita.save();
     await cita.populate(['cliente', 'profesional']);
+
+    // Enviar notificación al profesional
+    try {
+      const fechaFormateada = new Date(datos.fecha).toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      // Crear notificación de solicitud de cita
+      const notificacionData = {
+        usuario: datos.profesional,
+        tipo: 'sistema' as const,
+        titulo: 'Nueva solicitud de cita',
+        contenido: `${cliente.fullName} ha solicitado una cita para el ${fechaFormateada}. Revisa y confirma la cita.`,
+        prioridad: 'alta' as const,
+        accion: {
+          tipo: 'navegar' as const,
+          url: '/citas',
+          metadata: { citaId: (cita._id as mongoose.Types.ObjectId).toString() }
+        },
+        metadata: {
+          remitente: datos.cliente
+        }
+      };
+
+      await crearNotificacionService(notificacionData);
+
+      // Enviar notificación en tiempo real
+      if (socketServer) {
+        await socketServer.sendNotificationToUser(datos.profesional, notificacionData as unknown as Record<string, unknown>);
+        logger.info(`Notificación de solicitud de cita enviada en tiempo real a ${datos.profesional}`);
+      }
+    } catch (error) {
+      console.error('Error al enviar notificación de solicitud de cita:', error);
+      // No lanzar error para no interrumpir el proceso de creación
+    }
+
 
     logger.info('Cita creada correctamente', { 
       citaId: cita._id, 
@@ -318,6 +360,89 @@ export async function confirmarCitaService(citaId: string, usuarioId: string): P
     cita.estado = 'confirmada';
     await cita.save();
     await cita.populate(['cliente', 'profesional']);
+
+    // Enviar notificación al cliente
+    try {
+      logger.info('=== INICIANDO ENVÍO DE NOTIFICACIÓN DE CITA CONFIRMADA ===');
+      logger.info('Cliente ID:', cita.cliente.toString());
+      logger.info('Profesional ID:', cita.profesional.toString());
+      
+      const fechaFormateada = cita.fecha.toLocaleDateString('es-ES', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      
+      const profesional = cita.profesional as { fullName?: string };
+      logger.info('Profesional nombre:', profesional.fullName);
+      
+      // Crear notificación de cita confirmada
+      const notificacionData = {
+        usuario: cita.cliente._id,
+        tipo: 'sistema' as const,
+        titulo: 'Cita confirmada',
+        contenido: `${profesional.fullName || 'Profesional'} ha confirmado tu cita para el ${fechaFormateada}. ¡Nos vemos pronto!`,
+        prioridad: 'normal' as const,
+        accion: {
+          tipo: 'navegar' as const,
+          url: '/citas',
+          metadata: { citaId }
+        },
+        metadata: {
+          remitente: cita.profesional
+        }
+      };
+
+      logger.info('Datos de notificación:', JSON.stringify(notificacionData, null, 2));
+      
+      logger.info('Creando notificación en base de datos...');
+      const notificacionGuardada = await crearNotificacionService(notificacionData);
+      logger.info('Notificación creada en base de datos exitosamente con ID:', notificacionGuardada._id);
+
+      // Enviar notificación en tiempo real
+      if (socketServer) {
+        logger.info('Enviando notificación en tiempo real...');
+        logger.info('Cliente ID para envío:', cita.cliente.toString());
+        logger.info('Notificación guardada:', JSON.stringify(notificacionGuardada, null, 2));
+        
+        try {
+          await socketServer.sendNotificationToUser(cita.cliente.toString(), notificacionGuardada as unknown as Record<string, unknown>);
+          logger.info(`Notificación de cita confirmada enviada en tiempo real a ${cita.cliente}`);
+        } catch (socketError) {
+          logger.error('Error al enviar via WebSocket:', socketError);
+        }
+      } else {
+        logger.error('socketServer no está disponible');
+      }
+    } catch (error) {
+      logger.error('Error al enviar notificación de cita confirmada:', error);
+      console.error('Error al enviar notificación de cita confirmada:', error);
+      // No lanzar error para no interrumpir el proceso de confirmación
+    }
+
+    // Crear recordatorio automático para la cita confirmada (1 hora antes)
+    try {
+      const fechaHoraCita = new Date(cita.fecha);
+      if (cita.hora) {
+        const [horas, minutos] = cita.hora.split(':').map(Number);
+        fechaHoraCita.setHours(horas, minutos, 0, 0);
+      }
+      
+      const profesional = cita.profesional as { fullName?: string };
+      await recordatorioService.crearRecordatorioCita(
+        cita.cliente.toString(),
+        cita.profesional.toString(),
+        citaId,
+        `Cita con ${profesional.fullName || 'Profesional'}`,
+        fechaHoraCita
+      );
+      
+      logger.info(`Recordatorio de cita creado para ${cita.cliente} en ${fechaHoraCita.toISOString()}`);
+    } catch (error) {
+      logger.error('Error al crear recordatorio de cita:', error);
+      // No lanzar error para no interrumpir la confirmación de la cita
+    }
 
     logger.info('Cita confirmada correctamente', { citaId });
 

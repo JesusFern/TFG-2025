@@ -81,68 +81,37 @@ describe('Notificacion API Endpoints', () => {
     };
   });
 
-  describe('POST /api/messaging/notificaciones', () => {
-    it('debería crear una notificación exitosamente', async () => {
-      const notificacionData = {
-        usuario: testUserId,
-        tipo: 'mensaje' as const,
-        titulo: 'Test notification',
-        contenido: 'Test notification content',
-        prioridad: 'normal' as const
-      };
-
-      mockNotificacionService.crearNotificacionService.mockResolvedValue(mockNotificacion);
+  describe('GET /api/messaging/notificaciones/no-leidas', () => {
+    it('debería obtener notificaciones no leídas exitosamente', async () => {
+      mockNotificacionService.obtenerNotificacionesService.mockResolvedValue({
+        notificaciones: [mockNotificacion],
+        total: 1,
+        limit: 10,
+        offset: 0
+      });
 
       const res = await request(app)
-        .post('/api/messaging/notificaciones')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(notificacionData);
+        .get('/api/messaging/notificaciones/no-leidas')
+        .set('Authorization', `Bearer ${authToken}`);
 
-      expect(res.statusCode).toEqual(201);
-      expect(res.body).toHaveProperty('notificacion');
-      expect(mockNotificacionService.crearNotificacionService).toHaveBeenCalledWith(
+      expect(res.statusCode).toEqual(200);
+      expect(res.body).toHaveProperty('notificaciones');
+      expect(mockNotificacionService.obtenerNotificacionesService).toHaveBeenCalledWith(
+        testUserId,
         expect.objectContaining({
-          usuario: testUserId,
-          tipo: 'mensaje',
-          titulo: 'Test notification',
-          contenido: 'Test notification content',
-          prioridad: 'normal'
+          limit: 10,
+          offset: 0,
+          leida: false,
+          orden: 'desc'
         })
       );
     });
 
     it('debería fallar sin token de autorización', async () => {
-      const notificacionData = {
-        usuario: testUserId,
-        tipo: 'mensaje' as const,
-        titulo: 'Test notification',
-        contenido: 'Test notification content'
-      };
-
       const res = await request(app)
-        .post('/api/messaging/notificaciones')
-        .send(notificacionData);
+        .get('/api/messaging/notificaciones/no-leidas');
 
       expect(res.statusCode).toEqual(401);
-    });
-
-    it('debería fallar con datos inválidos', async () => {
-      const notificacionData = {
-        usuario: 'invalid-id',
-        tipo: 'invalid-type' as unknown,
-        titulo: '',
-        contenido: ''
-      };
-
-      // Mock del servicio para que devuelva error
-      mockNotificacionService.crearNotificacionService.mockRejectedValue(new Error('Datos inválidos'));
-
-      const res = await request(app)
-        .post('/api/messaging/notificaciones')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send(notificacionData);
-
-      expect(res.statusCode).toEqual(500);
     });
   });
 
@@ -157,7 +126,7 @@ describe('Notificacion API Endpoints', () => {
 
       expect(res.statusCode).toEqual(200);
       expect(res.body).toHaveProperty('notificacion');
-      expect(mockNotificacionService.obtenerNotificacionPorIdService).toHaveBeenCalledWith(notificacionId);
+      expect(mockNotificacionService.obtenerNotificacionPorIdService).toHaveBeenCalledWith(notificacionId, testUserId);
     });
 
     it('debería fallar con ID inválido', async () => {
@@ -204,8 +173,8 @@ describe('Notificacion API Endpoints', () => {
       expect(res.body).toHaveProperty('notificaciones');
       expect(res.body).toHaveProperty('total', 1);
       expect(mockNotificacionService.obtenerNotificacionesService).toHaveBeenCalledWith(
+        testUserId,
         expect.objectContaining({
-          usuario: testUserId,
           tipo: 'mensaje',
           leida: false,
           prioridad: 'normal',
@@ -233,13 +202,13 @@ describe('Notificacion API Endpoints', () => {
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(res.statusCode).toEqual(200);
-      expect(res.body).toHaveProperty('message', 'Notificación eliminada exitosamente');
+      expect(res.body).toHaveProperty('message', 'Notificación eliminada correctamente');
       expect(mockNotificacionService.eliminarNotificacionService).toHaveBeenCalledWith(notificacionId, testUserId);
     });
 
     it('debería fallar con ID inválido', async () => {
       // Mock del servicio para que devuelva error
-      mockNotificacionService.obtenerNotificacionPorIdService.mockResolvedValue(null);
+      mockNotificacionService.eliminarNotificacionService.mockRejectedValue(new Error('Notificación no encontrada'));
 
       const res = await request(app)
         .delete('/api/messaging/notificaciones/invalid-id')

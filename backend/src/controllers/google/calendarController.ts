@@ -375,10 +375,7 @@ export const createCalendarEvent = async (req: AuthenticatedRequest, res: Respon
     };
 
     try {
-      // Primero, obtener la lista de calendarios para verificar que tenemos acceso
-      const calendarList = await calendar.calendarList.list();
-      console.log('Calendarios disponibles:', calendarList.data.items?.map((cal: any) => ({ id: cal.id, summary: cal.summary }))); // eslint-disable-line @typescript-eslint/no-explicit-any
-
+      // Crear evento directamente sin verificar calendarios (más eficiente)
       const { data } = await calendar.events.insert({
         calendarId: 'primary',
         requestBody: event,

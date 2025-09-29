@@ -8,6 +8,7 @@ import { DatesProvider } from '@mantine/dates';
 import { ColorSchemeProvider } from './styles/components/ColorSchemeProvider';
 import { AuthProvider } from './contexts/AuthContext';
 import { VideoProvider } from './contexts/VideoContext';
+import { NotificationProvider } from './contexts/NotificationContext';
 import AppRoutes from './routes/routes';
 import '@mantine/core/styles.css';
 import '@mantine/dates/styles.css';
@@ -28,7 +29,9 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             <ColorSchemeProvider>
               <AuthProvider>
                 <VideoProvider>
-                  <AppRoutes />
+                  <NotificationProvider>
+                    <AppRoutes />
+                  </NotificationProvider>
                 </VideoProvider>
               </AuthProvider>
             </ColorSchemeProvider>

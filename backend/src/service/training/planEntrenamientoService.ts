@@ -3,6 +3,7 @@ import PlanEntrenamiento from '../../models/training/planEntrenamiento';
 import User from '../../models/users/user';
 import Sesion from '../../models/training/sesion';
 import { EjercicioDistribucionService } from './ejercicioDistribucionService';
+import { notificacionIntegracionService } from '../notificaciones/notificacionIntegracionService';
 
 interface EjercicioSesion {
   ejercicio: string;
@@ -614,4 +615,40 @@ export async function generarPlanDesdePlantillaService({
       estrategia: EjercicioDistribucionService.determinarEstrategia(sesionesPorSemana)
     }
   };
+}
+
+// Publicar un plan de entrenamiento
+export async function publicarPlanEntrenamientoService(planId: string, entrenadorId: string): Promise<typeof PlanEntrenamiento.prototype> {
+  const plan = await PlanEntrenamiento.findById(planId);
+  if (!plan) {
+    throw new Error('Plan de entrenamiento no encontrado');
+  }
+
+  // Verificar que el entrenador es el creador del plan
+  if (plan.entrenador.toString() !== entrenadorId) {
+    throw new Error('No tienes permisos para publicar este plan');
+  }
+
+  plan.draftMode = false;
+  await plan.save();
+
+  // Enviar notificaciones a todos los clientes asignados
+  if (plan.clientes && plan.clientes.length > 0) {
+    // Enviar notificación a cada cliente asignado
+    for (const clienteId of plan.clientes) {
+      try {
+        await notificacionIntegracionService.notificarPlanPublicado(
+          clienteId.toString(),
+          entrenadorId,
+          planId,
+          plan.nombre
+        );
+      } catch (error) {
+        console.error(`Error al enviar notificación de plan publicado a cliente ${clienteId}:`, error);
+        // No lanzar error para no interrumpir el proceso de publicación
+      }
+    }
+  }
+
+  return plan;
 }

@@ -25,6 +25,13 @@ interface SocketEvents {
   onUserJoined?: (data: { userId: string; conversacionId: string }) => void;
   onUserStatusChange?: (data: { userId: string; status: 'online' | 'offline'; timestamp: Date }) => void;
   onMessageRead?: (data: { mensajeId: string; leidoPor: string; timestamp: Date }) => void;
+  onNewNotification?: (data: { notificacion: unknown; timestamp: Date }) => void;
+  onScheduledNotification?: (data: { notificacion: unknown; timestamp: Date }) => void;
+  onInactiveTrackingNotification?: (data: { notificacion: unknown; timestamp: Date }) => void;
+  onNotificationMarkedRead?: (data: { notificacionId: string; timestamp: Date }) => void;
+  onNotificationDeleted?: (data: { notificacionId: string; timestamp: Date }) => void;
+  onAllNotificationsMarkedRead?: (data: { actualizadas: number; timestamp: Date }) => void;
+  onNotificationError?: (error: { error: string; details: string }) => void;
   onError?: (error: unknown) => void;
   onConnect?: () => void;
   onDisconnect?: (reason: string) => void;
@@ -168,6 +175,42 @@ export const useSocket = (events: SocketEvents = {}) => {
       socket.on(SOCKET_EVENTS.MESSAGE_ERROR, (error: unknown) => {
         
         eventsRef.current.onError?.(error);
+      });
+
+      // Eventos de notificaciones
+      socket.on(SOCKET_EVENTS.NEW_NOTIFICATION, (data: { notificacion: unknown; timestamp: Date }) => {
+        console.log('useSocket: Nueva notificación recibida:', data);
+        eventsRef.current.onNewNotification?.(data);
+      });
+
+      socket.on(SOCKET_EVENTS.SCHEDULED_NOTIFICATION, (data: { notificacion: unknown; timestamp: Date }) => {
+        console.log('useSocket: Notificación programada recibida:', data);
+        eventsRef.current.onScheduledNotification?.(data);
+      });
+
+      socket.on(SOCKET_EVENTS.INACTIVE_TRACKING_NOTIFICATION, (data: { notificacion: unknown; timestamp: Date }) => {
+        console.log('useSocket: Notificación de seguimiento inactivo recibida:', data);
+        eventsRef.current.onInactiveTrackingNotification?.(data);
+      });
+
+      socket.on(SOCKET_EVENTS.NOTIFICATION_MARKED_READ, (data: { notificacionId: string; timestamp: Date }) => {
+        console.log('useSocket: Notificación marcada como leída:', data);
+        eventsRef.current.onNotificationMarkedRead?.(data);
+      });
+
+      socket.on(SOCKET_EVENTS.NOTIFICATION_DELETED, (data: { notificacionId: string; timestamp: Date }) => {
+        console.log('useSocket: Notificación eliminada:', data);
+        eventsRef.current.onNotificationDeleted?.(data);
+      });
+
+      socket.on(SOCKET_EVENTS.ALL_NOTIFICATIONS_MARKED_READ, (data: { actualizadas: number; timestamp: Date }) => {
+        console.log('useSocket: Todas las notificaciones marcadas como leídas:', data);
+        eventsRef.current.onAllNotificationsMarkedRead?.(data);
+      });
+
+      socket.on(SOCKET_EVENTS.NOTIFICATION_ERROR, (error: { error: string; details: string }) => {
+        console.error('useSocket: Error en notificación:', error);
+        eventsRef.current.onNotificationError?.(error);
       });
 
       // Conectar el socket
