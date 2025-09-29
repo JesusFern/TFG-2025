@@ -619,6 +619,14 @@ export async function obtenerEstadisticasSemanalService({
     const fechaFinSemana = new Date(fechaInicioSemana);
     fechaFinSemana.setDate(fechaFinSemana.getDate() + 6);
 
+    logger.info('Fechas calculadas para la semana', {
+      userId,
+      numeroSemana,
+      año,
+      fechaInicioSemana: fechaInicioSemana.toISOString(),
+      fechaFinSemana: fechaFinSemana.toISOString()
+    });
+
     // Buscar todas las dietas del usuario
     const dietas = await Dieta.find({
       $or: [
@@ -626,6 +634,19 @@ export async function obtenerEstadisticasSemanalService({
         { creador: userId }
       ]
     }).populate('dias.comidas.platos.receta');
+
+    logger.info('Dietas encontradas para el usuario', {
+      userId,
+      totalDietas: dietas.length,
+      dietas: dietas.map(d => ({
+        id: d._id,
+        nombre: d.nombre,
+        fechaInicio: d.fechaInicio,
+        dias: d.dias.length,
+        asignadaA: d.asignadaA,
+        creador: d.creador
+      }))
+    });
 
     if (dietas.length === 0) {
       return {
@@ -677,8 +698,19 @@ export async function obtenerEstadisticasSemanalService({
       const fechaFinDieta = new Date(fechaInicioDieta);
       fechaFinDieta.setDate(fechaFinDieta.getDate() + dieta.dias.length - 1);
 
+      logger.info('Verificando dieta para semana', {
+        dietaId: dieta._id,
+        dietaNombre: dieta.nombre,
+        fechaInicioDieta: fechaInicioDieta.toISOString(),
+        fechaFinDieta: fechaFinDieta.toISOString(),
+        fechaInicioSemana: fechaInicioSemana.toISOString(),
+        fechaFinSemana: fechaFinSemana.toISOString(),
+        diasDieta: dieta.dias.length
+      });
+
       // Si la dieta no se superpone con la semana, saltarla
       if (fechaFinDieta < fechaInicioSemana || fechaInicioDieta > fechaFinSemana) {
+        logger.info('Dieta fuera del rango de la semana', { dietaId: dieta._id });
         continue;
       }
 
@@ -692,6 +724,12 @@ export async function obtenerEstadisticasSemanalService({
           diasEnSemana.push({ diaIndex: i, fecha: fechaDia });
         }
       }
+
+      logger.info('Días de la dieta en la semana', {
+        dietaId: dieta._id,
+        diasEnSemana: diasEnSemana.length,
+        dias: diasEnSemana.map(d => ({ diaIndex: d.diaIndex, fecha: d.fecha.toISOString() }))
+      });
 
       // Procesar cada día de la semana
       for (const { diaIndex } of diasEnSemana) {
@@ -708,6 +746,16 @@ export async function obtenerEstadisticasSemanalService({
             // Verificar si tiene seguimiento
             if (plato.satisfaccion !== null || plato.cumplimiento !== null || plato.notaUsuario) {
               comidasRegistradas++;
+              
+              logger.debug('Plato con seguimiento encontrado', {
+                dietaId: dieta._id,
+                diaIndex,
+                comidaNombre: comida.nombreComida,
+                platoNombre: plato.nombre,
+                satisfaccion: plato.satisfaccion,
+                cumplimiento: plato.cumplimiento,
+                tieneNota: !!plato.notaUsuario
+              });
 
               // Acumular satisfacción
               if (plato.satisfaccion !== null) {
@@ -761,6 +809,22 @@ export async function obtenerEstadisticasSemanalService({
     const promedioCumplimiento = contadorCumplimiento > 0 ? totalCumplimiento / contadorCumplimiento : 0;
     const porcentajeCumplimiento = comidasPlanificadas > 0 ? (comidasRegistradas / comidasPlanificadas) * 100 : 0;
 
+    logger.info('Cálculo de estadísticas semanales', {
+      userId,
+      numeroSemana,
+      año,
+      comidasPlanificadas,
+      comidasRegistradas,
+      porcentajeCumplimiento,
+      promedioSatisfaccion,
+      promedioCumplimiento,
+      contadorSatisfaccion,
+      contadorCumplimiento,
+      totalDietas: dietas.length,
+      distribucionComidas,
+      comidasConSeguimiento: comidasConSeguimiento.length
+    });
+
 
     // Determinar tendencias (simplificado - en una implementación real se compararía con semanas anteriores)
     const tendencias = {
@@ -794,15 +858,18 @@ export async function obtenerEstadisticasSemanalService({
 
 // Función auxiliar para obtener la fecha de inicio de una semana ISO
 function getDateOfISOWeek(week: number, year: number): Date {
-  const simple = new Date(year, 0, 1 + (week - 1) * 7);
-  const dow = simple.getDay();
-  const ISOweekStart = new Date(simple);
-  if (dow <= 4) {
-    ISOweekStart.setDate(simple.getDate() - simple.getDay() + 1);
-  } else {
-    ISOweekStart.setDate(simple.getDate() + 8 - simple.getDay());
-  }
-  return ISOweekStart;
+  // Implementación simple y robusta
+  const jan4 = new Date(year, 0, 4); // 4 de enero siempre está en la semana 1
+  const jan4Day = jan4.getDay(); // 0 = domingo, 1 = lunes, etc.
+  const daysToMonday = jan4Day === 0 ? -6 : 1 - jan4Day; // Ajustar al lunes
+  const week1Start = new Date(jan4);
+  week1Start.setDate(jan4.getDate() + daysToMonday);
+  
+  // Calcular el inicio de la semana solicitada
+  const weekStart = new Date(week1Start);
+  weekStart.setDate(week1Start.getDate() + (week - 1) * 7);
+  
+  return weekStart;
 }
 
 /**
@@ -833,6 +900,16 @@ export async function obtenerProgresoComidasService({
         { asignadaA: userId },
         { creador: userId }
       ]
+    });
+
+    logger.info('Obteniendo progreso de comidas', {
+      userId,
+      totalDietas: dietas.length,
+      dietas: dietas.map(d => ({
+        id: d._id,
+        nombre: d.nombre,
+        dias: d.dias.length
+      }))
     });
 
     const platosConSeguimiento: Array<{

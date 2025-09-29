@@ -1,27 +1,20 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Grid, 
-  Card, 
   Text, 
   Group, 
   Badge, 
-  Progress, 
   Select,
   Button,
   Alert,
   Loader,
   Center,
   Stack, 
-  ThemeIcon,
   Divider,
   Paper
 } from '@mantine/core';
 import {
-  IconTarget, 
   IconRefresh,
-  IconApple,
-  IconStar,
-  IconCheck,
   IconUsers
 } from '@tabler/icons-react';
 import { useAuth } from '../../hooks/useAuth';
@@ -31,10 +24,29 @@ import {
   EstadisticasNutricionalesSemanal, 
   ProgresoComida
 } from '../../types/estadisticasNutricionales';
+import EstadisticasGeneralesGrid from './shared/EstadisticasGeneralesGrid';
+import EstadisticasSemanalesGrid from './shared/EstadisticasSemanalesGrid';
+import PlatosFavoritosGrid from './shared/PlatosFavoritosGrid';
 
 // Tipo extendido para manejar la diferencia entre frontend y backend
-interface EstadisticasSemanalBackend extends EstadisticasNutricionalesSemanal {
-  cumplimiento: EstadisticasNutricionalesSemanal['cumplimiento'];
+interface EstadisticasSemanalBackend extends Omit<EstadisticasNutricionalesSemanal, 'tendencias'> {
+  progreso: {
+    porcentajeCompletitud: number;
+    comidasRegistradas: number;
+    comidasPlanificadas: number;
+    promedioSatisfaccion: number;
+    promedioCumplimiento: number;
+  };
+  asistencia: {
+    comidasConsumidas: number;
+    comidasOmitidas: number;
+    comidasParciales: number;
+    porcentajeAsistencia: number;
+  };
+  tendencias: {
+    satisfaccion: 'mejorando' | 'empeorando' | 'estable';
+    cumplimiento: 'mejorando' | 'empeorando' | 'estable';
+  };
 }
 
 interface ClienteNutricional extends ClienteAsignado {
@@ -99,9 +111,6 @@ const ProgresoNutricionWorkerTab: React.FC = () => {
   // Cargar estadísticas del cliente seleccionado
   const cargarEstadisticasCliente = useCallback(async (clienteId: string) => {
     try {
-      const cliente = clientes.find(c => c.clienteId === clienteId);
-      if (!cliente) return;
-
       // Obtener estadísticas nutricionales del cliente
       const response = await getEstadisticasNutricionalesCliente(clienteId, semanaSeleccionada, añoSeleccionado);
       
@@ -121,7 +130,7 @@ const ProgresoNutricionWorkerTab: React.FC = () => {
     } catch (err) {
       console.error('Error cargando estadísticas del cliente:', err);
     }
-  }, [clientes, semanaSeleccionada, añoSeleccionado]);
+  }, [semanaSeleccionada, añoSeleccionado]); // Removemos 'clientes' de las dependencias
 
   useEffect(() => {
     cargarClientes();
@@ -231,209 +240,31 @@ const ProgresoNutricionWorkerTab: React.FC = () => {
 
           {/* Estadísticas Generales del Cliente */}
           {clienteActual.estadisticas && (
-            <Grid>
-              <Grid.Col span={12}>
-                <Text size="lg" fw={600} mb="md">
-                  Resumen General
-                </Text>
-              </Grid.Col>
-              
-              <Grid.Col span={{ base: 6, md: 3 }}>
-                <Card shadow="sm" padding="md" radius="md">
-                  <Group justify="space-between" mb="xs">
-                    <Text fw={500} size="sm">Cumplimiento</Text>
-                    <ThemeIcon color="green" variant="light">
-                      <IconCheck size={16} />
-                    </ThemeIcon>
-                  </Group>
-                  <Text size="xl" fw={700} c="green">
-                    {Math.round(clienteActual.estadisticas.porcentajeCumplimientoGeneral)}%
-                  </Text>
-                  <Text size="sm" c="dimmed">
-                    {clienteActual.estadisticas.totalComidasRegistradas} de {clienteActual.estadisticas.totalComidasPlanificadas} comidas
-                  </Text>
-                  <Progress 
-                    value={clienteActual.estadisticas.porcentajeCumplimientoGeneral} 
-                    size="sm" 
-                    mt="xs" 
-                    color="green"
-                  />
-                </Card>
-              </Grid.Col>
-
-              <Grid.Col span={{ base: 6, md: 3 }}>
-                <Card shadow="sm" padding="md" radius="md">
-                  <Group justify="space-between" mb="xs">
-                    <Text fw={500} size="sm">Satisfacción</Text>
-                    <ThemeIcon color="yellow" variant="light">
-                      <IconStar size={16} />
-                    </ThemeIcon>
-                  </Group>
-                  <Text size="xl" fw={700} c="yellow">
-                    {clienteActual.estadisticas.promedioSatisfaccion.toFixed(1)}/5
-                  </Text>
-                  <Text size="sm" c="dimmed">
-                    Promedio general
-                  </Text>
-                </Card>
-              </Grid.Col>
-
-              <Grid.Col span={{ base: 6, md: 3 }}>
-                <Card shadow="sm" padding="md" radius="md">
-                  <Group justify="space-between" mb="xs">
-                    <Text fw={500} size="sm">Dietas Activas</Text>
-                    <ThemeIcon color="blue" variant="light">
-                      <IconApple size={16} />
-                    </ThemeIcon>
-                  </Group>
-                  <Text size="xl" fw={700} c="blue">
-                    {clienteActual.estadisticas.dietasActivas}
-                  </Text>
-                  <Text size="sm" c="dimmed">
-                    de {clienteActual.estadisticas.totalDietas} totales
-                  </Text>
-                </Card>
-              </Grid.Col>
-
-              <Grid.Col span={{ base: 6, md: 3 }}>
-                <Card shadow="sm" padding="md" radius="md">
-                  <Group justify="space-between" mb="xs">
-                    <Text fw={500} size="sm">Cumplimiento Promedio</Text>
-                    <ThemeIcon color="orange" variant="light">
-                      <IconTarget size={16} />
-                    </ThemeIcon>
-                  </Group>
-                  <Text size="xl" fw={700} c="orange">
-                    {clienteActual.estadisticas.promedioCumplimiento.toFixed(1)}/5
-                  </Text>
-                  <Text size="sm" c="dimmed">
-                    Promedio general
-                  </Text>
-                </Card>
-              </Grid.Col>
-            </Grid>
+            <EstadisticasGeneralesGrid 
+              estadisticas={clienteActual.estadisticas} 
+            />
           )}
 
           {/* Estadísticas Semanales */}
           {clienteActual.estadisticasSemanal && (
             <>
               <Divider my="md" />
-              <Text size="lg" fw={600} mb="md">
-                🍎 Resumen de la Semana {clienteActual.estadisticasSemanal.semana?.numero}
-              </Text>
-              
-              <Grid>
-                <Grid.Col span={{ base: 12, md: 6 }}>
-                  <Card shadow="sm" padding="lg" radius="md" h="100%">
-                    <Group justify="space-between" mb="md">
-                      <div>
-                        <Text fw={600} size="lg">Cumplimiento</Text>
-                        <Text size="sm" c="dimmed">Comidas registradas esta semana</Text>
-                      </div>
-                      <ThemeIcon color="green" variant="light" size="xl">
-                        <IconCheck size={24} />
-                      </ThemeIcon>
-                    </Group>
-                    
-                    <Group align="flex-end" mb="md">
-                      <Text size="2rem" fw={800} c="green">
-                        {Math.round(clienteActual.estadisticasSemanal.cumplimiento?.porcentajeCumplimiento || 0)}%
-                      </Text>
-                      <Text size="sm" c="dimmed" ml="xs">
-                        ({clienteActual.estadisticasSemanal.cumplimiento?.comidasRegistradas || 0}/{clienteActual.estadisticasSemanal.cumplimiento?.comidasPlanificadas || 0} comidas)
-                      </Text>
-                    </Group>
-                    
-                    <Progress 
-                      value={clienteActual.estadisticasSemanal.cumplimiento?.porcentajeCumplimiento || 0} 
-                      size="lg" 
-                      color="green"
-                      radius="xl"
-                    />
-                  </Card>
-                </Grid.Col>
-
-                <Grid.Col span={{ base: 12, md: 6 }}>
-                  <Card shadow="sm" padding="lg" radius="md" h="100%">
-                    <Group justify="space-between" mb="md">
-                      <div>
-                        <Text fw={600} size="lg">Satisfacción</Text>
-                        <Text size="sm" c="dimmed">Promedio de satisfacción</Text>
-                      </div>
-                      <ThemeIcon color="yellow" variant="light" size="xl">
-                        <IconStar size={24} />
-                      </ThemeIcon>
-                    </Group>
-                    
-                    <Group align="flex-end" mb="md">
-                      <Text size="2rem" fw={800} c="yellow">
-                        {clienteActual.estadisticasSemanal.cumplimiento?.promedioSatisfaccion?.toFixed(1) || '0.0'}/5
-                      </Text>
-                      <Text size="sm" c="dimmed" ml="xs">
-                        Promedio semanal
-                      </Text>
-                    </Group>
-                    
-                    <Progress 
-                      value={(clienteActual.estadisticasSemanal.cumplimiento?.promedioSatisfaccion || 0) * 20} 
-                      size="lg" 
-                      color="yellow"
-                      radius="xl"
-                    />
-                  </Card>
-                </Grid.Col>
-              </Grid>
+              <EstadisticasSemanalesGrid 
+                estadisticasSemanal={clienteActual.estadisticasSemanal}
+                title={`🍎 Resumen de la Semana ${clienteActual.estadisticasSemanal.semana?.numero}`}
+              />
 
               {/* Platos Favoritos del Cliente */}
-              {clienteActual.estadisticasSemanal.comidasFavoritas && clienteActual.estadisticasSemanal.comidasFavoritas.length > 0 && (
+              {clienteActual.progresoComidas && clienteActual.progresoComidas.length > 0 && (
                 <>
                   <Divider my="md" />
-                  <Group justify="space-between" align="center" mb="md">
-                    <Text size="lg" fw={600}>
-                      🏆 Platos Favoritos de {clienteActual.cliente.fullName}
-                    </Text>
-                    <Text size="sm" c="dimmed">
-                      Mejor satisfacción registrada
-                    </Text>
-                  </Group>
-                  
-                  <Grid>
-                    {clienteActual.estadisticasSemanal.comidasFavoritas.map((plato, index) => (
-                      <Grid.Col span={{ base: 12, md: 4 }} key={index}>
-                        <Card shadow="sm" padding="lg" radius="md" h="100%">
-                          <Group justify="space-between" mb="md">
-                            <Group gap="sm">
-                              <ThemeIcon 
-                                color={index === 0 ? 'yellow' : index === 1 ? 'gray' : 'orange'} 
-                                variant="filled" 
-                                size="lg"
-                              >
-                                <Text fw={700} size="sm">
-                                  {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                                </Text>
-                              </ThemeIcon>
-                              <div>
-                                <Text fw={600} size="md">{plato.nombre}</Text>
-                                <Text size="sm" c="dimmed">{plato.vecesConsumida} veces</Text>
-                              </div>
-                            </Group>
-                          </Group>
-
-                          <Stack gap="md">
-                            <div>
-                              <Text size="sm" c="dimmed">Satisfacción Promedio</Text>
-                              <Text fw={700} size="xl" c="yellow">
-                                {plato.satisfaccionPromedio.toFixed(1)}/5
-                              </Text>
-                            </div>
-                          </Stack>
-                        </Card>
-                      </Grid.Col>
-                    ))}
-                  </Grid>
+                  <PlatosFavoritosGrid 
+                    progresoComidas={clienteActual.progresoComidas}
+                    title={`🏆 Platos Favoritos de ${clienteActual.cliente.fullName}`}
+                    subtitle="Mejor satisfacción registrada"
+                  />
                 </>
               )}
-
             </>
           )}
         </>

@@ -46,11 +46,24 @@ export class WorkerController {
         año
       });
 
+      // Transformar los datos de progreso de comidas al formato esperado por el frontend
+      const progresoComidasTransformado = progresoComidas.comidas.map((comida: { nombre: string; satisfaccionPromedio: number; cumplimientoPromedio: number; vecesConsumida: number; ultimaConsumida: string | null }) => ({
+        comidaId: comida.nombre, // Usar el nombre como ID temporal
+        nombreComida: comida.nombre,
+        nombreDieta: 'Dieta General', // Valor por defecto
+        estadisticas: {
+          totalRegistros: comida.vecesConsumida,
+          satisfaccionPromedio: comida.satisfaccionPromedio,
+          cumplimientoPromedio: comida.cumplimientoPromedio,
+          tendenciaSatisfaccion: 'estable' // Valor por defecto
+        }
+      }));
+
       res.status(200).json({
         success: true,
         estadisticas: estadisticasGenerales,
         estadisticasSemanal: estadisticasSemanal,
-        progresoComidas: progresoComidas
+        progresoComidas: progresoComidasTransformado
       });
     } catch (error) {
       logger.error('Error al obtener estadísticas nutricionales del cliente', {

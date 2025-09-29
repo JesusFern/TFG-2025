@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 
 export const useProgressTab = () => {
   // Función para obtener el número de semana actual (ISO 8601)
@@ -20,9 +20,12 @@ export const useProgressTab = () => {
     setMostrarHistorial(false);
   }, [getCurrentWeekNumber]);
 
-  const isCurrentWeek = semanaSeleccionada === getCurrentWeekNumber() && añoSeleccionado === new Date().getFullYear();
+  const isCurrentWeek = useMemo(() => 
+    semanaSeleccionada === getCurrentWeekNumber() && añoSeleccionado === new Date().getFullYear(),
+    [semanaSeleccionada, añoSeleccionado, getCurrentWeekNumber]
+  );
 
-  return {
+  return useMemo(() => ({
     getCurrentWeekNumber,
     semanaSeleccionada,
     añoSeleccionado,
@@ -32,5 +35,5 @@ export const useProgressTab = () => {
     setAñoSeleccionado,
     setMostrarHistorial,
     handleVolverActual
-  };
+  }), [getCurrentWeekNumber, semanaSeleccionada, añoSeleccionado, mostrarHistorial, isCurrentWeek, setSemanaSeleccionada, setAñoSeleccionado, setMostrarHistorial, handleVolverActual]);
 };
