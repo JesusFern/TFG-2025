@@ -4,6 +4,22 @@ import Dieta from '../models/diets/dieta';
 export interface IComida {
   horaEstimada?: string | null;
   nombreComida?: string | null;
+  platos: IPlato[];
+}
+
+export interface IPlato {
+  orden: number;
+  nombre?: string;
+  receta?: mongoose.Types.ObjectId;
+  ingredientesPersonalizados?: Array<{
+    ingrediente: mongoose.Types.ObjectId;
+    peso: number;
+  }>;
+  
+  // === CAMPOS DE SEGUIMIENTO ===
+  satisfaccion?: number | null; // 1-5
+  cumplimiento?: number | null; // 1-5
+  notaUsuario?: string | null;
 }
 
 export async function buscarDietaYVerificarPermisos(

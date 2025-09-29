@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Grid, 
   Card, 
@@ -6,25 +6,17 @@ import {
   Group, 
   Badge, 
   Progress, 
-  NumberFormatter,
-  Select,
-  Button,
-  Alert,
-  Loader,
-  Center,
   Stack,
   ThemeIcon,
   Divider,
-  Paper,
   SimpleGrid,
-  Box
+  Box,
+  Paper
 } from '@mantine/core';
 import { 
-  IconCalendar, 
-  IconTarget, 
-  IconTrendingUp, 
+  IconCalendar,
+  IconTarget,
   IconClock,
-  IconRefresh,
   IconBarbell,
   IconFlame,
   IconHeart,
@@ -36,33 +28,75 @@ import {
   IconTrophy
 } from '@tabler/icons-react';
 import { 
-  BarChart, 
   PieChart
 } from '@mantine/charts';
+import BarChartComponent from './shared/BarChartComponent';
 import { estadisticasService } from '../../services/estadisticasService';
-import { EstadisticasCliente, EstadisticasSemanal, ProgresoEjercicio, RachasEntrenamiento } from '../../types/estadisticas';
+import { EstadisticasCliente, EstadisticasSemanal, RachasEntrenamiento } from '../../types/estadisticas';
 import EmptyProgresoState from './EmptyProgresoState';
+import WeekPanel from './shared/WeekPanel';
+import HistorialSelector from './shared/HistorialSelector';
+import { LoadingState, ErrorState } from './shared/LoadingErrorStates';
+import EstadisticasGeneralesLayout from './shared/EstadisticasGeneralesLayout';
+import { useProgressTab } from '../../hooks/useProgressTab';
+import { useProgressStats } from '../../hooks/useProgressStats';
 
 // Tipo extendido para manejar la diferencia entre frontend y backend
 interface EstadisticasSemanalBackend extends EstadisticasSemanal {
   progreso: EstadisticasSemanal['progreso'];
 }
 
-const ProgresoEntrenamientoTab: React.FC = () => {
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [estadisticas, setEstadisticas] = useState<EstadisticasCliente | null>(null);
-  const [estadisticasSemanal, setEstadisticasSemanal] = useState<EstadisticasSemanalBackend | null>(null);
-  const [progresoEjercicios, setProgresoEjercicios] = useState<ProgresoEjercicio[]>([]);
-  const [rachas, setRachas] = useState<RachasEntrenamiento | null>(null);
-  // Función para obtener el número de semana actual (ISO 8601)
-  const getCurrentWeekNumber = (): number => {
-    const d = new Date(Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()));
-    const dayNum = d.getUTCDay() || 7;
-    d.setUTCDate(d.getUTCDate() + 4 - dayNum);
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(),0,1));
-    return Math.ceil((((d.getTime() - yearStart.getTime()) / 86400000) + 1)/7);
+interface ProgresoEjercicioType {
+  ejercicioId?: string;
+  ejercicioNombre?: string;
+  grupoMuscular?: string;
+  estadisticas?: {
+    totalSesiones?: number;
+    cargaMaxima?: number;
+    repeticionesMaximas?: number;
   };
+  progreso?: {
+    tendencia?: string;
+  };
+}
+
+const ProgresoEntrenamientoTab: React.FC = () => {
+  const [rachas, setRachas] = useState<RachasEntrenamiento | null>(null);
+
+  const {
+    getCurrentWeekNumber,
+    semanaSeleccionada,
+    añoSeleccionado,
+    mostrarHistorial,
+    isCurrentWeek,
+    setSemanaSeleccionada,
+    setAñoSeleccionado,
+    setMostrarHistorial,
+    handleVolverActual
+  } = useProgressTab();
+
+  // Hook para manejar estadísticas
+  const {
+    loading,
+    error,
+    estadisticas,
+    estadisticasSemanal,
+    progresoStats: progresoEjercicios,
+    cargarEstadisticas
+  } = useProgressStats({
+    loadGeneralStats: async () => {
+      const response = await estadisticasService.getMiProgreso();
+      return response.success && response.estadisticas ? response.estadisticas as EstadisticasCliente : null;
+    },
+    loadWeeklyStats: async (semana: number, año: number) => {
+      const response = await estadisticasService.getMiProgresoSemanal(semana, año);
+      return response.success && response.estadisticas ? response.estadisticas as EstadisticasSemanalBackend : null;
+    },
+    loadProgressStats: async () => {
+      const response = await estadisticasService.getMiProgresoEjercicios();
+      return response.success && response.progreso ? response.progreso : null;
+    }
+  });
 
   // Componente para mostrar comparación con semana anterior
   const ComparacionSemanaAnterior = ({ comparacion }: { comparacion: Record<string, { actual: number; porcentajeCambio: number }> }) => {
@@ -199,47 +233,18 @@ const ProgresoEntrenamientoTab: React.FC = () => {
 
   // Componente para mostrar distribución por tipo de ejercicio
   const DistribucionTipoEjercicio = ({ distribucion }: { distribucion: Record<string, number> }) => {
-    const data = Object.entries(distribucion)
-      .filter(([, value]) => value > 0)
-      .map(([tipo, cantidad]) => ({
-        tipo: tipo.charAt(0).toUpperCase() + tipo.slice(1),
-        cantidad: cantidad
-      }));
-
-    if (data.length === 0) {
-      return (
-        <Card p="md" radius="md" withBorder>
-          <Text size="lg" fw={600} mb="md">Distribución por Tipo de Ejercicio</Text>
-          <Text c="dimmed" ta="center">No hay datos disponibles</Text>
-        </Card>
-      );
-    }
+    const data = Object.entries(distribucion).map(([tipo, cantidad]) => ({
+      tipo,
+      cantidad
+    }));
 
     return (
-      <Card p="md" radius="md" withBorder>
-        <Text size="lg" fw={600} mb="md">Distribución por Tipo de Ejercicio</Text>
-        <Box h={300}>
-          <BarChart
-            h={300}
-            data={data}
-            dataKey="tipo"
-            series={[{ name: 'cantidad', color: 'blue.6' }]}
-            withLegend
-            legendProps={{ verticalAlign: 'bottom' }}
-            withTooltip
-            tooltipProps={{
-              content: ({ label, payload }) => (
-                <Paper p="sm" withBorder>
-                  <Text size="sm" fw={500}>{label}</Text>
-                  <Text size="sm" c="blue">
-                    {payload?.[0]?.value} ejercicios
-                  </Text>
-                </Paper>
-              ),
-            }}
-          />
-        </Box>
-      </Card>
+      <BarChartComponent
+        title="Distribución por Tipo de Ejercicio"
+        data={data}
+        tooltipLabel="ejercicios"
+        color="blue.6"
+      />
     );
   };
 
@@ -294,46 +299,10 @@ const ProgresoEntrenamientoTab: React.FC = () => {
     );
   };
 
-  const [semanaSeleccionada, setSemanaSeleccionada] = useState<number>(getCurrentWeekNumber());
-  const [añoSeleccionado, setAñoSeleccionado] = useState<number>(new Date().getFullYear());
-  const [mostrarHistorial, setMostrarHistorial] = useState<boolean>(false);
 
-  const cargarEstadisticas = useCallback(async () => {
-    try {
-      setLoading(true);
-      setError(null);
-
-      // Cargar estadísticas generales
-      try {
-        const responseGeneral = await estadisticasService.getMiProgreso();
-        if (responseGeneral.success && responseGeneral.estadisticas) {
-          setEstadisticas(responseGeneral.estadisticas as EstadisticasCliente);
-        }
-      } catch (err) {
-        console.warn('No se pudieron cargar las estadísticas generales:', err);
-      }
-
-      // Cargar estadísticas semanales
-      try {
-        const responseSemanal = await estadisticasService.getMiProgresoSemanal(semanaSeleccionada, añoSeleccionado);
-        if (responseSemanal.success && responseSemanal.estadisticas) {
-          setEstadisticasSemanal(responseSemanal.estadisticas as EstadisticasSemanalBackend);
-        }
-      } catch (err) {
-        console.warn('No se pudieron cargar las estadísticas semanales:', err);
-      }
-
-      // Cargar progreso de ejercicios
-      try {
-        const responseEjercicios = await estadisticasService.getMiProgresoEjercicios();
-        if (responseEjercicios.success && responseEjercicios.progreso) {
-          setProgresoEjercicios(responseEjercicios.progreso);
-        }
-      } catch (err) {
-        console.warn('No se pudo cargar el progreso de ejercicios:', err);
-      }
-
-      // Cargar rachas de entrenamiento
+  // Cargar rachas de entrenamiento
+  useEffect(() => {
+    const cargarRachas = async () => {
       try {
         const responseRachas = await estadisticasService.getRachasEntrenamiento();
         if (responseRachas.success && responseRachas.rachas) {
@@ -342,44 +311,25 @@ const ProgresoEntrenamientoTab: React.FC = () => {
       } catch (err) {
         console.warn('No se pudieron cargar las rachas de entrenamiento:', err);
       }
-
-    } catch (err) {
-      setError('Error al cargar las estadísticas');
-      console.error('Error cargando estadísticas:', err);
-    } finally {
-      setLoading(false);
-    }
-  }, [semanaSeleccionada, añoSeleccionado]);
+    };
+    cargarRachas();
+  }, []);
 
   useEffect(() => {
-    cargarEstadisticas();
+    cargarEstadisticas(semanaSeleccionada, añoSeleccionado);
   }, [semanaSeleccionada, añoSeleccionado, cargarEstadisticas]);
 
   if (loading) {
-    return (
-      <Center py="xl">
-        <Loader size="lg" />
-      </Center>
-    );
+    return <LoadingState />;
   }
 
   if (error) {
-    if (error.includes('No hay datos')) {
-      return <EmptyProgresoState onRetry={cargarEstadisticas} />;
-    }
-    
     return (
-      <Alert color="red" title="Error" icon={<IconRefresh size={16} />}>
-        {error}
-        <Button 
-          variant="light" 
-          size="sm" 
-          mt="sm" 
-          onClick={cargarEstadisticas}
-        >
-          Reintentar
-        </Button>
-      </Alert>
+      <ErrorState 
+        error={error} 
+        onRetry={() => cargarEstadisticas(semanaSeleccionada, añoSeleccionado)}
+        emptyStateComponent={<EmptyProgresoState onRetry={() => cargarEstadisticas(semanaSeleccionada, añoSeleccionado)} />}
+      />
     );
   }
 
@@ -387,191 +337,35 @@ const ProgresoEntrenamientoTab: React.FC = () => {
   return (
     <Stack gap="xl">
       {/* Panel de información de la semana */}
-      <Paper p="md" radius="md" withBorder style={{ backgroundColor: '#f8f9fa' }}>
-        <Group justify="space-between" align="center">
-          <Group gap="md">
-            <ThemeIcon color="blue" variant="light" size="lg">
-              <IconCalendar size={20} />
-            </ThemeIcon>
-            <div>
-              <Text size="lg" fw={600}>
-                Semana {semanaSeleccionada} de {añoSeleccionado}
-              </Text>
-              <Text size="sm" c="dimmed">
-                {semanaSeleccionada === getCurrentWeekNumber() && añoSeleccionado === new Date().getFullYear() 
-                  ? "Semana actual" 
-                  : "Semana histórica"}
-              </Text>
-            </div>
-          </Group>
-          
-          <Group gap="sm">
-            <Button 
-              variant="light" 
-              leftSection={<IconRefresh size={16} />}
-              onClick={cargarEstadisticas}
-              size="sm"
-            >
-              Actualizar
-            </Button>
-            <Button 
-              variant="outline" 
-              leftSection={<IconTarget size={16} />}
-              onClick={() => setMostrarHistorial(!mostrarHistorial)}
-              size="sm"
-            >
-              {mostrarHistorial ? 'Ocultar Historial' : 'Ver Historial'}
-            </Button>
-          </Group>
-        </Group>
-      </Paper>
+      <WeekPanel
+        semanaSeleccionada={semanaSeleccionada}
+        añoSeleccionado={añoSeleccionado}
+        isCurrentWeek={isCurrentWeek}
+        onRefresh={() => cargarEstadisticas(semanaSeleccionada, añoSeleccionado)}
+        onToggleHistorial={() => setMostrarHistorial(!mostrarHistorial)}
+        mostrarHistorial={mostrarHistorial}
+        color="blue"
+      />
 
       {/* Selectores de historial (solo cuando se muestre) */}
       {mostrarHistorial && (
-        <Paper p="md" radius="md" withBorder>
-          <Text size="md" fw={500} mb="md">Historial de Progreso</Text>
-          <Group>
-            <Select
-              label="Semana"
-              placeholder="Seleccionar semana"
-              data={Array.from({ length: 52 }, (_, i) => ({
-                value: (i + 1).toString(),
-                label: `Semana ${i + 1}`
-              }))}
-              value={semanaSeleccionada.toString()}
-              onChange={(value) => setSemanaSeleccionada(parseInt(value || '1'))}
-              style={{ minWidth: 150 }}
-            />
-            <Select
-              label="Año"
-              placeholder="Seleccionar año"
-              data={Array.from({ length: 3 }, (_, i) => {
-                const año = new Date().getFullYear() - i;
-                return {
-                  value: año.toString(),
-                  label: año.toString()
-                };
-              })}
-              value={añoSeleccionado.toString()}
-              onChange={(value) => setAñoSeleccionado(parseInt(value || new Date().getFullYear().toString()))}
-              style={{ minWidth: 120 }}
-            />
-            <Button 
-              variant="outline" 
-              leftSection={<IconCalendar size={16} />}
-              onClick={() => {
-                setSemanaSeleccionada(getCurrentWeekNumber());
-                setAñoSeleccionado(new Date().getFullYear());
-                setMostrarHistorial(false);
-              }}
-              style={{ marginTop: 25 }}
-            >
-              Volver a Actual
-            </Button>
-          </Group>
-        </Paper>
+        <HistorialSelector
+          semanaSeleccionada={semanaSeleccionada}
+          añoSeleccionado={añoSeleccionado}
+          onSemanaChange={setSemanaSeleccionada}
+          onAñoChange={setAñoSeleccionado}
+          onVolverActual={handleVolverActual}
+          getCurrentWeekNumber={getCurrentWeekNumber}
+        />
       )}
 
 
       {/* Estadísticas Generales */}
       {estadisticas && (
-        <Grid>
-          <Grid.Col span={12}>
-            <Text size="lg" fw={600} mb="md">
-              Resumen General
-            </Text>
-          </Grid.Col>
-          
-          {/* Asistencia */}
-          <Grid.Col span={{ base: 6, md: 3 }}>
-            <Card shadow="sm" padding="md" radius="md">
-              <Group justify="space-between" mb="xs">
-                <Text fw={500} size="sm">Asistencia</Text>
-                <ThemeIcon color="blue" variant="light">
-                  <IconCalendar size={16} />
-                </ThemeIcon>
-              </Group>
-              <Text size="xl" fw={700} c="blue">
-                {Math.round(estadisticas.asistencia?.porcentajeAsistencia || 0)}%
-              </Text>
-              <Text size="sm" c="dimmed">
-                {estadisticas.asistencia?.sesionesCompletadas || 0} de {estadisticas.asistencia?.sesionesProgramadas || 0} sesiones
-              </Text>
-              <Progress 
-                value={estadisticas.asistencia?.porcentajeAsistencia || 0} 
-                size="sm" 
-                mt="xs" 
-                color="blue"
-              />
-            </Card>
-          </Grid.Col>
-
-          {/* Progreso */}
-          <Grid.Col span={{ base: 6, md: 3 }}>
-            <Card shadow="sm" padding="md" radius="md">
-              <Group justify="space-between" mb="xs">
-                <Text fw={500} size="sm">Progreso</Text>
-                <ThemeIcon color="green" variant="light">
-                  <IconTarget size={16} />
-                </ThemeIcon>
-              </Group>
-              <Text size="xl" fw={700} c="green">
-                {Math.round(estadisticas.rendimiento?.porcentajeCompletitud || 0)}%
-              </Text>
-                <Text size="sm" c="dimmed">
-                  {estadisticas.rendimiento?.ejerciciosCompletados || 0} de {estadisticas.rendimiento?.ejerciciosTotal || 0} ejercicios
-                </Text>
-              <Progress 
-                value={estadisticas.rendimiento?.porcentajeCompletitud || 0} 
-                size="sm" 
-                mt="xs" 
-                color="green"
-              />
-            </Card>
-          </Grid.Col>
-
-          {/* Consistencia */}
-          <Grid.Col span={{ base: 6, md: 3 }}>
-            <Card shadow="sm" padding="md" radius="md">
-              <Group justify="space-between" mb="xs">
-                <Text fw={500} size="sm">Consistencia</Text>
-                <ThemeIcon color="orange" variant="light">
-                  <IconTrendingUp size={16} />
-                </ThemeIcon>
-              </Group>
-              <Text size="xl" fw={700} c="orange">
-                {Math.round(estadisticas.consistencia?.porcentajeConsistencia || 0)}%
-              </Text>
-              <Text size="sm" c="dimmed">
-                {estadisticas.consistencia?.diasEntrenados || 0} de {estadisticas.consistencia?.diasDisponibles || 0} días
-              </Text>
-              <Progress 
-                value={estadisticas.consistencia?.porcentajeConsistencia || 0}
-                size="sm" 
-                mt="xs" 
-                color="orange"
-              />
-            </Card>
-          </Grid.Col>
-
-          {/* Rendimiento */}
-          <Grid.Col span={{ base: 6, md: 3 }}>
-            <Card shadow="sm" padding="md" radius="md">
-              <Group justify="space-between" mb="xs">
-                <Text fw={500} size="sm">Tiempo Promedio</Text>
-                <ThemeIcon color="purple" variant="light">
-                  <IconClock size={16} />
-                </ThemeIcon>
-              </Group>
-              <Text size="xl" fw={700} c="purple">
-                <NumberFormatter value={estadisticas.rendimiento.tiempoPromedioSesion} suffix=" min" />
-              </Text>
-              <Text size="sm" c="dimmed">
-                Por sesión
-              </Text>
-            </Card>
-          </Grid.Col>
-        </Grid>
+        <EstadisticasGeneralesLayout 
+          estadisticas={estadisticas} 
+          tipo="entrenamiento" 
+        />
       )}
 
       {/* Estadísticas Semanales */}
@@ -698,7 +492,7 @@ const ProgresoEntrenamientoTab: React.FC = () => {
       )}
 
       {/* Top 3 Ejercicios */}
-      {progresoEjercicios.length > 0 && (
+      {progresoEjercicios && progresoEjercicios.length > 0 && (
         <>
           <Divider my="md" />
           <Group justify="space-between" align="center" mb="md">
@@ -712,10 +506,10 @@ const ProgresoEntrenamientoTab: React.FC = () => {
           
           <Grid>
             {progresoEjercicios
-              .filter(ejercicio => ejercicio.estadisticas?.totalSesiones && ejercicio.estadisticas.totalSesiones > 0)
-              .sort((a, b) => (b.estadisticas?.cargaMaxima || 0) - (a.estadisticas?.cargaMaxima || 0))
+              .filter((ejercicio: ProgresoEjercicioType) => ejercicio.estadisticas?.totalSesiones && ejercicio.estadisticas.totalSesiones > 0)
+              .sort((a: ProgresoEjercicioType, b: ProgresoEjercicioType) => (b.estadisticas?.cargaMaxima || 0) - (a.estadisticas?.cargaMaxima || 0))
               .slice(0, 3)
-              .map((ejercicio, index) => (
+              .map((ejercicio: ProgresoEjercicioType, index: number) => (
               <Grid.Col span={{ base: 12, md: 4 }} key={ejercicio.ejercicioId || 'unknown'}>
                 <Card shadow="sm" padding="lg" radius="md" h="100%">
                   {/* Posición y medalla */}
@@ -777,7 +571,7 @@ const ProgresoEntrenamientoTab: React.FC = () => {
             ))}
           </Grid>
           
-          {progresoEjercicios.filter(ejercicio => ejercicio.estadisticas?.totalSesiones && ejercicio.estadisticas.totalSesiones > 0).length === 0 && (
+          {progresoEjercicios.filter((ejercicio: ProgresoEjercicioType) => ejercicio.estadisticas?.totalSesiones && ejercicio.estadisticas.totalSesiones > 0).length === 0 && (
             <Card shadow="sm" padding="xl" radius="md">
               <Stack align="center" gap="md">
                 <ThemeIcon color="gray" variant="light" size="xl">

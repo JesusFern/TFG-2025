@@ -61,6 +61,13 @@ router.get(
   SuscriptionPlanController.getUserSubscription
 );
 
+// Ruta para obtener el estado de suscripción (para verificar acceso a funcionalidades)
+router.get(
+  '/status', 
+  authenticateToken, 
+  SuscriptionPlanController.getSuscriptionStatus
+);
+
 // Ruta para obtener un plan por ID (debe ir al final para no interferir con rutas específicas)
 router.get('/:id', SuscriptionPlanController.getPlanById);
 

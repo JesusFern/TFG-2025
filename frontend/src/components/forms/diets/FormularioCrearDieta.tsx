@@ -262,7 +262,7 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
       }
     }
     return { isValid: true, error: null };
-  }, [activeStep, formData, tipoCreacion]);
+  }, [activeStep, formData]);
   
   const isCurrentStepValid = useCallback(() => {
     return validateCurrentStep().isValid;

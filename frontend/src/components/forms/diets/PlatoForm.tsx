@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   TextInput, 
   Group, 
@@ -40,10 +40,10 @@ const PlatoForm: React.FC<PlatoFormProps> = ({ plato, onSave, onCancel }) => {
   });
 
   // Asegurar que recetas siempre sea un array válido
-  const safeRecetas = Array.isArray(recetas) ? recetas : [];
+  const safeRecetas = useMemo(() => Array.isArray(recetas) ? recetas : [], [recetas]);
 
   // Función para cargar recetas iniciales al hacer clic
-  const fetchInitialRecetas = async () => {
+  const fetchInitialRecetas = useCallback(async () => {
     if (hasSearched) return; // No recargar si ya se buscó
     
     try {
@@ -57,7 +57,7 @@ const PlatoForm: React.FC<PlatoFormProps> = ({ plato, onSave, onCancel }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [hasSearched]);
 
   // Función para buscar con término específico
   const fetchRecetas = async (termino: string) => {
@@ -103,7 +103,7 @@ const PlatoForm: React.FC<PlatoFormProps> = ({ plato, onSave, onCancel }) => {
       // Si se borró el término, volver a las recetas iniciales
       fetchInitialRecetas();
     }
-  }, [searchTerm, hasSearched]);
+  }, [searchTerm, hasSearched, fetchInitialRecetas]);
 
   const handleChange = <K extends keyof Plato>(key: K, value: Plato[K]) => {
     setFormData({
@@ -134,7 +134,7 @@ const PlatoForm: React.FC<PlatoFormProps> = ({ plato, onSave, onCancel }) => {
     };
     
     cargarIngredientes();
-  }, [plato]);
+  }, [plato, hasSearched]);
 
   const handleSelectReceta = (recetaId: string) => {
     const recetaSeleccionada = safeRecetas.find(r => r._id === recetaId);

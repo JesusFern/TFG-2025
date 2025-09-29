@@ -3,6 +3,7 @@ import Cita from '../models/citas/cita';
 import User from '../models/users/user';
 import mongoose from 'mongoose';
 import { Response } from 'express';
+import { manejarErrorValidacion } from '../utils/errorHandler';
 
 // Validadores para crear cita
 export const validarCrearCita = (): ValidationChain[] => [
@@ -309,30 +310,5 @@ export const manejarErrorCita = (
   contexto: Record<string, unknown> = {}
 ): void => {
   console.error(`Error al ${operacion}:`, error, contexto);
-
-  if (error instanceof Error) {
-    if (error.message.includes('Ya existe una cita programada')) {
-      res.status(409).json({ message: error.message });
-      return;
-    }
-
-    if (error.message.includes('no encontrado') || error.message.includes('no existe')) {
-      res.status(404).json({ message: error.message });
-      return;
-    }
-
-    if (error.message.includes('permisos') || error.message.includes('No tienes')) {
-      res.status(403).json({ message: error.message });
-      return;
-    }
-
-    if (error.message.includes('no puede ser') || error.message.includes('No se puede')) {
-      res.status(400).json({ message: error.message });
-      return;
-    }
-  }
-
-  res.status(500).json({ 
-    message: `Error interno del servidor al ${operacion}` 
-  });
+  manejarErrorValidacion(error, res, operacion);
 };

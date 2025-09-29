@@ -592,6 +592,54 @@ export const getClientsAssignedToWorker = async (req: AuthenticatedRequest, res:
   }
 };
 
+export const getMyClientsAssigned = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    
+    if (!userId) {
+      res.status(401).json({ message: 'No autenticado' });
+      return;
+    }
+
+    // Buscar el trabajador actual y obtener sus clientes asignados
+    const worker = await User.findById(userId)
+      .populate({
+        path: 'clientesAsignados.clienteId',
+        select: 'fullName email phoneNumber role gender birthDate profilePicture datosSaludYNutricion datosActividadFisica suscripcion'
+      });
+    
+    if (!worker) {
+      res.status(404).json({ message: 'Trabajador no encontrado' });
+      return;
+    }
+
+    if (worker.role !== 'worker') {
+      res.status(403).json({ message: 'Solo los trabajadores pueden acceder a esta información' });
+      return;
+    }
+
+    // Formatear la respuesta
+    const clientesAsignados = worker.clientesAsignados?.map(asignacion => ({
+      clienteId: asignacion.clienteId._id,
+      tipoAsignacion: asignacion.tipoAsignacion,
+      cliente: asignacion.clienteId
+    })) || [];
+
+    res.status(200).json({
+      success: true,
+      data: clientesAsignados
+    });
+
+  } catch (error: unknown) {
+    const err = error as Error;
+    console.error('Error al obtener mis clientes asignados:', err);
+    res.status(500).json({ 
+      message: 'Error interno del servidor al obtener clientes asignados',
+      error: err.message 
+    });
+  }
+};
+
 export const getUserById = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {
     const { id } = req.params;

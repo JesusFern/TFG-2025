@@ -190,7 +190,7 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [plato.ingredientesPersonalizados]);
 
   const cargarIngredientesPersonalizados = useCallback(async (ingredientesPersonalizados: Array<{ ingrediente: string | { _id: string; nombre: string; calorias: number; proteinas: number; grasas: number; hidratosCarbono: number; }; peso: number }>) => {
     // Evitar múltiples cargas simultáneas
@@ -316,7 +316,7 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
       setIngredientes([]);
       setIngredientesReceta([]);
     }
-  }, [platoPropiedades]);
+  }, [platoPropiedades, plato, cargarIngredientesDeReceta, cargarIngredientesPersonalizados]);
 
   // Limpiar el ref cuando se desmonta el componente
   useEffect(() => {
