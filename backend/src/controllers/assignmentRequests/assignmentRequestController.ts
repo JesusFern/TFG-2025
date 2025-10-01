@@ -3,6 +3,8 @@ import AssignmentRequest from '../../models/assignmentRequest/assignmentRequest'
 import User from '../../models/users/user';
 import UserSuscription from '../../models/suscriptionPlans/userSuscription';
 import { AuthenticatedRequest } from '../../types';
+import * as assignmentRequestService from '../../service/assignmentRequests/assignmentRequestService';
+import mongoose from 'mongoose';
 
 interface MongoError extends Error {
   code?: number;
@@ -185,14 +187,12 @@ export const createAssignmentRequest = async (req: AuthenticatedRequest, res: Re
       }
     }
 
-    // Crear la nueva solicitud
-    const assignmentRequest = new AssignmentRequest({
-      usuarioSolicitante,
-      trabajadorSolicitado: sanitizedTrabajadorSolicitado,
-      tipoAsignacion: sanitizedTipoAsignacion
-    });
-
-    await assignmentRequest.save();
+    // Crear la nueva solicitud usando el servicio (que envía notificaciones)
+    const assignmentRequest = await assignmentRequestService.createAssignmentRequest(
+      new mongoose.Types.ObjectId(usuarioSolicitante),
+      new mongoose.Types.ObjectId(sanitizedTrabajadorSolicitado),
+      sanitizedTipoAsignacion as 'Nutricionista' | 'Entrenador personal'
+    );
 
     // Poblar los datos para la respuesta
     await assignmentRequest.populate([
@@ -246,30 +246,21 @@ export const updateAssignmentRequestStatus = async (req: AuthenticatedRequest, r
       return;
     }
 
+    // Usar el servicio para actualizar el estado (que envía notificaciones)
+    await assignmentRequestService.updateAssignmentRequestStatus(
+      new mongoose.Types.ObjectId(requestId),
+      new mongoose.Types.ObjectId(workerId),
+      estado as 'aceptada' | 'rechazada'
+    );
+
+    // Eliminar la solicitud ya que se ha procesado
+    await AssignmentRequest.findByIdAndDelete(requestId);
+
     if (estado === 'aceptada') {
-      // Si se acepta la solicitud, asignar el usuario al trabajador
-      await User.findByIdAndUpdate(
-        assignmentRequest.trabajadorSolicitado,
-        { 
-          $addToSet: { 
-            clientesAsignados: {
-              clienteId: assignmentRequest.usuarioSolicitante,
-              tipoAsignacion: assignmentRequest.tipoAsignacion
-            }
-          } 
-        }
-      );
-
-      // Eliminar la solicitud ya que se ha procesado
-      await AssignmentRequest.findByIdAndDelete(requestId);
-
       res.json({
         message: 'Solicitud de asignación aceptada exitosamente'
       });
     } else {
-      // Si se rechaza, simplemente eliminar la solicitud
-      await AssignmentRequest.findByIdAndDelete(requestId);
-
       res.json({
         message: 'Solicitud de asignación rechazada exitosamente'
       });

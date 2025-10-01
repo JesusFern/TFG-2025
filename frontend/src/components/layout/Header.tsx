@@ -28,6 +28,7 @@ import {
 } from '@tabler/icons-react';
 import logo from '../../assets/images/Logo-Nutroos.svg';
 import { useAuth } from '../../hooks/useAuth';
+import { NotificationBell } from '../molecules/NotificationBell';
 
 const Header: React.FC = () => {
   const [mobileMenuOpened, { close: closeMobileMenu, toggle: toggleMobileMenu }] = useDisclosure();
@@ -142,6 +143,14 @@ const Header: React.FC = () => {
                 {isDark ? <IconSun size={rem(18)} /> : <IconMoon size={rem(18)} />}
               </ActionIcon>
             </Tooltip>
+            
+            {isAuthenticated && user && (
+              <NotificationBell
+                onViewAllClick={() => navigate('/notificaciones')}
+                showCount={true}
+                maxVisible={5}
+              />
+            )}
             
             {isAuthenticated && user ? (
               <Menu shadow="md" width={200} withArrow position="bottom-end" zIndex={1000}>

@@ -14,7 +14,8 @@ import {
   obtenerPlantillaPorObjetivoService,
   obtenerPlantillasPorFiltrosService,
   buscarPlantillasService,
-  generarPlanDesdePlantillaService
+  generarPlanDesdePlantillaService,
+  publicarPlanEntrenamientoService
 } from '../../service/training/planEntrenamientoService';
 import logger from '../../utils/logger';
 
@@ -299,20 +300,7 @@ export const publicarPlanEntrenamiento = async (req: AuthenticatedRequest, res: 
       entrenadorId
     });
 
-    const plan = await PlanEntrenamiento.findById(planId);
-    if (!plan) {
-      res.status(404).json({ message: 'Plan de entrenamiento no encontrado' });
-      return;
-    }
-
-    // Verificar que el entrenador es el creador del plan
-    if (plan.entrenador.toString() !== entrenadorId) {
-      res.status(403).json({ message: 'No tienes permisos para publicar este plan' });
-      return;
-    }
-
-    plan.draftMode = false;
-    await plan.save();
+    const plan = await publicarPlanEntrenamientoService(planId, entrenadorId);
 
     logger.info('Plan de entrenamiento publicado correctamente', { planId });
     res.status(200).json({ 

@@ -197,23 +197,21 @@ describe('Chat Module Integration Tests', () => {
   });
 
   describe('Sistema de Notificaciones', () => {
-    it('debería crear notificación exitosamente', async () => {
+    it('debería obtener notificaciones no leídas exitosamente', async () => {
       const mockNotificacionService = jest.requireMock('../../src/service/chats/notificacionService');
-      mockNotificacionService.crearNotificacionService = jest.fn().mockResolvedValue(mockNotificacion);
+      mockNotificacionService.obtenerNotificacionesService = jest.fn().mockResolvedValue({
+        notificaciones: [mockNotificacion],
+        total: 1,
+        limit: 10,
+        offset: 0
+      });
 
       const notificacionRes = await request(app)
-        .post('/api/messaging/notificaciones')
-        .set('Authorization', `Bearer ${authToken}`)
-        .send({
-          usuario: testUserId2,
-          tipo: 'mensaje' as const,
-          titulo: 'Test notification',
-          contenido: 'Test notification content',
-          prioridad: 'normal' as const
-        });
+        .get('/api/messaging/notificaciones/no-leidas')
+        .set('Authorization', `Bearer ${authToken}`);
 
-      expect(notificacionRes.statusCode).toEqual(201);
-      expect(notificacionRes.body.notificacion).toBeDefined();
+      expect(notificacionRes.statusCode).toEqual(200);
+      expect(notificacionRes.body.notificaciones).toBeDefined();
     });
 
     it('debería obtener notificaciones del usuario', async () => {
@@ -381,7 +379,7 @@ describe('Chat Module Integration Tests', () => {
         .set('Authorization', `Bearer ${authToken}`);
 
       expect(deleteRes.statusCode).toEqual(200);
-      expect(deleteRes.body.message).toEqual('Notificación eliminada exitosamente');
+      expect(deleteRes.body.message).toEqual('Notificación eliminada correctamente');
     });
   });
 });

@@ -2,7 +2,7 @@ import Mensaje from '../../models/chats/mensaje';
 import Conversacion from '../../models/chats/conversacion';
 import { IMensaje } from '../../models/chats';
 import mongoose from 'mongoose';
-import { crearNotificacionService } from './notificacionService';
+import { notificacionIntegracionService } from '../notificaciones/notificacionIntegracionService';
 
 export interface CrearMensajeData {
   remitente: string;
@@ -95,30 +95,18 @@ export async function crearMensajeService(datos: CrearMensajeData): Promise<IMen
       await conversacion.save();
     }
 
-    // Crear notificación para el destinatario
+    // Enviar notificación en tiempo real (ya incluye creación en BD)
     try {
-      await crearNotificacionService({
-        usuario: datos.destinatario,
-        tipo: 'mensaje',
-        titulo: 'Nuevo mensaje recibido',
-        contenido: `Tienes un nuevo mensaje: ${datos.contenido.substring(0, 50)}${datos.contenido.length > 50 ? '...' : ''}`,
-        prioridad: datos.prioridad || 'normal',
-        accion: {
-          tipo: 'abrir_mensaje',
-          metadata: {
-            mensajeId: (mensajeGuardado._id as unknown as mongoose.Types.ObjectId).toString(),
-            conversacionId: (conversacion._id as unknown as mongoose.Types.ObjectId).toString()
-          }
-        },
-        metadata: {
-          mensaje: (mensajeGuardado._id as unknown as mongoose.Types.ObjectId).toString(),
-          conversacion: (conversacion._id as unknown as mongoose.Types.ObjectId).toString(),
-          remitente: datos.remitente
-        }
-      });
+      await notificacionIntegracionService.notificarMensajeChat(
+        datos.destinatario,
+        datos.remitente,
+        'Usuario', // TODO: Obtener nombre del remitente
+        (mensajeGuardado._id as unknown as mongoose.Types.ObjectId).toString(),
+        (conversacion._id as unknown as mongoose.Types.ObjectId).toString(),
+        datos.contenido
+      );
     } catch (error) {
-      // Log del error pero no fallar la creación del mensaje
-      console.error('Error al crear notificación:', error);
+      console.error('Error al enviar notificación en tiempo real:', error);
     }
 
     return mensajeGuardado.toObject() as unknown as IMensaje;

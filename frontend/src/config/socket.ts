@@ -47,5 +47,19 @@ export const SOCKET_EVENTS = {
   SEND_MESSAGE: 'send_message',
   MARK_AS_READ: 'mark_as_read',
   TYPING_START: 'typing_start',
-  TYPING_STOP: 'typing_stop'
+  TYPING_STOP: 'typing_stop',
+  
+  // Eventos de notificaciones
+  NEW_NOTIFICATION: 'new_notification',
+  SCHEDULED_NOTIFICATION: 'scheduled_notification',
+  INACTIVE_TRACKING_NOTIFICATION: 'inactive_tracking_notification',
+  NOTIFICATION_MARKED_READ: 'notification_marked_read',
+  NOTIFICATION_DELETED: 'notification_deleted',
+  NOTIFICATION_ERROR: 'notification_error',
+  ALL_NOTIFICATIONS_MARKED_READ: 'all_notifications_marked_read',
+  
+  // Eventos de notificaciones (enviar)
+  MARK_NOTIFICATION_READ: 'mark_notification_read',
+  MARK_ALL_NOTIFICATIONS_READ: 'mark_all_notifications_read',
+  DELETE_NOTIFICATION: 'delete_notification'
 };

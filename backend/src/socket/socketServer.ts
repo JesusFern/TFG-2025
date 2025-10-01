@@ -9,7 +9,10 @@ import {
   crearConversacionService,
   obtenerConversacionesUsuarioService 
 } from '../service/chats/conversacionService';
-import { crearNotificacionService } from '../service/chats/notificacionService';
+import { 
+  crearNotificacionService,
+  marcarNotificacionComoEnviadaService
+} from '../service/chats/notificacionService';
 
 import { Socket } from 'socket.io';
 
@@ -309,6 +312,65 @@ export class SocketServer {
         });
       });
 
+      // ===== EVENTOS DE NOTIFICACIONES =====
+      
+      // Evento: Marcar notificación como leída
+      socket.on('mark_notification_read', async (notificacionId: string) => {
+        try {
+          const { marcarComoLeidaService } = await import('../service/chats/notificacionService');
+          await marcarComoLeidaService(notificacionId, authenticatedSocket.userId);
+          
+          // Confirmar al cliente
+          socket.emit('notification_marked_read', {
+            notificacionId,
+            timestamp: new Date()
+          });
+        } catch (error) {
+          socket.emit('notification_error', {
+            error: 'Error al marcar notificación como leída',
+            details: error instanceof Error ? error.message : 'Error desconocido'
+          });
+        }
+      });
+
+      // Evento: Marcar todas las notificaciones como leídas
+      socket.on('mark_all_notifications_read', async () => {
+        try {
+          const { marcarTodasComoLeidasService } = await import('../service/chats/notificacionService');
+          const result = await marcarTodasComoLeidasService(authenticatedSocket.userId);
+          
+          // Confirmar al cliente
+          socket.emit('all_notifications_marked_read', {
+            actualizadas: result.actualizadas,
+            timestamp: new Date()
+          });
+        } catch (error) {
+          socket.emit('notification_error', {
+            error: 'Error al marcar todas las notificaciones como leídas',
+            details: error instanceof Error ? error.message : 'Error desconocido'
+          });
+        }
+      });
+
+      // Evento: Eliminar notificación
+      socket.on('delete_notification', async (notificacionId: string) => {
+        try {
+          const { eliminarNotificacionService } = await import('../service/chats/notificacionService');
+          await eliminarNotificacionService(notificacionId, authenticatedSocket.userId);
+          
+          // Confirmar al cliente
+          socket.emit('notification_deleted', {
+            notificacionId,
+            timestamp: new Date()
+          });
+        } catch (error) {
+          socket.emit('notification_error', {
+            error: 'Error al eliminar notificación',
+            details: error instanceof Error ? error.message : 'Error desconocido'
+          });
+        }
+      });
+
       // Evento: Desconexión
       socket.on('disconnect', () => {
         // Remover referencia del socket
@@ -345,5 +407,75 @@ export class SocketServer {
   // Obtener el servidor IO para uso externo
   public getIO() {
     return this.io;
+  }
+
+  // ===== MÉTODOS DE NOTIFICACIONES =====
+
+  // Enviar notificación en tiempo real a un usuario específico
+  public async sendNotificationToUser(userId: string, notificacion: Record<string, unknown>) {
+    try {
+      // Enviar la notificación a través de WebSocket
+      this.sendToUser(userId, 'new_notification', {
+        notificacion,
+        timestamp: new Date()
+      });
+
+      // Solo marcar como enviada si tiene _id (notificación guardada en BD)
+      if (notificacion._id) {
+        await marcarNotificacionComoEnviadaService(notificacion._id as string);
+      }
+    } catch (error) {
+      console.error('Error al enviar notificación en tiempo real:', error);
+    }
+  }
+
+  // Enviar notificación a múltiples usuarios
+  public async sendNotificationToUsers(userIds: string[], notificacion: Record<string, unknown>) {
+    const promises = userIds.map(userId => this.sendNotificationToUser(userId, notificacion));
+    await Promise.allSettled(promises);
+  }
+
+  // Enviar notificación de recordatorio programado
+  public async sendScheduledNotification(notificacion: Record<string, unknown>) {
+    try {
+      // Usar usuarioId (que es un string) en lugar de usuario (que puede ser un objeto)
+      const userId = (notificacion.usuarioId || 
+                     (typeof notificacion.usuario === 'object' && notificacion.usuario !== null 
+                       ? (notificacion.usuario as Record<string, unknown>)._id 
+                       : notificacion.usuario)) as string;
+
+      // Enviar la notificación a través de WebSocket usando el mismo evento que las notificaciones normales
+      this.sendToUser(userId, 'new_notification', {
+        notificacion,
+        timestamp: new Date()
+      });
+
+      // Marcar como enviada en la base de datos
+      await marcarNotificacionComoEnviadaService(notificacion._id as string);
+    } catch (error) {
+      console.error('Error al enviar recordatorio en tiempo real:', error);
+    }
+  }
+
+  // Enviar notificación de seguimiento inactivo
+  public async sendInactiveTrackingNotification(notificacion: Record<string, unknown>) {
+    try {
+      // Usar usuarioId (que es un string) en lugar de usuario (que puede ser un objeto)
+      const userId = (notificacion.usuarioId || 
+                     (typeof notificacion.usuario === 'object' && notificacion.usuario !== null 
+                       ? (notificacion.usuario as Record<string, unknown>)._id 
+                       : notificacion.usuario)) as string;
+
+      // Enviar la notificación a través de WebSocket
+      this.sendToUser(userId, 'inactive_tracking_notification', {
+        notificacion,
+        timestamp: new Date()
+      });
+
+      // Marcar como enviada en la base de datos
+      await marcarNotificacionComoEnviadaService(notificacion._id as string);
+    } catch (error) {
+      console.error('Error al enviar notificación de seguimiento inactivo:', error);
+    }
   }
 }

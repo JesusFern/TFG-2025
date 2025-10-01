@@ -13,7 +13,8 @@ import {
 import {
   IconPlus,
   IconCalendar,
-  IconAlertCircle
+  IconAlertCircle,
+  IconRefresh
 } from '@tabler/icons-react';
 import { useGoogleCalendar } from '../../hooks/useGoogleCalendar';
 import { useEventHandlers } from '../../hooks/useEventHandlers';
@@ -37,10 +38,16 @@ const MantineCalendarView: React.FC<MantineCalendarViewProps> = ({ className }) 
     error, 
     connectToGoogle, 
     disconnectFromGoogle, 
+    refreshEvents,
     clearError 
   } = useGoogleCalendar();
 
   const { handleCreateEvent, handleUpdateEvent, handleDeleteEvent } = useEventHandlers();
+
+  // Debug: Log cuando cambien los eventos
+  React.useEffect(() => {
+    console.log('Eventos actualizados en MantineCalendarView:', events.length, events);
+  }, [events]);
 
   // Estados para modales y calendario
   const [showCreateModal, setShowCreateModal] = useState(false);
@@ -145,7 +152,7 @@ const MantineCalendarView: React.FC<MantineCalendarViewProps> = ({ className }) 
   const monthEvents = getEventsForMonth(currentDate);
 
   return (
-    <Stack gap="md" className={className}>
+    <Stack gap="md" className={className} key={`calendar-${events.length}`}>
       {/* Error Alert */}
       {error && (
         <Alert
@@ -179,6 +186,15 @@ const MantineCalendarView: React.FC<MantineCalendarViewProps> = ({ className }) 
             </Button>
             <Button
               variant="light"
+              leftSection={<IconRefresh size={16} />}
+              onClick={refreshEvents}
+              loading={loading}
+              size="sm"
+            >
+              Actualizar
+            </Button>
+            <Button
+              variant="light"
               color="red"
               onClick={disconnectFromGoogle}
               size="sm"
@@ -191,6 +207,7 @@ const MantineCalendarView: React.FC<MantineCalendarViewProps> = ({ className }) 
 
       {/* Calendario Grid */}
       <CalendarGrid
+        key={`calendar-grid-${events.length}`}
         currentDate={currentDate}
         calendarDays={calendarDays}
         events={events}
@@ -204,6 +221,7 @@ const MantineCalendarView: React.FC<MantineCalendarViewProps> = ({ className }) 
 
       {/* Lista de eventos del mes */}
       <EventsList
+        key={`events-list-${events.length}`}
         events={monthEvents}
         currentDate={currentDate}
         onEventSelect={handleEventSelect}

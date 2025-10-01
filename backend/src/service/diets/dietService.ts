@@ -6,6 +6,8 @@ import {
   actualizarCamposBasicosDieta,
   actualizarDatosDiaDieta
 } from '../../helpers/dietHelper';
+import { notificacionIntegracionService } from '../notificaciones/notificacionIntegracionService';
+import { recordatorioService } from '../notificaciones/recordatorioService';
 
 interface PlatoDocument {
   orden: number;
@@ -109,6 +111,8 @@ export async function crearDietaService({
   });
 
   await dieta.save();
+
+
   return dieta;
 }
 
@@ -233,8 +237,73 @@ export async function publicarDietaService(dietaId: string, userId: string): Pro
   dieta.draftMode = false;
   await dieta.save();
   
+  // Enviar notificaciones a todos los clientes asignados
+  if (dieta.asignadaA && dieta.asignadaA.length > 0) {
+    // Enviar notificación a cada cliente asignado
+    for (const clienteId of dieta.asignadaA) {
+      try {
+        await notificacionIntegracionService.notificarDietaPublicada(
+          clienteId.toString(),
+          userId,
+          dietaId,
+          dieta.nombre
+        );
+      } catch {
+        // No lanzar error para no interrumpir el proceso de publicación
+      }
+    }
+
+    // Crear recordatorios de comidas para todos los clientes
+    try {
+      if (dieta.duracion && dieta.dias && dieta.dias.length > 0) {
+        for (let diaIndex = 0; diaIndex < (dieta.duracion || 0); diaIndex++) {
+          const fechaDia = new Date(dieta.fechaInicio);
+          fechaDia.setDate(dieta.fechaInicio.getDate() + diaIndex);
+          
+          // Obtener las comidas del primer día para usar como plantilla
+          const primerDia = dieta.dias[0];
+          if (primerDia && primerDia.comidas) {
+            for (let comidaIndex = 0; comidaIndex < primerDia.comidas.length; comidaIndex++) {
+              const comida = primerDia.comidas[comidaIndex];
+              const horaComida = comida.horaEstimada;
+              const nombreComida = comida.nombreComida;
+              
+              if (horaComida && nombreComida) {
+                // Crear fecha y hora para la comida
+                const [horas, minutos] = horaComida.split(':').map(Number);
+                const fechaHoraComida = new Date(fechaDia);
+                fechaHoraComida.setHours(horas, minutos, 0, 0);
+                
+                // Crear recordatorio para cada cliente
+                for (const clienteId of dieta.asignadaA) {
+                  try {
+                    await recordatorioService.crearRecordatorioComida(
+                      clienteId.toString(),
+                      userId,
+                      dieta._id.toString(),
+                      nombreComida,
+                      fechaHoraComida,
+                      diaIndex
+                    );
+                  } catch {
+                    // Continuar con los demás clientes aunque uno falle
+                  }
+                }
+              }
+            }
+          }
+        }
+        
+        // Recordatorios de comidas creados exitosamente
+      }
+    } catch {
+      // No lanzar error para no interrumpir el proceso de publicación
+    }
+  }
+  
   return {
     dieta,
     platosEliminados
   };
 }
+

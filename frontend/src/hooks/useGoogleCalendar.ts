@@ -44,14 +44,14 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
       });
       
       console.log('Eventos obtenidos:', response.events.length);
-      setEvents(response.events);
+      setEvents([...response.events]); // Forzar nueva referencia del array
     } catch (err) {
       console.error('Error cargando eventos:', err);
       setError(err instanceof Error ? err.message : 'Error cargando eventos');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, []); // Sin dependencias para evitar bucles
 
   // Verificar estado de conexión
   const checkConnectionStatus = useCallback(async () => {
@@ -164,7 +164,12 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
       console.log('Evento creado en backend:', result);
       
       console.log('Refrescando eventos después de crear...');
-      await refreshEvents(); // Refrescar lista de eventos
+      // Pequeño delay para asegurar que el backend haya procesado la operación
+      await new Promise(resolve => setTimeout(resolve, 500));
+      // Refrescar eventos directamente sin dependencia
+      const response = await googleCalendarService.getCalendarEvents({ maxResults: 50 });
+      console.log('Eventos obtenidos después de crear:', response.events.length);
+      setEvents([...response.events]); // Forzar nueva referencia del array
     } catch (err) {
       console.error('Error creando evento:', err);
       
@@ -181,7 +186,7 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
     } finally {
       setLoading(false);
     }
-  }, [refreshEvents]);
+  }, []);
 
   // Actualizar evento
   const updateEvent = useCallback(async (eventId: string, eventData: UpdateCalendarEventRequest) => {
@@ -190,7 +195,12 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
       setError(null);
       
       await googleCalendarService.updateCalendarEvent(eventId, eventData);
-      await refreshEvents(); // Refrescar lista de eventos
+      // Pequeño delay para asegurar que el backend haya procesado la operación
+      await new Promise(resolve => setTimeout(resolve, 500));
+      // Refrescar eventos directamente sin dependencia
+      const response = await googleCalendarService.getCalendarEvents({ maxResults: 50 });
+      console.log('Eventos obtenidos después de actualizar:', response.events.length);
+      setEvents([...response.events]); // Forzar nueva referencia del array
     } catch (err) {
       console.error('Error actualizando evento:', err);
       setError(err instanceof Error ? err.message : 'Error actualizando evento');
@@ -198,7 +208,7 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
     } finally {
       setLoading(false);
     }
-  }, [refreshEvents]);
+  }, []);
 
   // Eliminar evento
   const deleteEvent = useCallback(async (eventId: string) => {
@@ -207,7 +217,12 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
       setError(null);
       
       await googleCalendarService.deleteCalendarEvent(eventId);
-      await refreshEvents(); // Refrescar lista de eventos
+      // Pequeño delay para asegurar que el backend haya procesado la operación
+      await new Promise(resolve => setTimeout(resolve, 500));
+      // Refrescar eventos directamente sin dependencia
+      const response = await googleCalendarService.getCalendarEvents({ maxResults: 50 });
+      console.log('Eventos obtenidos después de eliminar:', response.events.length);
+      setEvents([...response.events]); // Forzar nueva referencia del array
     } catch (err) {
       console.error('Error eliminando evento:', err);
       setError(err instanceof Error ? err.message : 'Error eliminando evento');
@@ -215,7 +230,7 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
     } finally {
       setLoading(false);
     }
-  }, [refreshEvents]);
+  }, []);
 
   // Limpiar error
   const clearError = useCallback(() => {
