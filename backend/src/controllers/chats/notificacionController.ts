@@ -1,4 +1,5 @@
 import { Response } from 'express';
+import mongoose from 'mongoose';
 import { AuthenticatedRequest } from '../../types';
 import {
   obtenerNotificacionesService,
@@ -127,7 +128,6 @@ export const obtenerNotificacionPorId = async (req: AuthenticatedRequest, res: R
     const { id } = req.params;
 
     // Validar que el ID sea un ObjectId válido de MongoDB
-    const mongoose = require('mongoose');
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({ message: 'ID de notificación inválido' });
       return;
@@ -160,7 +160,6 @@ export const marcarComoLeida = async (req: AuthenticatedRequest, res: Response):
     const { id } = req.params;
 
     // Validar que el ID sea un ObjectId válido de MongoDB
-    const mongoose = require('mongoose');
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({ message: 'ID de notificación inválido' });
       return;
@@ -224,7 +223,6 @@ export const eliminarNotificacion = async (req: AuthenticatedRequest, res: Respo
     const { id } = req.params;
 
     // Validar que el ID sea un ObjectId válido de MongoDB
-    const mongoose = require('mongoose');
     if (!mongoose.Types.ObjectId.isValid(id)) {
       res.status(400).json({ message: 'ID de notificación inválido' });
       return;

@@ -53,6 +53,44 @@ export async function crearNotificacionService(datos: CrearNotificacionData): Pr
   }
 }
 
+// Función helper para construir consultas de forma segura
+function buildSafeNotificationQuery(
+  usuarioId: string,
+  tipo?: string,
+  prioridad?: string,
+  leida?: boolean
+): Record<string, unknown> {
+  const tiposValidos = ['mensaje', 'recordatorio', 'sistema', 'entrenamiento', 'nutricion'];
+  const prioridadesValidas = ['baja', 'normal', 'alta', 'urgente'];
+
+  // Construir consulta base segura
+  const baseQuery = {
+    usuario: new mongoose.Types.ObjectId(usuarioId),
+    $or: [
+      { enviada: true },
+      { programadaPara: { $lte: new Date() } },
+      { programadaPara: { $exists: false } }
+    ]
+  };
+
+  // Agregar filtros solo si son válidos y seguros
+  const query: Record<string, unknown> = { ...baseQuery };
+
+  if (tipo && tiposValidos.includes(tipo)) {
+    query.tipo = tipo;
+  }
+
+  if (prioridad && prioridadesValidas.includes(prioridad)) {
+    query.prioridad = prioridad;
+  }
+
+  if (leida !== undefined) {
+    query.leida = leida;
+  }
+
+  return query;
+}
+
 export async function obtenerNotificacionesService(
   usuarioId: string,
   filtros: {
@@ -83,45 +121,20 @@ export async function obtenerNotificacionesService(
       orden = 'desc'
     } = filtros;
 
-    // Validar y sanitizar parámetros de entrada
-    const tiposValidos = ['mensaje', 'recordatorio', 'sistema', 'entrenamiento', 'nutricion'];
-    const prioridadesValidas = ['baja', 'normal', 'alta', 'urgente'];
-    const ordenesValidos = ['asc', 'desc'];
-
-    // Construir filtros de consulta de forma segura
-    const query: Record<string, unknown> = { 
-      usuario: usuarioId,
-      // Solo mostrar notificaciones que ya han sido enviadas O que están programadas para el pasado/ahora
-      $or: [
-        { enviada: true },
-        { programadaPara: { $lte: new Date() } },
-        { programadaPara: { $exists: false } }
-      ]
-    };
-
-    // Validar y agregar filtros solo si son válidos
-    if (tipo && tiposValidos.includes(tipo)) {
-      query.tipo = tipo;
-    }
-
-    if (prioridad && prioridadesValidas.includes(prioridad)) {
-      query.prioridad = prioridad;
-    }
-
-    if (leida !== undefined) {
-      query.leida = leida;
-    }
-
     // Validar límites de paginación
     const limitValidado = Math.min(Math.max(parseInt(limit.toString()) || 20, 1), 100);
     const offsetValidado = Math.max(parseInt(offset.toString()) || 0, 0);
+    const ordenesValidos = ['asc', 'desc'];
     const ordenValidado = ordenesValidos.includes(orden) ? orden : 'desc';
 
+    // Construir consulta de forma segura
+    const safeQuery = buildSafeNotificationQuery(usuarioId, tipo, prioridad, leida);
+
     // Obtener total de notificaciones
-    const total = await Notificacion.countDocuments(query);
+    const total = await Notificacion.countDocuments(safeQuery);
 
     // Obtener notificaciones con paginación
-    const notificaciones = await Notificacion.find(query)
+    const notificaciones = await Notificacion.find(safeQuery)
       .sort({ createdAt: ordenValidado === 'asc' ? 1 : -1 })
       .skip(offsetValidado)
       .limit(limitValidado)
