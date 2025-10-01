@@ -16,7 +16,6 @@ import {
   IconBellRinging, 
   IconCheck, 
   IconTrash,
-  IconX
 } from '@tabler/icons-react';
 import { useNotificationContext } from '../../contexts/NotificationContext';
 import { NotificationToast } from './NotificationToast';
@@ -37,7 +36,6 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
     notifications,
     unreadCount,
     isConnected,
-    markAsRead,
     markAllAsRead,
     deleteNotification,
     getUnreadNotifications
@@ -126,8 +124,8 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
         <Popover.Dropdown>
           <Box style={{ width: '350px', maxHeight: '400px' }}>
             {/* Header del popover */}
-            <Group position="apart" mb="md">
-              <Text size="sm" weight={600}>
+            <Group justify="space-between" mb="md">
+              <Text size="sm" fw={600}>
                 Notificaciones
                 {unreadCount > 0 && (
                   <Badge size="sm" color="red" variant="light" ml="xs">
@@ -135,12 +133,12 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
                   </Badge>
                 )}
               </Text>
-              <Group spacing="xs">
+              <Group gap="xs">
                 {unreadCount > 0 && (
                   <Button
                     size="xs"
                     variant="subtle"
-                    leftIcon={<IconCheck size={12} />}
+                    leftSection={<IconCheck size={12} />}
                     onClick={handleMarkAllAsRead}
                   >
                     Marcar todas
@@ -151,7 +149,7 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
                     size="xs"
                     variant="subtle"
                     color="red"
-                    leftIcon={<IconTrash size={12} />}
+                    leftSection={<IconTrash size={12} />}
                     onClick={handleDeleteAll}
                   >
                     Eliminar todas
@@ -167,12 +165,12 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
               {recentNotifications.length === 0 ? (
                 <Stack align="center" py="xl">
                   <IconBell size={48} color="gray" />
-                  <Text size="sm" color="dimmed" align="center">
+                  <Text size="sm" c="dimmed" ta="center">
                     No hay notificaciones
                   </Text>
                 </Stack>
               ) : (
-                <Stack spacing="xs">
+                <Stack gap="xs">
                   {recentNotifications.map((notification) => (
                     <Box key={notification._id}>
                       <NotificationToast
@@ -188,11 +186,11 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
 
             {/* Footer con estado de conexión */}
             <Divider mt="md" />
-            <Group position="apart" mt="xs">
-              <Text size="xs" color="dimmed">
+            <Group justify="space-between" mt="xs">
+              <Text size="xs" c="dimmed">
                 {isConnected ? 'Conectado' : 'Desconectado'}
               </Text>
-              <Text size="xs" color="dimmed">
+              <Text size="xs" c="dimmed">
                 {recentNotifications.length} notificaciones
               </Text>
             </Group>
@@ -212,7 +210,7 @@ export const NotificationBadge: React.FC<NotificationBadgeProps> = ({
             overflowY: 'auto'
           }}
         >
-          <Stack spacing="sm">
+          <Stack gap="sm">
             {unreadNotifications.slice(0, 3).map((notification) => (
               <NotificationToast
                 key={notification._id}

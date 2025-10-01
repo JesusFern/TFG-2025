@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { 
-  Notification, 
   Group, 
   Text, 
   ActionIcon, 
@@ -16,29 +15,29 @@ import {
   IconTrash, 
   IconBell, 
   IconBellRinging,
-  IconDumbbell,
+  IconBarbell,
   IconApple,
   IconMessage,
-  IconCalendar,
   IconAlertTriangle
 } from '@tabler/icons-react';
 import { useNotificationContext } from '../../contexts/NotificationContext';
+import { Notificacion } from '../../types/notifications';
 
 // Tipos para las props
 interface NotificationToastProps {
-  notification: Notification;
+  notification: Notificacion;
   onClose: () => void;
   autoClose?: boolean;
   duration?: number;
 }
 
 // Mapeo de tipos de notificación a iconos
-const getNotificationIcon = (tipo: Notification['tipo']) => {
+const getNotificationIcon = (tipo: Notificacion['tipo']) => {
   switch (tipo) {
     case 'mensaje':
       return <IconMessage size={20} />;
     case 'entrenamiento':
-      return <IconDumbbell size={20} />;
+      return <IconBarbell size={20} />;
     case 'nutricion':
       return <IconApple size={20} />;
     case 'recordatorio':
@@ -51,7 +50,7 @@ const getNotificationIcon = (tipo: Notification['tipo']) => {
 };
 
 // Mapeo de prioridades a colores
-const getPriorityColor = (prioridad: Notification['prioridad']) => {
+const getPriorityColor = (prioridad: Notificacion['prioridad']) => {
   switch (prioridad) {
     case 'urgente':
       return 'red';
@@ -67,7 +66,7 @@ const getPriorityColor = (prioridad: Notification['prioridad']) => {
 };
 
 // Mapeo de prioridades a iconos de alerta
-const getPriorityIcon = (prioridad: Notification['prioridad']) => {
+const getPriorityIcon = (prioridad: Notificacion['prioridad']) => {
   if (prioridad === 'urgente') {
     return <IconAlertTriangle size={16} />;
   }
@@ -152,12 +151,12 @@ export const NotificationToast: React.FC<NotificationToastProps> = ({
         transition: 'all 0.3s ease-in-out'
       }}
     >
-      <Stack spacing="xs">
+      <Stack gap="xs">
         {/* Header con icono, título y prioridad */}
-        <Group position="apart" noWrap>
-          <Group spacing="xs" noWrap>
+        <Group justify="space-between" wrap="nowrap">
+          <Group gap="xs" wrap="nowrap">
             {getNotificationIcon(notification.tipo)}
-            <Text size="sm" weight={600} lineClamp={1}>
+            <Text size="sm" fw={600} lineClamp={1}>
               {notification.titulo}
             </Text>
             {getPriorityIcon(notification.prioridad) && (
@@ -186,13 +185,13 @@ export const NotificationToast: React.FC<NotificationToastProps> = ({
         </Text>
 
         {/* Footer con acciones */}
-        <Group position="apart" noWrap>
-          <Group spacing="xs">
+        <Group justify="space-between" wrap="nowrap">
+          <Group gap="xs">
             {!notification.leida && (
               <Button
                 size="xs"
                 variant="subtle"
-                leftIcon={<IconCheck size={14} />}
+                leftSection={<IconCheck size={14} />}
                 onClick={handleMarkAsRead}
               >
                 Marcar como leída
@@ -224,7 +223,7 @@ export const NotificationToast: React.FC<NotificationToastProps> = ({
 
 // Componente para mostrar múltiples notificaciones
 export const NotificationToastList: React.FC<{
-  notifications: Notification[];
+  notifications: Notificacion[];
   onClose: (notificationId: string) => void;
   maxNotifications?: number;
 }> = ({ 
@@ -245,7 +244,7 @@ export const NotificationToastList: React.FC<{
         overflowY: 'auto'
       }}
     >
-      <Stack spacing="sm">
+      <Stack gap="sm">
         {visibleNotifications.map((notification) => (
           <NotificationToast
             key={notification._id}

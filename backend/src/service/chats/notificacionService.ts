@@ -63,7 +63,7 @@ function buildSafeNotificationQuery(
   const tiposValidos = ['mensaje', 'recordatorio', 'sistema', 'entrenamiento', 'nutricion'];
   const prioridadesValidas = ['baja', 'normal', 'alta', 'urgente'];
 
-  // Construir consulta base segura
+  // Construir consulta base segura con ObjectId validado
   const baseQuery = {
     usuario: new mongoose.Types.ObjectId(usuarioId),
     $or: [
@@ -89,6 +89,59 @@ function buildSafeNotificationQuery(
   }
 
   return query;
+}
+
+// Función helper para ejecutar consultas de forma segura
+async function executeSafeNotificationQuery(
+  usuarioId: string,
+  tipo?: string,
+  prioridad?: string,
+  leida?: boolean,
+  limit?: number,
+  offset?: number,
+  orden?: 'asc' | 'desc'
+): Promise<{
+  notificaciones: Record<string, unknown>[];
+  total: number;
+  paginacion: {
+    pagina: number;
+    totalPaginas: number;
+    limite: number;
+    offset: number;
+  };
+}> {
+  // Validar límites de paginación
+  const limitValidado = Math.min(Math.max(parseInt(limit?.toString() || '20') || 20, 1), 100);
+  const offsetValidado = Math.max(parseInt(offset?.toString() || '0') || 0, 0);
+  const ordenesValidos = ['asc', 'desc'];
+  const ordenValidado = ordenesValidos.includes(orden || 'desc') ? orden : 'desc';
+
+  // Construir consulta de forma segura
+  const safeQuery = buildSafeNotificationQuery(usuarioId, tipo, prioridad, leida);
+
+  // Ejecutar consultas de forma segura
+  const [total, notificaciones] = await Promise.all([
+    Notificacion.countDocuments(safeQuery),
+    Notificacion.find(safeQuery)
+      .sort({ createdAt: ordenValidado === 'asc' ? 1 : -1 })
+      .skip(offsetValidado)
+      .limit(limitValidado)
+      .lean()
+  ]);
+
+  const totalPaginas = Math.ceil(total / limitValidado);
+  const pagina = Math.floor(offsetValidado / limitValidado) + 1;
+
+  return {
+    notificaciones: notificaciones as unknown as Record<string, unknown>[],
+    total,
+    paginacion: {
+      pagina,
+      totalPaginas,
+      limite: limitValidado,
+      offset: offsetValidado
+    }
+  };
 }
 
 export async function obtenerNotificacionesService(
@@ -121,38 +174,16 @@ export async function obtenerNotificacionesService(
       orden = 'desc'
     } = filtros;
 
-    // Validar límites de paginación
-    const limitValidado = Math.min(Math.max(parseInt(limit.toString()) || 20, 1), 100);
-    const offsetValidado = Math.max(parseInt(offset.toString()) || 0, 0);
-    const ordenesValidos = ['asc', 'desc'];
-    const ordenValidado = ordenesValidos.includes(orden) ? orden : 'desc';
-
-    // Construir consulta de forma segura
-    const safeQuery = buildSafeNotificationQuery(usuarioId, tipo, prioridad, leida);
-
-    // Obtener total de notificaciones
-    const total = await Notificacion.countDocuments(safeQuery);
-
-    // Obtener notificaciones con paginación
-    const notificaciones = await Notificacion.find(safeQuery)
-      .sort({ createdAt: ordenValidado === 'asc' ? 1 : -1 })
-      .skip(offsetValidado)
-      .limit(limitValidado)
-      .lean();
-
-    const totalPaginas = Math.ceil(total / limitValidado);
-    const pagina = Math.floor(offsetValidado / limitValidado) + 1;
-
-    return {
-      notificaciones: notificaciones as unknown as Record<string, unknown>[],
-      total,
-      paginacion: {
-        pagina,
-        totalPaginas,
-        limite: limitValidado,
-        offset: offsetValidado
-      }
-    };
+    // Usar función helper segura para ejecutar la consulta
+    return await executeSafeNotificationQuery(
+      usuarioId,
+      tipo,
+      prioridad,
+      leida,
+      limit,
+      offset,
+      orden
+    );
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Error al obtener notificaciones: ${error.message}`);
@@ -271,8 +302,13 @@ export async function eliminarNotificacionService(
 
 export async function obtenerNotificacionesNoLeidasService(usuarioId: string): Promise<INotificacion[]> {
   try {
+    // Validar que el ID sea un ObjectId válido de MongoDB
+    if (!mongoose.Types.ObjectId.isValid(usuarioId)) {
+      throw new Error('ID de usuario inválido');
+    }
+
     const notificaciones = await Notificacion.find({
-      usuario: usuarioId,
+      usuario: new mongoose.Types.ObjectId(usuarioId),
       leida: false
     }).sort({ createdAt: -1 }).lean();
     
@@ -287,8 +323,13 @@ export async function obtenerNotificacionesNoLeidasService(usuarioId: string): P
 
 export async function contarNotificacionesNoLeidasService(usuarioId: string): Promise<number> {
   try {
+    // Validar que el ID sea un ObjectId válido de MongoDB
+    if (!mongoose.Types.ObjectId.isValid(usuarioId)) {
+      throw new Error('ID de usuario inválido');
+    }
+
     return await Notificacion.countDocuments({
-      usuario: usuarioId,
+      usuario: new mongoose.Types.ObjectId(usuarioId),
       leida: false
     });
   } catch (error) {
@@ -513,18 +554,25 @@ export async function obtenerEstadisticasService(usuarioId: string): Promise<{
   };
 }> {
   try {
+    // Validar que el ID sea un ObjectId válido de MongoDB
+    if (!mongoose.Types.ObjectId.isValid(usuarioId)) {
+      throw new Error('ID de usuario inválido');
+    }
+
+    const usuarioObjectId = new mongoose.Types.ObjectId(usuarioId);
+
     // Total de notificaciones
-    const total = await Notificacion.countDocuments({ usuario: usuarioId });
+    const total = await Notificacion.countDocuments({ usuario: usuarioObjectId });
 
     // Notificaciones no leídas
     const noLeidas = await Notificacion.countDocuments({
-      usuario: usuarioId,
+      usuario: usuarioObjectId,
       leida: false
     });
 
     // Por tipo
     const porTipo = await Notificacion.aggregate([
-      { $match: { usuario: usuarioId } },
+      { $match: { usuario: usuarioObjectId } },
       {
         $group: {
           _id: '$tipo',
@@ -549,7 +597,7 @@ export async function obtenerEstadisticasService(usuarioId: string): Promise<{
 
     // Por prioridad
     const porPrioridad = await Notificacion.aggregate([
-      { $match: { usuario: usuarioId } },
+      { $match: { usuario: usuarioObjectId } },
       {
         $group: {
           _id: '$prioridad',
