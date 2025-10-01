@@ -130,14 +130,12 @@ describe('Notificacion API Endpoints', () => {
     });
 
     it('debería fallar con ID inválido', async () => {
-      // Mock del servicio para que devuelva error
-      mockNotificacionService.obtenerNotificacionPorIdService.mockRejectedValue(new Error('ID inválido'));
-
       const res = await request(app)
         .get('/api/messaging/notificaciones/invalid-id')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect(res.statusCode).toEqual(500);
+      expect(res.statusCode).toEqual(400);
+      expect(res.body.message).toEqual('ID de notificación inválido');
     });
 
     it('debería fallar sin token de autorización', async () => {
@@ -207,14 +205,12 @@ describe('Notificacion API Endpoints', () => {
     });
 
     it('debería fallar con ID inválido', async () => {
-      // Mock del servicio para que devuelva error
-      mockNotificacionService.eliminarNotificacionService.mockRejectedValue(new Error('Notificación no encontrada'));
-
       const res = await request(app)
         .delete('/api/messaging/notificaciones/invalid-id')
         .set('Authorization', `Bearer ${authToken}`);
 
-      expect(res.statusCode).toEqual(404);
+      expect(res.statusCode).toEqual(400);
+      expect(res.body.message).toEqual('ID de notificación inválido');
     });
 
     it('debería fallar sin token de autorización', async () => {
