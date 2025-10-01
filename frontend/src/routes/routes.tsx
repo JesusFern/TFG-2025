@@ -113,6 +113,7 @@ import EditarCitaPage from '../pages/EditarCitaPage';
 import ProgresoSemanalPage from '../pages/ProgresoSemanalPage';
 import CalendarPage from '../pages/CalendarPage';
 import NotificacionesPage from '../pages/NotificacionesPage';
+import ListaCompraPage from '../pages/ListaCompraPage';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -221,6 +222,14 @@ const AppRoutes: React.FC = () => {
         <ProtectedRoute>
           <Layout>
             <DetalleDiaPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+
+      <Route path="/lista-compra/:dietaId/semana/:semana" element={
+        <ProtectedRoute>
+          <Layout>
+            <ListaCompraPage />
           </Layout>
         </ProtectedRoute>
       } />

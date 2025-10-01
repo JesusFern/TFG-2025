@@ -12,9 +12,11 @@ import {
   getAllAvailableWorkers,
   getWorkersAssignedToClient,
   getClientsAssignedToWorker,
+  getMyClientsAssigned,
   checkUserSubscriptionStatus,
   getUserById
 } from '../../controllers/users/userController';
+import { WorkerController } from '../../controllers/workers/workerController';
 import { authenticateToken, authorizeUserOrAdmin, authorizeUserWithValidSubscription } from '../../middlewares/authMiddleware';
 import { validateRequest } from '../../middlewares/validationMiddleware';
 import { 
@@ -59,6 +61,7 @@ router.patch('/me/photo', authenticateToken, uploadProfilePhoto);
 if (process.env.NODE_ENV !== 'test') {
   router.get('/workers/available', getAllAvailableWorkers);
   router.get('/workers/assigned/:clienteId', authenticateToken, getWorkersAssignedToClient);
+  router.get('/clients/assigned/me', authenticateToken, getMyClientsAssigned);
   router.get('/clients/assigned/:workerId', authenticateToken, getClientsAssignedToWorker);
   router.get('/available-workers-by-my-suscription', authenticateToken, authorizeUserWithValidSubscription, validateRequest, getTrabajadoresRol);
   router.get('/subscription-status', authenticateToken, checkUserSubscriptionStatus);
@@ -69,5 +72,8 @@ router.get('/:id', authenticateToken, getUserById);
 router.put('/:id', authenticateToken, authorizeUserOrAdmin, validateRequest, updateUser);
 router.delete('/:id', authenticateToken, authorizeUserOrAdmin, validateRequest, deleteUser);
 
+// Rutas para trabajadores
+router.get('/workers/estadisticas-nutricionales/:clienteId', authenticateToken, WorkerController.getEstadisticasNutricionalesCliente);
+router.get('/workers/estadisticas-entrenamiento/:clienteId', authenticateToken, WorkerController.getEstadisticasEntrenamientoCliente);
 
 export default router;

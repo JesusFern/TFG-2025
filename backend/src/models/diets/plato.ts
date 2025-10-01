@@ -21,7 +21,32 @@ export const PlatoSchema = new mongoose.Schema({
         message: 'El peso debe estar entre 0.1g y 10000g'
       }
     }
-  }]
+  }],
+  
+  // === CAMPOS DE SEGUIMIENTO ===
+  
+  // Evaluación del gusto/satisfacción (1-5)
+  satisfaccion: {
+    type: Number,
+    min: 1,
+    max: 5,
+    default: null
+  },
+  
+  // Cumplimiento de la pauta (1-5)
+  cumplimiento: {
+    type: Number,
+    min: 1,
+    max: 5,
+    default: null
+  },
+  
+  // Nota personal del usuario
+  notaUsuario: {
+    type: String,
+    maxlength: 500,
+    default: null
+  }
 }, {
   timestamps: true,
   collection: 'platos',

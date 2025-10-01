@@ -1,10 +1,12 @@
 import { Response, Request } from 'express';
 import { SuscriptionPlanService } from '../../service/suscriptionPlan/suscriptionPlanService';
 import { AuthenticatedRequest } from '../../types';
+import { verificarAutenticacion } from '../../validators/commonValidators';
 import mongoose from 'mongoose';
 import SuscriptionPlan from '../../models/suscriptionPlans/suscriptionPlan';
 import UserSuscription from '../../models/suscriptionPlans/userSuscription';
 import Payment from '../../models/payments/payment';
+import logger from '../../utils/logger';
 
 export class SuscriptionPlanController {
   static async getPlansWithUserStatus(req: AuthenticatedRequest, res: Response): Promise<void> {
@@ -436,6 +438,101 @@ export class SuscriptionPlanController {
       res.status(500).json({
         success: false,
         message: errorMessage
+      });
+    }
+  }
+
+  /**
+   * Obtener el estado de suscripción del usuario
+   * GET /api/suscription-plans/status
+   */
+  static async getSuscriptionStatus(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userId = verificarAutenticacion(req, res, 'obtener estado de suscripción');
+      if (!userId) return;
+
+      // Buscar la suscripción del usuario
+      const suscription = await UserSuscription.findOne({ userId })
+        .populate('planId', 'nombre descripcion tipoPrecio tipoPlan precioMensual precioTrimestral precioAnual beneficios');
+
+      if (!suscription) {
+        res.status(200).json({
+          hasSuscription: false,
+          canAccessNutrition: false,
+          canAccessTraining: false,
+          message: 'No tienes un plan de suscripción activo. Suscríbete para acceder al progreso de nutrición y entrenamiento.'
+        });
+        return;
+      }
+
+      // Verificar si la suscripción está activa
+      const isActive = suscription.isActive();
+      
+      // Determinar qué servicios puede acceder según el tipo de plan
+      let canAccessNutrition = false;
+      let canAccessTraining = false;
+      let message = '';
+
+      if (isActive) {
+        const plan = suscription.planId as unknown as { tipoPlan?: string; tipoPrecio?: string }; // El populate debería haber cargado el plan
+        
+        logger.info('Plan data:', { plan, tipoPlan: plan?.tipoPlan, tipoPrecio: plan?.tipoPrecio });
+        
+        if (plan?.tipoPlan === 'Nutricion') {
+          canAccessNutrition = true;
+          message = 'Tienes acceso al progreso de nutrición.';
+        } else if (plan?.tipoPlan === 'Entrenamiento personal') {
+          canAccessTraining = true;
+          message = 'Tienes acceso al progreso de entrenamiento personal.';
+        } else if (plan?.tipoPlan === 'Nutrición y entrenamiento personal') {
+          canAccessNutrition = true;
+          canAccessTraining = true;
+          message = 'Tienes acceso completo al progreso de nutrición y entrenamiento personal.';
+        } else if (plan?.tipoPrecio === 'Gratuito') {
+          // Plan gratuito - acceso limitado
+          canAccessNutrition = true;
+          canAccessTraining = true;
+          message = 'Plan gratuito activo. Acceso básico al progreso.';
+        }
+      } else {
+        message = 'Tu suscripción ha expirado. Renueva tu plan para continuar accediendo al progreso.';
+      }
+
+      logger.info('Estado de suscripción obtenido', {
+        userId,
+        hasSuscription: true,
+        isActive,
+        canAccessNutrition,
+        canAccessTraining,
+        planType: suscription.planId ? (suscription.planId as unknown as { tipoPlan: string }).tipoPlan : 'N/A'
+      });
+
+      res.status(200).json({
+        hasSuscription: true,
+        suscription: {
+          _id: suscription._id,
+          userId: suscription.userId,
+          planId: suscription.planId._id,
+          plan: suscription.planId,
+          fechaInicio: suscription.fechaInicio,
+          fechaFin: suscription.fechaFin,
+          frecuenciaDePago: suscription.frecuenciaDePago,
+          estadoPago: suscription.estadoPago,
+          fechaProximoPago: suscription.fechaProximoPago,
+          isActive
+        },
+        canAccessNutrition,
+        canAccessTraining,
+        message
+      });
+    } catch (error) {
+      logger.error('Error al obtener estado de suscripción', {
+        error: error instanceof Error ? error.message : String(error),
+        userId: req.user?.id
+      });
+
+      res.status(500).json({ 
+        message: 'Error interno del servidor al obtener estado de suscripción' 
       });
     }
   }

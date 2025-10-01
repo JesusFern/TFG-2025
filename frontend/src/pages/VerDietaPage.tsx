@@ -19,7 +19,8 @@ import {
   IconChevronRight, 
   IconAlertCircle, 
   IconChevronLeft,
-  IconEye
+  IconEye,
+  IconShoppingCart
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -180,6 +181,11 @@ const VerDietaPage: React.FC = () => {
 
   const handleDayChange = (newDayIndex: number) => {
     setCurrentDayIndex(newDayIndex);
+  };
+
+  // Función para navegar a la página de lista de compra
+  const handleVerListaCompra = () => {
+    navigate(`/lista-compra/${dietaId}/semana/${currentWeek}`);
   };
 
   // Función para manejar la navegación del botón de volver
@@ -489,9 +495,20 @@ const VerDietaPage: React.FC = () => {
               </Button>
             </Group>
             
-            <Text size="md" fw={600} c={isDark ? "gray.3" : "gray.6"}>
-              {currentWeek} de {daysRange.totalWeeks} semanas
-            </Text>
+            <Group gap="md">
+              <Text size="md" fw={600} c={isDark ? "gray.3" : "gray.6"}>
+                {currentWeek} de {daysRange.totalWeeks} semanas
+              </Text>
+              <Button
+                size="sm"
+                leftSection={<IconShoppingCart size={16} />}
+                color="nutroos-green"
+                variant="light"
+                onClick={handleVerListaCompra}
+              >
+                Ver Lista de Compra
+              </Button>
+            </Group>
           </Group>
         </Box>
         
