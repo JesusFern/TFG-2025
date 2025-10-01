@@ -75,8 +75,6 @@ export class CronNotificacionesService {
         return;
       }
 
-      logger.info(`Procesando ${notificaciones.length} notificaciones programadas`);
-
       for (const notificacion of notificaciones) {
         try {
           // Aquí se podría integrar con servicios de notificación externos
@@ -86,12 +84,6 @@ export class CronNotificacionesService {
           // Marcar como enviada
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           await marcarNotificacionComoEnviadaService((notificacion as any)._id.toString());
-          
-          logger.info(`Notificación enviada: ${notificacion.titulo}`, {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            notificacionId: (notificacion as any)._id,
-            usuario: notificacion.usuario
-          });
         } catch (error) {
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           logger.error(`Error al enviar notificación ${(notificacion as any)._id}:`, error);
@@ -107,9 +99,7 @@ export class CronNotificacionesService {
    */
   private async verificarSeguimientoInactivo(): Promise<void> {
     try {
-      logger.info('Verificando seguimiento inactivo de usuarios');
       await seguimientoInactivoService.verificarSeguimientoInactivo();
-      logger.info('Verificación de seguimiento inactivo completada');
     } catch (error) {
       logger.error('Error al verificar seguimiento inactivo:', error);
     }
@@ -123,11 +113,6 @@ export class CronNotificacionesService {
       // Enviar notificación en tiempo real a través de WebSocket
       if (socketServer) {
         await socketServer.sendScheduledNotification(notificacion);
-        logger.info(`Notificación enviada en tiempo real: ${notificacion.titulo}`, {
-          tipo: notificacion.tipo,
-          prioridad: notificacion.prioridad,
-          usuario: notificacion.usuario
-        });
       } else {
         logger.warn('SocketServer no disponible para enviar notificación en tiempo real');
       }

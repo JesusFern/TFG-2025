@@ -4,6 +4,7 @@ import User from '../../models/users/user';
 import Sesion from '../../models/training/sesion';
 import { EjercicioDistribucionService } from './ejercicioDistribucionService';
 import { notificacionIntegracionService } from '../notificaciones/notificacionIntegracionService';
+import { recordatorioService } from '../notificaciones/recordatorioService';
 
 interface EjercicioSesion {
   ejercicio: string;
@@ -647,6 +648,63 @@ export async function publicarPlanEntrenamientoService(planId: string, entrenado
         console.error(`Error al enviar notificación de plan publicado a cliente ${clienteId}:`, error);
         // No lanzar error para no interrumpir el proceso de publicación
       }
+    }
+
+    // Crear recordatorios de sesiones para todos los clientes
+    try {
+      console.log(`Buscando sesiones para plan ${planId}...`);
+      
+      // Obtener las sesiones del plan usando el método correcto
+      const planConSesiones = await PlanEntrenamiento.findById(planId).populate({
+        path: 'sesiones',
+        populate: {
+          path: 'cliente',
+          model: 'User'
+        }
+      });
+      const sesiones = (planConSesiones?.sesiones || []) as unknown[];
+      console.log(`Sesiones encontradas: ${sesiones.length}`);
+      
+      if (sesiones.length === 0) {
+        console.log('No se encontraron sesiones para crear recordatorios');
+        return plan;
+      }
+      
+      for (const sesionData of sesiones) {
+        try {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          const sesion = sesionData as any;
+          const fechaHoraSesion = new Date(sesion.fecha);
+          // Si no hay hora específica, usar 09:00 por defecto
+          if (!sesion.hora) {
+            fechaHoraSesion.setHours(9, 0, 0, 0);
+          } else {
+            const [horas, minutos] = sesion.hora.split(':').map(Number);
+            fechaHoraSesion.setHours(horas, minutos, 0, 0);
+          }
+          
+          console.log(`Creando recordatorio para sesión ${sesion._id} del cliente ${sesion.cliente._id} en ${fechaHoraSesion.toISOString()}`);
+          
+          await recordatorioService.crearRecordatorioSesion(
+            sesion.cliente._id.toString(),
+            entrenadorId,
+            sesion._id.toString(),
+            `${sesion.tipoEntrenamiento} - ${sesion.duracion} min`,
+            fechaHoraSesion,
+            planId
+          );
+          
+          console.log(`Recordatorio de sesión creado exitosamente para ${sesion.cliente._id} en ${fechaHoraSesion.toISOString()}`);
+        } catch (error) {
+          console.error(`Error al crear recordatorio de sesión:`, error);
+          // Continuar con las demás sesiones aunque una falle
+        }
+      }
+      
+      console.log(`Recordatorios de sesiones creados para plan ${planId}`);
+    } catch (error) {
+      console.error('Error al crear recordatorios de sesiones:', error);
+      // No lanzar error para no interrumpir el proceso de publicación
     }
   }
 

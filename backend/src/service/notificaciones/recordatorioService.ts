@@ -1,6 +1,5 @@
 import { notificacionIntegracionService } from './notificacionIntegracionService';
 import { crearNotificacionService } from '../chats/notificacionService';
-import { socketServer } from '../../server';
 import logger from '../../utils/logger';
 
 /**
@@ -30,29 +29,7 @@ export class RecordatorioService {
     planId: string
   ): Promise<void> {
     try {
-      // Crear notificación en la base de datos
-      await crearNotificacionService({
-        usuario: clienteId,
-        tipo: 'recordatorio',
-        titulo: 'Recordatorio de sesión de entrenamiento',
-        contenido: `Tu sesión "${nombreSesion}" está programada para ${fechaHora.toLocaleString('es-ES')}. ¡Prepárate!`,
-        prioridad: 'alta',
-        programadaPara: new Date(fechaHora.getTime() - 60 * 60 * 1000), // 1 hora antes
-        accion: {
-          tipo: 'abrir_plan',
-          metadata: {
-            sesionId,
-            planId
-          }
-        },
-        metadata: {
-          sesion: sesionId,
-          planEntrenamiento: planId,
-          remitente: entrenadorId
-        }
-      });
-
-      // Enviar notificación en tiempo real
+      // Usar el servicio de integración que maneja tanto BD como WebSocket
       await notificacionIntegracionService.crearRecordatorioSesion(
         clienteId,
         entrenadorId,
@@ -62,7 +39,7 @@ export class RecordatorioService {
         planId
       );
 
-      logger.info('Recordatorio de sesión creado y enviado', {
+      logger.info('Recordatorio de sesión programado', {
         clienteId,
         sesionId,
         fechaHora
@@ -85,28 +62,7 @@ export class RecordatorioService {
     diaIndex: number
   ): Promise<void> {
     try {
-      // Crear notificación en la base de datos
-      await crearNotificacionService({
-        usuario: clienteId,
-        tipo: 'recordatorio',
-        titulo: 'Recordatorio de comida',
-        contenido: `Es hora de tu ${nombreComida} del día ${diaIndex + 1}. ¡Mantén tu rutina!`,
-        prioridad: 'normal',
-        programadaPara: new Date(fechaHora.getTime() - 30 * 60 * 1000), // 30 minutos antes
-        accion: {
-          tipo: 'abrir_dieta',
-          metadata: {
-            dietaId,
-            dia: diaIndex.toString()
-          }
-        },
-        metadata: {
-          dieta: dietaId,
-          remitente: nutricionistaId
-        }
-      });
-
-      // Enviar notificación en tiempo real
+      // Usar el servicio de integración que maneja tanto BD como WebSocket
       await notificacionIntegracionService.crearRecordatorioComida(
         clienteId,
         nutricionistaId,
@@ -116,7 +72,7 @@ export class RecordatorioService {
         diaIndex
       );
 
-      logger.info('Recordatorio de comida creado y enviado', {
+      logger.info('Recordatorio de comida programado', {
         clienteId,
         dietaId,
         diaIndex,
@@ -140,48 +96,30 @@ export class RecordatorioService {
   ): Promise<void> {
     try {
       // Crear notificación en la base de datos
-      await crearNotificacionService({
+      const notificacionData = {
         usuario: clienteId,
-        tipo: 'recordatorio',
+        tipo: 'recordatorio' as const,
         titulo: 'Recordatorio de cita',
-        contenido: `Tienes una cita de ${tipoCita} programada para ${fechaHora.toLocaleString('es-ES')}. ¡No la olvides!`,
-        prioridad: 'alta',
+        contenido: `Tienes una cita de ${tipoCita} programada para ${fechaHora.toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })}. ¡No la olvides!`,
+        prioridad: 'alta' as const,
         programadaPara: new Date(fechaHora.getTime() - 60 * 60 * 1000), // 1 hora antes
+        expiraEn: new Date(fechaHora.getTime() + 2 * 60 * 60 * 1000), // Expira 2 horas después de la cita
         accion: {
-          tipo: 'navegar',
+          tipo: 'navegar' as const,
           url: `/citas/${citaId}`
         },
         metadata: {
           remitente: profesionalId
         }
-      });
+      };
 
-      // Enviar notificación en tiempo real
-      if (socketServer) {
-        const notificacion = {
-          usuario: clienteId,
-          tipo: 'recordatorio',
-          titulo: 'Recordatorio de cita',
-          contenido: `Tienes una cita de ${tipoCita} programada para ${fechaHora.toLocaleString('es-ES')}. ¡No la olvides!`,
-          prioridad: 'alta',
-          programadaPara: fechaHora,
-          accion: {
-            tipo: 'navegar',
-            url: `/citas/${citaId}`
-          },
-          metadata: {
-            remitente: profesionalId
-          }
-        };
+      await crearNotificacionService(notificacionData);
 
-        await socketServer.sendNotificationToUser(clienteId, notificacion as unknown as Record<string, unknown>);
-        logger.info(`Recordatorio de cita enviado en tiempo real a ${clienteId}`);
-      }
-
-      logger.info('Recordatorio de cita creado y enviado', {
+      logger.info('Recordatorio de cita programado', {
         clienteId,
         citaId,
-        fechaHora
+        fechaHora,
+        programadaPara: notificacionData.programadaPara.toLocaleString('es-ES')
       });
     } catch (error) {
       logger.error('Error al crear recordatorio de cita:', error);

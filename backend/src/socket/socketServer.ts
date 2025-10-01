@@ -424,8 +424,6 @@ export class SocketServer {
       if (notificacion._id) {
         await marcarNotificacionComoEnviadaService(notificacion._id as string);
       }
-      
-      console.log(`Notificación enviada en tiempo real a usuario ${userId}:`, notificacion.titulo);
     } catch (error) {
       console.error('Error al enviar notificación en tiempo real:', error);
     }
@@ -440,16 +438,20 @@ export class SocketServer {
   // Enviar notificación de recordatorio programado
   public async sendScheduledNotification(notificacion: Record<string, unknown>) {
     try {
-      // Enviar la notificación a través de WebSocket
-      this.sendToUser(notificacion.usuario as string, 'scheduled_notification', {
+      // Usar usuarioId (que es un string) en lugar de usuario (que puede ser un objeto)
+      const userId = (notificacion.usuarioId || 
+                     (typeof notificacion.usuario === 'object' && notificacion.usuario !== null 
+                       ? (notificacion.usuario as Record<string, unknown>)._id 
+                       : notificacion.usuario)) as string;
+
+      // Enviar la notificación a través de WebSocket usando el mismo evento que las notificaciones normales
+      this.sendToUser(userId, 'new_notification', {
         notificacion,
         timestamp: new Date()
       });
 
       // Marcar como enviada en la base de datos
       await marcarNotificacionComoEnviadaService(notificacion._id as string);
-      
-      console.log(`Recordatorio enviado en tiempo real a usuario ${notificacion.usuario}:`, notificacion.titulo);
     } catch (error) {
       console.error('Error al enviar recordatorio en tiempo real:', error);
     }
@@ -458,16 +460,20 @@ export class SocketServer {
   // Enviar notificación de seguimiento inactivo
   public async sendInactiveTrackingNotification(notificacion: Record<string, unknown>) {
     try {
+      // Usar usuarioId (que es un string) en lugar de usuario (que puede ser un objeto)
+      const userId = (notificacion.usuarioId || 
+                     (typeof notificacion.usuario === 'object' && notificacion.usuario !== null 
+                       ? (notificacion.usuario as Record<string, unknown>)._id 
+                       : notificacion.usuario)) as string;
+
       // Enviar la notificación a través de WebSocket
-      this.sendToUser(notificacion.usuario as string, 'inactive_tracking_notification', {
+      this.sendToUser(userId, 'inactive_tracking_notification', {
         notificacion,
         timestamp: new Date()
       });
 
       // Marcar como enviada en la base de datos
       await marcarNotificacionComoEnviadaService(notificacion._id as string);
-      
-      console.log(`Notificación de seguimiento inactivo enviada a usuario ${notificacion.usuario}:`, notificacion.titulo);
     } catch (error) {
       console.error('Error al enviar notificación de seguimiento inactivo:', error);
     }

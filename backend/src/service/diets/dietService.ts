@@ -8,7 +8,6 @@ import {
 } from '../../helpers/dietHelper';
 import { notificacionIntegracionService } from '../notificaciones/notificacionIntegracionService';
 import { recordatorioService } from '../notificaciones/recordatorioService';
-import logger from '../../utils/logger';
 
 interface PlatoDocument {
   orden: number;
@@ -113,38 +112,6 @@ export async function crearDietaService({
 
   await dieta.save();
 
-  // Crear recordatorios automáticos para las comidas de cada día
-  try {
-    for (let diaIndex = 0; diaIndex < duracion; diaIndex++) {
-      const fechaDia = new Date(fechaInicioDate);
-      fechaDia.setDate(fechaInicioDate.getDate() + diaIndex);
-      
-      for (let comidaIndex = 0; comidaIndex < comidasDiarias; comidaIndex++) {
-        const horaComida = horasComidas[comidaIndex];
-        const nombreComida = nombreComidas[comidaIndex];
-        
-        // Crear fecha y hora para la comida
-        const [horas, minutos] = horaComida.split(':').map(Number);
-        const fechaHoraComida = new Date(fechaDia);
-        fechaHoraComida.setHours(horas, minutos, 0, 0);
-        
-        // Crear recordatorio 30 minutos antes de la comida
-        await recordatorioService.crearRecordatorioComida(
-          asignadaA,
-          creadorId,
-          dieta._id.toString(),
-          nombreComida,
-          fechaHoraComida,
-          diaIndex + 1
-        );
-      }
-    }
-    
-    logger.info(`Recordatorios de comidas creados para dieta ${dieta._id} (${duracion} días, ${comidasDiarias} comidas/día)`);
-  } catch (error) {
-    logger.error('Error al crear recordatorios de comidas:', error);
-    // No lanzar error para no interrumpir la creación de la dieta
-  }
 
   return dieta;
 }
@@ -271,30 +238,73 @@ export async function publicarDietaService(dietaId: string, userId: string): Pro
   await dieta.save();
   
   // Enviar notificaciones a todos los clientes asignados
-  console.log('Dieta publicada - Clientes asignados:', dieta.asignadaA?.length || 0);
   if (dieta.asignadaA && dieta.asignadaA.length > 0) {
     // Extraer solo los IDs de los clientes
     const clienteIds = dieta.asignadaA.map(cliente => 
       typeof cliente === 'string' ? cliente : cliente._id?.toString() || cliente.toString()
     );
-    console.log('Enviando notificaciones a clientes:', clienteIds);
     
     // Enviar notificación a cada cliente asignado
     for (const clienteId of clienteIds) {
       try {
-        console.log(`Enviando notificación de dieta "${dieta.nombre}" a cliente ${clienteId}`);
         await notificacionIntegracionService.notificarDietaPublicada(
           clienteId,
           userId,
           dietaId,
           dieta.nombre
         );
-        console.log(`Notificación enviada exitosamente a cliente ${clienteId}`);
-
-      } catch (error) {
-        console.error(`Error al enviar notificación de dieta publicada a cliente ${clienteId}:`, error);
+      } catch {
         // No lanzar error para no interrumpir el proceso de publicación
       }
+    }
+
+    // Crear recordatorios de comidas para todos los clientes
+    try {
+      if (dieta.duracion && dieta.dias && dieta.dias.length > 0) {
+        for (let diaIndex = 0; diaIndex < (dieta.duracion || 0); diaIndex++) {
+          const fechaDia = new Date(dieta.fechaInicio);
+          fechaDia.setDate(dieta.fechaInicio.getDate() + diaIndex);
+          
+          // Obtener las comidas del primer día para usar como plantilla
+          const primerDia = dieta.dias[0];
+          if (primerDia && primerDia.comidas) {
+            for (let comidaIndex = 0; comidaIndex < primerDia.comidas.length; comidaIndex++) {
+              const comida = primerDia.comidas[comidaIndex];
+              const horaComida = comida.horaEstimada;
+              const nombreComida = comida.nombreComida;
+              
+              if (horaComida && nombreComida) {
+                // Crear fecha y hora para la comida
+                const [horas, minutos] = horaComida.split(':').map(Number);
+                const fechaHoraComida = new Date(fechaDia);
+                fechaHoraComida.setHours(horas, minutos, 0, 0);
+                
+                // Crear recordatorio para cada cliente
+                for (const clienteId of clienteIds) {
+                  try {
+                    await recordatorioService.crearRecordatorioComida(
+                      clienteId,
+                      userId,
+                      dieta._id.toString(),
+                      nombreComida,
+                      fechaHoraComida,
+                      diaIndex
+                    );
+                  } catch (error) {
+                    console.error(`Error al crear recordatorio de comida para cliente ${clienteId}:`, error);
+                    // Continuar con los demás clientes aunque uno falle
+                  }
+                }
+              }
+            }
+          }
+        }
+        
+        console.log(`Recordatorios de comidas creados para dieta ${dieta._id} (${dieta.duracion} días, ${dieta.comidasDiarias} comidas/día)`);
+      }
+    } catch (error) {
+      console.error('Error al crear recordatorios de comidas:', error);
+      // No lanzar error para no interrumpir el proceso de publicación
     }
   } else {
     console.log('No hay clientes asignados a esta dieta, no se enviarán notificaciones');

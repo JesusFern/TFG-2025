@@ -36,22 +36,16 @@ export interface FiltrosNotificaciones {
 
 export async function crearNotificacionService(datos: CrearNotificacionData): Promise<INotificacion> {
   try {
-    console.log('=== CREAR NOTIFICACION SERVICE ===');
-    console.log('Datos recibidos:', JSON.stringify(datos, null, 2));
-    
     const notificacion = new Notificacion({
       ...datos,
       leida: false,
       enviada: false
     });
 
-    console.log('Notificación creada, guardando en BD...');
     const notificacionGuardada = await notificacion.save();
-    console.log('Notificación guardada exitosamente con ID:', notificacionGuardada._id);
     
     return notificacionGuardada.toObject() as unknown as INotificacion;
   } catch (error) {
-    console.error('Error en crearNotificacionService:', error);
     if (error instanceof Error) {
       throw new Error(`Error al crear notificación: ${error.message}`);
     }
@@ -90,7 +84,15 @@ export async function obtenerNotificacionesService(
     } = filtros;
 
     // Construir filtros de consulta
-    const query: Record<string, unknown> = { usuario: usuarioId };
+    const query: Record<string, unknown> = { 
+      usuario: usuarioId,
+      // Solo mostrar notificaciones que ya han sido enviadas O que están programadas para el pasado/ahora
+      $or: [
+        { enviada: true },
+        { programadaPara: { $lte: new Date() } },
+        { programadaPara: { $exists: false } }
+      ]
+    };
 
     if (tipo) {
       query.tipo = tipo;
@@ -401,13 +403,28 @@ export async function obtenerNotificacionesProgramadasService(): Promise<any[]> 
   try {
     const ahora = new Date();
     
-    const notificaciones = await Notificacion.find({
+    const query = {
       programadaPara: { $lte: ahora },
       enviada: false,
-      expiraEn: { $gt: ahora } // No expiradas
-    }).populate('usuario', 'fullName email');
+      // Incluir notificaciones sin expiraEn o con expiraEn mayor a ahora
+      $or: [
+        { expiraEn: { $exists: false } },
+        { expiraEn: { $gt: ahora } }
+      ]
+    };
 
-    return notificaciones;
+    const notificaciones = await Notificacion.find(query).populate('usuario', 'fullName email');
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return notificaciones.map((n: any) => {
+      const obj = n.toObject();
+      const userId = obj.usuario?._id || obj.usuario;
+      return {
+        ...obj,
+        usuarioId: userId?.toString() || userId,
+        usuario: obj.usuario
+      };
+    });
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Error al obtener notificaciones programadas: ${error.message}`);

@@ -47,12 +47,11 @@ export class NotificacionIntegracionService {
       };
 
       // Crear notificación en la base de datos
-      await crearNotificacionService(notificacionData);
+      const notificacionGuardada = await crearNotificacionService(notificacionData);
       
       // Enviar notificación en tiempo real
       if (socketServer) {
-        await socketServer.sendNotificationToUser(clienteId, notificacionData as unknown as Record<string, unknown>);
-        logger.info(`Notificación de dieta publicada enviada en tiempo real a ${clienteId}`);
+        await socketServer.sendNotificationToUser(clienteId, notificacionGuardada as unknown as Record<string, unknown>);
       }
     } catch (error) {
       logger.error('Error al notificar dieta publicada:', error);
@@ -87,12 +86,11 @@ export class NotificacionIntegracionService {
       };
 
       // Crear notificación en la base de datos
-      await crearNotificacionService(notificacionData);
+      const notificacionGuardada = await crearNotificacionService(notificacionData);
       
       // Enviar notificación en tiempo real
       if (socketServer) {
-        await socketServer.sendNotificationToUser(clienteId, notificacionData as unknown as Record<string, unknown>);
-        logger.info(`Notificación de plan publicado enviada en tiempo real a ${clienteId}`);
+        await socketServer.sendNotificationToUser(clienteId, notificacionGuardada as unknown as Record<string, unknown>);
       }
     } catch (error) {
       logger.error('Error al notificar plan publicado:', error);
@@ -129,12 +127,11 @@ export class NotificacionIntegracionService {
       };
 
       // Crear notificación en la base de datos
-      await crearNotificacionService(notificacionData);
+      const notificacionGuardada = await crearNotificacionService(notificacionData);
       
       // Enviar notificación en tiempo real
       if (socketServer) {
-        await socketServer.sendNotificationToUser(clienteId, notificacionData as unknown as Record<string, unknown>);
-        logger.info(`Notificación de cita confirmada enviada en tiempo real a ${clienteId}`);
+        await socketServer.sendNotificationToUser(clienteId, notificacionGuardada as unknown as Record<string, unknown>);
       }
     } catch (error) {
       logger.error('Error al notificar cita confirmada:', error);
@@ -173,23 +170,12 @@ export class NotificacionIntegracionService {
           metadata: {
             mensaje: mensajeId,
             conversacion: conversacionId,
-            remitente: remitenteId
-          }
-        };
-        
-        console.log('DEBUG: Enviando notificación de mensaje:', {
-          destinatarioId,
-          remitenteId,
-          mensajeId,
-          conversacionId,
-          notificacion
-        });
-        
-        await socketServer.sendNotificationToUser(destinatarioId, notificacion);
-        logger.info(`Notificación de mensaje enviada en tiempo real a ${destinatarioId}`);
-      } else {
-        console.log('DEBUG: socketServer no está disponible para mensaje');
-      }
+          remitente: remitenteId
+        }
+      };
+      
+      await socketServer.sendNotificationToUser(destinatarioId, notificacion);
+    }
     } catch (error) {
       logger.error('Error al notificar mensaje:', error);
       throw error;
@@ -208,13 +194,16 @@ export class NotificacionIntegracionService {
     planId?: string
   ): Promise<void> {
     try {
+      const programadaPara = new Date(fechaHora.getTime() - 60 * 60 * 1000); // 1 hora antes
+
       const notificacionData = {
         usuario: clienteId,
         tipo: 'recordatorio' as const,
         titulo: 'Recordatorio de sesión de entrenamiento',
-        contenido: `Tu sesión "${nombreSesion}" está programada para ${fechaHora.toLocaleString('es-ES')}. ¡Prepárate!`,
+        contenido: `Tu sesión "${nombreSesion}" está programada para ${fechaHora.toLocaleString('es-ES', { timeZone: 'Europe/Madrid' })}. ¡Prepárate!`,
         prioridad: 'alta' as const,
-        programadaPara: new Date(fechaHora.getTime() - 60 * 60 * 1000), // 1 hora antes
+        programadaPara: programadaPara,
+        expiraEn: new Date(fechaHora.getTime() + 2 * 60 * 60 * 1000), // Expira 2 horas después de la sesión
         accion: {
           tipo: 'abrir_plan' as const,
           metadata: {
@@ -229,14 +218,10 @@ export class NotificacionIntegracionService {
         }
       };
 
-      // Crear notificación en la base de datos
+      // Crear notificación en la base de datos (programada para 1 hora antes)
       await crearNotificacionService(notificacionData);
       
-      // Enviar notificación en tiempo real
-      if (socketServer) {
-        await socketServer.sendNotificationToUser(clienteId, notificacionData as unknown as Record<string, unknown>);
-        logger.info(`Recordatorio de sesión enviado en tiempo real a ${clienteId}: ${nombreSesion}`);
-      }
+      logger.info(`Recordatorio de sesión programado para ${clienteId}: ${nombreSesion} (${notificacionData.programadaPara.toLocaleString('es-ES')})`);
     } catch (error) {
       logger.error('Error al crear recordatorio de sesión:', error);
       throw error;
@@ -262,6 +247,7 @@ export class NotificacionIntegracionService {
         contenido: `Es hora de tu ${nombreComida} del día ${(diaIndex || 0) + 1}. ¡Mantén tu rutina!`,
         prioridad: 'normal' as const,
         programadaPara: new Date(fechaHora.getTime() - 30 * 60 * 1000), // 30 minutos antes
+        expiraEn: new Date(fechaHora.getTime() + 2 * 60 * 60 * 1000), // Expira 2 horas después de la comida
         accion: {
           tipo: 'abrir_dieta' as const,
           metadata: {
@@ -275,14 +261,10 @@ export class NotificacionIntegracionService {
         }
       };
 
-      // Crear notificación en la base de datos
+      // Crear notificación en la base de datos (programada para 30 minutos antes)
       await crearNotificacionService(notificacionData);
       
-      // Enviar notificación en tiempo real
-      if (socketServer) {
-        await socketServer.sendNotificationToUser(clienteId, notificacionData as unknown as Record<string, unknown>);
-        logger.info(`Recordatorio de comida enviado en tiempo real a ${clienteId}: ${nombreComida}`);
-      }
+      logger.info(`Recordatorio de comida programado para ${clienteId}: ${nombreComida} (${notificacionData.programadaPara.toLocaleString('es-ES')})`);
     } catch (error) {
       logger.error('Error al crear recordatorio de comida:', error);
       throw error;

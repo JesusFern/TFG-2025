@@ -26,15 +26,11 @@ export class SeguimientoInactivoService {
    */
   public async verificarSeguimientoInactivo(): Promise<void> {
     try {
-      logger.info('Iniciando verificación de seguimiento inactivo');
-
       // Verificar seguimiento de entrenamientos
       await this.verificarSeguimientoEntrenamientos();
 
       // Verificar seguimiento de dietas
       await this.verificarSeguimientoDietas();
-
-      logger.info('Verificación de seguimiento inactivo completada');
     } catch (error) {
       logger.error('Error al verificar seguimiento inactivo:', error);
     }
@@ -231,7 +227,6 @@ export class SeguimientoInactivoService {
       );
 
       if (notificacionReciente) {
-        logger.info(`Ya se envió notificación de seguimiento inactivo recientemente para ${clienteId}`);
         return;
       }
 
@@ -247,14 +242,11 @@ export class SeguimientoInactivoService {
         for (const notificacion of notificaciones) {
           try {
             await socketServer.sendInactiveTrackingNotification(notificacion as unknown as Record<string, unknown>);
-            logger.info(`Notificación de seguimiento inactivo enviada en tiempo real: ${notificacion.titulo}`);
           } catch (error) {
             logger.error('Error al enviar notificación en tiempo real:', error);
           }
         }
       }
-
-      logger.info(`Notificación de seguimiento inactivo creada para ${clienteId} (${tipo}, ${diasInactivo} días)`);
     } catch (error) {
       logger.error(`Error al crear notificación de seguimiento inactivo:`, error);
     }

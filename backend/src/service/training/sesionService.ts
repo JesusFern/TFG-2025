@@ -2,8 +2,6 @@ import Sesion from '../../models/training/sesion';
 import PlanEntrenamiento from '../../models/training/planEntrenamiento';
 import User from '../../models/users/user';
 import Ejercicio from '../../models/training/ejercicio';
-import { recordatorioService } from '../notificaciones/recordatorioService';
-import logger from '../../utils/logger';
 
 // Función auxiliar para obtener nombres de ejercicios duplicados
 async function obtenerNombresEjerciciosDuplicados(idsDuplicados: string[]): Promise<string[]> {
@@ -174,28 +172,6 @@ export async function crearSesionService({
     });
   }
 
-  // Crear recordatorio automático para la sesión (1 hora antes)
-  try {
-    const fechaHoraSesion = new Date(fechaSesion);
-    if (hora) {
-      const [horas, minutos] = hora.split(':').map(Number);
-      fechaHoraSesion.setHours(horas, minutos, 0, 0);
-    }
-    
-    await recordatorioService.crearRecordatorioSesion(
-      clienteId,
-      entrenadorId,
-      sesion._id.toString(),
-      `${tipoEntrenamiento} - ${duracion} min`,
-      fechaHoraSesion,
-      planId || ''
-    );
-    
-    logger.info(`Recordatorio de sesión creado para ${clienteId} en ${fechaHoraSesion.toISOString()}`);
-  } catch (error) {
-    logger.error('Error al crear recordatorio de sesión:', error);
-    // No lanzar error para no interrumpir la creación de la sesión
-  }
 
   return sesion;
 }
