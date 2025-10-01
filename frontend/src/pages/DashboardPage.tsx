@@ -29,18 +29,26 @@ import {
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useSuscription } from '../hooks/useSuscription';
 import { WeeklyProgressChart } from '../components/molecules/WeeklyProgressChart';
 import { CurrentSubscription } from '../components/molecules/CurrentSubscription';
 import { ComingSoonBadge } from '../components/atoms/ComingSoonBadge';
 import { ComingSoonModal } from '../components/atoms/ComingSoonModal';
 import { estadisticasService } from '../services/estadisticasService';
+import { estadisticasNutricionalesService } from '../services/estadisticasNutricionalesService';
 import { EstadisticasSemanal } from '../types/estadisticas';
+import { EstadisticasNutricionalesSemanal } from '../types/estadisticasNutricionales';
 
 // Tipo extendido para manejar la diferencia entre frontend y backend
 interface EstadisticasSemanalBackend extends EstadisticasSemanal {
   progreso: EstadisticasSemanal['progreso'] & {
     ejerciciosRegistrados?: number;
   };
+}
+
+// Tipo extendido para estadísticas nutricionales semanales
+interface EstadisticasNutricionalesSemanalBackend extends EstadisticasNutricionalesSemanal {
+  progreso: EstadisticasNutricionalesSemanal['progreso'];
 }
 
 interface DashboardCardProps {
@@ -130,6 +138,7 @@ const DashboardPage: React.FC = () => {
   const { colorScheme } = useMantineColorScheme();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { suscriptionStatus } = useSuscription();
   const [comingSoonModal, setComingSoonModal] = useState<{
     opened: boolean;
     title: string;
@@ -142,6 +151,7 @@ const DashboardPage: React.FC = () => {
 
   // Estado para las estadísticas semanales
   const [weeklyStats, setWeeklyStats] = useState<EstadisticasSemanalBackend | null>(null);
+  const [weeklyNutritionStats, setWeeklyNutritionStats] = useState<EstadisticasNutricionalesSemanalBackend | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
 
   // Función para mostrar modal de próximamente
@@ -155,7 +165,7 @@ const DashboardPage: React.FC = () => {
 
   // Cargar estadísticas semanales
   const loadWeeklyStats = useCallback(async () => {
-    if (user?.role !== 'user') return; // Solo para clientes
+    if (user?.role !== 'user' && user?.role !== 'worker') return; // Solo para clientes y trabajadores
 
     try {
       setLoadingStats(true);
@@ -163,9 +173,24 @@ const DashboardPage: React.FC = () => {
       const weekNumber = getWeekNumber(currentDate);
       const year = currentDate.getFullYear();
 
-      const response = await estadisticasService.getMiProgresoSemanal(weekNumber, year);
-      if (response.success) {
-        setWeeklyStats(response.estadisticas as EstadisticasSemanalBackend);
+      // Cargar estadísticas de entrenamiento
+      try {
+        const response = await estadisticasService.getMiProgresoSemanal(weekNumber, year);
+        if (response.success) {
+          setWeeklyStats(response.estadisticas as EstadisticasSemanalBackend);
+        }
+      } catch (error) {
+        console.warn('Error cargando estadísticas de entrenamiento:', error);
+      }
+
+      // Cargar estadísticas nutricionales
+      try {
+        const nutritionResponse = await estadisticasNutricionalesService.getMiProgresoNutricionalSemanal(weekNumber, year);
+        if (nutritionResponse.success) {
+          setWeeklyNutritionStats(nutritionResponse.estadisticas as EstadisticasNutricionalesSemanalBackend);
+        }
+      } catch (error) {
+        console.warn('Error cargando estadísticas nutricionales:', error);
       }
     } catch (error) {
       console.error('Error cargando estadísticas semanales:', error);
@@ -187,15 +212,48 @@ const DashboardPage: React.FC = () => {
     loadWeeklyStats();
   }, [user, loadWeeklyStats]);
 
+  // Determinar qué secciones mostrar según el rol y suscripción
+  const getProgressSections = () => {
+    if (user?.role === 'worker') {
+      // Para trabajadores, mostrar según su tipo
+      if (user.workerType === 'Nutricionista') {
+        return { showNutrition: true, showExercise: false, showGeneral: false };
+      } else if (user.workerType === 'Entrenador personal') {
+        return { showNutrition: false, showExercise: true, showGeneral: false };
+      } else if (user.workerType === 'Nutricionista y Entrenador personal') {
+        return { showNutrition: true, showExercise: true, showGeneral: true };
+      }
+      return { showNutrition: false, showExercise: false, showGeneral: false };
+    } else if (user?.role === 'user') {
+      // Para usuarios, mostrar según su suscripción
+      if (!suscriptionStatus) {
+        return { showNutrition: false, showExercise: false, showGeneral: false };
+      }
+      
+      if (suscriptionStatus.canAccessNutrition && suscriptionStatus.canAccessTraining) {
+        return { showNutrition: true, showExercise: true, showGeneral: true };
+      } else if (suscriptionStatus.canAccessNutrition) {
+        return { showNutrition: true, showExercise: false, showGeneral: false };
+      } else if (suscriptionStatus.canAccessTraining) {
+        return { showNutrition: false, showExercise: true, showGeneral: false };
+      }
+      return { showNutrition: false, showExercise: false, showGeneral: false };
+    }
+    
+    return { showNutrition: false, showExercise: false, showGeneral: false };
+  };
+
+  const progressSections = getProgressSections();
+
   // Datos de progreso - usar datos reales si están disponibles, sino datos por defecto
-  const weeklyProgress = weeklyStats ? {
-    nutrition: 0, // La nutrición aún no está implementada
-    exercise: Math.round(weeklyStats.progreso.porcentajeCompletitud),
-    goal: Math.round((weeklyStats.progreso.porcentajeCompletitud + weeklyStats.asistencia.porcentajeAsistencia) / 2) // Promedio entre ejercicio y asistencia
-  } : {
-    nutrition: 85,
-    exercise: 72,
-    goal: 78
+  const weeklyProgress = {
+    nutrition: weeklyNutritionStats ? Math.round(weeklyNutritionStats.progreso?.porcentajeCompletitud || 0) : 0,
+    exercise: weeklyStats ? Math.round(weeklyStats.progreso.porcentajeCompletitud) : 0,
+    goal: weeklyStats && weeklyNutritionStats 
+      ? Math.round((weeklyStats.progreso.porcentajeCompletitud + (weeklyNutritionStats.progreso?.porcentajeCompletitud || 0)) / 2)
+      : weeklyStats 
+      ? Math.round((weeklyStats.progreso.porcentajeCompletitud + weeklyStats.asistencia.porcentajeAsistencia) / 2)
+      : 0
   };
 
   // Configuración de tarjetas del dashboard según el rol del usuario
@@ -394,7 +452,7 @@ const DashboardPage: React.FC = () => {
         <Grid gutter="lg">
           <Grid.Col span={{ base: 12, lg: 4 }}>
             <Stack gap="lg">
-              {loadingStats && user?.role === 'user' ? (
+              {loadingStats && (user?.role === 'user' || user?.role === 'worker') ? (
                 <Paper p="lg" radius="lg" withBorder>
                   <Center py="xl">
                     <Stack align="center" gap="md">
@@ -403,12 +461,29 @@ const DashboardPage: React.FC = () => {
                     </Stack>
                   </Center>
                 </Paper>
-              ) : (
+              ) : (progressSections.showNutrition || progressSections.showExercise || progressSections.showGeneral) ? (
                 <WeeklyProgressChart
                   nutritionProgress={weeklyProgress.nutrition}
                   exerciseProgress={weeklyProgress.exercise}
                   goalProgress={weeklyProgress.goal}
+                  showNutrition={progressSections.showNutrition}
+                  showExercise={progressSections.showExercise}
+                  showGeneral={progressSections.showGeneral}
+                  userRole={user?.role as 'user' | 'worker' | 'admin'}
                 />
+              ) : (
+                <Paper p="lg" radius="lg" withBorder>
+                  <Center py="xl">
+                    <Stack align="center" gap="md">
+                      <Text c="dimmed" ta="center">
+                        {user?.role === 'user' 
+                          ? 'Suscríbete para ver tu progreso semanal'
+                          : 'No tienes acceso al progreso semanal'
+                        }
+                      </Text>
+                    </Stack>
+                  </Center>
+                </Paper>
               )}
               {user?.role === 'user' && (
                 <CurrentSubscription />

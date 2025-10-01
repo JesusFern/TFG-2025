@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { 
   Container, 
   Alert, 
@@ -21,7 +21,8 @@ import {
   IconMeat,
   IconBread,
   IconDroplet,
-  IconClock
+  IconClock,
+  IconStar
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { obtenerDieta } from '../services/dietService';
@@ -30,19 +31,28 @@ import {
   parseFecha, 
   crearDatoDia
 } from '../helpers/diets/DietaHelper';
-import PlatosList from '../components/organisms/PlatosList';
 import IngredientesList from '../components/organisms/IngredientesList';
+import { useAuth } from '../hooks/useAuth';
+import { obtenerSeguimientoPlatos } from '../services/seguimientoComidaService';
+import type { SeguimientoPlato } from '../types/seguimientoComida';
+import SeguimientoPlatoModal from '../components/molecules/SeguimientoComidaModal';
+import SeguimientoPlatoDisplay from '../components/molecules/SeguimientoComidaDisplay';
+import ResumenSeguimientoDia from '../components/molecules/ResumenSeguimientoDia';
 
 const DetalleDiaPage: React.FC = () => {
   const { dietaId, diaIndex } = useParams<{ dietaId: string; diaIndex: string }>();
   const navigate = useNavigate();
   const { colorScheme } = useMantineColorScheme();
+  const { user } = useAuth();
   const isDark = colorScheme === 'dark';
   
   const [dieta, setDieta] = useState<Dieta | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [dayInfo, setDayInfo] = useState<DayInfo | null>(null);
+  const [seguimientos, setSeguimientos] = useState<{ [key: string]: SeguimientoPlato }>({});
+  const [modalAbierto, setModalAbierto] = useState<{ [key: string]: boolean }>({});
+  const [cargandoSeguimientos, setCargandoSeguimientos] = useState<boolean>(false);
 
   // Función para navegar a los detalles de una receta
   const handleVerReceta = (recetaId: string) => {
@@ -57,6 +67,88 @@ const DetalleDiaPage: React.FC = () => {
   // Función para volver a la vista de dieta
   const handleVolver = () => {
     navigate(`/ver-dieta/${dietaId}`);
+  };
+
+  // Verificar si el usuario puede ver/editar seguimiento
+  const puedeGestionarSeguimiento = useCallback((): boolean => {
+    if (!user || !dieta) {
+      return false;
+    }
+    
+    // Usuario asignado a la dieta
+    const esUsuarioAsignado = dieta.asignadaA?.some(userAsignado => {
+      const userIdAsignado = typeof userAsignado === 'string' ? userAsignado : (userAsignado as { _id: string })._id;
+      return userIdAsignado === user._id;
+    });
+    
+    // Nutricionista creador de la dieta
+    const esNutricionistaCreador = user.role === 'worker' && 
+      (user.workerType === 'Nutricionista' || user.workerType === 'Nutricionista y Entrenador personal') &&
+      dieta.creador && (typeof dieta.creador === 'string' ? dieta.creador : (dieta.creador as { _id: string })._id) === user._id;
+    
+    return esUsuarioAsignado || !!esNutricionistaCreador;
+  }, [user, dieta]);
+
+  // Verificar si el usuario puede editar (solo usuarios asignados)
+  const puedeEditarSeguimiento = useCallback((): boolean => {
+    if (!user || !dieta) return false;
+    return dieta.asignadaA?.some(userAsignado => {
+      const userIdAsignado = typeof userAsignado === 'string' ? userAsignado : (userAsignado as { _id: string })._id;
+      return userIdAsignado === user._id;
+    }) || false;
+  }, [user, dieta]);
+
+  // Cargar seguimientos del día
+  const cargarSeguimientos = useCallback(async () => {
+    if (!dietaId || !diaIndex || !puedeGestionarSeguimiento()) return;
+    
+    try {
+      setCargandoSeguimientos(true);
+      const dayNumber = parseInt(diaIndex) - 1; // Convertir a índice 0-based
+      const response = await obtenerSeguimientoPlatos(dietaId, {
+        diaIndex: dayNumber,
+        limit: 50,
+        offset: 0
+      });
+      
+      // Mapear seguimientos por clave "comidaIndex-platoIndex"
+      const seguimientosMap: { [key: string]: SeguimientoPlato } = {};
+      
+      // Ahora el backend devuelve la información completa con diaIndex, comidaIndex, platoIndex
+      response.seguimientos.forEach((seguimiento) => {
+        const key = `${seguimiento.comidaIndex}-${seguimiento.platoIndex}`;
+        seguimientosMap[key] = {
+          satisfaccion: seguimiento.satisfaccion,
+          cumplimiento: seguimiento.cumplimiento,
+          notaUsuario: seguimiento.notaUsuario
+        };
+      });
+      
+      setSeguimientos(seguimientosMap);
+    } catch (error) {
+      console.error('Error al cargar seguimientos:', error);
+    } finally {
+      setCargandoSeguimientos(false);
+    }
+  }, [dietaId, diaIndex, puedeGestionarSeguimiento]);
+
+  // Abrir modal de seguimiento
+  const abrirModalSeguimiento = (comidaIndex: number, platoIndex: number) => {
+    const key = `${comidaIndex}-${platoIndex}`;
+    setModalAbierto(prev => ({ ...prev, [key]: true }));
+  };
+
+  // Cerrar modal de seguimiento
+  const cerrarModalSeguimiento = (comidaIndex: number, platoIndex: number) => {
+    const key = `${comidaIndex}-${platoIndex}`;
+    setModalAbierto(prev => ({ ...prev, [key]: false }));
+  };
+
+  // Actualizar seguimiento después de guardar
+  const handleSeguimientoActualizado = (comidaIndex: number, platoIndex: number, seguimiento: SeguimientoPlato) => {
+    const key = `${comidaIndex}-${platoIndex}`;
+    setSeguimientos(prev => ({ ...prev, [key]: seguimiento }));
+    cerrarModalSeguimiento(comidaIndex, platoIndex);
   };
 
   useEffect(() => {
@@ -119,6 +211,13 @@ const DetalleDiaPage: React.FC = () => {
     
     cargarDietaYProcesarDia();
   }, [dietaId, diaIndex, navigate]);
+
+  // Cargar seguimientos cuando la dieta esté disponible
+  useEffect(() => {
+    if (dieta && puedeGestionarSeguimiento()) {
+      cargarSeguimientos();
+    }
+  }, [dieta, user, cargarSeguimientos, puedeGestionarSeguimiento]);
 
   // Formatear fecha de inicio de dieta (comentado porque no se usa actualmente)
   // const fechaInicioFormateada = useMemo(() => {
@@ -254,6 +353,14 @@ const DetalleDiaPage: React.FC = () => {
         </Paper>
       )}
 
+      {/* Resumen de seguimiento del día */}
+      {puedeGestionarSeguimiento() && Object.keys(seguimientos).length > 0 && (
+        <ResumenSeguimientoDia
+          seguimientos={seguimientos}
+          totalPlatos={dayInfo.data.comidas.reduce((total, comida) => total + comida.platos.length, 0)}
+        />
+      )}
+
       {/* Comidas del día */}
       <Paper p="md" withBorder>
         <Stack gap="sm">
@@ -291,13 +398,95 @@ const DetalleDiaPage: React.FC = () => {
                       <Divider size="xs" />
                       
                       <Stack gap="xs">
-                        {/* Lista de platos */}
-                        <PlatosList 
-                          platos={comida.platos}
-                          isDark={isDark}
-                          isMobile={false}
-                          onVerReceta={handleVerReceta}
-                        />
+                        {/* Lista de platos con seguimiento */}
+                        {comida.platos.map((plato, platoIndex) => {
+                          const key = `${index}-${platoIndex}`;
+                          const seguimientoPlato = seguimientos[key];
+                          
+                          return (
+                            <Paper key={platoIndex} p="sm" withBorder>
+                              <Stack gap="xs">
+                                <Group justify="space-between" align="center">
+                                  <Text fw={600} size="sm" c={isDark ? "gray.1" : "gray.8"}>
+                                    {plato.nombre || `Plato ${platoIndex + 1}`}
+                                  </Text>
+                                  
+                                  <Group gap="xs">
+                                    {/* Botón para ver receta si existe */}
+                                    {plato.receta && (
+                                      <Button
+                                        size="xs"
+                                        variant="outline"
+                                        color="blue"
+                                        onClick={() => {
+                                          if (!plato.receta) return;
+                                          
+                                          let recetaId: string;
+                                          if (typeof plato.receta === 'string') {
+                                            recetaId = plato.receta;
+                                          } else if (typeof plato.receta === 'object' && plato.receta !== null) {
+                                            // Si es un objeto poblado, extraer el _id
+                                            recetaId = (plato.receta as { _id: string })._id;
+                                          } else {
+                                            recetaId = String(plato.receta);
+                                          }
+                                          
+                                          if (recetaId) {
+                                            handleVerReceta(recetaId);
+                                          }
+                                        }}
+                                      >
+                                        Ver receta
+                                      </Button>
+                                    )}
+                                    
+                                    {/* Botón de seguimiento para el plato */}
+                                    {puedeGestionarSeguimiento() && puedeEditarSeguimiento() && (
+                                      <Button
+                                        size="xs"
+                                        variant="light"
+                                        color="nutroos-green"
+                                        leftSection={<IconStar size={14} />}
+                                        onClick={() => abrirModalSeguimiento(index, platoIndex)}
+                                        loading={cargandoSeguimientos}
+                                      >
+                                        {seguimientoPlato ? 'Ver seguimiento' : 'Registrar seguimiento'}
+                                      </Button>
+                                    )}
+                                  </Group>
+                                </Group>
+                                
+                                {/* Mostrar seguimiento existente para nutricionistas creadores */}
+                                {puedeGestionarSeguimiento() && !puedeEditarSeguimiento() && (
+                                  <>
+                                    {seguimientoPlato ? (
+                                      <SeguimientoPlatoDisplay
+                                        seguimiento={seguimientoPlato}
+                                        nombrePlato={plato.nombre || `Plato ${platoIndex + 1}`}
+                                        soloLectura={true}
+                                      />
+                                    ) : (
+                                      <Paper p="sm" withBorder bg={isDark ? "dark.6" : "gray.0"} style={{ opacity: 0.6 }}>
+                                        <Text size="xs" c="dimmed" ta="center" style={{ fontStyle: 'italic' }}>
+                                          Sin seguimiento registrado
+                                        </Text>
+                                      </Paper>
+                                    )}
+                                  </>
+                                )}
+                                
+                                {/* Mostrar seguimiento existente para usuarios asignados */}
+                                {puedeGestionarSeguimiento() && puedeEditarSeguimiento() && seguimientoPlato && (
+                                  <SeguimientoPlatoDisplay
+                                    seguimiento={seguimientoPlato}
+                                    nombrePlato={plato.nombre || `Plato ${platoIndex + 1}`}
+                                    soloLectura={false}
+                                  />
+                                )}
+                              </Stack>
+                            </Paper>
+                          );
+                        })}
                         
                         {/* Lista de ingredientes del plato */}
                         {comida.platos.some(plato => 
@@ -373,6 +562,8 @@ const DetalleDiaPage: React.FC = () => {
                             })}
                           </Stack>
                         )}
+                        
+                        
                       </Stack>
                     </Stack>
                   </Paper>
@@ -381,6 +572,28 @@ const DetalleDiaPage: React.FC = () => {
             </Stack>
         </Stack>
       </Paper>
+
+      {/* Modales de seguimiento por plato */}
+      {puedeGestionarSeguimiento() && dayInfo && dayInfo.data.comidas.map((comida, comidaIndex) => 
+        comida.platos.map((plato, platoIndex) => {
+          const key = `${comidaIndex}-${platoIndex}`;
+          return (
+            <SeguimientoPlatoModal
+              key={`modal-${key}`}
+              opened={modalAbierto[key] || false}
+              onClose={() => cerrarModalSeguimiento(comidaIndex, platoIndex)}
+              dietaId={dietaId!}
+              diaIndex={parseInt(diaIndex!) - 1} // Convertir a índice 0-based
+              comidaIndex={comidaIndex}
+              platoIndex={platoIndex}
+              nombrePlato={plato.nombre || `Plato ${platoIndex + 1}`}
+              seguimientoActual={seguimientos[key]}
+              onSeguimientoActualizado={(seguimiento) => handleSeguimientoActualizado(comidaIndex, platoIndex, seguimiento)}
+              soloLectura={!puedeEditarSeguimiento()}
+            />
+          );
+        })
+      )}
     </Container>
   );
 };

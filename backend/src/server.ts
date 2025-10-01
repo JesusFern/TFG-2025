@@ -6,6 +6,7 @@ import { createServer } from "http";
 import userRoutes from "./routes/users/userRoutes";
 import adminRoutes from './routes/users/adminRoutes';
 import dietRoutes from './routes/diets/dietRoutes';
+import seguimientoRoutes from './routes/diets/seguimientoRoutes';
 import recetaRoutes from './routes/diets/recetaRoutes';
 import trainingRoutes from './routes/training';
 import estadisticasRoutes from './routes/training/estadisticasRoutes';
@@ -19,6 +20,7 @@ import alimentosHibridoRoutes from './routes/alimentos/alimentosHibridoRoutes';
 import ingredientesRoutes from './routes/alimentos/ingredientesRoutes';
 import wgerRoutes from './routes/training/wgerRoutes';
 import googleCalendarRoutes from './routes/google/calendarRoutes';
+import listaCompraRoutes from './routes/listaCompraRoutes';
 import { SocketServer } from './socket/socketServer';
 import { cronNotificacionesService } from './service/notificaciones/cronNotificacionesService';
 
@@ -56,6 +58,7 @@ app.use('/uploads', express.static('uploads'));
 app.use("/api/users", userRoutes);
 app.use("/api/admin", adminRoutes);
 app.use('/api/diets', dietRoutes);
+app.use('/api/diets-seguimiento', seguimientoRoutes);
 app.use('/api/recetas', recetaRoutes);
 app.use('/api/training', trainingRoutes);
 app.use('/api/estadisticas', estadisticasRoutes);
@@ -69,6 +72,7 @@ app.use('/api/alimentos', alimentosHibridoRoutes);
 app.use('/api/ingredientes', ingredientesRoutes);
 app.use('/api/wger', wgerRoutes);
 app.use('/api/google', googleCalendarRoutes);
+app.use('/api/lista-compra', listaCompraRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("API corriendo...");
