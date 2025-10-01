@@ -53,45 +53,51 @@ export async function crearNotificacionService(datos: CrearNotificacionData): Pr
   }
 }
 
-// Función helper para construir consultas de forma segura
-function buildSafeNotificationQuery(
+// Constantes para validación segura
+const TIPOS_VALIDOS = ['mensaje', 'recordatorio', 'sistema', 'entrenamiento', 'nutricion'] as const;
+const PRIORIDADES_VALIDAS = ['baja', 'normal', 'alta', 'urgente'] as const;
+const ORDENES_VALIDOS = ['asc', 'desc'] as const;
+
+// Función helper para validar y sanitizar parámetros
+function validateAndSanitizeParams(
   usuarioId: string,
   tipo?: string,
   prioridad?: string,
-  leida?: boolean
-): Record<string, unknown> {
-  const tiposValidos = ['mensaje', 'recordatorio', 'sistema', 'entrenamiento', 'nutricion'];
-  const prioridadesValidas = ['baja', 'normal', 'alta', 'urgente'];
+  leida?: boolean,
+  limit?: number,
+  offset?: number,
+  orden?: 'asc' | 'desc'
+) {
+  // Validar ObjectId del usuario
+  if (!mongoose.Types.ObjectId.isValid(usuarioId)) {
+    throw new Error('ID de usuario inválido');
+  }
 
-  // Construir consulta base segura con ObjectId validado
-  const baseQuery = {
-    usuario: new mongoose.Types.ObjectId(usuarioId),
-    $or: [
-      { enviada: true },
-      { programadaPara: { $lte: new Date() } },
-      { programadaPara: { $exists: false } }
-    ]
+  // Validar y sanitizar tipo
+  const tipoValidado = tipo && TIPOS_VALIDOS.includes(tipo as typeof TIPOS_VALIDOS[number]) ? tipo : undefined;
+  
+  // Validar y sanitizar prioridad
+  const prioridadValidada = prioridad && PRIORIDADES_VALIDAS.includes(prioridad as typeof PRIORIDADES_VALIDAS[number]) ? prioridad : undefined;
+  
+  // Validar límites de paginación
+  const limitValidado = Math.min(Math.max(parseInt(limit?.toString() || '20') || 20, 1), 100);
+  const offsetValidado = Math.max(parseInt(offset?.toString() || '0') || 0, 0);
+  
+  // Validar orden
+  const ordenValidado = ORDENES_VALIDOS.includes(orden || 'desc') ? orden : 'desc';
+
+  return {
+    usuarioObjectId: new mongoose.Types.ObjectId(usuarioId),
+    tipo: tipoValidado,
+    prioridad: prioridadValidada,
+    leida,
+    limit: limitValidado,
+    offset: offsetValidado,
+    orden: ordenValidado
   };
-
-  // Agregar filtros solo si son válidos y seguros
-  const query: Record<string, unknown> = { ...baseQuery };
-
-  if (tipo && tiposValidos.includes(tipo)) {
-    query.tipo = tipo;
-  }
-
-  if (prioridad && prioridadesValidas.includes(prioridad)) {
-    query.prioridad = prioridad;
-  }
-
-  if (leida !== undefined) {
-    query.leida = leida;
-  }
-
-  return query;
 }
 
-// Función helper para ejecutar consultas de forma segura
+// Función helper para ejecutar consultas de forma segura usando métodos específicos
 async function executeSafeNotificationQuery(
   usuarioId: string,
   tipo?: string,
@@ -110,27 +116,67 @@ async function executeSafeNotificationQuery(
     offset: number;
   };
 }> {
-  // Validar límites de paginación
-  const limitValidado = Math.min(Math.max(parseInt(limit?.toString() || '20') || 20, 1), 100);
-  const offsetValidado = Math.max(parseInt(offset?.toString() || '0') || 0, 0);
-  const ordenesValidos = ['asc', 'desc'];
-  const ordenValidado = ordenesValidos.includes(orden || 'desc') ? orden : 'desc';
+  // Validar y sanitizar parámetros
+  const params = validateAndSanitizeParams(usuarioId, tipo, prioridad, leida, limit, offset, orden);
 
-  // Construir consulta de forma segura
-  const safeQuery = buildSafeNotificationQuery(usuarioId, tipo, prioridad, leida);
+  // Usar métodos específicos de Mongoose para evitar construcción dinámica de consultas
+  let query = Notificacion.find({
+    usuario: params.usuarioObjectId,
+    $or: [
+      { enviada: true },
+      { programadaPara: { $lte: new Date() } },
+      { programadaPara: { $exists: false } }
+    ]
+  });
 
-  // Ejecutar consultas de forma segura
-  const [total, notificaciones] = await Promise.all([
-    Notificacion.countDocuments(safeQuery),
-    Notificacion.find(safeQuery)
-      .sort({ createdAt: ordenValidado === 'asc' ? 1 : -1 })
-      .skip(offsetValidado)
-      .limit(limitValidado)
-      .lean()
-  ]);
+  // Aplicar filtros adicionales usando métodos específicos
+  if (params.tipo) {
+    query = query.where('tipo').equals(params.tipo);
+  }
+  
+  if (params.prioridad) {
+    query = query.where('prioridad').equals(params.prioridad);
+  }
+  
+  if (params.leida !== undefined) {
+    query = query.where('leida').equals(params.leida);
+  }
 
-  const totalPaginas = Math.ceil(total / limitValidado);
-  const pagina = Math.floor(offsetValidado / limitValidado) + 1;
+  // Aplicar ordenamiento, paginación y ejecutar
+  const sortOrder = params.orden === 'asc' ? 1 : -1;
+  const notificaciones = await query
+    .sort({ createdAt: sortOrder })
+    .skip(params.offset)
+    .limit(params.limit)
+    .lean();
+
+  // Contar total usando la misma lógica pero sin paginación
+  let countQuery = Notificacion.countDocuments({
+    usuario: params.usuarioObjectId,
+    $or: [
+      { enviada: true },
+      { programadaPara: { $lte: new Date() } },
+      { programadaPara: { $exists: false } }
+    ]
+  });
+
+  // Aplicar los mismos filtros al conteo
+  if (params.tipo) {
+    countQuery = countQuery.where('tipo').equals(params.tipo);
+  }
+  
+  if (params.prioridad) {
+    countQuery = countQuery.where('prioridad').equals(params.prioridad);
+  }
+  
+  if (params.leida !== undefined) {
+    countQuery = countQuery.where('leida').equals(params.leida);
+  }
+
+  const total = await countQuery;
+
+  const totalPaginas = Math.ceil(total / params.limit);
+  const pagina = Math.floor(params.offset / params.limit) + 1;
 
   return {
     notificaciones: notificaciones as unknown as Record<string, unknown>[],
@@ -138,8 +184,8 @@ async function executeSafeNotificationQuery(
     paginacion: {
       pagina,
       totalPaginas,
-      limite: limitValidado,
-      offset: offsetValidado
+      limite: params.limit,
+      offset: params.offset
     }
   };
 }
