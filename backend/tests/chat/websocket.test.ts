@@ -98,7 +98,7 @@ describe('WebSocket Server', () => {
     it('debería manejar evento new_notification', () => {
       const mockIO = socketServer.getIO();
       const mockOn = mockIO.on as jest.MockedFunction<typeof mockIO.on>;
-      const connectionHandler = mockOn.mock.calls.find((call: any[]) => call[0] === 'connection')?.[1];
+      const connectionHandler = mockOn.mock.calls.find((call: unknown[]) => call[0] === 'connection')?.[1];
       
       if (connectionHandler) {
         const mockSocket = {
@@ -111,14 +111,15 @@ describe('WebSocket Server', () => {
         };
         
         // Mock del middleware de autenticación para que pase
-        jest.spyOn(require('../../src/middlewares/authMiddleware'), 'authenticateToken')
-          .mockImplementation((req: any, res: any, next: any) => {
-            req.user = { id: 'test-user-id' };
-            next();
+        const authMiddleware = jest.requireMock('../../src/middlewares/authMiddleware');
+        jest.spyOn(authMiddleware, 'authenticateToken')
+          .mockImplementation((req: unknown, res: unknown, next: unknown) => {
+            (req as { user: { id: string } }).user = { id: 'test-user-id' };
+            (next as () => void)();
           });
         
         // Mock del servicio de notificaciones
-        const mockNotificacionService = require('../../src/service/chats/notificacionService');
+        const mockNotificacionService = jest.requireMock('../../src/service/chats/notificacionService');
         mockNotificacionService.marcarComoLeidaService = jest.fn().mockResolvedValue(undefined);
         mockNotificacionService.eliminarNotificacionService = jest.fn().mockResolvedValue(undefined);
         mockNotificacionService.marcarTodasComoLeidasService = jest.fn().mockResolvedValue({ actualizadas: 5 });

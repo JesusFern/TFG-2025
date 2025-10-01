@@ -10,6 +10,20 @@ import {
 } from '../../service/chats/notificacionService';
 import logger from '../../utils/logger';
 
+// Helper function para manejo de errores de notificaciones
+const handleNotificationError = (error: unknown, res: Response, action: string): void => {
+  logger.error(`Error al ${action}:`, error);
+  
+  if (error instanceof Error && error.message.includes('no encontrada')) {
+    res.status(404).json({ message: error.message });
+  } else {
+    res.status(500).json({ 
+      message: 'Error interno del servidor',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+};
+
 /**
  * Obtener notificaciones del usuario con filtros
  */
@@ -30,13 +44,18 @@ export const obtenerNotificaciones = async (req: AuthenticatedRequest, res: Resp
       orden = 'desc'
     } = req.query;
 
+    // Validar y sanitizar parámetros de entrada
+    const tiposValidos = ['mensaje', 'recordatorio', 'sistema', 'entrenamiento', 'nutricion'];
+    const prioridadesValidas = ['baja', 'normal', 'alta', 'urgente'];
+    const ordenesValidos = ['asc', 'desc'];
+
     const filtros = {
-      limit: parseInt(limit as string),
-      offset: parseInt(offset as string),
-      tipo: tipo as string,
-      prioridad: prioridad as string,
+      limit: Math.min(Math.max(parseInt(limit as string) || 20, 1), 100),
+      offset: Math.max(parseInt(offset as string) || 0, 0),
+      tipo: tipo && tiposValidos.includes(tipo as string) ? tipo as string : undefined,
+      prioridad: prioridad && prioridadesValidas.includes(prioridad as string) ? prioridad as string : undefined,
       leida: leida === 'true' ? true : leida === 'false' ? false : undefined,
-      orden: orden as 'asc' | 'desc'
+      orden: ordenesValidos.includes(orden as string) ? orden as 'asc' | 'desc' : 'desc'
     };
 
     const resultado = await obtenerNotificacionesService(userId, filtros);
@@ -107,6 +126,13 @@ export const obtenerNotificacionPorId = async (req: AuthenticatedRequest, res: R
 
     const { id } = req.params;
 
+    // Validar que el ID sea un ObjectId válido de MongoDB
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ message: 'ID de notificación inválido' });
+      return;
+    }
+
     const notificacion = await obtenerNotificacionPorIdService(id, userId);
     
     logger.info('Notificación obtenida correctamente', { 
@@ -116,16 +142,7 @@ export const obtenerNotificacionPorId = async (req: AuthenticatedRequest, res: R
 
     res.status(200).json({ notificacion });
   } catch (error) {
-    logger.error('Error al obtener notificación por ID:', error);
-    
-    if (error instanceof Error && error.message.includes('no encontrada')) {
-      res.status(404).json({ message: error.message });
-    } else {
-      res.status(500).json({ 
-        message: 'Error interno del servidor',
-        error: error instanceof Error ? error.message : 'Error desconocido'
-      });
-    }
+    handleNotificationError(error, res, 'obtener notificación por ID');
   }
 };
 
@@ -142,6 +159,13 @@ export const marcarComoLeida = async (req: AuthenticatedRequest, res: Response):
 
     const { id } = req.params;
 
+    // Validar que el ID sea un ObjectId válido de MongoDB
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ message: 'ID de notificación inválido' });
+      return;
+    }
+
     await marcarComoLeidaService(id, userId);
     
     logger.info('Notificación marcada como leída', { 
@@ -151,16 +175,7 @@ export const marcarComoLeida = async (req: AuthenticatedRequest, res: Response):
 
     res.status(200).json({ message: 'Notificación marcada como leída' });
   } catch (error) {
-    logger.error('Error al marcar notificación como leída:', error);
-    
-    if (error instanceof Error && error.message.includes('no encontrada')) {
-      res.status(404).json({ message: error.message });
-    } else {
-      res.status(500).json({ 
-        message: 'Error interno del servidor',
-        error: error instanceof Error ? error.message : 'Error desconocido'
-      });
-    }
+    handleNotificationError(error, res, 'marcar notificación como leída');
   }
 };
 
@@ -208,6 +223,13 @@ export const eliminarNotificacion = async (req: AuthenticatedRequest, res: Respo
 
     const { id } = req.params;
 
+    // Validar que el ID sea un ObjectId válido de MongoDB
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      res.status(400).json({ message: 'ID de notificación inválido' });
+      return;
+    }
+
     await eliminarNotificacionService(id, userId);
     
     logger.info('Notificación eliminada correctamente', { 
@@ -217,16 +239,7 @@ export const eliminarNotificacion = async (req: AuthenticatedRequest, res: Respo
 
     res.status(200).json({ message: 'Notificación eliminada correctamente' });
   } catch (error) {
-    logger.error('Error al eliminar notificación:', error);
-    
-    if (error instanceof Error && error.message.includes('no encontrada')) {
-      res.status(404).json({ message: error.message });
-    } else {
-      res.status(500).json({ 
-        message: 'Error interno del servidor',
-        error: error instanceof Error ? error.message : 'Error desconocido'
-      });
-    }
+    handleNotificationError(error, res, 'eliminar notificación');
   }
 };
 

@@ -110,14 +110,20 @@ export const NotificationItem: React.FC<NotificationItemProps> = ({
   };
 
   const handleAction = () => {
+    console.log('NotificationItem: handleAction called', { 
+      hasOnAction: !!onAction, 
+      accion: notificacion.accion 
+    });
+    
     if (onAction && notificacion.accion) {
       onAction(notificacion.accion);
     }
   };
 
-  const formatTime = (dateString: string) => {
+  const formatTime = (date: string | Date) => {
     try {
-      return formatDistanceToNow(new Date(dateString), { 
+      const dateObj = typeof date === 'string' ? new Date(date) : date;
+      return formatDistanceToNow(dateObj, { 
         addSuffix: true, 
         locale: es 
       });

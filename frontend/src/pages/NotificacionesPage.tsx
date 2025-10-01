@@ -27,6 +27,7 @@ import {
 import { useNotificationContext } from '../contexts/NotificationContext';
 import { NotificationItem } from '../components/molecules/NotificationItem';
 import { FiltrosNotificaciones } from '../types/notifications';
+import { convertNotificationToStandard } from '../utils/notificationUtils';
 
 const NotificacionesPage: React.FC = () => {
   const navigate = useNavigate();
@@ -387,29 +388,7 @@ const NotificacionesPage: React.FC = () => {
             <Stack gap="xs" p="md">
               {notificacionesFiltradas.map((notificacion) => {
                 // Convertir el tipo Notification a Notificacion
-                const notificacionConvertida = {
-                  ...notificacion,
-                  programadaPara: notificacion.programadaPara ? 
-                    (typeof notificacion.programadaPara === 'string' ? 
-                      notificacion.programadaPara : 
-                      notificacion.programadaPara.toISOString()) : 
-                    undefined,
-                  expiraEn: notificacion.expiraEn ? 
-                    (typeof notificacion.expiraEn === 'string' ? 
-                      notificacion.expiraEn : 
-                      notificacion.expiraEn.toISOString()) : 
-                    undefined,
-                  createdAt: notificacion.createdAt ? 
-                    (typeof notificacion.createdAt === 'string' ? 
-                      notificacion.createdAt : 
-                      notificacion.createdAt.toISOString()) : 
-                    new Date().toISOString(),
-                  updatedAt: notificacion.updatedAt ? 
-                    (typeof notificacion.updatedAt === 'string' ? 
-                      notificacion.updatedAt : 
-                      notificacion.updatedAt.toISOString()) : 
-                    new Date().toISOString()
-                };
+                const notificacionConvertida = convertNotificationToStandard(notificacion);
                 
                 return (
                   <NotificationItem

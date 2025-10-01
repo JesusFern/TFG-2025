@@ -1,6 +1,8 @@
 import AssignmentRequest from '../../models/assignmentRequest/assignmentRequest';
 import User from '../../models/users/user';
 import mongoose from 'mongoose';
+import { notificacionIntegracionService } from '../notificaciones/notificacionIntegracionService';
+import logger from '../../utils/logger';
 
 export const createAssignmentRequest = async (
   usuarioSolicitante: mongoose.Types.ObjectId,
@@ -48,8 +50,26 @@ export const createAssignmentRequest = async (
       estado: 'pendiente'
     });
 
-  await assignmentRequest.save();
-  return assignmentRequest;
+    await assignmentRequest.save();
+
+    // Notificar al trabajador sobre la nueva solicitud
+    try {
+      const cliente = await User.findById(usuarioSolicitante);
+      if (cliente && assignmentRequest._id) {
+        await notificacionIntegracionService.notificarSolicitudAsignacion(
+          trabajadorSolicitado.toString(),
+          usuarioSolicitante.toString(),
+          cliente.fullName || 'Un usuario',
+          String(assignmentRequest._id),
+          tipoAsignacion
+        );
+      }
+    } catch (error) {
+      logger.error('Error al enviar notificación de solicitud de asignación:', error);
+      // No lanzar error para no interrumpir la creación de la solicitud
+    }
+
+    return assignmentRequest;
 };
 
 
@@ -91,9 +111,41 @@ export const updateAssignmentRequestStatus = async (
           } 
         }
       );
+
+      // Notificar al cliente que su solicitud fue aceptada
+      try {
+        const trabajador = await User.findById(assignmentRequest.trabajadorSolicitado);
+        if (trabajador) {
+          await notificacionIntegracionService.notificarAsignacionAceptada(
+            assignmentRequest.usuarioSolicitante.toString(),
+            assignmentRequest.trabajadorSolicitado.toString(),
+            trabajador.fullName || 'El profesional',
+            assignmentRequest.tipoAsignacion
+          );
+        }
+      } catch (error) {
+        logger.error('Error al enviar notificación de asignación aceptada:', error);
+        // No lanzar error para no interrumpir la actualización
+      }
+    } else if (estado === 'rechazada') {
+      // Notificar al cliente que su solicitud fue rechazada
+      try {
+        const trabajador = await User.findById(assignmentRequest.trabajadorSolicitado);
+        if (trabajador) {
+          await notificacionIntegracionService.notificarAsignacionRechazada(
+            assignmentRequest.usuarioSolicitante.toString(),
+            assignmentRequest.trabajadorSolicitado.toString(),
+            trabajador.fullName || 'El profesional',
+            assignmentRequest.tipoAsignacion
+          );
+        }
+      } catch (error) {
+        logger.error('Error al enviar notificación de asignación rechazada:', error);
+        // No lanzar error para no interrumpir la actualización
+      }
     }
 
-  return assignmentRequest;
+    return assignmentRequest;
 };
 
 export const cancelAssignmentRequest = async (

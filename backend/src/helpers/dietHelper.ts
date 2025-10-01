@@ -17,7 +17,6 @@ export async function buscarDietaYVerificarPermisos(
 
   const dieta = await Dieta.findById(dietaId)
     .populate('creador', 'fullName email')
-    .populate('asignadaA', 'fullName email')
     .populate({
       path: 'dias.comidas.platos.receta',
       populate: {

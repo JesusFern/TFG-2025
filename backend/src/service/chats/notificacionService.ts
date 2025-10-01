@@ -83,7 +83,12 @@ export async function obtenerNotificacionesService(
       orden = 'desc'
     } = filtros;
 
-    // Construir filtros de consulta
+    // Validar y sanitizar parámetros de entrada
+    const tiposValidos = ['mensaje', 'recordatorio', 'sistema', 'entrenamiento', 'nutricion'];
+    const prioridadesValidas = ['baja', 'normal', 'alta', 'urgente'];
+    const ordenesValidos = ['asc', 'desc'];
+
+    // Construir filtros de consulta de forma segura
     const query: Record<string, unknown> = { 
       usuario: usuarioId,
       // Solo mostrar notificaciones que ya han sido enviadas O que están programadas para el pasado/ahora
@@ -94,11 +99,12 @@ export async function obtenerNotificacionesService(
       ]
     };
 
-    if (tipo) {
+    // Validar y agregar filtros solo si son válidos
+    if (tipo && tiposValidos.includes(tipo)) {
       query.tipo = tipo;
     }
 
-    if (prioridad) {
+    if (prioridad && prioridadesValidas.includes(prioridad)) {
       query.prioridad = prioridad;
     }
 
@@ -106,18 +112,23 @@ export async function obtenerNotificacionesService(
       query.leida = leida;
     }
 
+    // Validar límites de paginación
+    const limitValidado = Math.min(Math.max(parseInt(limit.toString()) || 20, 1), 100);
+    const offsetValidado = Math.max(parseInt(offset.toString()) || 0, 0);
+    const ordenValidado = ordenesValidos.includes(orden) ? orden : 'desc';
+
     // Obtener total de notificaciones
     const total = await Notificacion.countDocuments(query);
 
     // Obtener notificaciones con paginación
     const notificaciones = await Notificacion.find(query)
-      .populate('usuario', 'fullName email')
-      .sort({ createdAt: orden === 'asc' ? 1 : -1 })
-      .skip(offset)
-      .limit(limit);
+      .sort({ createdAt: ordenValidado === 'asc' ? 1 : -1 })
+      .skip(offsetValidado)
+      .limit(limitValidado)
+      .lean();
 
-    const totalPaginas = Math.ceil(total / limit);
-    const pagina = Math.floor(offset / limit) + 1;
+    const totalPaginas = Math.ceil(total / limitValidado);
+    const pagina = Math.floor(offsetValidado / limitValidado) + 1;
 
     return {
       notificaciones: notificaciones as unknown as Record<string, unknown>[],
@@ -125,8 +136,8 @@ export async function obtenerNotificacionesService(
       paginacion: {
         pagina,
         totalPaginas,
-        limite: limit,
-        offset
+        limite: limitValidado,
+        offset: offsetValidado
       }
     };
   } catch (error) {
@@ -142,10 +153,15 @@ export async function obtenerNotificacionPorIdService(
   usuarioId: string
 ): Promise<Record<string, unknown>> {
   try {
+    // Validar que el ID sea un ObjectId válido de MongoDB
+    if (!mongoose.Types.ObjectId.isValid(notificacionId)) {
+      throw new Error('ID de notificación inválido');
+    }
+
     const notificacion = await Notificacion.findOne({
-      _id: notificacionId,
-      usuario: usuarioId
-    }).populate('usuario', 'fullName email');
+      _id: new mongoose.Types.ObjectId(notificacionId),
+      usuario: new mongoose.Types.ObjectId(usuarioId)
+    }).lean();
 
     if (!notificacion) {
       throw new Error('Notificación no encontrada');
@@ -165,8 +181,19 @@ export async function marcarComoLeidaService(
   usuarioId: string
 ): Promise<void> {
   try {
+    // Validar que los IDs sean ObjectIds válidos de MongoDB
+    if (!mongoose.Types.ObjectId.isValid(notificacionId)) {
+      throw new Error('ID de notificación inválido');
+    }
+    if (!mongoose.Types.ObjectId.isValid(usuarioId)) {
+      throw new Error('ID de usuario inválido');
+    }
+
     const notificacion = await Notificacion.findOneAndUpdate(
-      { _id: notificacionId, usuario: usuarioId },
+      { 
+        _id: new mongoose.Types.ObjectId(notificacionId), 
+        usuario: new mongoose.Types.ObjectId(usuarioId) 
+      },
       { leida: true },
       { new: true }
     );
@@ -205,9 +232,17 @@ export async function eliminarNotificacionService(
   usuarioId: string
 ): Promise<void> {
   try {
+    // Validar que los IDs sean ObjectIds válidos de MongoDB
+    if (!mongoose.Types.ObjectId.isValid(notificacionId)) {
+      throw new Error('ID de notificación inválido');
+    }
+    if (!mongoose.Types.ObjectId.isValid(usuarioId)) {
+      throw new Error('ID de usuario inválido');
+    }
+
     const notificacion = await Notificacion.findOneAndDelete({
-      _id: notificacionId,
-      usuario: usuarioId
+      _id: new mongoose.Types.ObjectId(notificacionId),
+      usuario: new mongoose.Types.ObjectId(usuarioId)
     });
 
     if (!notificacion) {
@@ -226,9 +261,9 @@ export async function obtenerNotificacionesNoLeidasService(usuarioId: string): P
     const notificaciones = await Notificacion.find({
       usuario: usuarioId,
       leida: false
-    }).sort({ createdAt: -1 });
+    }).sort({ createdAt: -1 }).lean();
     
-    return notificaciones.map(n => n.toObject() as unknown as INotificacion);
+    return notificaciones as unknown as INotificacion[];
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Error al obtener notificaciones no leídas: ${error.message}`);
@@ -413,18 +448,13 @@ export async function obtenerNotificacionesProgramadasService(): Promise<any[]> 
       ]
     };
 
-    const notificaciones = await Notificacion.find(query).populate('usuario', 'fullName email');
+    const notificaciones = await Notificacion.find(query).lean();
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return notificaciones.map((n: any) => {
-      const obj = n.toObject();
-      const userId = obj.usuario?._id || obj.usuario;
-      return {
-        ...obj,
-        usuarioId: userId?.toString() || userId,
-        usuario: obj.usuario
-      };
-    });
+    return notificaciones.map((n: any) => ({
+      ...n,
+      usuarioId: n.usuario?.toString() || n.usuario
+    }));
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Error al obtener notificaciones programadas: ${error.message}`);

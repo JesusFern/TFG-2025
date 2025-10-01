@@ -239,16 +239,11 @@ export async function publicarDietaService(dietaId: string, userId: string): Pro
   
   // Enviar notificaciones a todos los clientes asignados
   if (dieta.asignadaA && dieta.asignadaA.length > 0) {
-    // Extraer solo los IDs de los clientes
-    const clienteIds = dieta.asignadaA.map(cliente => 
-      typeof cliente === 'string' ? cliente : cliente._id?.toString() || cliente.toString()
-    );
-    
     // Enviar notificación a cada cliente asignado
-    for (const clienteId of clienteIds) {
+    for (const clienteId of dieta.asignadaA) {
       try {
         await notificacionIntegracionService.notificarDietaPublicada(
-          clienteId,
+          clienteId.toString(),
           userId,
           dietaId,
           dieta.nombre
@@ -280,18 +275,17 @@ export async function publicarDietaService(dietaId: string, userId: string): Pro
                 fechaHoraComida.setHours(horas, minutos, 0, 0);
                 
                 // Crear recordatorio para cada cliente
-                for (const clienteId of clienteIds) {
+                for (const clienteId of dieta.asignadaA) {
                   try {
                     await recordatorioService.crearRecordatorioComida(
-                      clienteId,
+                      clienteId.toString(),
                       userId,
                       dieta._id.toString(),
                       nombreComida,
                       fechaHoraComida,
                       diaIndex
                     );
-                  } catch (error) {
-                    console.error(`Error al crear recordatorio de comida para cliente ${clienteId}:`, error);
+                  } catch {
                     // Continuar con los demás clientes aunque uno falle
                   }
                 }
@@ -300,14 +294,11 @@ export async function publicarDietaService(dietaId: string, userId: string): Pro
           }
         }
         
-        console.log(`Recordatorios de comidas creados para dieta ${dieta._id} (${dieta.duracion} días, ${dieta.comidasDiarias} comidas/día)`);
+        // Recordatorios de comidas creados exitosamente
       }
-    } catch (error) {
-      console.error('Error al crear recordatorios de comidas:', error);
+    } catch {
       // No lanzar error para no interrumpir el proceso de publicación
     }
-  } else {
-    console.log('No hay clientes asignados a esta dieta, no se enviarán notificaciones');
   }
   
   return {

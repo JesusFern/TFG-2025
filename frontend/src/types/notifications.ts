@@ -9,7 +9,7 @@ export interface Notificacion {
   leida: boolean;
   enviada: boolean;
   accion?: {
-    tipo: 'navegar' | 'abrir_mensaje' | 'abrir_conversacion' | 'abrir_plan' | 'abrir_dieta';
+    tipo: 'navegar' | 'abrir_mensaje' | 'abrir_conversacion' | 'abrir_plan' | 'abrir_dieta' | 'abrir_sesion' | 'abrir_dia_dieta';
     url?: string;
     metadata?: Record<string, string | number | boolean>;
   };
@@ -21,10 +21,10 @@ export interface Notificacion {
     sesion?: string;
     remitente?: string;
   };
-  programadaPara?: string;
-  expiraEn?: string;
-  createdAt: string;
-  updatedAt: string;
+  programadaPara?: string | Date;
+  expiraEn?: string | Date;
+  createdAt: string | Date;
+  updatedAt: string | Date;
 }
 
 export interface NotificacionesResponse {
@@ -67,7 +67,7 @@ export interface CrearNotificacionData {
   contenido: string;
   prioridad?: 'baja' | 'normal' | 'alta' | 'urgente';
   accion?: {
-    tipo: 'navegar' | 'abrir_mensaje' | 'abrir_conversacion' | 'abrir_plan' | 'abrir_dieta';
+    tipo: 'navegar' | 'abrir_mensaje' | 'abrir_conversacion' | 'abrir_plan' | 'abrir_dieta' | 'abrir_sesion' | 'abrir_dia_dieta';
     url?: string;
     metadata?: Record<string, string | number | boolean>;
   };
@@ -84,7 +84,7 @@ export interface CrearNotificacionData {
 }
 
 // Tipos para acciones de notificaciones
-export type AccionNotificacion = 'navegar' | 'abrir_mensaje' | 'abrir_conversacion' | 'abrir_plan' | 'abrir_dieta';
+export type AccionNotificacion = 'navegar' | 'abrir_mensaje' | 'abrir_conversacion' | 'abrir_plan' | 'abrir_dieta' | 'abrir_sesion' | 'abrir_dia_dieta';
 
 // Tipos para prioridades
 export type PrioridadNotificacion = 'baja' | 'normal' | 'alta' | 'urgente';

@@ -229,6 +229,128 @@ export class NotificacionIntegracionService {
   }
 
   /**
+   * Notificar cuando un cliente solicita asignación a un trabajador
+   */
+  public async notificarSolicitudAsignacion(
+    trabajadorId: string,
+    clienteId: string,
+    clienteNombre: string,
+    solicitudId: string,
+    tipoAsignacion: 'Nutricionista' | 'Entrenador personal'
+  ): Promise<void> {
+    try {
+      const notificacionData = {
+        usuario: trabajadorId,
+        tipo: 'sistema' as const,
+        titulo: 'Nueva solicitud de asignación',
+        contenido: `${clienteNombre} te ha solicitado como ${tipoAsignacion}. Revisa la solicitud y decide si aceptarla o rechazarla.`,
+        prioridad: 'alta' as const,
+        accion: {
+          tipo: 'navegar' as const,
+          url: '/solicitudes',
+          metadata: { solicitudId }
+        },
+        metadata: {
+          remitente: clienteId
+        }
+      };
+
+      // Crear notificación en la base de datos
+      const notificacionGuardada = await crearNotificacionService(notificacionData);
+      
+      // Enviar notificación en tiempo real
+      if (socketServer) {
+        await socketServer.sendNotificationToUser(trabajadorId, notificacionGuardada as unknown as Record<string, unknown>);
+      }
+
+      logger.info(`Notificación de solicitud de asignación enviada a trabajador ${trabajadorId}`);
+    } catch (error) {
+      logger.error('Error al notificar solicitud de asignación:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Notificar cuando un trabajador acepta la solicitud de asignación
+   */
+  public async notificarAsignacionAceptada(
+    clienteId: string,
+    trabajadorId: string,
+    trabajadorNombre: string,
+    tipoAsignacion: 'Nutricionista' | 'Entrenador personal'
+  ): Promise<void> {
+    try {
+      const notificacionData = {
+        usuario: clienteId,
+        tipo: 'sistema' as const,
+        titulo: '¡Solicitud aceptada!',
+        contenido: `${trabajadorNombre} ha aceptado tu solicitud. Ya tienes un ${tipoAsignacion} asignado. ¡Comienza tu camino hacia tus objetivos!`,
+        prioridad: 'alta' as const,
+        accion: {
+          tipo: 'navegar' as const,
+          url: '/dashboard'
+        },
+        metadata: {
+          remitente: trabajadorId
+        }
+      };
+
+      // Crear notificación en la base de datos
+      const notificacionGuardada = await crearNotificacionService(notificacionData);
+      
+      // Enviar notificación en tiempo real
+      if (socketServer) {
+        await socketServer.sendNotificationToUser(clienteId, notificacionGuardada as unknown as Record<string, unknown>);
+      }
+
+      logger.info(`Notificación de asignación aceptada enviada a cliente ${clienteId}`);
+    } catch (error) {
+      logger.error('Error al notificar asignación aceptada:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Notificar cuando un trabajador rechaza la solicitud de asignación
+   */
+  public async notificarAsignacionRechazada(
+    clienteId: string,
+    trabajadorId: string,
+    trabajadorNombre: string,
+    tipoAsignacion: 'Nutricionista' | 'Entrenador personal'
+  ): Promise<void> {
+    try {
+      const notificacionData = {
+        usuario: clienteId,
+        tipo: 'sistema' as const,
+        titulo: 'Solicitud rechazada',
+        contenido: `${trabajadorNombre} no ha podido aceptar tu solicitud de ${tipoAsignacion} en este momento. Puedes intentar con otro profesional.`,
+        prioridad: 'normal' as const,
+        accion: {
+          tipo: 'navegar' as const,
+          url: '/profesionales'
+        },
+        metadata: {
+          remitente: trabajadorId
+        }
+      };
+
+      // Crear notificación en la base de datos
+      const notificacionGuardada = await crearNotificacionService(notificacionData);
+      
+      // Enviar notificación en tiempo real
+      if (socketServer) {
+        await socketServer.sendNotificationToUser(clienteId, notificacionGuardada as unknown as Record<string, unknown>);
+      }
+
+      logger.info(`Notificación de asignación rechazada enviada a cliente ${clienteId}`);
+    } catch (error) {
+      logger.error('Error al notificar asignación rechazada:', error);
+      throw error;
+    }
+  }
+
+  /**
    * Crear recordatorio de comida
    */
   public async crearRecordatorioComida(

@@ -19,9 +19,11 @@ import {
   IconCheck,
   IconEye
 } from '@tabler/icons-react';
+import { useNavigate } from 'react-router-dom';
 import { useNotificationContext } from '../../contexts/NotificationContext';
 import { NotificationItem } from './NotificationItem';
 import { NotificationBellProps } from '../../types/notifications';
+import { convertNotificationToStandard } from '../../utils/notificationUtils';
 
 export const NotificationBell: React.FC<NotificationBellProps> = ({
   onViewAllClick,
@@ -29,6 +31,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
   maxVisible = 5
 }) => {
   const [opened, setOpened] = useState(false);
+  const navigate = useNavigate();
   const {
     notifications,
     unreadCount,
@@ -50,6 +53,60 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
 
   const handleMarkAllAsRead = () => {
     markAllAsRead();
+  };
+
+  // Función para manejar la acción de redirección
+  const handleNotificationAction = (accion: { tipo: 'navegar' | 'abrir_mensaje' | 'abrir_conversacion' | 'abrir_plan' | 'abrir_dieta' | 'abrir_sesion' | 'abrir_dia_dieta'; url?: string; metadata?: Record<string, string | number | boolean> } | undefined) => {
+    console.log('NotificationBell: handleNotificationAction called with:', accion);
+    
+    if (!accion) {
+      console.log('NotificationBell: No action provided');
+      return;
+    }
+
+    // Cerrar el popover antes de navegar
+    setOpened(false);
+
+    switch (accion.tipo) {
+      case 'navegar':
+        console.log('NotificationBell: Navigating to:', accion.url);
+        if (accion.url) {
+          navigate(accion.url);
+        }
+        break;
+      case 'abrir_mensaje':
+        if (accion.metadata?.mensajeId) {
+          navigate(`/chat?mensaje=${accion.metadata.mensajeId}`);
+        } else if (accion.metadata?.conversacionId) {
+          navigate(`/chat?conversacion=${accion.metadata.conversacionId}`);
+        }
+        break;
+      case 'abrir_conversacion':
+        if (accion.metadata?.conversacionId) {
+          navigate(`/chat?conversacion=${accion.metadata.conversacionId}`);
+        }
+        break;
+      case 'abrir_plan':
+        if (accion.metadata?.planId) {
+          navigate(`/mis-entrenamientos/${accion.metadata.planId}`);
+        }
+        break;
+      case 'abrir_sesion':
+        if (accion.metadata?.sesionId && accion.metadata?.planId) {
+          navigate(`/mis-entrenamientos/${accion.metadata.planId}/sesion/${accion.metadata.sesionId}`);
+        }
+        break;
+      case 'abrir_dieta':
+        if (accion.metadata?.dietaId) {
+          navigate(`/ver-dieta/${accion.metadata.dietaId}`);
+        }
+        break;
+      case 'abrir_dia_dieta':
+        if (accion.metadata?.dietaId && accion.metadata?.dia) {
+          navigate(`/dieta/${accion.metadata.dietaId}/dia/${accion.metadata.dia}`);
+        }
+        break;
+    }
   };
 
   // Mostrar solo notificaciones no leídas en el display de la campana
@@ -160,29 +217,14 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
               <Stack gap="xs">
                 {notificacionesVisibles.map((notificacion, index) => {
                   // Convertir el tipo Notification a Notificacion
-                  const notificacionConvertida = {
-                    ...notificacion,
-                    programadaPara: notificacion.programadaPara ? 
-                      (typeof notificacion.programadaPara === 'string' ? 
-                        notificacion.programadaPara : 
-                        notificacion.programadaPara.toISOString()) : 
-                      undefined,
-                    expiraEn: notificacion.expiraEn ? 
-                      (typeof notificacion.expiraEn === 'string' ? 
-                        notificacion.expiraEn : 
-                        notificacion.expiraEn.toISOString()) : 
-                      undefined,
-                    createdAt: notificacion.createdAt ? 
-                      (typeof notificacion.createdAt === 'string' ? 
-                        notificacion.createdAt : 
-                        notificacion.createdAt.toISOString()) : 
-                      new Date().toISOString(),
-                    updatedAt: notificacion.updatedAt ? 
-                      (typeof notificacion.updatedAt === 'string' ? 
-                        notificacion.updatedAt : 
-                        notificacion.updatedAt.toISOString()) : 
-                      new Date().toISOString()
-                  };
+                  const notificacionConvertida = convertNotificationToStandard(notificacion);
+                  
+                  // Log para debug
+                  console.log('NotificationBell: Rendering notification:', {
+                    id: notificacion._id,
+                    titulo: notificacion.titulo,
+                    accion: notificacion.accion
+                  });
                   
                   return (
                     <NotificationItem
@@ -190,7 +232,7 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                       notificacion={notificacionConvertida}
                       onMarkAsRead={() => markAsRead(notificacion._id)}
                       onDelete={() => deleteNotification(notificacion._id)}
-                      onAction={() => {}}
+                      onAction={handleNotificationAction}
                       compact
                     />
                   );

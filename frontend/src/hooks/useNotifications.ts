@@ -2,35 +2,10 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useSocket } from './useSocket';
 import { SOCKET_EVENTS } from '../config/socket';
 import { chatService } from '../services/chatService';
+import { Notificacion } from '../types/notifications';
 
-// Tipos para las notificaciones
-export interface Notification {
-  _id: string;
-  usuario: string;
-  tipo: 'mensaje' | 'recordatorio' | 'sistema' | 'entrenamiento' | 'nutricion';
-  titulo: string;
-  contenido: string;
-  prioridad: 'baja' | 'normal' | 'alta' | 'urgente';
-  leida: boolean;
-  enviada: boolean;
-  accion?: {
-    tipo: 'navegar' | 'abrir_mensaje' | 'abrir_conversacion' | 'abrir_plan' | 'abrir_dieta';
-    url?: string;
-    metadata?: Record<string, string | number | boolean>;
-  };
-  metadata?: {
-    mensaje?: string;
-    conversacion?: string;
-    planEntrenamiento?: string;
-    dieta?: string;
-    sesion?: string;
-    remitente?: string;
-  };
-  programadaPara?: Date;
-  expiraEn?: Date;
-  createdAt: Date;
-  updatedAt: Date;
-}
+// Alias para mantener compatibilidad con el código existente
+export type Notification = Notificacion;
 
 // Tipos para los eventos de notificaciones
 interface NotificationEvents {
@@ -48,6 +23,8 @@ export const useNotifications = (events: NotificationEvents = {}) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const eventsRef = useRef(events);
+  const hasLoadedRef = useRef(false); // Flag para evitar cargas múltiples
+  const isLoadingRef = useRef(false); // Ref para evitar dependencias circulares
 
   // Actualizar eventsRef cuando events cambie
   useEffect(() => {
@@ -120,8 +97,11 @@ export const useNotifications = (events: NotificationEvents = {}) => {
 
   // Cargar notificaciones iniciales
   const loadInitialNotifications = useCallback(async () => {
-    if (isLoading) return;
+    // Evitar múltiples llamadas simultáneas
+    if (isLoadingRef.current || hasLoadedRef.current) return;
     
+    hasLoadedRef.current = true;
+    isLoadingRef.current = true;
     setIsLoading(true);
     try {
       const response = await chatService.notificaciones.obtenerNotificaciones({ limit: 50 });
@@ -145,17 +125,19 @@ export const useNotifications = (events: NotificationEvents = {}) => {
       setUnreadCount(unread);
     } catch (error) {
       console.error('useNotifications: Error al cargar notificaciones iniciales:', error);
+      hasLoadedRef.current = false; // Resetear en caso de error para permitir reintentos
     } finally {
+      isLoadingRef.current = false;
       setIsLoading(false);
     }
-  }, [isLoading]);
+  }, []); // ✅ Sin dependencias - la función es estable
 
   // Cargar notificaciones iniciales cuando se conecte el socket
   useEffect(() => {
-    if (isConnected && notifications.length === 0) {
+    if (isConnected && !hasLoadedRef.current) {
       loadInitialNotifications();
     }
-  }, [isConnected, loadInitialNotifications, notifications.length]);
+  }, [isConnected, loadInitialNotifications]); // ✅ loadInitialNotifications es estable ahora
 
 
   // Marcar notificación como leída
