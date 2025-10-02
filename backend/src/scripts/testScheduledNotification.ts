@@ -39,7 +39,7 @@ async function testScheduledNotification() {
     const notificacion = await crearNotificacionService(notificacionData);
     console.log('✅ Notificación de prueba creada:', {
       id: notificacion._id,
-      programadaPara: notificacion.programadaPara,
+      programadaPara: notificacion.programadoPara,
       enviada: notificacion.enviada
     });
 

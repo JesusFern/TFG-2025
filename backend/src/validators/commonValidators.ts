@@ -63,7 +63,7 @@ export const manejarErrorGenerico = (
     }
     
     res.status(400).json({ 
-      message: `Error al ${operacion}`, 
+      message: `Error al ${operacion}: ${error.message}`, 
       error: error.message 
     });
     return;
