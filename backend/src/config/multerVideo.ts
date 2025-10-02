@@ -46,7 +46,7 @@ const storage = multer.diskStorage({
   }
 });
 
-const fileFilter = (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+const videoFileFilter = (req: Express.Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
   // Permitir videos
   if (file.mimetype.startsWith('video/')) {
     cb(null, true);
@@ -57,7 +57,7 @@ const fileFilter = (req: Express.Request, file: Express.Multer.File, cb: multer.
 
 const uploadVideo = multer({
   storage: storage,
-  fileFilter: fileFilter,
+  fileFilter: videoFileFilter,
   limits: {
     fileSize: 50 * 1024 * 1024, // 50MB máximo para videos
     files: 1 // Máximo 1 video por ejercicio
