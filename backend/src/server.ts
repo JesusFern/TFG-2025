@@ -21,6 +21,7 @@ import ingredientesRoutes from './routes/alimentos/ingredientesRoutes';
 import wgerRoutes from './routes/training/wgerRoutes';
 import googleCalendarRoutes from './routes/google/calendarRoutes';
 import listaCompraRoutes from './routes/listaCompraRoutes';
+import incidentRoutes from './routes/incidents/incidentRoutes';
 import { SocketServer } from './socket/socketServer';
 import { cronNotificacionesService } from './service/notificaciones/cronNotificacionesService';
 
@@ -73,6 +74,7 @@ app.use('/api/ingredientes', ingredientesRoutes);
 app.use('/api/wger', wgerRoutes);
 app.use('/api/google', googleCalendarRoutes);
 app.use('/api/lista-compra', listaCompraRoutes);
+app.use('/api/incidents', incidentRoutes);
 
 app.get("/", (req: Request, res: Response) => {
   res.send("API corriendo...");

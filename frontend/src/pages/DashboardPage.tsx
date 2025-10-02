@@ -21,11 +21,11 @@ import {
   IconCalendar,
   IconUser,
   IconSettings,
-  IconPlus,
   IconMessage,
   IconChefHat,
   IconClipboardList,
-  IconCalendarEvent
+  IconCalendarEvent,
+  IconAlertCircle
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -76,6 +76,15 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
 }) => {
   const theme = useMantineTheme();
 
+  // Validar que el color existe en el tema
+  const getColorValue = (colorName: string) => {
+    if (theme.colors[colorName] && theme.colors[colorName][6]) {
+      return theme.colors[colorName][6];
+    }
+    // Fallback a un color por defecto si no existe
+    return theme.colors.blue[6];
+  };
+
   const handleClick = () => {
     if (comingSoon || disabled) {
       return; // No hacer nada si está deshabilitado o es próximamente
@@ -91,8 +100,10 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
       style={{
         cursor: comingSoon || disabled ? 'not-allowed' : 'pointer',
         transition: 'all 0.2s ease',
-        borderLeft: `4px solid ${theme.colors[color][6]}`,
-        opacity: comingSoon || disabled ? 0.6 : 1
+        borderLeft: `4px solid ${getColorValue(color)}`,
+        opacity: comingSoon || disabled ? 0.6 : 1,
+        height: '100%',
+        minHeight: '160px'
       }}
       onClick={handleClick}
       onMouseEnter={(e) => {
@@ -106,9 +117,9 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
         e.currentTarget.style.boxShadow = 'none';
       }}
     >
-      <Stack gap="md">
+      <Stack gap="md" style={{ height: '100%' }}>
         <Group justify="space-between" align="flex-start">
-          <div style={{ color: theme.colors[color][6] }}>
+          <div style={{ color: getColorValue(color) }}>
             {icon}
           </div>
           <Group gap="xs">
@@ -120,7 +131,7 @@ const DashboardCard: React.FC<DashboardCardProps> = ({
             )}
           </Group>
         </Group>
-        <div>
+        <div style={{ flex: 1 }}>
           <Title order={4} mb="xs" c={theme.colors.gray[8]}>
             {title}
           </Title>
@@ -153,15 +164,6 @@ const DashboardPage: React.FC = () => {
   const [weeklyStats, setWeeklyStats] = useState<EstadisticasSemanalBackend | null>(null);
   const [weeklyNutritionStats, setWeeklyNutritionStats] = useState<EstadisticasNutricionalesSemanalBackend | null>(null);
   const [loadingStats, setLoadingStats] = useState(false);
-
-  // Función para mostrar modal de próximamente
-  const showComingSoon = (title: string, description: string) => {
-    setComingSoonModal({
-      opened: true,
-      title,
-      description
-    });
-  };
 
   // Cargar estadísticas semanales
   const loadWeeklyStats = useCallback(async () => {
@@ -258,6 +260,45 @@ const DashboardPage: React.FC = () => {
 
   // Configuración de tarjetas del dashboard según el rol del usuario
   const getDashboardItems = (): DashboardCardProps[] => {
+    // Dashboard específico para administradores
+    if (user?.role === 'admin') {
+      return [
+        {
+          title: 'Gestión de Usuarios',
+          description: 'Administra y gestiona todos los usuarios del sistema',
+          icon: <IconUser size={32} />,
+          color: 'blue',
+          onClick: () => navigate('/admin/users'),
+          badge: 'Administrar'
+        },
+        {
+          title: 'Gestión de Trabajadores',
+          description: 'Gestiona trabajadores, nutricionistas y entrenadores',
+          icon: <IconUser size={32} />,
+          color: 'green',
+          onClick: () => navigate('/admin/workers'),
+          badge: 'Administrar'
+        },
+        {
+          title: 'Crear Trabajador',
+          description: 'Registra nuevos trabajadores en el sistema',
+          icon: <IconUser size={32} />,
+          color: 'grape',
+          onClick: () => navigate('/admin/registrar-trabajador'),
+          badge: 'Registrar'
+        },
+        {
+          title: 'Gestión de Incidencias',
+          description: 'Administra y resuelve las incidencias reportadas por usuarios',
+          icon: <IconAlertCircle size={32} />,
+          color: 'orange',
+          onClick: () => navigate('/admin/incidencias'),
+          badge: 'Administrar'
+        }
+      ];
+    }
+
+    // Dashboard para usuarios y trabajadores
     const baseItems: DashboardCardProps[] = [
       {
         title: 'Progreso Semanal',
@@ -343,18 +384,6 @@ const DashboardPage: React.FC = () => {
           color: 'nutroos-green',
           onClick: () => navigate('/mis-recetas'),
           badge: 'Gestionar'
-        }
-      );
-    } else {
-      // Para otros roles (admin): mostrar recetas como próximamente
-      baseItems.splice(1, 0, 
-        {
-          title: 'Recetas',
-          description: 'Crea y gestiona recetas nutritivas',
-          icon: <IconChefHat size={32} />,
-          color: 'nutroos-green',
-          onClick: () => showComingSoon('Recetas', 'Esta funcionalidad estará disponible próximamente para administradores.'),
-          comingSoon: true
         }
       );
     }
@@ -448,117 +477,105 @@ const DashboardPage: React.FC = () => {
           </Stack>
         </Paper>
 
-        {/* Gráfico de Progreso Semanal */}
-        <Grid gutter="lg">
-          <Grid.Col span={{ base: 12, lg: 4 }}>
-            <Stack gap="lg">
-              {loadingStats && (user?.role === 'user' || user?.role === 'worker') ? (
-                <Paper p="lg" radius="lg" withBorder>
-                  <Center py="xl">
-                    <Stack align="center" gap="md">
-                      <Loader size="lg" />
-                      <Text c="dimmed">Cargando progreso semanal...</Text>
+        {/* Layout específico para administradores */}
+        {user?.role === 'admin' ? (
+          <Grid gutter="lg">
+            {dashboardItems.map((item, index) => (
+              <Grid.Col key={index} span={{ base: 12, sm: 6, lg: 3 }}>
+                <DashboardCard {...item} />
+              </Grid.Col>
+            ))}
+          </Grid>
+        ) : (
+          /* Layout para usuarios y trabajadores */
+          <Grid gutter="lg">
+            <Grid.Col span={{ base: 12, lg: 4 }}>
+              <Stack gap="lg">
+                {loadingStats && (user?.role === 'user' || user?.role === 'worker') ? (
+                  <Paper p="lg" radius="lg" withBorder>
+                    <Center py="xl">
+                      <Stack align="center" gap="md">
+                        <Loader size="lg" />
+                        <Text c="dimmed">Cargando progreso semanal...</Text>
+                      </Stack>
+                    </Center>
+                  </Paper>
+                ) : (progressSections.showNutrition || progressSections.showExercise || progressSections.showGeneral) ? (
+                  <WeeklyProgressChart
+                    nutritionProgress={weeklyProgress.nutrition}
+                    exerciseProgress={weeklyProgress.exercise}
+                    goalProgress={weeklyProgress.goal}
+                    showNutrition={progressSections.showNutrition}
+                    showExercise={progressSections.showExercise}
+                    showGeneral={progressSections.showGeneral}
+                    userRole={user?.role as 'user' | 'worker' | 'admin'}
+                  />
+                ) : (
+                  <Paper p="lg" radius="lg" withBorder>
+                    <Center py="xl">
+                      <Stack align="center" gap="md">
+                        <Text c="dimmed" ta="center">
+                          {user?.role === 'user' 
+                            ? 'Suscríbete para ver tu progreso semanal'
+                            : 'No tienes acceso al progreso semanal'
+                          }
+                        </Text>
+                      </Stack>
+                    </Center>
+                  </Paper>
+                )}
+                {user?.role === 'user' && (
+                  <CurrentSubscription />
+                )}
+                
+                {/* Tarjeta Mis Incidencias - Solo para user y worker */}
+                {(user?.role === 'user' || user?.role === 'worker') && (
+                  <Paper p="lg" radius="lg" withBorder>
+                    <Stack gap="md">
+                      <Group justify="space-between" align="flex-start">
+                        <div style={{ color: theme.colors.orange[6] }}>
+                          <IconAlertCircle size={32} />
+                        </div>
+                        <Badge color="orange" variant="light" size="sm">
+                          Soporte
+                        </Badge>
+                      </Group>
+                      <div>
+                        <Title order={4} mb="xs" c={theme.colors.gray[8]}>
+                          Mis Incidencias
+                        </Title>
+                        <Text size="sm" c="dimmed" lineClamp={2}>
+                          Revisa el estado de tus incidencias reportadas
+                        </Text>
+                      </div>
+                      <Button
+                        variant="light"
+                        color="orange"
+                        size="sm"
+                        onClick={() => navigate('/mis-incidencias')}
+                        fullWidth
+                      >
+                        Mis Incidencias
+                      </Button>
                     </Stack>
-                  </Center>
-                </Paper>
-              ) : (progressSections.showNutrition || progressSections.showExercise || progressSections.showGeneral) ? (
-                <WeeklyProgressChart
-                  nutritionProgress={weeklyProgress.nutrition}
-                  exerciseProgress={weeklyProgress.exercise}
-                  goalProgress={weeklyProgress.goal}
-                  showNutrition={progressSections.showNutrition}
-                  showExercise={progressSections.showExercise}
-                  showGeneral={progressSections.showGeneral}
-                  userRole={user?.role as 'user' | 'worker' | 'admin'}
-                />
-              ) : (
-                <Paper p="lg" radius="lg" withBorder>
-                  <Center py="xl">
-                    <Stack align="center" gap="md">
-                      <Text c="dimmed" ta="center">
-                        {user?.role === 'user' 
-                          ? 'Suscríbete para ver tu progreso semanal'
-                          : 'No tienes acceso al progreso semanal'
-                        }
-                      </Text>
-                    </Stack>
-                  </Center>
-                </Paper>
-              )}
-              {user?.role === 'user' && (
-                <CurrentSubscription />
-              )}
-            </Stack>
-          </Grid.Col>
-          
-          {/* Grid de Funcionalidades */}
-          <Grid.Col span={{ base: 12, lg: 8 }}>
-            <Grid gutter="md">
-              {dashboardItems.map((item, index) => (
-                <Grid.Col key={index} span={{ base: 12, sm: 6 }}>
-                  <DashboardCard {...item} />
-                </Grid.Col>
-              ))}
-            </Grid>
-          </Grid.Col>
-        </Grid>
+                  </Paper>
+                )}
+              </Stack>
+            </Grid.Col>
+            
+            {/* Grid de Funcionalidades */}
+            <Grid.Col span={{ base: 12, lg: 8 }}>
+              <Grid gutter="md">
+                {dashboardItems.map((item, index) => (
+                  <Grid.Col key={index} span={{ base: 12, sm: 6 }}>
+                    <DashboardCard {...item} />
+                  </Grid.Col>
+                ))}
+              </Grid>
+            </Grid.Col>
+          </Grid>
+        )}
 
-        {/* Acciones Rápidas */}
-        <Paper p="xl" radius="lg" withBorder>
-          <Stack gap="md">
-            <Title order={3} c={theme.colors.gray[8]}>
-              Acciones Rápidas
-            </Title>
-            <Group gap="md">
-              {user?.role === 'worker' && (
-                <Button
-                  leftSection={<IconPlus size={16} />}
-                  color="nutroos-green"
-                  variant="filled"
-                  onClick={() => navigate('/worker/dashboard-clients')}
-                >
-                  Seleccionar Cliente para Dieta
-                </Button>
-              )}
-              <Button
-                leftSection={<IconPlus size={16} />}
-                color="blue"
-                variant="light"
-                onClick={() => navigate('/training/new')}
-              >
-                Nueva Sesión
-              </Button>
-              {user?.role === 'admin' && (
-                <Group gap="md">
-                  <Button
-                    leftSection={<IconUser size={16} />}
-                    color="nutroos-green"
-                    variant="light"
-                    onClick={() => navigate('/admin/users')}
-                  >
-                    Gestión de Usuarios
-                  </Button>
-                  <Button
-                    leftSection={<IconUser size={16} />}
-                    color="blue"
-                    variant="light"
-                    onClick={() => navigate('/admin/workers')}
-                  >
-                    Gestión de Trabajadores
-                  </Button>
-                  <Button
-                    leftSection={<IconUser size={16} />}
-                    color="purple"
-                    variant="light"
-                    onClick={() => navigate('/admin/registrar-trabajador')}
-                  >
-                    Registrar Trabajador
-                  </Button>
-                </Group>
-              )}
-            </Group>
-          </Stack>
-        </Paper>
       </Stack>
 
       {/* Modal de Próximamente */}
