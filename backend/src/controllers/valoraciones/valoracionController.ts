@@ -39,6 +39,34 @@ export class ValoracionController {
 
       const valoracion = await ValoracionService.createValoracion(valoracionData);
 
+      // Emitir eventos WebSocket para actualización en tiempo real
+      try {
+        const { getSocketServer } = await import('../../server');
+        const socketServer = getSocketServer();
+        
+        if (socketServer) {
+          // Obtener estadísticas actualizadas del trabajador
+          const estadisticas = await ValoracionService.getValoracionStats({
+            trabajadorId: trabajadorId
+          });
+          
+          // Enviar actualización de estadísticas al trabajador
+          await socketServer.sendValoracionStatsUpdateToWorker(trabajadorId, estadisticas as unknown as Record<string, unknown>);
+          
+          // Enviar actualización de calificación promedio a todos los usuarios
+          await socketServer.sendWorkerRatingUpdate(trabajadorId, {
+            satisfactionRating: estadisticas.calificacionPromedio || 0,
+            totalValoraciones: estadisticas.totalValoraciones || 0
+          });
+          
+          // Enviar actualización de la valoración específica al trabajador
+          await socketServer.sendValoracionUpdateToWorker(trabajadorId, valoracion as unknown as Record<string, unknown>);
+        }
+      } catch (socketError) {
+        console.error('Error al emitir eventos WebSocket:', socketError);
+        // No fallar la operación si hay error en WebSocket
+      }
+
       res.status(201).json({
         message: 'Valoración creada exitosamente',
         data: valoracion

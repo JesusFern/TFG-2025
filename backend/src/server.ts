@@ -89,6 +89,9 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
 // Inicializar Socket.IO
 const socketServer = new SocketServer(httpServer);
 
+// Función para obtener la instancia del SocketServer
+export const getSocketServer = () => socketServer;
+
 // Exportar para uso en tests o módulos externos
 export { socketServer };
 

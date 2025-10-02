@@ -37,6 +37,7 @@ export interface ProfessionalResponse {
   biography?: string;
   availability?: string;
   clientesAsignados?: string[];
+  satisfactionRating?: number;
 }
 
 export const getUserById = async (userId: string): Promise<UserDetailResponse> => {
@@ -486,5 +487,91 @@ export const registerWorker = async (workerData: WorkerRegistrationData): Promis
       throw error;
     }
     throw new Error('Error de conexión al servidor');
+  }
+};
+
+export interface AssignedWorker {
+  _id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  workerType: string;
+  biography?: string;
+  availability?: string;
+  profilePicture?: string;
+  satisfactionRating?: number;
+  asignaciones: Array<{
+    clienteId: string;
+    tipoAsignacion: 'Nutricionista' | 'Entrenador personal';
+  }>;
+}
+
+export const getAssignedWorkers = async (): Promise<AssignedWorker[]> => {
+  try {
+    const { apiRequest } = await import('./api');
+    
+    // Obtener el ID del usuario actual desde el token o desde el contexto
+    const user = JSON.parse(localStorage.getItem('userData') || '{}');
+    const userId = user._id;
+
+    console.log('getAssignedWorkers - userId:', userId);
+    console.log('getAssignedWorkers - user:', user);
+
+    if (!userId) {
+      throw new Error('No se pudo obtener el ID del usuario');
+    }
+
+    const response = await apiRequest(`/api/users/workers/assigned/${userId}`, {
+      method: 'GET',
+    });
+
+    console.log('getAssignedWorkers - response status:', response.status);
+    console.log('getAssignedWorkers - response ok:', response.ok);
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      console.log('getAssignedWorkers - error data:', errorData);
+      throw new Error(errorData.message || 'Error al obtener los trabajadores asignados');
+    }
+
+    const data = await response.json();
+    console.log('getAssignedWorkers - data:', data);
+    return data || [];
+  } catch (error) {
+    console.error('Error al obtener trabajadores asignados:', error);
+    throw error; // Lanzar el error para que el componente lo maneje
+  }
+};
+
+export interface AssignedClient {
+  _id: string;
+  fullName: string;
+  email: string;
+  phoneNumber: string;
+  profilePicture?: string;
+  asignaciones: Array<{
+    clienteId: string;
+    tipoAsignacion: 'Nutricionista' | 'Entrenador personal';
+  }>;
+}
+
+export const getClientsAssignedToWorker = async (workerId: string): Promise<AssignedClient[]> => {
+  try {
+    const { apiRequest } = await import('./api');
+
+    const response = await apiRequest(`/api/users/clients/assigned/${workerId}`, {
+      method: 'GET',
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al obtener los clientes asignados');
+    }
+
+    const data = await response.json();
+    return data || [];
+  } catch (error) {
+    console.error('Error al obtener clientes asignados:', error);
+    throw error; // Lanzar el error para que el componente lo maneje
   }
 };

@@ -2,6 +2,7 @@ import React from 'react';
 import { Avatar, Group, Stack, Text, Badge, ActionIcon, useMantineTheme } from '@mantine/core';
 import { IconEdit, IconCamera } from '@tabler/icons-react';
 import { UserProfile } from '../../types/profile';
+import { useWorkerRating } from '../../hooks/useWorkerRating';
 
 interface ProfileHeaderProps {
   profile: UserProfile;
@@ -15,6 +16,12 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
   onEditPhoto 
 }) => {
   const theme = useMantineTheme();
+  
+  // Hook para obtener la calificación en tiempo real si es un trabajador
+  const { satisfactionRating } = useWorkerRating({
+    workerId: profile._id,
+    enabled: profile.role === 'worker'
+  });
   
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
@@ -132,24 +139,38 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </Text>
         )}
 
-        {profile.satisfactionRating !== undefined && (
-          <Group gap="xs">
-            <Text size="sm" c={theme.colors.gray[6]}>
-              <strong>Valoración:</strong>
-            </Text>
-            <Group gap={4}>
-              {[1, 2, 3, 4, 5].map((star) => (
-                <Text
-                  key={star}
-                  size="sm"
-                  c={star <= profile.satisfactionRating! ? 'yellow' : theme.colors.gray[4]}
-                >
-                  ★
+        <Group gap="xs">
+          <Text size="sm" c={theme.colors.gray[6]}>
+            <strong>Valoración:</strong>
+          </Text>
+          <Group gap={4}>
+            {(() => {
+              // Usar la calificación en tiempo real si es un trabajador, sino usar la del perfil
+              const rating = profile.role === 'worker' ? satisfactionRating : profile.satisfactionRating;
+              
+              return rating && rating > 0 ? (
+                <>
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Text
+                      key={star}
+                      size="sm"
+                      c={star <= rating ? 'yellow' : theme.colors.gray[4]}
+                    >
+                      ★
+                    </Text>
+                  ))}
+                  <Text size="sm" c="yellow" fw={500}>
+                    ({rating.toFixed(1)})
+                  </Text>
+                </>
+              ) : (
+                <Text size="sm" c={theme.colors.gray[5]}>
+                  Sin calificar
                 </Text>
-              ))}
-            </Group>
+              );
+            })()}
           </Group>
-        )}
+        </Group>
       </Stack>
     </Group>
   );
