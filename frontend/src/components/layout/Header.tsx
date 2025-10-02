@@ -63,6 +63,11 @@ const Header: React.FC = () => {
     closeMobileMenu();
   };
 
+  const handleMisIncidencias = () => {
+    navigate('/mis-incidencias');
+    closeMobileMenu();
+  };
+
   const navItems = [
     { label: 'Inicio', path: '/' },
     { label: 'Acerca de', path: '/acerca-de' },
@@ -186,6 +191,7 @@ const Header: React.FC = () => {
                     Dashboard
                   </Menu.Item>
 
+
                   <Menu.Item
                     leftSection={<IconCalendarEvent size={14} />}
                     onClick={() => {
@@ -224,6 +230,15 @@ const Header: React.FC = () => {
                   >
                     Mi Perfil
                   </Menu.Item>
+
+                  {(user.role === 'user' || user.role === 'worker') && (
+                    <Menu.Item
+                      leftSection={<IconCalendarEvent size={14} />}
+                      onClick={handleMisIncidencias}
+                    >
+                      Mis incidencias
+                    </Menu.Item>
+                  )}
 
                   <Menu.Divider />
 
@@ -299,6 +314,8 @@ const Header: React.FC = () => {
               >
                 Dashboard
               </Button>
+
+              {/* Mantenemos esta sección sin "Crear incidencia"; lo moveremos al fondo */}
               
               <Button
                 variant="light"
@@ -336,6 +353,18 @@ const Header: React.FC = () => {
               >
                 Mi Perfil
               </Button>
+
+              {(user.role === 'user' || user.role === 'worker') && (
+                <Button
+                  variant="light"
+                  leftSection={<IconCalendarEvent size={16} />}
+                  onClick={handleMisIncidencias}
+                  fullWidth
+                  color="nutroos-green"
+                >
+                  Mis incidencias
+                </Button>
+              )}
               <Button
                 variant="light"
                 leftSection={<IconLogout size={16} />}
@@ -345,6 +374,18 @@ const Header: React.FC = () => {
               >
                 Cerrar Sesión
               </Button>
+
+              {(user.role === 'user' || user.role === 'worker') && (
+                <Button
+                  variant="light"
+                  leftSection={<IconCalendarEvent size={16} />}
+                  onClick={handleMisIncidencias}
+                  fullWidth
+                  color="nutroos-green"
+                >
+                  Mis incidencias
+                </Button>
+              )}
             </Stack>
           ) : (
             <Group gap="sm">

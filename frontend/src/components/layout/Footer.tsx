@@ -76,20 +76,38 @@ const Footer: React.FC = () => {
               </Stack>
             </Group>
             
-            <Stack gap="xs" visibleFrom="sm">
-              <Text fw={500}>Síguenos</Text>
-              <Group gap="xs">
-                <ActionIcon size="lg" variant="subtle" color={isDark ? "blue.4" : "blue.6"}>
-                  <IconBrandTwitter size="1.2rem" />
-                </ActionIcon>
-                <ActionIcon size="lg" variant="subtle" color={isDark ? "blue.4" : "blue.6"}>
-                  <IconBrandInstagram size="1.2rem" />
-                </ActionIcon>
-                <ActionIcon size="lg" variant="subtle" color={isDark ? "blue.4" : "blue.6"}>
-                  <IconBrandYoutube size="1.2rem" />
-                </ActionIcon>
-              </Group>
-            </Stack>
+            <Group gap={50} align="flex-start" visibleFrom="sm">
+              <Stack gap="xs">
+                <Text fw={500}>Síguenos</Text>
+                <Group gap="xs">
+                  <ActionIcon size="lg" variant="subtle" color={isDark ? "blue.4" : "blue.6"}>
+                    <IconBrandTwitter size="1.2rem" />
+                  </ActionIcon>
+                  <ActionIcon size="lg" variant="subtle" color={isDark ? "blue.4" : "blue.6"}>
+                    <IconBrandInstagram size="1.2rem" />
+                  </ActionIcon>
+                  <ActionIcon size="lg" variant="subtle" color={isDark ? "blue.4" : "blue.6"}>
+                    <IconBrandYoutube size="1.2rem" />
+                  </ActionIcon>
+                </Group>
+              </Stack>
+              
+              <Stack gap="xs">
+                <Text fw={500}>Soporte</Text>
+                <Text size="sm" c="dimmed">
+                  ¿Tienes algún problema con la página?
+                </Text>
+                <Anchor 
+                  component={Link} 
+                  to="/incidencias/crear" 
+                  size="sm" 
+                  c={isDark ? "blue.3" : "blue.7"}
+                  fw={500}
+                >
+                  Crea una incidencia
+                </Anchor>
+              </Stack>
+            </Group>
           </Group>
           
           <Divider my="sm" color={isDark ? "dark.4" : "gray.3"} />

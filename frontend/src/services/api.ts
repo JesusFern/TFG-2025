@@ -26,8 +26,8 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
     ...(options.headers as Record<string, string>),
   };
 
-  // Agregar token de autorización si existe
-  if (token) {
+  // Agregar token de autorización si existe y no se ha enviado explícitamente
+  if (token && !headers['Authorization']) {
     headers['Authorization'] = `Bearer ${token}`;
   }
 
