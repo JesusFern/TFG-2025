@@ -100,13 +100,13 @@ export class ValoracionController {
         trabajadorId: trabajadorId as string,
         clienteId: clienteId as string,
         tipoTrabajador: tipoTrabajador as 'Nutricionista' | 'Entrenador personal',
-        calificacionMin: calificacionMin ? parseInt(calificacionMin as string) : undefined,
-        calificacionMax: calificacionMax ? parseInt(calificacionMax as string) : undefined,
+        calificacionMin: calificacionMin ? Number.parseInt(calificacionMin as string) : undefined,
+        calificacionMax: calificacionMax ? Number.parseInt(calificacionMax as string) : undefined,
         fechaDesde: fechaDesde ? new Date(fechaDesde as string) : undefined,
         fechaHasta: fechaHasta ? new Date(fechaHasta as string) : undefined,
         activa: activa ? activa === 'true' : undefined,
-        page: page ? parseInt(page as string) : undefined,
-        limit: limit ? parseInt(limit as string) : undefined,
+        page: page ? Number.parseInt(page as string) : undefined,
+        limit: limit ? Number.parseInt(limit as string) : undefined,
         sortBy: sortBy as 'fechaValoracion' | 'calificacion' | 'createdAt',
         sortOrder: sortOrder as 'asc' | 'desc'
       };
@@ -275,13 +275,13 @@ export class ValoracionController {
 
       const result = await ValoracionService.getValoracionesByTrabajador(trabajadorId, {
         tipoTrabajador: filters.tipoTrabajador as 'Nutricionista' | 'Entrenador personal',
-        calificacionMin: filters.calificacionMin ? parseInt(filters.calificacionMin as string) : undefined,
-        calificacionMax: filters.calificacionMax ? parseInt(filters.calificacionMax as string) : undefined,
+        calificacionMin: filters.calificacionMin ? Number.parseInt(filters.calificacionMin as string) : undefined,
+        calificacionMax: filters.calificacionMax ? Number.parseInt(filters.calificacionMax as string) : undefined,
         fechaDesde: filters.fechaDesde ? new Date(filters.fechaDesde as string) : undefined,
         fechaHasta: filters.fechaHasta ? new Date(filters.fechaHasta as string) : undefined,
         activa: filters.activa ? filters.activa === 'true' : undefined,
-        page: filters.page ? parseInt(filters.page as string) : undefined,
-        limit: filters.limit ? parseInt(filters.limit as string) : undefined,
+        page: filters.page ? Number.parseInt(filters.page as string) : undefined,
+        limit: filters.limit ? Number.parseInt(filters.limit as string) : undefined,
         sortBy: filters.sortBy as 'fechaValoracion' | 'calificacion' | 'createdAt',
         sortOrder: filters.sortOrder as 'asc' | 'desc'
       });
@@ -325,13 +325,13 @@ export class ValoracionController {
 
       const result = await ValoracionService.getValoracionesByCliente(clienteId, {
         tipoTrabajador: filters.tipoTrabajador as 'Nutricionista' | 'Entrenador personal',
-        calificacionMin: filters.calificacionMin ? parseInt(filters.calificacionMin as string) : undefined,
-        calificacionMax: filters.calificacionMax ? parseInt(filters.calificacionMax as string) : undefined,
+        calificacionMin: filters.calificacionMin ? Number.parseInt(filters.calificacionMin as string) : undefined,
+        calificacionMax: filters.calificacionMax ? Number.parseInt(filters.calificacionMax as string) : undefined,
         fechaDesde: filters.fechaDesde ? new Date(filters.fechaDesde as string) : undefined,
         fechaHasta: filters.fechaHasta ? new Date(filters.fechaHasta as string) : undefined,
         activa: filters.activa ? filters.activa === 'true' : undefined,
-        page: filters.page ? parseInt(filters.page as string) : undefined,
-        limit: filters.limit ? parseInt(filters.limit as string) : undefined,
+        page: filters.page ? Number.parseInt(filters.page as string) : undefined,
+        limit: filters.limit ? Number.parseInt(filters.limit as string) : undefined,
         sortBy: filters.sortBy as 'fechaValoracion' | 'calificacion' | 'createdAt',
         sortOrder: filters.sortOrder as 'asc' | 'desc'
       });

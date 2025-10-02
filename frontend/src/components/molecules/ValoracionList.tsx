@@ -91,7 +91,7 @@ const ValoracionList: React.FC<ValoracionListProps> = ({
     setFiltros(prev => ({
       ...prev,
       page: 1,
-      calificacion: filtroCalificacion ? parseInt(filtroCalificacion) : undefined,
+      calificacion: filtroCalificacion ? Number.parseInt(filtroCalificacion) : undefined,
       tipoTrabajador: filtroTipo as TipoTrabajador || undefined
     }));
   };

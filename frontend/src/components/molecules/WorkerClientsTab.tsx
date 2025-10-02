@@ -112,15 +112,8 @@ const WorkerClientsTab: React.FC<WorkerClientsTabProps> = ({ workerId }) => {
     navigate(`/worker/dashboard-clients?cliente=${encodeURIComponent(client.fullName)}`);
   };
 
-  const getTipoAsignacionIcon = (tipo: string) => {
-    switch (tipo) {
-      case 'Nutricionista':
-        return <IconUser size={16} />;
-      case 'Entrenador personal':
-        return <IconUser size={16} />;
-      default:
-        return <IconUser size={16} />;
-    }
+  const getTipoAsignacionIcon = () => {
+    return <IconUser size={16} />;
   };
 
   const getTipoAsignacionColor = (tipo: string) => {
@@ -202,7 +195,7 @@ const WorkerClientsTab: React.FC<WorkerClientsTabProps> = ({ workerId }) => {
                             key={index}
                             color={getTipoAsignacionColor(asignacion.tipoAsignacion)}
                             variant="light"
-                            leftSection={getTipoAsignacionIcon(asignacion.tipoAsignacion)}
+                            leftSection={getTipoAsignacionIcon()}
                             size="sm"
                           >
                             {asignacion.tipoAsignacion}
