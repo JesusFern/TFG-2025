@@ -27,11 +27,15 @@ import {
   IconClock,
   IconTarget,
   IconAlertTriangle,
-  IconPhone
+  IconPhone,
+  IconStar,
+  IconUsers
 } from '@tabler/icons-react';
 import { ProfileHeader } from '../molecules/ProfileHeader';
 import { ProfileStats } from '../molecules/ProfileStats';
 import { ProfileForm } from '../molecules/ProfileForm';
+import WorkerRatingsTab from '../molecules/WorkerRatingsTab';
+import WorkerClientsTab from '../molecules/WorkerClientsTab';
 import { UserProfile, DatosSaludYNutricion, DatosActividadFisica, ProfileFormData } from '../../types/profile';
 
 interface ProfilePageProps {
@@ -162,20 +166,42 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
               >
                 Resumen
               </Tabs.Tab>
-              <Tabs.Tab 
-                value="health" 
-                leftSection={<IconHeart size={16} />}
-                fw={500}
-              >
-                Salud
-              </Tabs.Tab>
-              <Tabs.Tab 
-                value="activity" 
-                leftSection={<IconActivity size={16} />}
-                fw={500}
-              >
-                Actividad
-              </Tabs.Tab>
+              {profile.role === 'user' && (
+                <>
+                  <Tabs.Tab 
+                    value="health" 
+                    leftSection={<IconHeart size={16} />}
+                    fw={500}
+                  >
+                    Salud
+                  </Tabs.Tab>
+                  <Tabs.Tab 
+                    value="activity" 
+                    leftSection={<IconActivity size={16} />}
+                    fw={500}
+                  >
+                    Actividad
+                  </Tabs.Tab>
+                </>
+              )}
+              {profile.role === 'worker' && (
+                <>
+                  <Tabs.Tab 
+                    value="ratings" 
+                    leftSection={<IconStar size={16} />}
+                    fw={500}
+                  >
+                    Valoraciones
+                  </Tabs.Tab>
+                  <Tabs.Tab 
+                    value="clients" 
+                    leftSection={<IconUsers size={16} />}
+                    fw={500}
+                  >
+                    Clientes
+                  </Tabs.Tab>
+                </>
+              )}
               <Tabs.Tab 
                 value="settings" 
                 leftSection={<IconSettings size={16} />}
@@ -536,6 +562,19 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                   </Text>
                 )}
               </Tabs.Panel>
+
+              {/* Paneles específicos para trabajadores */}
+              {profile.role === 'worker' && (
+                <>
+                  <Tabs.Panel value="ratings">
+                    <WorkerRatingsTab workerId={profile._id} />
+                  </Tabs.Panel>
+
+                  <Tabs.Panel value="clients">
+                    <WorkerClientsTab workerId={profile._id} />
+                  </Tabs.Panel>
+                </>
+              )}
 
               <Tabs.Panel value="settings">
                 <Stack gap="lg">

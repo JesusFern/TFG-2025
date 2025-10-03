@@ -32,6 +32,9 @@ interface SocketEvents {
   onNotificationDeleted?: (data: { notificacionId: string; timestamp: Date }) => void;
   onAllNotificationsMarkedRead?: (data: { actualizadas: number; timestamp: Date }) => void;
   onNotificationError?: (error: { error: string; details: string }) => void;
+  onValoracionUpdated?: (data: { valoracion: unknown; timestamp: Date }) => void;
+  onValoracionStatsUpdated?: (data: { estadisticas: unknown; timestamp: Date }) => void;
+  onWorkerRatingUpdated?: (data: { workerId: string; rating: unknown; timestamp: Date }) => void;
   onError?: (error: unknown) => void;
   onConnect?: () => void;
   onDisconnect?: (reason: string) => void;
@@ -211,6 +214,22 @@ export const useSocket = (events: SocketEvents = {}) => {
       socket.on(SOCKET_EVENTS.NOTIFICATION_ERROR, (error: { error: string; details: string }) => {
         console.error('useSocket: Error en notificación:', error);
         eventsRef.current.onNotificationError?.(error);
+      });
+
+      // Eventos de valoraciones
+      socket.on(SOCKET_EVENTS.VALORACION_UPDATED, (data: { valoracion: unknown; timestamp: Date }) => {
+        console.log('useSocket: Valoración actualizada:', data);
+        eventsRef.current.onValoracionUpdated?.(data);
+      });
+
+      socket.on(SOCKET_EVENTS.VALORACION_STATS_UPDATED, (data: { estadisticas: unknown; timestamp: Date }) => {
+        console.log('useSocket: Estadísticas de valoraciones actualizadas:', data);
+        eventsRef.current.onValoracionStatsUpdated?.(data);
+      });
+
+      socket.on(SOCKET_EVENTS.WORKER_RATING_UPDATED, (data: { workerId: string; rating: unknown; timestamp: Date }) => {
+        console.log('useSocket: Calificación del trabajador actualizada:', data);
+        eventsRef.current.onWorkerRatingUpdated?.(data);
       });
 
       // Conectar el socket

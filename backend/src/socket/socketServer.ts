@@ -478,4 +478,44 @@ export class SocketServer {
       console.error('Error al enviar notificación de seguimiento inactivo:', error);
     }
   }
+
+  // ===== MÉTODOS DE VALORACIONES =====
+
+  // Enviar actualización de valoraciones a un trabajador específico
+  public async sendValoracionUpdateToWorker(workerId: string, valoracionData: Record<string, unknown>) {
+    try {
+      this.sendToUser(workerId, 'valoracion_updated', {
+        valoracion: valoracionData,
+        timestamp: new Date()
+      });
+    } catch (error) {
+      console.error('Error al enviar actualización de valoración al trabajador:', error);
+    }
+  }
+
+  // Enviar actualización de estadísticas de valoraciones a un trabajador
+  public async sendValoracionStatsUpdateToWorker(workerId: string, statsData: Record<string, unknown>) {
+    try {
+      this.sendToUser(workerId, 'valoracion_stats_updated', {
+        estadisticas: statsData,
+        timestamp: new Date()
+      });
+    } catch (error) {
+      console.error('Error al enviar actualización de estadísticas de valoraciones:', error);
+    }
+  }
+
+  // Enviar actualización de calificación promedio a todos los usuarios que vean al trabajador
+  public async sendWorkerRatingUpdate(workerId: string, ratingData: Record<string, unknown>) {
+    try {
+      // Enviar a todos los usuarios conectados (ya que cualquier usuario puede ver las calificaciones)
+      this.broadcast('worker_rating_updated', {
+        workerId,
+        rating: ratingData,
+        timestamp: new Date()
+      });
+    } catch (error) {
+      console.error('Error al enviar actualización de calificación del trabajador:', error);
+    }
+  }
 }

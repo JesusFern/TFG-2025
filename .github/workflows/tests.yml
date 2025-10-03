@@ -11,6 +11,18 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        test-group:
+          - name: 'Autenticación y Usuarios'
+            pattern: 'tests/(auth|users|assignmentRequests)'
+          - name: 'Dietas y Alimentación'
+            pattern: 'tests/(diets|alimentos|estadisticas)'
+          - name: 'Entrenamiento'
+            pattern: 'tests/training'
+          - name: 'Comunicación y Servicios'
+            pattern: 'tests/(chat|citas|google|video|suscriptionPlan|valoraciones|config|incidents)'
 
     services:
       mongo:
@@ -36,10 +48,11 @@ jobs:
         run: npm install
         working-directory: ./backend
 
-      - name: Run tests
+      - name: Run tests - ${{ matrix.test-group.name }}
         env:
           MONGO_URI_TEST: mongodb://localhost:27017/nutroos_test
           JWT_SECRET: test_secret
           NODE_ENV: test
-        run: npm test
+          NODE_OPTIONS: --max_old_space_size=4096
+        run: npx cross-env NODE_ENV=test jest --testPathPattern="${{ matrix.test-group.pattern }}" --runInBand --detectOpenHandles --forceExit --logHeapUsage
         working-directory: ./backend

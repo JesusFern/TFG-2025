@@ -21,6 +21,7 @@ import ingredientesRoutes from './routes/alimentos/ingredientesRoutes';
 import wgerRoutes from './routes/training/wgerRoutes';
 import googleCalendarRoutes from './routes/google/calendarRoutes';
 import listaCompraRoutes from './routes/listaCompraRoutes';
+import valoracionRoutes from './routes/valoraciones/valoracionRoutes';
 import incidentRoutes from './routes/incidents/incidentRoutes';
 import { SocketServer } from './socket/socketServer';
 import { cronNotificacionesService } from './service/notificaciones/cronNotificacionesService';
@@ -74,6 +75,7 @@ app.use('/api/ingredientes', ingredientesRoutes);
 app.use('/api/wger', wgerRoutes);
 app.use('/api/google', googleCalendarRoutes);
 app.use('/api/lista-compra', listaCompraRoutes);
+app.use('/api/valoraciones', valoracionRoutes);
 app.use('/api/incidents', incidentRoutes);
 
 app.get("/", (req: Request, res: Response) => {
@@ -88,6 +90,9 @@ app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
 
 // Inicializar Socket.IO
 const socketServer = new SocketServer(httpServer);
+
+// Función para obtener la instancia del SocketServer
+export const getSocketServer = () => socketServer;
 
 // Exportar para uso en tests o módulos externos
 export { socketServer };

@@ -3,8 +3,7 @@ import { Group, Paper, Stack, Text, useMantineTheme } from '@mantine/core';
 import { 
   IconUser, 
   IconCalendar, 
-  IconTarget, 
-  IconTrophy,
+  IconTarget,
   IconHeart,
   IconActivity
 } from '@tabler/icons-react';
@@ -67,15 +66,9 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
     },
     {
       icon: IconTarget,
-      label: 'Objetivo de peso',
-      value: datosSalud?.objetivoPeso ? `${datosSalud.objetivoPeso} kg` : 'No especificado',
+      label: 'Especialidades',
+      value: profile.workerType || 'No especificado',
       color: 'orange'
-    },
-    {
-      icon: IconTrophy,
-      label: 'Nivel de actividad',
-      value: datosActividad?.frecuenciaEjercicio || 'No especificado',
-      color: 'purple'
     }
   ];
 

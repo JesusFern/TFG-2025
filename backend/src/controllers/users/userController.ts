@@ -487,15 +487,27 @@ export const getWorkersAssignedToClient = async (req: AuthenticatedRequest, res:
     const workers = await User.find({
       role: 'worker',
       'clientesAsignados.clienteId': new Types.ObjectId(clienteId)
-    }).select('_id fullName email workerType');
+    }).select('_id fullName email phoneNumber workerType biography availability profilePicture satisfactionRating clientesAsignados');
 
-    // Mapear a formato ProfesionalCita
-    const profesionalesAsignados = workers.map(worker => ({
-      _id: (worker._id as Types.ObjectId).toString(),
-      fullName: worker.fullName,
-      email: worker.email,
-      workerType: worker.workerType
-    }));
+    // Formatear la respuesta para incluir solo las asignaciones relevantes
+    const profesionalesAsignados = workers.map(worker => {
+      const relevantAssignments = worker.clientesAsignados?.filter(
+        asignacion => asignacion.clienteId.toString() === clienteId
+      ) || [];
+
+      return {
+        _id: (worker._id as Types.ObjectId).toString(),
+        fullName: worker.fullName,
+        email: worker.email,
+        phoneNumber: worker.phoneNumber,
+        workerType: worker.workerType,
+        biography: worker.biography,
+        availability: worker.availability,
+        profilePicture: worker.profilePicture,
+        satisfactionRating: worker.satisfactionRating,
+        asignaciones: relevantAssignments
+      };
+    });
 
     res.status(200).json(profesionalesAsignados);
 
@@ -569,16 +581,23 @@ export const getClientsAssignedToWorker = async (req: AuthenticatedRequest, res:
     const clientes = await User.find({
       _id: { $in: clientesIds },
       role: 'user'
-    }).select('_id fullName email profilePicture role');
+    }).select('_id fullName email phoneNumber profilePicture role');
 
-    // Mapear a formato UsuarioResumido
-    const clientesAsignados = clientes.map(cliente => ({
-      _id: (cliente._id as Types.ObjectId).toString(),
-      fullName: cliente.fullName,
-      email: cliente.email,
-      profilePicture: cliente.profilePicture,
-      role: cliente.role
-    }));
+    // Mapear a formato con asignaciones
+    const clientesAsignados = clientes.map(cliente => {
+      const asignaciones = worker.clientesAsignados?.filter(
+        asignacion => asignacion.clienteId.toString() === (cliente._id as Types.ObjectId).toString()
+      ) || [];
+
+      return {
+        _id: (cliente._id as Types.ObjectId).toString(),
+        fullName: cliente.fullName,
+        email: cliente.email,
+        phoneNumber: cliente.phoneNumber,
+        profilePicture: cliente.profilePicture,
+        asignaciones: asignaciones
+      };
+    });
 
     res.status(200).json(clientesAsignados);
 
@@ -639,6 +658,7 @@ export const getMyClientsAssigned = async (req: AuthenticatedRequest, res: Respo
     });
   }
 };
+
 
 export const getUserById = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
   try {

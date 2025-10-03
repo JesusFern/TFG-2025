@@ -101,7 +101,7 @@ import MisRecetasPage from '../pages/MisRecetasPage';
 import VerRecetaPage from '../pages/VerRecetaPage';
 import AcercaDePage from '../pages/AcercaDePage';
 import ProfessionalsPage from '../pages/ProfessionalsPage';
-import RequestsPage from '../pages/RequestsPage';
+import MyWorkersPage from '../pages/MyWorkersPage';
 import ClientTrainingPlansPage from '../pages/ClientTrainingPlansPage';
 import ClientTrainingPlanDetailPage from '../pages/ClientTrainingPlanDetailPage';
 import ClientTrainingSessionPage from '../pages/ClientTrainingSessionPage';
@@ -114,6 +114,8 @@ import ProgresoSemanalPage from '../pages/ProgresoSemanalPage';
 import CalendarPage from '../pages/CalendarPage';
 import NotificacionesPage from '../pages/NotificacionesPage';
 import ListaCompraPage from '../pages/ListaCompraPage';
+import WorkerValoracionesPage from '../pages/WorkerValoracionesPage';
+import WorkerProfilePage from '../pages/WorkerProfilePage';
 import CrearIncidenciaPage from '../pages/CrearIncidenciaPage';
 import ListadoIncidenciasPage from '../pages/ListadoIncidenciasPage';
 
@@ -183,7 +185,7 @@ const AppRoutes: React.FC = () => {
       <Route path="/solicitudes" element={
         <ProtectedRoute>
           <Layout>
-            <RequestsPage />
+            <MyWorkersPage />
           </Layout>
         </ProtectedRoute>
       } />
@@ -232,6 +234,24 @@ const AppRoutes: React.FC = () => {
         <ProtectedRoute>
           <Layout>
             <ListaCompraPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+
+      {/* Rutas de valoraciones */}
+
+      <Route path="/worker/valoraciones" element={
+        <ProtectedRoute workerRoute={true}>
+          <Layout>
+            <WorkerValoracionesPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+
+      <Route path="/profesional/:id" element={
+        <ProtectedRoute>
+          <Layout>
+            <WorkerProfilePage />
           </Layout>
         </ProtectedRoute>
       } />

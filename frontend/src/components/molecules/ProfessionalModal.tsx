@@ -9,7 +9,8 @@ import {
   Divider,
   Button,
   ThemeIcon,
-  Alert
+  Alert,
+  Badge
 } from '@mantine/core';
 import { 
   IconUser, 
@@ -17,7 +18,8 @@ import {
   IconStethoscope,
   IconBarbell,
   IconMail,
-  IconX
+  IconX,
+  IconStar
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { ProfessionalResponse, createAssignmentRequest, getPendingAssignmentRequests, PendingAssignmentRequest, checkAssignmentAvailability } from '../../services/userService';
@@ -302,6 +304,25 @@ const ProfessionalModal: React.FC<ProfessionalModalProps> = ({
               <Text size="md" c="dimmed">
                 {professional.workerType}
               </Text>
+              {professional.satisfactionRating && professional.satisfactionRating > 0 ? (
+                <Badge
+                  color="yellow"
+                  variant="light"
+                  leftSection={<IconStar size={12} />}
+                  size="sm"
+                >
+                  {professional.satisfactionRating.toFixed(1)}/5
+                </Badge>
+              ) : (
+                <Badge
+                  color="gray"
+                  variant="light"
+                  leftSection={<IconStar size={12} />}
+                  size="sm"
+                >
+                  Sin calificar
+                </Badge>
+              )}
             </Group>
           </Box>
         </Group>

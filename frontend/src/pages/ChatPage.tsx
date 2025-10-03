@@ -303,11 +303,12 @@ export const ChatPage: React.FC = () => {
               onChange={(value) => setNuevoParticipante(value || '')}
               data={usuarios.map(u => ({
                 value: u._id,
-                label: `${u.fullName} (${u.email}) - ${u.role}`
+                label: `${u.fullName} (${u.email})`
               }))}
               searchable
               clearable
               required
+              comboboxProps={{ zIndex: 3000 }}
             />
           )}
           
@@ -322,6 +323,7 @@ export const ChatPage: React.FC = () => {
             value={nuevoTipo}
             onChange={(value) => setNuevoTipo(value as 'general' | 'entrenamiento' | 'nutricion' | 'consulta')}
             required
+            comboboxProps={{ zIndex: 3000 }}
           />
           
           <Group justify="flex-end" gap="sm">

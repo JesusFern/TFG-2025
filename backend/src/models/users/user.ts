@@ -240,17 +240,13 @@ UserSchema.pre('save', async function (next) {
       
       // Limpiar automáticamente los IDs de clientes que no existen
       const clientesEncontrados = clientes.map(c => c._id.toString());
-      const clientesNoEncontrados = clientesIdsUnicos.filter(id => !clientesEncontrados.includes(id));
+      const clientesNoEncontrados = clientesIdsUnicos.filter(id => !clientesEncontrados.includes(id.toString()));
       
       if (clientesNoEncontrados.length > 0) {
-        console.warn('Limpiando IDs de clientes que no existen:', clientesNoEncontrados);
-        
         // Filtrar clientesAsignados para mantener solo los que existen
         doc.clientesAsignados = doc.clientesAsignados.filter(cliente => 
-          clientesEncontrados.includes(cliente.clienteId)
+          clientesEncontrados.includes(cliente.clienteId.toString())
         );
-        
-        console.log(`Se eliminaron ${clientesNoEncontrados.length} referencias de clientes inexistentes`);
       }
     } catch (error) {
       return next(error as mongoose.CallbackError);

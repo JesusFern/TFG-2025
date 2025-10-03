@@ -61,5 +61,10 @@ export const SOCKET_EVENTS = {
   // Eventos de notificaciones (enviar)
   MARK_NOTIFICATION_READ: 'mark_notification_read',
   MARK_ALL_NOTIFICATIONS_READ: 'mark_all_notifications_read',
-  DELETE_NOTIFICATION: 'delete_notification'
+  DELETE_NOTIFICATION: 'delete_notification',
+  
+  // Eventos de valoraciones
+  VALORACION_UPDATED: 'valoracion_updated',
+  VALORACION_STATS_UPDATED: 'valoracion_stats_updated',
+  WORKER_RATING_UPDATED: 'worker_rating_updated'
 };

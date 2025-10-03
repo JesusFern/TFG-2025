@@ -15,9 +15,11 @@ import {
   IconX,
   IconUsers,
   IconStethoscope,
-  IconBarbell
+  IconBarbell,
+  IconStar
 } from '@tabler/icons-react';
 import { ProfessionalResponse } from '../../services/userService';
+import { useWorkerRating } from '../../hooks/useWorkerRating';
 
 interface ProfessionalCardProps {
   professional: ProfessionalResponse;
@@ -25,6 +27,12 @@ interface ProfessionalCardProps {
 }
 
 const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional, onClick }) => {
+  // Hook para obtener la calificación en tiempo real
+  const { satisfactionRating } = useWorkerRating({
+    workerId: professional._id,
+    enabled: true
+  });
+
   const getWorkerTypeIcon = (workerType: string) => {
     switch (workerType) {
       case 'Nutricionista':
@@ -100,6 +108,25 @@ const ProfessionalCard: React.FC<ProfessionalCardProps> = ({ professional, onCli
               <Text size="sm" c="dimmed">
                 {professional.workerType}
               </Text>
+              {satisfactionRating && satisfactionRating > 0 ? (
+                <Badge
+                  color="yellow"
+                  variant="light"
+                  leftSection={<IconStar size={12} />}
+                  size="sm"
+                >
+                  {satisfactionRating.toFixed(1)}/5
+                </Badge>
+              ) : (
+                <Badge
+                  color="gray"
+                  variant="light"
+                  leftSection={<IconStar size={12} />}
+                  size="sm"
+                >
+                  Sin calificar
+                </Badge>
+              )}
             </Group>
           </Box>
         </Group>

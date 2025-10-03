@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
 	Title, 
 	Text, 
@@ -38,6 +38,15 @@ const WorkerClientsDashboard: React.FC = () => {
 	const { colorScheme } = useMantineColorScheme();
 	const isDark = colorScheme === 'dark';
 	const user = getUserData();
+	const [searchParams] = useSearchParams();
+
+	// Leer parámetro de URL para filtrar por cliente
+	useEffect(() => {
+		const clienteParam = searchParams.get('cliente');
+		if (clienteParam) {
+			setSearchQuery(clienteParam);
+		}
+	}, [searchParams]);
 
 	useEffect(() => {
 		if (!user?._id) return;
