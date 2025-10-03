@@ -79,11 +79,23 @@ const FiltrosCitas: React.FC<FiltrosCitasProps> = ({
   };
 
   const tieneFiltrosActivos = () => {
-    return Object.values(filtros).some(value => value !== undefined && value !== '');
+    // Excluir filtros internos del conteo (estadosActivos, limit, offset)
+    const filtrosVisibles = { ...filtros };
+    delete filtrosVisibles.estadosActivos;
+    delete filtrosVisibles.limit;
+    delete filtrosVisibles.offset;
+    
+    return Object.values(filtrosVisibles).some(value => value !== undefined && value !== '');
   };
 
   const contarFiltrosActivos = () => {
-    return Object.values(filtros).filter(value => value !== undefined && value !== '').length;
+    // Excluir filtros internos del conteo (estadosActivos, limit, offset)
+    const filtrosVisibles = { ...filtros };
+    delete filtrosVisibles.estadosActivos;
+    delete filtrosVisibles.limit;
+    delete filtrosVisibles.offset;
+    
+    return Object.values(filtrosVisibles).filter(value => value !== undefined && value !== '').length;
   };
 
   return (

@@ -88,7 +88,12 @@ export const ModalDetallesPlan: React.FC<ModalDetallesPlanProps> = ({
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                  {plan.sesiones.map((sesion) => (
+                  {plan.sesiones.map((sesion) => {
+                    const fechaSesion = new Date(sesion.fecha);
+                    const hoy = new Date();
+                    const esNoCompletada = !sesion.completada && fechaSesion < hoy;
+                    
+                    return (
                     <Table.Tr key={sesion.id}>
                       <Table.Td>
                         <Badge color="blue" variant="light" size="sm">
@@ -102,11 +107,11 @@ export const ModalDetallesPlan: React.FC<ModalDetallesPlanProps> = ({
                       </Table.Td>
                       <Table.Td>
                         <Badge 
-                          color={sesion.completada ? 'green' : 'red'}
+                          color={sesion.completada ? 'green' : esNoCompletada ? 'red' : 'orange'}
                           variant="light"
                           size="sm"
                         >
-                          {sesion.completada ? 'Completada' : 'Pendiente'}
+                          {sesion.completada ? 'Completada' : esNoCompletada ? 'No Completada' : 'Pendiente'}
                         </Badge>
                       </Table.Td>
                       <Table.Td>
@@ -122,7 +127,8 @@ export const ModalDetallesPlan: React.FC<ModalDetallesPlanProps> = ({
                         </Button>
                       </Table.Td>
                     </Table.Tr>
-                  ))}
+                    );
+                  })}
                 </Table.Tbody>
               </Table>
             </ScrollArea>

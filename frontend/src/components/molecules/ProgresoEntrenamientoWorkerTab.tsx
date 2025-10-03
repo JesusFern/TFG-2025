@@ -114,9 +114,14 @@ const ProgresoEntrenamientoWorkerTab: React.FC = () => {
       const response = await estadisticasService.getClientesTrabajador(semanaSeleccionada, añoSeleccionado);
       
       if (response.success && response.clientes && response.resumen) {
+        console.log('Datos de trabajador recibidos:', {
+          clientes: response.clientes.length,
+          resumen: response.resumen
+        });
         setClientes(response.clientes);
         setResumen(response.resumen);
       } else {
+        console.error('Error en respuesta de trabajador:', response);
         throw new Error(response.message || 'Error al obtener datos de clientes');
       }
 
@@ -166,10 +171,10 @@ const ProgresoEntrenamientoWorkerTab: React.FC = () => {
           <Text size="sm" fw={500}>Total Clientes</Text>
         </Group>
         <Text size="xl" fw={700} c="blue">
-          {resumen.totalClientes}
+          {resumen.totalClientes || 0}
         </Text>
         <Text size="xs" c="dimmed">
-          {resumen.clientesActivos} activos, {resumen.clientesInactivos} inactivos
+          {resumen.clientesActivos || 0} activos, {resumen.clientesInactivos || 0} inactivos
         </Text>
       </Card>
 
@@ -181,10 +186,10 @@ const ProgresoEntrenamientoWorkerTab: React.FC = () => {
           <Text size="sm" fw={500}>Cumplimiento Promedio</Text>
         </Group>
         <Text size="xl" fw={700} c="green">
-          {Math.round(resumen.cumplimientoPromedio)}%
+          {Math.round(resumen.cumplimientoPromedio || 0)}%
         </Text>
         <Progress 
-          value={resumen.cumplimientoPromedio} 
+          value={resumen.cumplimientoPromedio || 0} 
           size="sm" 
           mt="xs" 
           color="green"
@@ -199,7 +204,7 @@ const ProgresoEntrenamientoWorkerTab: React.FC = () => {
           <Text size="sm" fw={500}>Sesiones Promedio</Text>
         </Group>
         <Text size="xl" fw={700} c="orange">
-          {resumen.sesionesPromedio.toFixed(1)}
+          {(resumen.sesionesPromedio || 0).toFixed(1)}
         </Text>
         <Text size="xs" c="dimmed">por cliente esta semana</Text>
       </Card>
@@ -212,7 +217,7 @@ const ProgresoEntrenamientoWorkerTab: React.FC = () => {
           <Text size="sm" fw={500}>Clientes Inactivos</Text>
         </Group>
         <Text size="xl" fw={700} c="red">
-          {resumen.clientesInactivos}
+          {resumen.clientesInactivos || 0}
         </Text>
         <Text size="xs" c="dimmed">requieren atención</Text>
       </Card>
@@ -222,7 +227,7 @@ const ProgresoEntrenamientoWorkerTab: React.FC = () => {
   // Componente para mostrar ranking de clientes
   const RankingClientes = ({ clientes, onClienteClick }: { clientes: ClienteProgreso[], onClienteClick?: (clienteId: string) => void }) => {
     const clientesOrdenados = [...clientes].sort((a, b) => 
-      b.estadisticas.rendimiento.porcentajeCompletitud - a.estadisticas.rendimiento.porcentajeCompletitud
+      b.estadisticas.asistencia.porcentajeAsistencia - a.estadisticas.asistencia.porcentajeAsistencia
     );
 
     return (
@@ -267,13 +272,13 @@ const ProgresoEntrenamientoWorkerTab: React.FC = () => {
                   </Table.Td>
                   <Table.Td>
                     <Group gap="xs">
-                      <Text fw={600}>{Math.round(cliente.estadisticas.rendimiento.porcentajeCompletitud)}%</Text>
+                      <Text fw={600}>{Math.round(cliente.estadisticas.asistencia.porcentajeAsistencia)}%</Text>
                       <Progress 
-                        value={cliente.estadisticas.rendimiento.porcentajeCompletitud} 
+                        value={cliente.estadisticas.asistencia.porcentajeAsistencia} 
                         size="sm" 
                         w={60}
-                        color={cliente.estadisticas.rendimiento.porcentajeCompletitud > 80 ? 'green' : 
-                               cliente.estadisticas.rendimiento.porcentajeCompletitud > 60 ? 'yellow' : 'red'}
+                        color={cliente.estadisticas.asistencia.porcentajeAsistencia > 80 ? 'green' : 
+                               cliente.estadisticas.asistencia.porcentajeAsistencia > 60 ? 'yellow' : 'red'}
                       />
                     </Group>
                   </Table.Td>
@@ -366,9 +371,9 @@ const ProgresoEntrenamientoWorkerTab: React.FC = () => {
             <Box>
               <Text size="sm" c="dimmed" mb="xs">Cumplimiento</Text>
               <Group gap="xs">
-                <Text fw={600}>{Math.round(cliente.estadisticas.rendimiento.porcentajeCompletitud)}%</Text>
+                <Text fw={600}>{Math.round(cliente.estadisticas.asistencia.porcentajeAsistencia)}%</Text>
                 <Progress 
-                  value={cliente.estadisticas.rendimiento.porcentajeCompletitud} 
+                  value={cliente.estadisticas.asistencia.porcentajeAsistencia} 
                   size="sm" 
                   w={100}
                 />
@@ -407,53 +412,6 @@ const ProgresoEntrenamientoWorkerTab: React.FC = () => {
           </Card>
         )}
 
-        {/* Planes de entrenamiento */}
-        <Card p="md" radius="md" withBorder>
-          <Group mb="md">
-            <ThemeIcon size="lg" radius="md" color="green">
-              <IconTarget size={20} />
-            </ThemeIcon>
-            <Text size="lg" fw={600}>Planes de Entrenamiento</Text>
-          </Group>
-          
-          {cliente.planes.length > 0 ? (
-            <Stack gap="md">
-              {cliente.planes.map((plan) => (
-                <Paper key={plan.id} p="md" withBorder>
-                  <Group justify="space-between" mb="sm">
-                    <Text fw={600}>{plan.nombre}</Text>
-                    <Badge color="blue" variant="light">
-                      {plan.objetivo}
-                    </Badge>
-                  </Group>
-                  <Text size="sm" c="dimmed" mb="sm">
-                    {plan.sesionesPorSemana} sesiones/semana • {plan.duracionDias} días
-                  </Text>
-                  <Text size="sm" c="dimmed" mb="sm">
-                    Inicio: {new Date(plan.fechaInicio).toLocaleDateString()}
-                  </Text>
-                  <Group justify="flex-end">
-                    <Button 
-                      variant="light" 
-                      size="xs"
-                      onClick={() => {
-                        setPlanSeleccionado(plan);
-                        setModalPlanAbierto(true);
-                      }}
-                    >
-                      Ver Detalles
-                    </Button>
-                  </Group>
-                </Paper>
-              ))}
-            </Stack>
-          ) : (
-            <Text size="sm" c="dimmed" ta="center">
-              No hay planes de entrenamiento asignados
-            </Text>
-          )}
-        </Card>
-
         {/* Sesiones recientes */}
         <Card p="md" radius="md" withBorder>
           <Group mb="md">
@@ -476,7 +434,21 @@ const ProgresoEntrenamientoWorkerTab: React.FC = () => {
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                  {cliente.sesiones.slice(0, 10).map((sesion) => (
+                  {cliente.sesiones
+                    .filter((sesion) => {
+                      const fechaSesion = new Date(sesion.fecha);
+                      const hoy = new Date();
+                      // Solo mostrar sesiones completadas o no completadas (fecha pasada + completado=false)
+                      return sesion.completada || fechaSesion < hoy;
+                    })
+                    .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+                    .slice(0, 10)
+                    .map((sesion) => {
+                      const fechaSesion = new Date(sesion.fecha);
+                      const hoy = new Date();
+                      const esNoCompletada = !sesion.completada && fechaSesion < hoy;
+                      
+                      return (
                     <Table.Tr key={sesion.id}>
                       <Table.Td>
                         <Badge color="blue" variant="light">
@@ -490,10 +462,10 @@ const ProgresoEntrenamientoWorkerTab: React.FC = () => {
                       </Table.Td>
                       <Table.Td>
                         <Badge 
-                          color={sesion.completada ? 'green' : 'red'}
+                          color={sesion.completada ? 'green' : esNoCompletada ? 'red' : 'orange'}
                           variant="light"
                         >
-                          {sesion.completada ? 'Completada' : 'Pendiente'}
+                          {sesion.completada ? 'Completada' : esNoCompletada ? 'No Completada' : 'Pendiente'}
                         </Badge>
                       </Table.Td>
                       <Table.Td>
@@ -512,7 +484,8 @@ const ProgresoEntrenamientoWorkerTab: React.FC = () => {
                         </Button>
                       </Table.Td>
                     </Table.Tr>
-                  ))}
+                      );
+                    })}
                 </Table.Tbody>
               </Table>
             </ScrollArea>
@@ -546,7 +519,10 @@ const ProgresoEntrenamientoWorkerTab: React.FC = () => {
                   </Table.Tr>
                 </Table.Thead>
                 <Table.Tbody>
-                  {cliente.registros.slice(0, 15).map((registro) => (
+                  {cliente.registros
+                    .sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime())
+                    .slice(0, 15)
+                    .map((registro) => (
                     <Table.Tr key={registro.id}>
                       <Table.Td>
                         <Text fw={500}>{registro.ejercicio.nombre}</Text>
@@ -594,6 +570,65 @@ const ProgresoEntrenamientoWorkerTab: React.FC = () => {
           ) : (
             <Text size="sm" c="dimmed" ta="center">
               No hay registros de ejercicios
+            </Text>
+          )}
+        </Card>
+
+        {/* Planes de entrenamiento */}
+        <Card p="md" radius="md" withBorder>
+          <Group mb="md">
+            <ThemeIcon size="lg" radius="md" color="green">
+              <IconTarget size={20} />
+            </ThemeIcon>
+            <Text size="lg" fw={600}>Planes de Entrenamiento</Text>
+          </Group>
+          
+          {cliente.planes.length > 0 ? (
+            <Stack gap="md">
+              {cliente.planes
+                .sort((a, b) => new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime())
+                .map((plan) => (
+                <Paper key={plan.id} p="md" withBorder>
+                  <Group justify="space-between" mb="sm">
+                    <Text fw={600}>{plan.nombre}</Text>
+                    <Badge color="blue" variant="light">
+                      {plan.objetivo}
+                    </Badge>
+                  </Group>
+                  <Text size="sm" c="dimmed" mb="sm">
+                    {plan.sesionesPorSemana} sesiones/semana • {plan.duracionDias} días
+                  </Text>
+                  <Text size="sm" c="dimmed" mb="sm">
+                    Inicio: {new Date(plan.fechaInicio).toLocaleDateString()}
+                  </Text>
+                  <Group justify="flex-end">
+                    <Button 
+                      variant="light" 
+                      size="xs"
+                      onClick={() => {
+                        setPlanSeleccionado(plan);
+                        setModalPlanAbierto(true);
+                      }}
+                    >
+                      Ver Detalles
+                    </Button>
+                    <Button 
+                      variant="filled" 
+                      size="xs"
+                      color="blue"
+                      onClick={() => {
+                        window.location.href = `/training/planes/${plan.id}/editar`;
+                      }}
+                    >
+                      Editar Plan
+                    </Button>
+                  </Group>
+                </Paper>
+              ))}
+            </Stack>
+          ) : (
+            <Text size="sm" c="dimmed" ta="center">
+              No hay planes de entrenamiento asignados
             </Text>
           )}
         </Card>

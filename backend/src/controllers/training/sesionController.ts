@@ -1,7 +1,6 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../types';
 import Sesion from '../../models/training/sesion';
-import PlanEntrenamiento from '../../models/training/planEntrenamiento';
 import { 
   crearSesionService, 
   obtenerSesionesService, 
@@ -13,29 +12,7 @@ import {
 } from '../../service/training/sesionService';
 import logger from '../../utils/logger';
 import { matchedData } from 'express-validator';
-import mongoose from 'mongoose';
 
-async function verificarPlanPublicado(sesionId: string): Promise<boolean> {
-  // Validar que el sesionId sea un ObjectId válido antes de usarlo en la consulta
-  if (!mongoose.Types.ObjectId.isValid(sesionId)) {
-    logger.warn('ID de sesión inválido proporcionado', { sesionId });
-    return false;
-  }
-
-  try {
-    const plan = await PlanEntrenamiento.findOne({ 
-      sesiones: new mongoose.Types.ObjectId(sesionId),
-      draftMode: false 
-    });
-    return !!plan;
-  } catch (error) {
-    logger.error('Error al verificar si el plan está publicado', { 
-      sesionId, 
-      error: error instanceof Error ? error.message : String(error) 
-    });
-    return false;
-  }
-}
 
 export const crearSesion = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -196,9 +173,13 @@ export const actualizarSesion = async (req: AuthenticatedRequest, res: Response)
       return;
     }
 
-    const esPlanPublicado = await verificarPlanPublicado(id);
-    if (esPlanPublicado) {
-      res.status(403).json({ message: 'No se puede editar una sesión de un plan publicado' });
+    // Verificar si la sesión ya ha ocurrido (fecha de hoy o anterior)
+    const fechaSesion = new Date(sesionExistente.fecha);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0); // Establecer a medianoche para comparar solo la fecha
+    
+    if (fechaSesion <= hoy) {
+      res.status(403).json({ message: 'No se puede editar una sesión que ya ha ocurrido' });
       return;
     }
 
@@ -238,9 +219,13 @@ export const eliminarSesion = async (req: AuthenticatedRequest, res: Response) =
       return;
     }
 
-    const esPlanPublicado = await verificarPlanPublicado(id);
-    if (esPlanPublicado) {
-      res.status(403).json({ message: 'No se puede eliminar una sesión de un plan publicado' });
+    // Verificar si la sesión ya ha ocurrido (fecha de hoy o anterior)
+    const fechaSesion = new Date(sesionExistente.fecha);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0); // Establecer a medianoche para comparar solo la fecha
+    
+    if (fechaSesion <= hoy) {
+      res.status(403).json({ message: 'No se puede eliminar una sesión que ya ha ocurrido' });
       return;
     }
 

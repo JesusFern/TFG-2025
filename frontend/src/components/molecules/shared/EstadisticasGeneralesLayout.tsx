@@ -134,7 +134,7 @@ const EstadisticasGeneralesLayout: React.FC<EstadisticasGeneralesLayoutProps> = 
         <Grid.Col span={{ base: 6, md: 3 }}>
           <EstadisticaCard
             titulo="Tiempo Promedio"
-            valor={estadisticas.rendimiento?.tiempoPromedioSesion || 0}
+            valor={Math.round(estadisticas.rendimiento?.tiempoPromedioSesion || 0)}
             subtitulo="Por sesión"
             color="purple"
             icono={<IconCheck size={16} />}

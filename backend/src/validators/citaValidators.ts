@@ -213,7 +213,12 @@ export const validarObtenerCitas = (): ValidationChain[] => [
   query('offset')
     .optional()
     .isInt({ min: 0 })
-    .withMessage('El offset debe ser un número positivo')
+    .withMessage('El offset debe ser un número positivo'),
+
+  query('estadosActivos')
+    .optional()
+    .isBoolean()
+    .withMessage('El parámetro estadosActivos debe ser un booleano')
 ];
 
 // Validadores para obtener disponibilidad

@@ -66,10 +66,10 @@ const EditarPlanHeader: React.FC<EditarPlanHeaderProps> = ({
         <Alert 
           icon={<IconAlertCircle size={18} />} 
           title="Plan publicado" 
-          color="green" 
+          color="blue" 
           mb="md"
         >
-          Este plan está publicado y no se puede editar. Los clientes pueden verlo en su panel.
+          Este plan de entrenamiento ha sido publicado. Puedes editarlo, pero las sesiones pasadas no se pueden modificar.
         </Alert>
       )}
     </>

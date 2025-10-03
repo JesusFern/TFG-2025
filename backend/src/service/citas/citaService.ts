@@ -8,7 +8,7 @@ import {
   DisponibilidadProfesional,
   ReagendarCitaData,
   EstadisticasCitas
-} from '../../models/citas';
+} from '../../models/citas/index';
 import { crearNotificacionService } from '../chats/notificacionService';
 import { socketServer } from '../../server';
 import { recordatorioService } from '../notificaciones/recordatorioService';
@@ -128,6 +128,9 @@ export async function obtenerCitasService(filtros: FiltrosCitas): Promise<{
 
     if (filtros.estado) {
       query.estado = filtros.estado;
+    } else if (filtros.estadosActivos) {
+      // Si se solicita solo estados activos, filtrar por pendientes, confirmadas y en_progreso
+      query.estado = { $in: ['pendiente', 'confirmada', 'en_progreso'] };
     }
 
 

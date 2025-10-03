@@ -38,11 +38,27 @@ export interface EstadisticasCliente {
   progresoEjercicios: {
     ejercicioId: string;
     ejercicioNombre: string;
+    grupoMuscular: string;
+    registros: {
+      fecha: string;
+      cargaUtilizada: number;
+      repeticionesRealizadas: number;
+      seriesCompletadas: number;
+      nivelEsfuerzo: number;
+      completado: boolean;
+    }[];
     progreso: {
+      mejoraCarga: number;
+      mejoraRepeticiones: number;
+      mejoraSeries: number;
+      tendencia: 'mejora' | 'estable' | 'baja';
+    };
+    estadisticas: {
       cargaMaxima: number;
       repeticionesMaximas: number;
-      sesionesRealizadas: number;
-      tendencia: 'mejora' | 'estable' | 'baja';
+      seriesMaximas: number;
+      promedioSesiones: number;
+      totalSesiones: number;
     };
   }[];
   consistencia: {
@@ -121,7 +137,7 @@ export interface EstadisticasSemanal {
       diferencia: number;
       porcentajeCambio: number;
     };
-    ejerciciosCompletados: {
+    seriesCompletadas: {
       actual: number;
       anterior: number;
       diferencia: number;
@@ -181,16 +197,14 @@ export async function obtenerEstadisticasClienteService(
     
     logger.info('Obteniendo estadísticas del cliente', { clienteId: sanitizedClienteId.toString(), fechaInicio, fechaFin });
 
-    // Establecer fechas por defecto (mes actual completo)
+    // Establecer fechas por defecto (últimos 3 meses para estadísticas generales)
     const fin = fechaFin || new Date();
-    const inicio = fechaInicio || new Date(fin.getFullYear(), fin.getMonth(), 1);
-    // Asegurar que el fin sea el último día del mes actual
+    const inicio = fechaInicio || new Date(fin.getFullYear(), fin.getMonth() - 2, 1); // Últimos 3 meses
     const finMesCompleto = new Date(fin.getFullYear(), fin.getMonth() + 1, 0, 23, 59, 59, 999);
 
-    // Obtener sesiones del cliente en el período
+    // Obtener todas las sesiones del cliente (sin filtro de fecha para estadísticas generales)
     const sesiones = await Sesion.find({
-      cliente: sanitizedClienteId,
-      fecha: { $gte: inicio, $lte: finMesCompleto }
+      cliente: sanitizedClienteId
     }).populate('ejercicios.ejercicio');
 
     // Obtener registros de ejercicios del cliente en el período
@@ -206,8 +220,23 @@ export async function obtenerEstadisticasClienteService(
     const sesionesAtrasadas = sesiones.filter((s: any) => {
       const fechaSesion = new Date(s.fecha);
       const hoy = new Date();
+      // Solo considerar atrasadas las sesiones que ya pasaron y no se completaron
       return fechaSesion < hoy && !s.completada;
     }).length;
+    
+    logger.info('Cálculo de estadísticas generales del cliente', {
+      clienteId: sanitizedClienteId,
+      periodo: { inicio, fin: finMesCompleto },
+      sesionesProgramadas,
+      sesionesCompletadas,
+      porcentajeAsistencia,
+      registrosTotal: registros.length,
+      sesiones: sesiones.map(s => ({ 
+        fecha: s.fecha, 
+        completada: s.completada,
+        id: s._id 
+      }))
+    });
 
     // Calcular progreso de ejercicios
     const progresoEjercicios = await calcularProgresoEjercicios(registros);
@@ -317,7 +346,11 @@ export async function obtenerEstadisticasSemanalService(
     const ejerciciosCompletados = registros.filter((r: any) => r.completado).length;
     const porcentajeCompletitud = ejerciciosRegistrados > 0 ? (ejerciciosCompletados / ejerciciosRegistrados) * 100 : 0;
     const cargaTotalUtilizada = registros.reduce((sum: number, r: any) => sum + (r.cargaUtilizada || 0), 0);
-    const tiempoTotalEntrenamiento = registros.reduce((sum: number, r: any) => sum + (r.duracionEjercicio || 0), 0);
+    
+    // Calcular tiempo total de entrenamiento basado en duración de sesiones completadas
+    // sesionesCompletadas es un número, no un array, así que necesitamos filtrar las sesiones completadas reales
+    const sesionesCompletadasArray = sesiones.filter((s: any) => s.completada);
+    const tiempoTotalEntrenamiento = sesionesCompletadasArray.reduce((sum: number, s: any) => sum + (s.duracion || 0), 0);
 
     // Nuevas métricas cuantitativas
     const seriesTotales = registros.reduce((sum: number, r: any) => sum + (r.seriesCompletadas || 0), 0);
@@ -361,11 +394,17 @@ export async function obtenerEstadisticasSemanalService(
       intenso: nivelesEsfuerzo.filter(n => n >= 8 && n <= 10).length
     };
 
+    // Obtener sesiones de la semana anterior para calcular tiempo correctamente
+    const sesionesSemanaAnterior = await Sesion.find({
+      cliente: sanitizedClienteId,
+      fecha: { $gte: inicioSemanaAnterior, $lte: finSemanaAnterior }
+    });
+    
     // Comparación con semana anterior
-    const sesionesCompletadasAnterior = registrosSemanaAnterior.filter((r: any) => r.completado).length;
-    const tiempoEntrenamientoAnterior = registrosSemanaAnterior.reduce((sum: number, r: any) => sum + (r.duracionEjercicio || 0), 0);
+    const sesionesCompletadasAnterior = sesionesSemanaAnterior.filter((s: any) => s.completada).length;
+    const tiempoEntrenamientoAnterior = sesionesSemanaAnterior.filter((s: any) => s.completada).reduce((sum: number, s: any) => sum + (s.duracion || 0), 0);
     const cargaUtilizadaAnterior = registrosSemanaAnterior.reduce((sum: number, r: any) => sum + (r.cargaUtilizada || 0), 0);
-    const ejerciciosCompletadosAnterior = registrosSemanaAnterior.filter((r: any) => r.completado).length;
+    const seriesCompletadasAnterior = registrosSemanaAnterior.reduce((sum: number, r: any) => sum + (r.seriesCompletadas || 0), 0);
 
     const comparacionSemanaAnterior = {
       sesionesCompletadas: {
@@ -389,12 +428,12 @@ export async function obtenerEstadisticasSemanalService(
         porcentajeCambio: cargaUtilizadaAnterior > 0 ? 
           ((cargaTotalUtilizada - cargaUtilizadaAnterior) / cargaUtilizadaAnterior) * 100 : 0
       },
-      ejerciciosCompletados: {
-        actual: ejerciciosCompletados,
-        anterior: ejerciciosCompletadosAnterior,
-        diferencia: ejerciciosCompletados - ejerciciosCompletadosAnterior,
-        porcentajeCambio: ejerciciosCompletadosAnterior > 0 ? 
-          ((ejerciciosCompletados - ejerciciosCompletadosAnterior) / ejerciciosCompletadosAnterior) * 100 : 0
+      seriesCompletadas: {
+        actual: seriesTotales,
+        anterior: seriesCompletadasAnterior,
+        diferencia: seriesTotales - seriesCompletadasAnterior,
+        porcentajeCambio: seriesCompletadasAnterior > 0 ? 
+          ((seriesTotales - seriesCompletadasAnterior) / seriesCompletadasAnterior) * 100 : 0
       }
     };
 
@@ -600,16 +639,28 @@ export async function obtenerProgresoEjerciciosService(
       const cargas = registrosEjercicio.map((r: any) => r.cargaUtilizada || 0);
       const repeticiones = registrosEjercicio.map((r: any) => r.repeticionesRealizadas || 0);
 
+      const series = registrosEjercicio.map((r: any) => r.seriesCompletadas || 0);
+      
       const estadisticas = {
         cargaMaxima: cargas.length > 0 ? Math.max(...cargas) : 0,
         repeticionesMaximas: repeticiones.length > 0 ? Math.max(...repeticiones) : 0,
+        seriesMaximas: series.length > 0 ? Math.max(...series) : 0,
+        promedioSesiones: registrosEjercicio.length,
         totalSesiones: registrosEjercicio.length
       };
 
       // Calcular tendencia basada en las últimas cargas
       const tendencia = calcularTendencia(cargas);
 
+      // Calcular mejoras (simplificado)
+      const mejoraCarga = cargas.length > 1 ? ((cargas[cargas.length - 1] - cargas[0]) / cargas[0]) * 100 : 0;
+      const mejoraRepeticiones = repeticiones.length > 1 ? ((repeticiones[repeticiones.length - 1] - repeticiones[0]) / repeticiones[0]) * 100 : 0;
+      const mejoraSeries = series.length > 1 ? ((series[series.length - 1] - series[0]) / series[0]) * 100 : 0;
+
       const progreso = {
+        mejoraCarga,
+        mejoraRepeticiones,
+        mejoraSeries,
         tendencia
       };
 
@@ -617,6 +668,14 @@ export async function obtenerProgresoEjerciciosService(
         ejercicioId,
         ejercicioNombre,
         grupoMuscular,
+        registros: registrosEjercicio.map((r: any) => ({
+          fecha: r.fecha,
+          cargaUtilizada: r.cargaUtilizada || 0,
+          repeticionesRealizadas: r.repeticionesRealizadas || 0,
+          seriesCompletadas: r.seriesCompletadas || 0,
+          nivelEsfuerzo: r.nivelEsfuerzo || 0,
+          completado: r.completado || false
+        })),
         estadisticas,
         progreso
       });
@@ -638,11 +697,27 @@ export async function obtenerProgresoEjerciciosService(
 async function calcularProgresoEjercicios(registros: any[]): Promise<{
   ejercicioId: string;
   ejercicioNombre: string;
+  grupoMuscular: string;
+  registros: {
+    fecha: string;
+    cargaUtilizada: number;
+    repeticionesRealizadas: number;
+    seriesCompletadas: number;
+    nivelEsfuerzo: number;
+    completado: boolean;
+  }[];
   progreso: {
+    mejoraCarga: number;
+    mejoraRepeticiones: number;
+    mejoraSeries: number;
+    tendencia: 'mejora' | 'estable' | 'baja';
+  };
+  estadisticas: {
     cargaMaxima: number;
     repeticionesMaximas: number;
-    sesionesRealizadas: number;
-    tendencia: 'mejora' | 'estable' | 'baja';
+    seriesMaximas: number;
+    promedioSesiones: number;
+    totalSesiones: number;
   };
 }[]> {
   const ejerciciosMap = new Map<string, any[]>();
@@ -661,36 +736,76 @@ async function calcularProgresoEjercicios(registros: any[]): Promise<{
   const progresoEjercicios: {
     ejercicioId: string;
     ejercicioNombre: string;
+    grupoMuscular: string;
+    registros: {
+      fecha: string;
+      cargaUtilizada: number;
+      repeticionesRealizadas: number;
+      seriesCompletadas: number;
+      nivelEsfuerzo: number;
+      completado: boolean;
+    }[];
     progreso: {
+      mejoraCarga: number;
+      mejoraRepeticiones: number;
+      mejoraSeries: number;
+      tendencia: 'mejora' | 'estable' | 'baja';
+    };
+    estadisticas: {
       cargaMaxima: number;
       repeticionesMaximas: number;
-      sesionesRealizadas: number;
-      tendencia: 'mejora' | 'estable' | 'baja';
+      seriesMaximas: number;
+      promedioSesiones: number;
+      totalSesiones: number;
     };
   }[] = [];
 
   ejerciciosMap.forEach((registrosEjercicio, ejercicioId) => {
     const ejercicio = registrosEjercicio[0].ejercicio;
     const ejercicioNombre = typeof ejercicio === 'string' ? 'Ejercicio' : (ejercicio as any).nombre;
+    const grupoMuscular = typeof ejercicio === 'string' ? 'General' : (ejercicio as any).grupoMuscular || 'General';
 
     const cargas = registrosEjercicio.map((r: any) => r.cargaUtilizada || 0);
-    const repeticiones = registrosEjercicio.map((r: any) => r.repeticionesRealizadas);
+    const repeticiones = registrosEjercicio.map((r: any) => r.repeticionesRealizadas || 0);
+    const series = registrosEjercicio.map((r: any) => r.seriesCompletadas || 0);
 
     const cargaMaxima = Math.max(...cargas);
     const repeticionesMaximas = Math.max(...repeticiones);
-    const sesionesRealizadas = registrosEjercicio.length;
+    const seriesMaximas = Math.max(...series);
+    const totalSesiones = registrosEjercicio.length;
 
     // Calcular tendencia (simplificado)
     const tendencia = calcularTendencia(cargas);
 
+    // Calcular mejoras (simplificado)
+    const mejoraCarga = cargas.length > 1 ? ((cargas[cargas.length - 1] - cargas[0]) / cargas[0]) * 100 : 0;
+    const mejoraRepeticiones = repeticiones.length > 1 ? ((repeticiones[repeticiones.length - 1] - repeticiones[0]) / repeticiones[0]) * 100 : 0;
+    const mejoraSeries = series.length > 1 ? ((series[series.length - 1] - series[0]) / series[0]) * 100 : 0;
+
     progresoEjercicios.push({
       ejercicioId,
       ejercicioNombre,
+      grupoMuscular,
+      registros: registrosEjercicio.map((r: any) => ({
+        fecha: r.fecha,
+        cargaUtilizada: r.cargaUtilizada || 0,
+        repeticionesRealizadas: r.repeticionesRealizadas || 0,
+        seriesCompletadas: r.seriesCompletadas || 0,
+        nivelEsfuerzo: r.nivelEsfuerzo || 0,
+        completado: r.completado || false
+      })),
       progreso: {
+        mejoraCarga,
+        mejoraRepeticiones,
+        mejoraSeries,
+        tendencia
+      },
+      estadisticas: {
         cargaMaxima,
         repeticionesMaximas,
-        sesionesRealizadas,
-        tendencia
+        seriesMaximas,
+        promedioSesiones: totalSesiones,
+        totalSesiones
       }
     });
   });
@@ -699,20 +814,21 @@ async function calcularProgresoEjercicios(registros: any[]): Promise<{
 }
 
 async function calcularTiempoPromedioSesion(registros: any[]): Promise<number> {
-  const sesionesMap = new Map<string, number>();
+  // Obtener sesiones únicas de los registros
+  const sesionesIds = [...new Set(registros.map((r: any) => r.sesion.toString()))];
   
-  registros.forEach((registro: any) => {
-    const sesionId = registro.sesion.toString();
-    const duracion = registro.duracionEjercicio || 0;
-    
-    if (!sesionesMap.has(sesionId)) {
-      sesionesMap.set(sesionId, 0);
-    }
-    sesionesMap.set(sesionId, sesionesMap.get(sesionId)! + duracion);
-  });
-
-  const duraciones = Array.from(sesionesMap.values());
-  return duraciones.length > 0 ? duraciones.reduce((sum, d) => sum + d, 0) / duraciones.length : 0;
+  if (sesionesIds.length === 0) return 0;
+  
+  // Obtener las sesiones de la base de datos para obtener la duración real
+  const sesiones = await Sesion.find({ 
+    _id: { $in: sesionesIds.map(id => new mongoose.Types.ObjectId(id)) }
+  }).select('duracion completada');
+  
+  // Filtrar solo sesiones completadas y sumar duraciones
+  const sesionesCompletadas = sesiones.filter(s => s.completada);
+  const tiempoTotal = sesionesCompletadas.reduce((sum, s) => sum + (s.duracion || 0), 0);
+  
+  return sesionesCompletadas.length > 0 ? tiempoTotal / sesionesCompletadas.length : 0;
 }
 
 async function calcularTendenciasEjercicios(registros: any[]): Promise<{
@@ -785,14 +901,21 @@ export const obtenerClientesTrabajadorService = async (trabajadorId: string, sem
       throw new Error('ID de trabajador no válido');
     }
 
-    // Obtener planes de entrenamiento del trabajador (solo publicados, no borradores)
+    // Obtener planes de entrenamiento del trabajador (incluyendo borradores para debug)
     const planes = await PlanEntrenamiento.find({ 
       entrenador: new mongoose.Types.ObjectId(trabajadorId),
-      activo: true,
-      draftMode: false // Solo planes publicados
+      activo: true
+      // Removido draftMode: false temporalmente para debug
     }).populate('clientes', 'fullName email');
 
+    logger.info('Planes encontrados para trabajador', { 
+      trabajadorId, 
+      cantidadPlanes: planes.length,
+      planes: planes.map(p => ({ id: p._id, nombre: p.nombre, activo: p.activo, draftMode: p.draftMode, clientes: p.clientes.length }))
+    });
+
     if (!planes || planes.length === 0) {
+      logger.warn('No se encontraron planes para el trabajador', { trabajadorId });
       return {
         success: true,
         clientes: [],
@@ -813,19 +936,131 @@ export const obtenerClientesTrabajadorService = async (trabajadorId: string, sem
     const clientesConEstadisticas = await Promise.all(
       clientesIds.map(async (clienteId: any) => {
         try {
-          // Obtener estadísticas generales del cliente
-          const estadisticasGenerales = await obtenerEstadisticasClienteService(clienteId.toString());
-          
-          // Obtener estadísticas semanales
-          const semanaActual = semana || getCurrentWeekNumber();
-          const añoActual = año || new Date().getFullYear();
-          const estadisticasSemanales = await obtenerEstadisticasSemanalService(clienteId.toString(), semanaActual, añoActual);
-          
-          // Obtener rachas de entrenamiento
-          const rachas = await obtenerRachasEntrenamientoService(clienteId.toString());
-          
-          // Obtener información del cliente
+          // Obtener información del cliente primero
           const cliente = await User.findById(clienteId).select('fullName email');
+          
+          if (!cliente) {
+            console.warn(`Cliente ${clienteId} no encontrado`);
+            return null;
+          }
+
+          // Obtener estadísticas generales del cliente con manejo de errores
+          let estadisticasGenerales;
+          try {
+            estadisticasGenerales = await obtenerEstadisticasClienteService(clienteId.toString());
+          } catch (error) {
+            console.warn(`Error obteniendo estadísticas generales del cliente ${clienteId}:`, error);
+            // Crear estadísticas por defecto
+            estadisticasGenerales = {
+              clienteId: clienteId.toString(),
+              periodo: {
+                inicio: new Date(),
+                fin: new Date()
+              },
+              asistencia: {
+                sesionesProgramadas: 0,
+                sesionesCompletadas: 0,
+                porcentajeAsistencia: 0,
+                sesionesAtrasadas: 0
+              },
+              progresoEjercicios: [],
+              consistencia: {
+                diasEntrenados: 0,
+                diasDisponibles: 0,
+                porcentajeConsistencia: 0
+              },
+              rendimiento: {
+                tiempoPromedioSesion: 0,
+                ejerciciosCompletados: 0,
+                ejerciciosTotal: 0,
+                porcentajeCompletitud: 0
+              }
+            };
+          }
+          
+          // Obtener estadísticas semanales con manejo de errores
+          let estadisticasSemanales;
+          try {
+            const semanaActual = semana || getCurrentWeekNumber();
+            const añoActual = año || new Date().getFullYear();
+            estadisticasSemanales = await obtenerEstadisticasSemanalService(clienteId.toString(), semanaActual, añoActual);
+          } catch (error) {
+            console.warn(`Error obteniendo estadísticas semanales del cliente ${clienteId}:`, error);
+            // Crear estadísticas semanales por defecto
+            estadisticasSemanales = {
+              semana: {
+                numero: semana || getCurrentWeekNumber(),
+                inicio: new Date(),
+                fin: new Date()
+              },
+              asistencia: {
+                sesionesProgramadas: 0,
+                sesionesCompletadas: 0,
+                porcentajeAsistencia: 0
+              },
+              progreso: {
+                ejerciciosRegistrados: 0,
+                ejerciciosCompletados: 0,
+                porcentajeCompletitud: 0,
+                cargaTotalUtilizada: 0,
+                tiempoTotalEntrenamiento: 0,
+                seriesTotales: 0,
+                repeticionesTotales: 0,
+                distribucionTipoEjercicio: {
+                  fuerza: 0,
+                  cardio: 0,
+                  movilidad: 0,
+                  hiit: 0,
+                  resistencia: 0,
+                  potencia: 0,
+                  estabilidad: 0,
+                  flexibilidad: 0
+                },
+                distanciaCardio: 0,
+                tiempoCardio: 0
+              },
+              percepcionEsfuerzo: {
+                promedioRPE: 0,
+                distribucionRPE: {
+                  ligero: 0,
+                  moderado: 0,
+                  intenso: 0
+                }
+              },
+              comparacionSemanaAnterior: {
+                sesionesCompletadas: { actual: 0, anterior: 0, diferencia: 0, porcentajeCambio: 0 },
+                tiempoEntrenamiento: { actual: 0, anterior: 0, diferencia: 0, porcentajeCambio: 0 },
+                cargaUtilizada: { actual: 0, anterior: 0, diferencia: 0, porcentajeCambio: 0 },
+                seriesCompletadas: { actual: 0, anterior: 0, diferencia: 0, porcentajeCambio: 0 }
+              },
+              tendencias: {
+                ejerciciosEnMejora: 0,
+                ejerciciosEstables: 0,
+                ejerciciosEnBaja: 0,
+                tendenciaGeneral: 'estable' as const
+              },
+              resumen: {
+                tiempoTotalEntrenado: 0,
+                cargaTotalLevantada: 0,
+                repeticionesTotales: 0
+              }
+            };
+          }
+          
+          // Obtener rachas de entrenamiento con manejo de errores
+          let rachas;
+          try {
+            rachas = await obtenerRachasEntrenamientoService(clienteId.toString());
+          } catch (error) {
+            console.warn(`Error obteniendo rachas del cliente ${clienteId}:`, error);
+            // Crear rachas por defecto
+            rachas = {
+              rachaActual: { dias: 0, semanas: 0 },
+              rachaMaxima: { dias: 0, semanas: 0, fechaInicio: null, fechaFin: null },
+              ultimaSesion: null,
+              diasSinEntrenar: 999
+            };
+          }
           
           // Calcular alertas
           const alertas = [];
@@ -841,8 +1076,8 @@ export const obtenerClientesTrabajadorService = async (trabajadorId: string, sem
 
           return {
             id: clienteId.toString(),
-            nombre: cliente?.fullName || 'Cliente sin nombre',
-            email: cliente?.email || '',
+            nombre: cliente.fullName,
+            email: cliente.email,
             estadisticas: estadisticasGenerales,
             estadisticasSemanal: estadisticasSemanales,
             rachas: rachas,
@@ -851,7 +1086,7 @@ export const obtenerClientesTrabajadorService = async (trabajadorId: string, sem
             notas: '' // TODO: Implementar sistema de notas
           };
         } catch (error) {
-          console.error(`Error obteniendo estadísticas del cliente ${clienteId}:`, error);
+          console.error(`Error general obteniendo datos del cliente ${clienteId}:`, error);
           return null;
         }
       })
@@ -860,23 +1095,53 @@ export const obtenerClientesTrabajadorService = async (trabajadorId: string, sem
     // Filtrar clientes nulos
     const clientes = clientesConEstadisticas.filter(cliente => cliente !== null);
 
-    // Calcular resumen agregado
+    // Calcular resumen agregado usando estadísticas generales
+    const cumplimientoPromedio = clientes.length > 0 ? 
+      clientes.reduce((acc, c) => {
+        const porcentaje = c.estadisticas?.asistencia?.porcentajeAsistencia || 0;
+        return acc + porcentaje;
+      }, 0) / clientes.length : 0;
+    
+    const sesionesPromedio = clientes.length > 0 ? 
+      clientes.reduce((acc, c) => {
+        const sesiones = c.estadisticas?.asistencia?.sesionesCompletadas || 0;
+        return acc + sesiones;
+      }, 0) / clientes.length : 0;
+
     const resumen = {
       totalClientes: clientes.length,
       clientesActivos: clientes.filter(c => c.rachas.diasSinEntrenar <= 3).length,
       clientesInactivos: clientes.filter(c => c.rachas.diasSinEntrenar > 3).length,
-      cumplimientoPromedio: clientes.length > 0 ? 
-        clientes.reduce((acc, c) => acc + c.estadisticas.rendimiento.porcentajeCompletitud, 0) / clientes.length : 0,
-      sesionesPromedio: clientes.length > 0 ? 
-        clientes.reduce((acc, c) => acc + c.estadisticas.asistencia.sesionesCompletadas, 0) / clientes.length : 0,
+      cumplimientoPromedio,
+      sesionesPromedio,
       distribucionTipos: clientes.reduce((acc, cliente) => {
-        const distribucion = cliente.estadisticasSemanal.progreso?.distribucionTipoEjercicio || {};
+        const distribucion = cliente.estadisticasSemanal?.progreso?.distribucionTipoEjercicio || {};
         Object.entries(distribucion).forEach(([tipo, cantidad]) => {
           acc[tipo] = (acc[tipo] || 0) + cantidad;
         });
         return acc;
       }, {} as Record<string, number>)
     };
+
+    logger.info('Cálculo de resumen de trabajador', {
+      trabajadorId,
+      totalClientes: clientes.length,
+      clientesConEstadisticasGenerales: clientes.filter(c => c.estadisticas).length,
+      clientesConEstadisticasSemanal: clientes.filter(c => c.estadisticasSemanal).length,
+      cumplimientoPromedio,
+      sesionesPromedio,
+      clientes: clientes.map(c => ({
+        id: c.id,
+        nombre: c.nombre,
+        tieneEstadisticasGenerales: !!c.estadisticas,
+        tieneEstadisticasSemanal: !!c.estadisticasSemanal,
+        porcentajeAsistenciaGeneral: c.estadisticas?.asistencia?.porcentajeAsistencia || 0,
+        sesionesCompletadasGeneral: c.estadisticas?.asistencia?.sesionesCompletadas || 0,
+        sesionesProgramadasGeneral: c.estadisticas?.asistencia?.sesionesProgramadas || 0,
+        porcentajeAsistenciaSemanal: c.estadisticasSemanal?.asistencia?.porcentajeAsistencia || 0,
+        sesionesCompletadasSemanal: c.estadisticasSemanal?.asistencia?.sesionesCompletadas || 0
+      }))
+    });
 
     return {
       success: true,
@@ -915,28 +1180,33 @@ export const obtenerDetallesClienteService = async (trabajadorId: string, client
       throw new Error('Cliente no encontrado');
     }
 
-    // Obtener sesiones del cliente de los últimos 5 días, hoy y próximos 5 días
-    const hoy = new Date();
-    const cincoDiasAtras = new Date(hoy);
-    cincoDiasAtras.setDate(hoy.getDate() - 5);
-    const cincoDiasAdelante = new Date(hoy);
-    cincoDiasAdelante.setDate(hoy.getDate() + 5);
-    
+    // Obtener todas las sesiones del cliente (sin filtro de fecha para detalles)
     const sesiones = await Sesion.find({ 
-      cliente: sanitizedClienteId,
-      fecha: {
-        $gte: cincoDiasAtras,
-        $lte: cincoDiasAdelante
-      }
+      cliente: sanitizedClienteId
     })
       .populate('ejercicios.ejercicio')
-      .sort({ fecha: 1 }); // Ordenar por fecha ascendente (más antiguas primero)
+      .sort({ fecha: -1 }); // Ordenar por fecha descendente (más recientes primero)
 
-    // Obtener todos los registros de ejercicios del cliente
-    const registros = await RegistroEjercicio.find({ cliente: sanitizedClienteId })
+    // Obtener todos los registros de ejercicios del cliente (últimos 3 meses)
+    const hoy = new Date();
+    const inicio = new Date(hoy.getFullYear(), hoy.getMonth() - 2, 1);
+    const finMesCompleto = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0, 23, 59, 59, 999);
+    
+    const registros = await RegistroEjercicio.find({ 
+      cliente: sanitizedClienteId,
+      fecha: { $gte: inicio, $lte: finMesCompleto }
+    })
       .populate('ejercicio')
       .populate('sesion')
       .sort({ fecha: -1 });
+
+    logger.info('Detalles del cliente obtenidos', {
+      trabajadorId: sanitizedTrabajadorId,
+      clienteId: sanitizedClienteId,
+      sesionesEncontradas: sesiones.length,
+      registrosEncontrados: registros.length,
+      periodo: { inicio, fin: finMesCompleto }
+    });
 
     // Obtener estadísticas del cliente
     const estadisticasGenerales = await obtenerEstadisticasClienteService(sanitizedClienteId.toString());
@@ -1036,7 +1306,7 @@ export const obtenerDetallesClienteService = async (trabajadorId: string, client
 };
 
 // Función auxiliar para obtener número de semana actual
-function getCurrentWeekNumber(): number {
+export function getCurrentWeekNumber(): number {
   const d = new Date(Date.UTC(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()));
   const dayNum = d.getUTCDay() || 7;
   d.setUTCDate(d.getUTCDate() + 4 - dayNum);

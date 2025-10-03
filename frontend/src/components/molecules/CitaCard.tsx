@@ -317,7 +317,7 @@ const CitaCard: React.FC<CitaCardProps> = ({
               </Group>
 
               {/* Botón de unirse a videollamada */}
-              {!esPasada() && ['confirmada', 'en_progreso'].includes(cita.estado || 'pendiente') && (
+              {(esHoy() || !esPasada()) && ['confirmada', 'en_progreso'].includes(cita.estado || 'pendiente') && (
                 <Button
                   size="sm"
                   leftSection={<IconVideo size={16} />}

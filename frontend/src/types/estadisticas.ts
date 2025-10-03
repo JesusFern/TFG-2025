@@ -89,7 +89,7 @@ export interface EstadisticasSemanal {
     sesionesCompletadas: ComparacionBase;
     tiempoEntrenamiento: ComparacionBase;
     cargaUtilizada: ComparacionBase;
-    ejerciciosCompletados: ComparacionBase;
+    seriesCompletadas: ComparacionBase;
   };
   tendencias: TendenciaBase;
   resumen: {

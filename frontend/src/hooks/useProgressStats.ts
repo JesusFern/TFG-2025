@@ -31,12 +31,15 @@ export const useProgressStats = <T, W = unknown, P = unknown>({
 
   const cargarEstadisticas = useCallback(async (semanaSeleccionada: number, añoSeleccionado: number) => {
     try {
+      console.log('Hook useProgressStats: Iniciando carga de estadísticas', { semanaSeleccionada, añoSeleccionado });
       setLoading(true);
       setError(null);
 
       // Cargar estadísticas generales
       try {
+        console.log('Hook useProgressStats: Cargando estadísticas generales...');
         const responseGeneral = await loadGeneralStatsRef.current();
+        console.log('Hook useProgressStats: Respuesta general recibida:', responseGeneral);
         if (responseGeneral) {
           setEstadisticas(responseGeneral);
         }
@@ -46,8 +49,9 @@ export const useProgressStats = <T, W = unknown, P = unknown>({
 
       // Cargar estadísticas semanales
       try {
+        console.log('Hook useProgressStats: Cargando estadísticas semanales...');
         const responseSemanal = await loadWeeklyStatsRef.current(semanaSeleccionada, añoSeleccionado);
-        console.log('Datos semanales recibidos en hook:', responseSemanal);
+        console.log('Hook useProgressStats: Datos semanales recibidos:', responseSemanal);
         if (responseSemanal) {
           setEstadisticasSemanal(responseSemanal);
         }
@@ -71,6 +75,7 @@ export const useProgressStats = <T, W = unknown, P = unknown>({
       setError('Error al cargar las estadísticas');
       console.error('Error cargando estadísticas:', err);
     } finally {
+      console.log('Hook useProgressStats: Finalizando carga de estadísticas');
       setLoading(false);
     }
   }, []);
