@@ -39,37 +39,13 @@ jest.mock('stripe', () => {
 
 // Limpiar la base de datos antes de cada test
 beforeEach(async () => {
-  // Esperar a que la conexión esté lista
-  if (mongoose.connection.readyState !== 1) {
-    await new Promise((resolve) => {
-      mongoose.connection.once('open', resolve);
-    });
-  }
-  
   const collections = Object.values(mongoose.connection.collections);
   for (const collection of collections) {
     await collection.deleteMany({});
-  }
-  
-  // Limpiar cachés de Jest
-  jest.clearAllMocks();
-});
-
-// Limpiar después de cada test
-afterEach(async () => {
-  // Liberar memoria
-  if (global.gc) {
-    global.gc();
   }
 });
 
 // Cerrar la conexión después de todos los tests
 afterAll(async () => {
-  // Desconectar mongoose
-  if (mongoose.connection.readyState !== 0) {
-    await mongoose.connection.close();
-  }
-  
-  // Esperar un poco para que se liberen recursos
-  await new Promise(resolve => setTimeout(resolve, 500));
+  await mongoose.connection.close();
 });
