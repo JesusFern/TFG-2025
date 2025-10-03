@@ -16,13 +16,13 @@ jobs:
       matrix:
         test-group:
           - name: 'Autenticación y Usuarios'
-            pattern: 'tests/(auth|users|assignmentRequests)/**/*.test.ts'
+            pattern: 'tests/(auth|users|assignmentRequests)'
           - name: 'Dietas y Alimentación'
-            pattern: 'tests/(diets|alimentos|estadisticas)/**/*.test.ts'
+            pattern: 'tests/(diets|alimentos|estadisticas)'
           - name: 'Entrenamiento'
-            pattern: 'tests/training/**/*.test.ts'
+            pattern: 'tests/training'
           - name: 'Comunicación y Servicios'
-            pattern: 'tests/(chat|citas|google|video|suscriptionPlan|valoraciones|config|incidents)/**/*.test.ts'
+            pattern: 'tests/(chat|citas|google|video|suscriptionPlan|valoraciones|config|incidents)'
 
     services:
       mongo:
@@ -54,5 +54,5 @@ jobs:
           JWT_SECRET: test_secret
           NODE_ENV: test
           NODE_OPTIONS: --max_old_space_size=4096
-        run: npx jest --testPathPattern="${{ matrix.test-group.pattern }}" --runInBand --detectOpenHandles --forceExit --logHeapUsage
+        run: npx cross-env NODE_ENV=test jest --testPathPattern="${{ matrix.test-group.pattern }}" --runInBand --detectOpenHandles --forceExit --logHeapUsage
         working-directory: ./backend
