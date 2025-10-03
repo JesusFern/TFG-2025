@@ -116,6 +116,8 @@ import NotificacionesPage from '../pages/NotificacionesPage';
 import ListaCompraPage from '../pages/ListaCompraPage';
 import WorkerValoracionesPage from '../pages/WorkerValoracionesPage';
 import WorkerProfilePage from '../pages/WorkerProfilePage';
+import CrearIncidenciaPage from '../pages/CrearIncidenciaPage';
+import ListadoIncidenciasPage from '../pages/ListadoIncidenciasPage';
 
 const AppRoutes: React.FC = () => {
   return (
@@ -407,6 +409,23 @@ const AppRoutes: React.FC = () => {
           </Layout>
         </ProtectedRoute>
       } />
+
+      {/* Rutas para incidencias */}
+      <Route path="/incidencias/crear" element={
+        <ProtectedRoute>
+          <Layout>
+            <CrearIncidenciaPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
+      <Route path="/mis-incidencias" element={
+        <ProtectedRoute>
+          <Layout>
+            <ListadoIncidenciasPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
       
       <Route path="/citas/crear" element={
         <ProtectedRoute>
@@ -463,6 +482,15 @@ const AppRoutes: React.FC = () => {
         <AdminProtectedRoute>
           <Layout>
             <WorkerDetailPage />
+          </Layout>
+        </AdminProtectedRoute>
+      } />
+
+      {/* Ruta para gestión de incidencias (solo admin) */}
+      <Route path="/admin/incidencias" element={
+        <AdminProtectedRoute>
+          <Layout>
+            <ListadoIncidenciasPage />
           </Layout>
         </AdminProtectedRoute>
       } />

@@ -9,11 +9,13 @@ export const verificarAutenticacion = (
   operacion: string
 ): string | null => {
   const userId = req.user?.id;
+  
   if (!userId) {
     logger.info(`Intento de ${operacion} sin autenticación`, { path: req.path });
-    res.status(401).json({ message: 'No autenticado' });
+    res.status(401).json({ message: 'Acceso denegado' });
     return null;
   }
+  
   return userId;
 };
 
