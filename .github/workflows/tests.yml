@@ -15,16 +15,14 @@ jobs:
       fail-fast: false
       matrix:
         test-group:
-          - name: 'auth-users'
-            pattern: 'tests/(auth|users)/**/*.test.ts'
-          - name: 'diets'
-            pattern: 'tests/diets/**/*.test.ts'
-          - name: 'training'
+          - name: 'Autenticación y Usuarios'
+            pattern: 'tests/(auth|users|assignmentRequests)/**/*.test.ts'
+          - name: 'Dietas y Alimentación'
+            pattern: 'tests/(diets|alimentos|estadisticas)/**/*.test.ts'
+          - name: 'Entrenamiento'
             pattern: 'tests/training/**/*.test.ts'
-          - name: 'chat-citas'
-            pattern: 'tests/(chat|citas)/**/*.test.ts'
-          - name: 'others'
-            pattern: 'tests/(alimentos|assignmentRequests|config|estadisticas|google|incidents|suscriptionPlan|valoraciones|video)/**/*.test.ts'
+          - name: 'Comunicación y Servicios'
+            pattern: 'tests/(chat|citas|google|video|suscriptionPlan|valoraciones|config|incidents)/**/*.test.ts'
 
     services:
       mongo:
