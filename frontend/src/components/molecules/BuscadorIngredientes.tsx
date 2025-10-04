@@ -85,20 +85,23 @@ const BuscadorIngredientes: React.FC<BuscadorIngredientesProps> = ({
 
   // Función auxiliar para determinar si es un ingrediente local
   const esIngredienteLocal = (ingrediente: IngredienteUnificado): ingrediente is IngredienteLocal => {
-    return '_id' in ingrediente && 'fuente' in ingrediente;
+    return '_id' in ingrediente;
   };
 
 
   const handleSeleccionarIngrediente = (alimento: IngredienteUnificado) => {
+    // Determinar si es ingrediente local o de OpenFoodFacts
+    const esLocal = esIngredienteLocal(alimento);
+    
     // Convertir a formato Ingrediente estándar
     const ingrediente: Ingrediente = {
       nombre: alimento.nombre,
       peso: 100, // Peso por defecto
       informacionNutricional: obtenerInfoNutricional(alimento), // Usar función normalizada
       marca: obtenerMarcaRender(alimento),
-      id: obtenerId(alimento) || null, // null para OpenFoodFacts
+      id: esLocal ? alimento._id : null, // null para OpenFoodFacts
       imagenIngrediente: obtenerImagenRender(alimento),
-      fuente: obtenerId(alimento) ? 'Interna' : 'Openfoodfacts'
+      fuente: esLocal ? (alimento as IngredienteLocal).fuente : 'Openfoodfacts' // Usar la fuente del ingrediente local o 'Openfoodfacts'
     };
     
     setIngredienteSeleccionado(ingrediente);

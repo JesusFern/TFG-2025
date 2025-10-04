@@ -192,7 +192,7 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
     }
   }, [plato.ingredientesPersonalizados]);
 
-  const cargarIngredientesPersonalizados = useCallback(async (ingredientesPersonalizados: Array<{ ingrediente: string | { _id: string; nombre: string; calorias: number; proteinas: number; grasas: number; hidratosCarbono: number; }; peso: number }>) => {
+  const cargarIngredientesPersonalizados = useCallback(async (ingredientesPersonalizados: Array<{ ingrediente: string | null | { _id: string; nombre: string; calorias: number; proteinas: number; grasas: number; hidratosCarbono: number; }; peso: number }>) => {
     // Evitar múltiples cargas simultáneas
     if (isLoadingIngredients.current) {
       return;
@@ -201,16 +201,35 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
     try {
       isLoadingIngredients.current = true;
       setLoading(true);
-      console.log(`🧄 Cargando ${ingredientesPersonalizados.length} ingredientes personalizados`);
+      console.log(`🧄 Procesando ${ingredientesPersonalizados.length} ingredientes personalizados`);
+      console.log(`🔍 Ingredientes personalizados recibidos:`, ingredientesPersonalizados);
       
       const ingredientesCompletos: Ingrediente[] = [];
       
       for (const ingPersonalizado of ingredientesPersonalizados) {
         try {
+          console.log(`🔍 Procesando ingrediente personalizado:`, ingPersonalizado);
+          
+          // Verificar si el ingrediente es null (OpenFoodFacts sin guardar en BD)
+          if (ingPersonalizado.ingrediente === null) {
+            console.log(`⚠️ Ingrediente es null - saltando carga desde BD`);
+            // Los ingredientes con ingrediente: null ya no deberían existir
+            // porque ahora se guardan en la BD antes de añadirlos al plato
+            continue;
+          }
+          
+          // Para ingredientes con ID (locales y OpenFoodFacts guardados en BD), cargar desde la base de datos
           const ingredienteId = typeof ingPersonalizado.ingrediente === 'string' 
             ? ingPersonalizado.ingrediente 
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            : (ingPersonalizado.ingrediente as any)._id || (ingPersonalizado.ingrediente as any).id;
+            : (ingPersonalizado.ingrediente as any)?._id || (ingPersonalizado.ingrediente as any)?.id;
+          
+          console.log(`🔍 ID del ingrediente a cargar:`, ingredienteId);
+          
+          if (!ingredienteId) {
+            console.log(`⚠️ No se encontró ID válido para el ingrediente - saltando`);
+            continue;
+          }
           
           const response = await fetch(`/api/ingredientes/${ingredienteId}`, {
             headers: {
@@ -239,17 +258,21 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
               id: ingredienteData._id
             };
             ingredientesCompletos.push(ingredienteCompleto);
-            console.log(`✅ Ingrediente cargado: ${ingredienteData.nombre} con peso ${ingPersonalizado.peso}g (desde BD)`);
+            console.log(`✅ Ingrediente cargado: ${ingredienteData.nombre} (${ingredienteData.fuente}) con peso ${ingPersonalizado.peso}g (desde BD)`);
+          } else {
+            console.log(`❌ Error en respuesta HTTP al cargar ingrediente ${ingredienteId}:`, response.status, response.statusText);
           }
         } catch (error) {
-          console.error(`❌ Error al cargar ingrediente:`, error);
+          console.error(`❌ Error al procesar ingrediente:`, error);
+          console.error(`❌ Ingrediente que causó el error:`, ingPersonalizado);
         }
       }
       
-      console.log(`✅ Ingredientes cargados: ${ingredientesCompletos.length}/${ingredientesPersonalizados.length}`);
+      console.log(`✅ Ingredientes procesados: ${ingredientesCompletos.length}/${ingredientesPersonalizados.length}`);
+      console.log(`📋 Lista final de ingredientes:`, ingredientesCompletos.map(ing => ({ nombre: ing.nombre, peso: ing.peso, id: ing.id, fuente: ing.fuente })));
       setIngredientes(ingredientesCompletos);
     } catch (error) {
-      console.error("❌ Error al cargar ingredientes personalizados:", error);
+      console.error("❌ Error al procesar ingredientes personalizados:", error);
       setIngredientes([]);
     } finally {
       setLoading(false);
@@ -300,19 +323,33 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
     lastProcessedPlatoId.current = platoId;
     
     // Actualizar formData solo cuando realmente cambie
+    // Si el plato tiene ingredientes personalizados, limpiar la receta
+    const tieneIngredientesPersonalizados = plato.ingredientesPersonalizados && plato.ingredientesPersonalizados.length > 0;
+    
     setFormData({
       ...plato,
       nombre: plato.nombre || '',
-      ingredientesPersonalizados: plato.ingredientesPersonalizados || []
+      ingredientesPersonalizados: plato.ingredientesPersonalizados || [],
+      receta: tieneIngredientesPersonalizados ? undefined : plato.receta // Limpiar receta si hay ingredientes personalizados
     });
 
     // Cargar ingredientes según prioridad
     if (platoPropiedades.tieneIngredientesPersonalizados && plato.ingredientesPersonalizados) {
       console.log('🔄 Cargando ingredientes personalizados desde plato:', plato.ingredientesPersonalizados);
+      console.log('🔍 Detalles de ingredientes personalizados:', plato.ingredientesPersonalizados.map(ing => ({
+        ingrediente: ing.ingrediente,
+        peso: ing.peso,
+        tipoIngrediente: typeof ing.ingrediente,
+        esNull: ing.ingrediente === null,
+        esString: typeof ing.ingrediente === 'string',
+        esObject: typeof ing.ingrediente === 'object' && ing.ingrediente !== null
+      })));
       cargarIngredientesPersonalizados(plato.ingredientesPersonalizados);
     } else if (plato.receta) {
+      console.log('🔄 Cargando ingredientes desde receta:', plato.receta);
       cargarIngredientesDeReceta(plato.receta);
     } else {
+      console.log('🔄 No hay ingredientes personalizados ni receta - limpiando estado');
       setIngredientes([]);
       setIngredientesReceta([]);
     }
@@ -359,7 +396,7 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
     }
   };
 
-  const addIngrediente = (ingrediente: Ingrediente) => {
+  const addIngrediente = async (ingrediente: Ingrediente) => {
     // Verificar si el ingrediente ya existe
     const existe = ingredientes.some(ing => 
       ing.nombre.toLowerCase() === ingrediente.nombre.toLowerCase()
@@ -384,16 +421,97 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
       peso: ingrediente.peso || 100 // Peso por defecto
     };
     
-    const newIngredientes = [...ingredientes, nuevoIngrediente];
+    console.log(`➕ Añadiendo ingrediente:`, {
+      nombre: nuevoIngrediente.nombre,
+      peso: nuevoIngrediente.peso,
+      id: nuevoIngrediente.id,
+      fuente: nuevoIngrediente.fuente,
+      informacionNutricional: nuevoIngrediente.informacionNutricional
+    });
+    
+    console.log(`🔍 Verificando si es OpenFoodFacts:`, {
+      id: nuevoIngrediente.id,
+      fuente: nuevoIngrediente.fuente,
+      esOpenFoodFacts: nuevoIngrediente.id === null
+    });
+
+    let ingredienteFinal = nuevoIngrediente;
+
+    // Si es un ingrediente de OpenFoodFacts (id: null), guardarlo primero en la base de datos
+    // Detectamos OpenFoodFacts por id: null, independientemente de la fuente
+    if (nuevoIngrediente.id === null) {
+      console.log(`🔍 Ingrediente detectado como OpenFoodFacts (id: null), asignando fuente manualmente`);
+      
+      // Asignar fuente manualmente si no está definida
+      if (!nuevoIngrediente.fuente || nuevoIngrediente.fuente === undefined) {
+        nuevoIngrediente.fuente = 'Openfoodfacts';
+        console.log(`✅ Fuente asignada manualmente: 'Openfoodfacts'`);
+      }
+      try {
+        console.log(`💾 Guardando ingrediente OpenFoodFacts en la base de datos:`, nuevoIngrediente.nombre);
+        
+        // Mapear solo las propiedades nutricionales necesarias
+        const datosGuardar = {
+          nombre: nuevoIngrediente.nombre,
+          calorias: nuevoIngrediente.informacionNutricional.calorias || 0,
+          proteinas: nuevoIngrediente.informacionNutricional.proteinas || 0,
+          grasas: nuevoIngrediente.informacionNutricional.grasas || 0,
+          hidratosCarbono: nuevoIngrediente.informacionNutricional.carbohidratos || 0
+        };
+        
+        console.log(`📊 Datos nutricionales mapeados para guardar:`, datosGuardar);
+        
+        const response = await fetch('/api/ingredientes/guardar-openfoodfacts', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+          },
+          body: JSON.stringify(datosGuardar)
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log(`✅ Ingrediente OpenFoodFacts guardado:`, data.ingrediente);
+          
+          // Actualizar el ingrediente con el ID de la base de datos
+          ingredienteFinal = {
+            ...nuevoIngrediente,
+            id: data.ingrediente._id,
+            fuente: 'Openfoodfacts'
+          };
+        } else {
+          const errorData = await response.json();
+          console.error(`❌ Error al guardar ingrediente OpenFoodFacts:`, errorData);
+          
+          setErrors(prev => ({
+            ...prev,
+            ingredientes: `Error al guardar ingrediente: ${errorData.message || 'Error desconocido'}`
+          }));
+          return;
+        }
+      } catch (error) {
+        console.error(`❌ Error al guardar ingrediente OpenFoodFacts:`, error);
+        setErrors(prev => ({
+          ...prev,
+          ingredientes: 'Error al guardar el ingrediente en la base de datos'
+        }));
+        return;
+      }
+    }
+    
+    const newIngredientes = [...ingredientes, ingredienteFinal];
     setIngredientes(newIngredientes);
     
     // ✅ ACTUALIZAR INMEDIATAMENTE los ingredientesPersonalizados del plato
     const ingredientesPersonalizadosActualizados = newIngredientes
-      .filter(ing => ing.id || ing.codigoBarras)
+      .filter(ing => ing.id !== undefined || ing.codigoBarras) // Incluir ingredientes con id válido
       .map(ing => ({
-        ingrediente: ing.id || ing.codigoBarras || '',
+        ingrediente: ing.id || ing.codigoBarras || null,
         peso: ing.peso || 100
       }));
+
+    console.log(`📝 Ingredientes personalizados actualizados:`, ingredientesPersonalizadosActualizados);
 
     // Actualizar el formData con los nuevos ingredientesPersonalizados
     const platoActualizado = {
@@ -423,9 +541,9 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
     
     // ✅ ACTUALIZAR INMEDIATAMENTE los ingredientesPersonalizados del plato
     const ingredientesPersonalizadosActualizados = newIngredientes
-      .filter(ing => ing.id || ing.codigoBarras)
+      .filter(ing => ing.id !== undefined || ing.codigoBarras) // Incluir ingredientes con id: null (OpenFoodFacts)
       .map(ing => ({
-        ingrediente: ing.id || ing.codigoBarras || '',
+        ingrediente: ing.id || ing.codigoBarras || null, // null para OpenFoodFacts
         peso: ing.peso || 100
       }));
 
@@ -453,9 +571,9 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
 
     // ✅ ACTUALIZAR INMEDIATAMENTE los ingredientesPersonalizados del plato
     const ingredientesPersonalizadosActualizados = newIngredientes
-      .filter(ing => ing.id || ing.codigoBarras)
+      .filter(ing => ing.id !== undefined || ing.codigoBarras) // Incluir ingredientes con id: null (OpenFoodFacts)
       .map(ing => ({
-        ingrediente: ing.id || ing.codigoBarras || '',
+        ingrediente: ing.id || ing.codigoBarras || null, // null para OpenFoodFacts
         peso: ing.peso || 100
       }));
 
@@ -492,9 +610,9 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
 
     // ✅ ACTUALIZAR INMEDIATAMENTE los ingredientesPersonalizados del plato
     const ingredientesPersonalizadosActualizados = newIngredientes
-      .filter(ing => ing.id || ing.codigoBarras)
+      .filter(ing => ing.id !== undefined || ing.codigoBarras) // Incluir ingredientes con id: null (OpenFoodFacts)
       .map(ing => ({
-        ingrediente: ing.id || ing.codigoBarras || '',
+        ingrediente: ing.id || ing.codigoBarras || null, // null para OpenFoodFacts
         peso: ing.peso || 100
       }));
 
@@ -539,9 +657,9 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
       
       // Crear ingredientes personalizados actualizados
       const ingredientesPersonalizadosActualizados = ingredientesConvertidos
-        .filter(ing => ing.id || ing.codigoBarras)
+        .filter(ing => ing.id !== undefined || ing.codigoBarras) // Incluir ingredientes con id: null (OpenFoodFacts)
         .map(ing => ({
-          ingrediente: ing.id || ing.codigoBarras || '',
+          ingrediente: ing.id || ing.codigoBarras || null, // null para OpenFoodFacts
           peso: ing.peso || 100
         }));
       
@@ -597,6 +715,13 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
+    console.log('🔍 Validando formulario:', {
+      nombre: formData.nombre,
+      receta: formData.receta,
+      ingredientes: ingredientes.length,
+      ingredientesReceta: ingredientesReceta.length
+    });
+
     if (!formData.nombre?.trim()) {
       newErrors.nombre = 'El nombre del plato es obligatorio';
     }
@@ -609,34 +734,38 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
       newErrors.ingredientes = 'La receta seleccionada no tiene ingredientes válidos';
     }
 
+    console.log('✅ Errores de validación:', newErrors);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('📝 Intentando guardar plato...');
     setHasTriedSubmit(true);
     
     if (!validateForm()) {
+      console.log('❌ Validación falló, no se puede guardar');
       return;
     }
 
+    console.log('✅ Validación exitosa, preparando datos para guardar...');
     let ingredientesPersonalizados;
 
     if (formData.receta) {
       // Si hay una receta seleccionada, usar los ingredientes de la receta con pesos modificados
       ingredientesPersonalizados = ingredientesReceta
-        .filter(ing => ing.id || ing.codigoBarras) // Solo ingredientes con ID válido
+        .filter(ing => ing.id !== undefined || ing.codigoBarras) // Incluir ingredientes con id: null (OpenFoodFacts)
         .map(ing => ({
-          ingrediente: ing.id || ing.codigoBarras || '', // Usar el ID del ingrediente
+          ingrediente: ing.id || ing.codigoBarras || null, // null para OpenFoodFacts
           peso: ing.peso || 100
         }));
     } else {
       // Si no hay receta, usar ingredientes personalizados
       ingredientesPersonalizados = ingredientes
-        .filter(ing => ing.id || ing.codigoBarras) // Solo ingredientes con ID válido
+        .filter(ing => ing.id !== undefined || ing.codigoBarras) // Incluir ingredientes con id: null (OpenFoodFacts)
         .map(ing => ({
-          ingrediente: ing.id || ing.codigoBarras || '', // Usar el ID del ingrediente
+          ingrediente: ing.id || ing.codigoBarras || null, // null para OpenFoodFacts
           peso: ing.peso || 100
         }));
     }
@@ -646,6 +775,7 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
       ingredientesPersonalizados: ingredientesPersonalizados.length > 0 ? ingredientesPersonalizados : undefined
     };
 
+    console.log('💾 Guardando plato actualizado:', platoActualizado);
     onSave(platoActualizado);
   };
 

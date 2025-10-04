@@ -100,6 +100,9 @@ export async function actualizarPlatosService(platos: PlatoUpdate[]) {
     if (typeof plato.orden !== 'undefined') subPlato.orden = plato.orden;
     
     // Actualizar receta
+    const recetaAnterior = subPlato.receta?.toString();
+    const recetaNueva = plato.receta;
+    
     if (typeof plato.receta !== 'undefined' && plato.receta && plato.receta !== '') {
       if (!mongoose.Types.ObjectId.isValid(plato.receta)) {
         const error: NotFoundError = new Error(`ID de receta inválido: ${plato.receta}`);
@@ -118,28 +121,70 @@ export async function actualizarPlatosService(platos: PlatoUpdate[]) {
       subPlato.receta = undefined;
     }
     
+    // Detectar si se cambió de receta a ingredientes personalizados o se quitó la receta
+    const cambioRecetaAIngredientes = recetaAnterior && !recetaNueva && 
+      typeof plato.ingredientesPersonalizados !== 'undefined';
+    
+    // Detectar si se añadieron ingredientes personalizados nuevos (no solo limpiar)
+    const ingredientesPersonalizadosNuevos = cambioRecetaAIngredientes && 
+      plato.ingredientesPersonalizados && 
+      plato.ingredientesPersonalizados.length > 0;
+    
+    console.log('🔍 Detección de cambio de receta a ingredientes:', {
+      recetaAnterior,
+      recetaNueva,
+      tieneIngredientesPersonalizados: !!(plato.ingredientesPersonalizados && plato.ingredientesPersonalizados.length > 0),
+      cambioRecetaAIngredientes,
+      ingredientesPersonalizadosNuevos
+    });
+    
     // Actualizar ingredientes personalizados
     if (typeof plato.ingredientesPersonalizados !== 'undefined') {
       console.log('🔄 Actualizando ingredientes personalizados:', {
         platoId: subPlato._id,
         ingredientesRecibidos: plato.ingredientesPersonalizados,
-        ingredientesActuales: subPlato.ingredientesPersonalizados
+        ingredientesActuales: subPlato.ingredientesPersonalizados,
+        cambioRecetaAIngredientes,
+        ingredientesPersonalizadosNuevos
       });
       
       // Limpiar ingredientes existentes
       subPlato.ingredientesPersonalizados.splice(0, subPlato.ingredientesPersonalizados.length);
       
+      // Si se detectó cambio de receta (quitada), limpiar completamente
+      if (cambioRecetaAIngredientes) {
+        console.log('🧹 Cambio detectado: limpiando ingredientes de receta anterior');
+        if (ingredientesPersonalizadosNuevos) {
+          console.log('✅ Añadiendo ingredientes personalizados nuevos');
+        } else {
+          console.log('🧹 Solo limpiando, no hay ingredientes personalizados nuevos');
+        }
+      }
+      
       // Añadir los nuevos ingredientes
       for (const ing of plato.ingredientesPersonalizados) {
-        if (ing.ingrediente && mongoose.Types.ObjectId.isValid(ing.ingrediente)) {
-          const nuevoIngrediente = {
-            ingrediente: new mongoose.Types.ObjectId(ing.ingrediente),
-            peso: ing.peso
-          };
-          subPlato.ingredientesPersonalizados.push(nuevoIngrediente);
-          console.log('✅ Ingrediente añadido:', nuevoIngrediente);
+        if (ing.ingrediente) {
+          // Verificar si es un ID de MongoDB válido (ingrediente local)
+          if (mongoose.Types.ObjectId.isValid(ing.ingrediente)) {
+            const nuevoIngrediente = {
+              ingrediente: new mongoose.Types.ObjectId(ing.ingrediente),
+              peso: ing.peso
+            };
+            subPlato.ingredientesPersonalizados.push(nuevoIngrediente);
+            console.log('✅ Ingrediente local añadido:', nuevoIngrediente);
+          } else if (ing.ingrediente === null || ing.ingrediente === '') {
+            // Ingrediente de OpenFoodFacts (sin ID de MongoDB)
+            const nuevoIngrediente = {
+              ingrediente: null, // Para ingredientes de OpenFoodFacts
+              peso: ing.peso
+            };
+            subPlato.ingredientesPersonalizados.push(nuevoIngrediente);
+            console.log('✅ Ingrediente de OpenFoodFacts añadido:', nuevoIngrediente);
+          } else {
+            console.warn(`❌ Ingrediente con formato inválido omitido: ${ing.ingrediente}`);
+          }
         } else {
-          console.warn(`❌ Ingrediente con ID inválido omitido: ${ing.ingrediente}`);
+          console.warn(`❌ Ingrediente sin ID omitido`);
         }
       }
       
