@@ -102,7 +102,6 @@ export class SocketServer {
       socket.on('send_message', async (data: {
         destinatario: string;
         contenido: string;
-        tipo?: 'texto' | 'imagen' | 'archivo' | 'sistema';
         prioridad?: 'baja' | 'normal' | 'alta' | 'urgente';
         categoria?: 'general' | 'entrenamiento' | 'nutricion' | 'consulta' | 'recordatorio';
         adjuntos?: Array<{
@@ -131,7 +130,6 @@ export class SocketServer {
               remitente: authenticatedSocket.userId,
               destinatario: data.destinatario,
               contenido: data.contenido,
-              tipo: data.tipo || 'texto',
               estado: 'enviado' as const,
               prioridad: data.prioridad || 'normal',
               categoria: data.categoria || 'general',
@@ -161,7 +159,6 @@ export class SocketServer {
             remitente: authenticatedSocket.userId,
             destinatario: data.destinatario,
             contenido: data.contenido,
-            tipo: data.tipo || 'texto',
             prioridad: data.prioridad || 'normal',
             categoria: data.categoria || 'general',
             adjuntos: data.adjuntos || [],

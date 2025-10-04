@@ -5,7 +5,7 @@ import { renderClientInfo } from './BreadcrumbUtils';
 
 interface PageLayoutProps {
   children: React.ReactNode;
-  breadcrumbItems: React.ReactNode[];
+  breadcrumbItems?: React.ReactNode[];
   title: string;
   subtitle?: string;
   icon: React.ReactNode;
@@ -28,18 +28,20 @@ export const PageLayout: React.FC<PageLayoutProps> = ({
 }) => {
   return (
     <Container size="lg" py="xl">
-      <Paper 
-        p="md" 
-        mb="lg" 
-        style={{ 
-          backgroundColor: 'var(--app-paper-bg)', 
-          borderBottom: '1px solid var(--app-border-color)' 
-        }}
-      >
-        <Breadcrumbs separator={<IconChevronRight size={14} />}>
-          {breadcrumbItems}
-        </Breadcrumbs>
-      </Paper>
+      {breadcrumbItems && breadcrumbItems.length > 0 && (
+        <Paper 
+          p="md" 
+          mb="lg" 
+          style={{ 
+            backgroundColor: 'var(--app-paper-bg)', 
+            borderBottom: '1px solid var(--app-border-color)' 
+          }}
+        >
+          <Breadcrumbs separator={<IconChevronRight size={14} />}>
+            {breadcrumbItems}
+          </Breadcrumbs>
+        </Paper>
+      )}
 
       <Paper 
         p="lg" 

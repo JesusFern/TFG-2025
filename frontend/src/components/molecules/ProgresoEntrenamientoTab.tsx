@@ -32,7 +32,7 @@ import {
 } from '@mantine/charts';
 import BarChartComponent from './shared/BarChartComponent';
 import { estadisticasService } from '../../services/estadisticasService';
-import { EstadisticasCliente, EstadisticasSemanal, RachasEntrenamiento } from '../../types/estadisticas';
+import { EstadisticasCliente, EstadisticasSemanal, ProgresoEjercicio, RachasEntrenamiento } from '../../types/estadisticas';
 import EmptyProgresoState from './EmptyProgresoState';
 import WeekPanel from './shared/WeekPanel';
 import HistorialSelector from './shared/HistorialSelector';
@@ -46,19 +46,6 @@ interface EstadisticasSemanalBackend extends EstadisticasSemanal {
   progreso: EstadisticasSemanal['progreso'];
 }
 
-interface ProgresoEjercicioType {
-  ejercicioId?: string;
-  ejercicioNombre?: string;
-  grupoMuscular?: string;
-  estadisticas?: {
-    totalSesiones?: number;
-    cargaMaxima?: number;
-    repeticionesMaximas?: number;
-  };
-  progreso?: {
-    tendencia?: string;
-  };
-}
 
 const ProgresoEntrenamientoTab: React.FC = () => {
   const [rachas, setRachas] = useState<RachasEntrenamiento | null>(null);
@@ -112,6 +99,18 @@ const ProgresoEntrenamientoTab: React.FC = () => {
       return 'gray';
     };
 
+    // Verificar que la comparación existe y tiene las propiedades necesarias
+    if (!comparacion) {
+      return (
+        <Card p="md" radius="md" withBorder>
+          <Text size="lg" fw={600} mb="md">
+            Comparación con Semana Anterior
+          </Text>
+          <Text c="dimmed">No hay datos de comparación disponibles</Text>
+        </Card>
+      );
+    }
+
     return (
       <Card p="md" radius="md" withBorder>
         <Text size="lg" fw={600} mb="md">
@@ -120,57 +119,57 @@ const ProgresoEntrenamientoTab: React.FC = () => {
         <SimpleGrid cols={{ base: 2, sm: 4 }} spacing="md">
           <Box>
             <Group mb="xs">
-              {getIcon(comparacion.sesionesCompletadas.porcentajeCambio)}
+              {getIcon(comparacion.sesionesCompletadas?.porcentajeCambio || 0)}
               <Text size="sm" fw={500}>Sesiones</Text>
             </Group>
-            <Text size="xl" fw={700} c={getColor(comparacion.sesionesCompletadas.porcentajeCambio)}>
-              {comparacion.sesionesCompletadas.actual}
+            <Text size="xl" fw={700} c={getColor(comparacion.sesionesCompletadas?.porcentajeCambio || 0)}>
+              {comparacion.sesionesCompletadas?.actual || 0}
             </Text>
             <Text size="xs" c="dimmed">
-              {comparacion.sesionesCompletadas.porcentajeCambio > 0 ? '+' : ''}
-              {Math.round(comparacion.sesionesCompletadas.porcentajeCambio)}%
+              {(comparacion.sesionesCompletadas?.porcentajeCambio || 0) > 0 ? '+' : ''}
+              {Math.round(comparacion.sesionesCompletadas?.porcentajeCambio || 0)}%
             </Text>
           </Box>
           
           <Box>
             <Group mb="xs">
-              {getIcon(comparacion.tiempoEntrenamiento.porcentajeCambio)}
+              {getIcon(comparacion.tiempoEntrenamiento?.porcentajeCambio || 0)}
               <Text size="sm" fw={500}>Tiempo (min)</Text>
             </Group>
-            <Text size="xl" fw={700} c={getColor(comparacion.tiempoEntrenamiento.porcentajeCambio)}>
-              {Math.round(comparacion.tiempoEntrenamiento.actual)}
+            <Text size="xl" fw={700} c={getColor(comparacion.tiempoEntrenamiento?.porcentajeCambio || 0)}>
+              {Math.round(comparacion.tiempoEntrenamiento?.actual || 0)}
             </Text>
             <Text size="xs" c="dimmed">
-              {comparacion.tiempoEntrenamiento.porcentajeCambio > 0 ? '+' : ''}
-              {Math.round(comparacion.tiempoEntrenamiento.porcentajeCambio)}%
+              {(comparacion.tiempoEntrenamiento?.porcentajeCambio || 0) > 0 ? '+' : ''}
+              {Math.round(comparacion.tiempoEntrenamiento?.porcentajeCambio || 0)}%
             </Text>
           </Box>
           
           <Box>
             <Group mb="xs">
-              {getIcon(comparacion.cargaUtilizada.porcentajeCambio)}
+              {getIcon(comparacion.cargaUtilizada?.porcentajeCambio || 0)}
               <Text size="sm" fw={500}>Carga (kg)</Text>
             </Group>
-            <Text size="xl" fw={700} c={getColor(comparacion.cargaUtilizada.porcentajeCambio)}>
-              {Math.round(comparacion.cargaUtilizada.actual)}
+            <Text size="xl" fw={700} c={getColor(comparacion.cargaUtilizada?.porcentajeCambio || 0)}>
+              {Math.round(comparacion.cargaUtilizada?.actual || 0)}
             </Text>
             <Text size="xs" c="dimmed">
-              {comparacion.cargaUtilizada.porcentajeCambio > 0 ? '+' : ''}
-              {Math.round(comparacion.cargaUtilizada.porcentajeCambio)}%
+              {(comparacion.cargaUtilizada?.porcentajeCambio || 0) > 0 ? '+' : ''}
+              {Math.round(comparacion.cargaUtilizada?.porcentajeCambio || 0)}%
             </Text>
           </Box>
           
           <Box>
             <Group mb="xs">
-              {getIcon(comparacion.ejerciciosCompletados.porcentajeCambio)}
-              <Text size="sm" fw={500}>Ejercicios</Text>
+              {getIcon(comparacion.seriesCompletadas?.porcentajeCambio || 0)}
+              <Text size="sm" fw={500}>Series</Text>
             </Group>
-            <Text size="xl" fw={700} c={getColor(comparacion.ejerciciosCompletados.porcentajeCambio)}>
-              {comparacion.ejerciciosCompletados.actual}
+            <Text size="xl" fw={700} c={getColor(comparacion.seriesCompletadas?.porcentajeCambio || 0)}>
+              {comparacion.seriesCompletadas?.actual || 0}
             </Text>
             <Text size="xs" c="dimmed">
-              {comparacion.ejerciciosCompletados.porcentajeCambio > 0 ? '+' : ''}
-              {Math.round(comparacion.ejerciciosCompletados.porcentajeCambio)}%
+              {(comparacion.seriesCompletadas?.porcentajeCambio || 0) > 0 ? '+' : ''}
+              {Math.round(comparacion.seriesCompletadas?.porcentajeCambio || 0)}%
             </Text>
           </Box>
         </SimpleGrid>
@@ -453,7 +452,7 @@ const ProgresoEntrenamientoTab: React.FC = () => {
                 </Group>
                 
                 <Text size="xl" fw={700} c="purple">
-                  {estadisticasSemanal?.progreso?.tiempoTotalEntrenamiento || 0} min
+                  {Math.round(estadisticasSemanal?.progreso?.tiempoTotalEntrenamiento || 0)} min
                 </Text>
                 
                 {estadisticasSemanal?.asistencia?.sesionesCompletadas && estadisticasSemanal.asistencia.sesionesCompletadas > 0 && (
@@ -506,10 +505,10 @@ const ProgresoEntrenamientoTab: React.FC = () => {
           
           <Grid>
             {progresoEjercicios
-              .filter((ejercicio: ProgresoEjercicioType) => ejercicio.estadisticas?.totalSesiones && ejercicio.estadisticas.totalSesiones > 0)
-              .sort((a: ProgresoEjercicioType, b: ProgresoEjercicioType) => (b.estadisticas?.cargaMaxima || 0) - (a.estadisticas?.cargaMaxima || 0))
+              .filter((ejercicio: ProgresoEjercicio) => ejercicio.estadisticas?.totalSesiones && ejercicio.estadisticas.totalSesiones > 0)
+              .sort((a: ProgresoEjercicio, b: ProgresoEjercicio) => (b.estadisticas?.cargaMaxima || 0) - (a.estadisticas?.cargaMaxima || 0))
               .slice(0, 3)
-              .map((ejercicio: ProgresoEjercicioType, index: number) => (
+              .map((ejercicio: ProgresoEjercicio, index: number) => (
               <Grid.Col span={{ base: 12, md: 4 }} key={ejercicio.ejercicioId || 'unknown'}>
                 <Card shadow="sm" padding="lg" radius="md" h="100%">
                   {/* Posición y medalla */}
@@ -571,7 +570,7 @@ const ProgresoEntrenamientoTab: React.FC = () => {
             ))}
           </Grid>
           
-          {progresoEjercicios.filter((ejercicio: ProgresoEjercicioType) => ejercicio.estadisticas?.totalSesiones && ejercicio.estadisticas.totalSesiones > 0).length === 0 && (
+          {progresoEjercicios.filter((ejercicio: ProgresoEjercicio) => ejercicio.estadisticas?.totalSesiones && ejercicio.estadisticas.totalSesiones > 0).length === 0 && (
             <Card shadow="sm" padding="xl" radius="md">
               <Stack align="center" gap="md">
                 <ThemeIcon color="gray" variant="light" size="xl">
@@ -638,7 +637,7 @@ const ProgresoEntrenamientoTab: React.FC = () => {
                       <Text size="sm" fw={500}>Cardio (min)</Text>
                     </Group>
                     <Text size="xl" fw={700} c="orange">
-                      {estadisticasSemanal?.progreso?.tiempoCardio || 0}
+                      {Math.round(estadisticasSemanal?.progreso?.tiempoCardio || 0)}
                     </Text>
                   </Box>
                   

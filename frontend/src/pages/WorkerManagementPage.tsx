@@ -156,6 +156,10 @@ const WorkerManagementPage: React.FC = () => {
     navigate(`/admin/workers/${workerId}`);
   };
 
+  const handleBackToDashboard = () => {
+    navigate('/dashboard');
+  };
+
 
   if (loading) {
     return (
@@ -235,7 +239,7 @@ const WorkerManagementPage: React.FC = () => {
   return (
     <AdminAccessGuard fallbackText="Solo los administradores pueden acceder a la gestión de trabajadores.">
       <Container size="lg" py="xl">
-        <Group mb="lg">
+        <Group mb="lg" justify="space-between">
           <Button 
             leftSection={<IconArrowLeft size={16} />}
             onClick={() => navigate(-1)}
@@ -244,6 +248,13 @@ const WorkerManagementPage: React.FC = () => {
             color="nutroos-green"
           >
             Volver
+          </Button>
+          <Button
+            leftSection={<IconArrowLeft size={16} />}
+            variant="light"
+            onClick={handleBackToDashboard}
+          >
+            Volver al Dashboard
           </Button>
         </Group>
 

@@ -2,6 +2,11 @@ import { Response } from 'express';
 import { AuthenticatedRequest } from '../../types';
 import logger from '../../utils/logger';
 import { verificarAccesoTrabajadorCliente } from '../../helpers/workerHelpers';
+import { 
+  obtenerEstadisticasClienteService, 
+  obtenerEstadisticasSemanalService,
+  getCurrentWeekNumber 
+} from '../../service/training/estadisticasService';
 
 export class WorkerController {
 
@@ -86,54 +91,28 @@ export class WorkerController {
       const { userId, clienteId } = acceso;
       const { semana, año } = req.query;
 
-      // Aquí deberías implementar la lógica para obtener las estadísticas de entrenamiento
-      // Por ahora, devolveremos datos simulados
-      const estadisticas = {
-        porcentajeCompletitudGeneral: 80,
-        totalSesionesRegistradas: 12,
-        totalSesionesPlanificadas: 15,
-        promedioIntensidad: 4.2,
-        promedioSatisfaccion: 4.5,
-        rutinasActivas: 1,
-        totalRutinas: 1
-      };
-
-      const estadisticasSemanal = {
-        semana: {
-          numero: semana ? parseInt(semana as string) : 1,
-          año: año ? parseInt(año as string) : new Date().getFullYear(),
-          fechaInicio: new Date().toISOString(),
-          fechaFin: new Date().toISOString()
-        },
-        progreso: {
-          sesionesRegistradas: 3,
-          sesionesPlanificadas: 4,
-          porcentajeCompletitud: 75,
-          promedioIntensidad: 4.0,
-          promedioSatisfaccion: 4.3
-        },
-        asistencia: {
-          sesionesAsistidas: 3,
-          sesionesProgramadas: 4,
-          porcentajeAsistencia: 75
-        },
-        tendencias: {
-          intensidad: 'mejorando',
-          asistencia: 'estable'
-        }
-      };
+      // Obtener estadísticas reales usando el servicio
+      const estadisticasGenerales = await obtenerEstadisticasClienteService(clienteId);
+      
+      const semanaNum = semana ? parseInt(semana as string) : undefined;
+      const añoNum = año ? parseInt(año as string) : undefined;
+      const estadisticasSemanal = await obtenerEstadisticasSemanalService(
+        clienteId, 
+        semanaNum || getCurrentWeekNumber(), 
+        añoNum || new Date().getFullYear()
+      );
 
       logger.info('Estadísticas de entrenamiento del cliente obtenidas', {
         workerId: userId,
         clienteId,
-        semana,
-        año
+        semana: semanaNum,
+        año: añoNum
       });
 
       res.status(200).json({
         success: true,
-        estadisticas,
-        estadisticasSemanal
+        estadisticas: estadisticasGenerales,
+        estadisticasSemanal: estadisticasSemanal
       });
     } catch (error) {
       logger.error('Error al obtener estadísticas de entrenamiento del cliente', {

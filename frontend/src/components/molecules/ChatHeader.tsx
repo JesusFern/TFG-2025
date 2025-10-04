@@ -10,43 +10,31 @@ import {
   Menu
 } from '@mantine/core';
 import {
-  IconSearch,
   IconInfoCircle,
   IconArchive,
   IconTrash,
-  IconVolumeOff,
-  IconPin,
-  IconPhone,
-  IconVideo,
-  IconDotsVertical
+  IconDotsVertical,
+  IconVideo
 } from '@tabler/icons-react';
 import { Conversacion } from '../../types/chat';
 import { useAuth } from '../../hooks/useAuth';
+import { useNavigate } from 'react-router-dom';
 
 interface ChatHeaderProps {
   conversacion: Conversacion;
-  onSearch?: () => void;
-  onInfo?: () => void;
   onArchive?: () => void;
   onDelete?: () => void;
-  onMute?: () => void;
-  onPin?: () => void;
-  onCall?: () => void;
   onVideoCall?: () => void;
 }
 
 export const ChatHeader: React.FC<ChatHeaderProps> = ({
   conversacion,
-  onSearch,
-  onInfo,
   onArchive,
   onDelete,
-  onMute,
-  onPin,
-  onCall,
   onVideoCall
 }) => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   
   // Obtener el otro participante (no el usuario actual)
   const otroParticipante = conversacion.participantes.find(p => {
@@ -59,6 +47,14 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
   });
   
   const canManageConversation = true; // Se debe obtener del contexto
+
+  // Función para navegar al perfil del otro participante
+  const handleViewProfile = () => {
+    if (otroParticipante) {
+      const participantId = typeof otroParticipante === 'string' ? otroParticipante : otroParticipante._id;
+      navigate(`/profile/${participantId}`);
+    }
+  };
 
   const getCategoryColor = (tipo?: string) => {
     switch (tipo) {
@@ -147,42 +143,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
 
         {/* Acciones del header */}
         <Group gap="xs">
-          {/* Botón de búsqueda */}
-          {onSearch && (
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              size="md"
-              onClick={onSearch}
-            >
-              <IconSearch size={18} />
-            </ActionIcon>
-          )}
-
-          {/* Botón de información */}
-          {onInfo && (
-            <ActionIcon
-              variant="subtle"
-              color="gray"
-              size="md"
-              onClick={onInfo}
-            >
-              <IconInfoCircle size={18} />
-            </ActionIcon>
-          )}
-
-          {/* Botón de llamada */}
-          {onCall && (
-            <ActionIcon
-              variant="subtle"
-              color="green"
-              size="md"
-              onClick={onCall}
-            >
-              <IconPhone size={18} />
-            </ActionIcon>
-          )}
-
           {/* Botón de videollamada */}
           {onVideoCall && (
             <ActionIcon
@@ -195,6 +155,17 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
             </ActionIcon>
           )}
 
+          {/* Botón de información */}
+          <ActionIcon
+            variant="subtle"
+            color="gray"
+            size="md"
+            onClick={handleViewProfile}
+            title="Ver perfil"
+          >
+            <IconInfoCircle size={18} />
+          </ActionIcon>
+
           {/* Menú de acciones */}
           {canManageConversation && (
             <Menu shadow="md" width={200}>
@@ -205,24 +176,6 @@ export const ChatHeader: React.FC<ChatHeaderProps> = ({
               </Menu.Target>
 
               <Menu.Dropdown>
-                {onPin && (
-                  <Menu.Item
-                    leftSection={<IconPin size={14} />}
-                    onClick={onPin}
-                  >
-                    Fijar conversación
-                  </Menu.Item>
-                )}
-                
-                {onMute && (
-                  <Menu.Item
-                    leftSection={<IconVolumeOff size={14} />}
-                    onClick={onMute}
-                  >
-                    Silenciar notificaciones
-                  </Menu.Item>
-                )}
-                
                 {onArchive && (
                   <Menu.Item
                     leftSection={<IconArchive size={14} />}

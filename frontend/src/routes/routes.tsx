@@ -182,6 +182,14 @@ const AppRoutes: React.FC = () => {
         </ProtectedRoute>
       } />
       
+      <Route path="/profile/:userId" element={
+        <ProtectedRoute>
+          <Layout>
+            <ProfilePage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      
       <Route path="/solicitudes" element={
         <ProtectedRoute>
           <Layout>

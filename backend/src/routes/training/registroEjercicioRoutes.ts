@@ -7,7 +7,8 @@ import {
   eliminarRegistroEjercicio,
   marcarRegistroCompletado,
   obtenerProgresoEjercicio,
-  verificarSesionCompleta
+  verificarSesionCompleta,
+  uploadVideoEjercicio
 } from '../../controllers/training/registroEjercicioController';
 import { authenticateToken } from '../../middlewares/authMiddleware';
 import { 
@@ -87,6 +88,13 @@ router.get(
   sesionIdValidator,
   validateRequest,
   verificarSesionCompleta
+);
+
+// Ruta para subir video de ejercicio
+router.post(
+  '/upload-video',
+  authenticateToken,
+  ...uploadVideoEjercicio
 );
 
 export default router;

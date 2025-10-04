@@ -19,7 +19,7 @@ const BarChartComponent: React.FC<BarChartComponentProps> = ({
   tooltipLabel = "ejercicios",
   color = "blue.6"
 }) => {
-  const filteredData = data.filter(([, value]) => value > 0);
+  const filteredData = data.filter((item) => item.cantidad > 0);
 
   if (filteredData.length === 0) {
     return (
@@ -30,9 +30,9 @@ const BarChartComponent: React.FC<BarChartComponentProps> = ({
     );
   }
 
-  const chartData = filteredData.map(([tipo, cantidad]) => ({
-    tipo: tipo.charAt(0).toUpperCase() + tipo.slice(1),
-    cantidad: cantidad
+  const chartData = filteredData.map((item) => ({
+    tipo: item.tipo.charAt(0).toUpperCase() + item.tipo.slice(1),
+    cantidad: item.cantidad
   }));
 
   return (

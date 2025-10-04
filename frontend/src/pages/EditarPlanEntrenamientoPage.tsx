@@ -70,7 +70,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     refetch
   } = useTrainingData({ 
     planId, 
-    options: { redirectToView: true, loadExercises: true } 
+    options: { redirectToView: false, loadExercises: true } 
   });
 
   // Hook para sincronización con Google Calendar
@@ -117,6 +117,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
 
     sesionesFiltradas.sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
     
+    // Calcular el número de semanas completas a partir de la fecha de inicio
     const totalWeeks = Math.ceil(plan.duracionDias / 7);
     
     const weekStartDate = getWeekStartDate(fechaInicio, currentWeek);
@@ -129,9 +130,14 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     
     const sesionesInfo: SesionInfo[] = [];
     
-    for (let i = 0; i < 7; i++) {
+    // Solo generar los días que están configurados en el plan
+    for (let i = 0; i < plan.diasSemana.length; i++) {
+      const diaSemana = plan.diasSemana[i];
       const fechaDelDia = new Date(weekStartDate);
-      fechaDelDia.setDate(fechaDelDia.getDate() + i);
+      
+      // Calcular cuántos días hay que sumar para llegar al día de la semana deseado
+      const diasHastaDiaSemana = (diaSemana - weekStartDate.getDay() + 7) % 7;
+      fechaDelDia.setDate(fechaDelDia.getDate() + diasHastaDiaSemana);
       
       // Buscar sesión para este día
       const sesionDelDia = sesionesDeLaSemana.find(sesion => {
@@ -142,10 +148,10 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
       sesionesInfo.push({
         weekDayIndex: i,
         sesionIndex: i,
-        weekDayName: DIAS_SEMANA[i],
+        weekDayName: DIAS_SEMANA[diaSemana],
         fecha: fechaDelDia,
         fechaFormateada: formatDateWithLocale(fechaDelDia),
-        nombreCompleto: `${DIAS_SEMANA[i]} ${formatDateWithLocale(fechaDelDia)}`,
+        nombreCompleto: `${DIAS_SEMANA[diaSemana]} ${formatDateWithLocale(fechaDelDia)}`,
         data: sesionDelDia || null
       });
     }
@@ -282,8 +288,34 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     handleOpenEjerciciosModal(setEjerciciosSesion, setShowEjerciciosModal);
   };
 
+  // Función auxiliar para verificar si una sesión se puede editar
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const canEditSession = (sessionData: any): boolean => {
+    if (!sessionData || !sessionData.fecha) return false;
+    
+    const fechaSesion = new Date(sessionData.fecha);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    
+    return fechaSesion > hoy; // Solo sesiones futuras se pueden editar
+  };
+
+  // Función auxiliar para verificar si se puede crear una nueva sesión
+  const canCreateSession = (fecha: Date): boolean => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    
+    return fecha > hoy; // Solo fechas futuras se pueden crear
+  };
+
   const handleReorderEjercicios = async (newOrder: EjercicioSesion[]) => {
-    if (!currentSesionInfo?.data || !plan?.draftMode) return;
+    if (!currentSesionInfo?.data) return;
+    
+    // Verificar si la sesión ya ha ocurrido
+    if (!canEditSession(currentSesionInfo.data)) {
+      setError('No se pueden reordenar ejercicios de sesiones que ya han ocurrido');
+      return;
+    }
 
     try {
       setPublishLoading(true);
@@ -610,16 +642,6 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
               </Alert>
             )}
             
-            {!plan?.draftMode && (
-              <Alert 
-                icon={<IconCheck size={16} />}
-                title="Plan publicado" 
-                color="green" 
-                mb="md"
-              >
-                Este plan de entrenamiento ha sido publicado y no se puede editar.
-              </Alert>
-            )}
           </motion.div>
         )}
       </Paper>
@@ -734,7 +756,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                         variant="light"
                         leftSection={<IconEdit size={16} />}
                         onClick={() => handleEditarSesion((currentSesionInfo.data as { _id?: string })?._id || '')}
-                        disabled={!plan?.draftMode}
+                        disabled={!canEditSession(currentSesionInfo.data)}
                       >
                         Editar sesión
                       </Button>
@@ -742,7 +764,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                         color="red" 
                         variant="light"
                         onClick={() => handleEliminarSesion((currentSesionInfo.data as { _id?: string })?._id || '')}
-                        disabled={!plan?.draftMode}
+                        disabled={!canEditSession(currentSesionInfo.data)}
                       >
                         <IconTrash size={16} />
                       </ActionIcon>
@@ -758,7 +780,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                         leftSection={<IconPlus size={16} />}
                         onClick={handleOpenEjerciciosModalWrapper}
                         loading={loading}
-                        disabled={!plan?.draftMode}
+                        disabled={!canEditSession(currentSesionInfo.data)}
                       >
                         Añadir ejercicio
                       </Button>
@@ -772,7 +794,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                         onReorder={handleReorderEjercicios}
                         onEdit={handleEditarEjercicio}
                         onDelete={setEjercicioAEliminar}
-                        disabled={!plan?.draftMode}
+                        disabled={!canEditSession(currentSesionInfo.data)}
                       />
                     ) : (
                       <Box p="md" style={{ backgroundColor: 'var(--mantine-color-gray-0)', borderRadius: '8px' }}>
@@ -781,11 +803,11 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                         </Text>
                         <Group justify="center">
                           <Button 
-                            size="sm" 
+                            size="sm"
                             color="nutroos-green"
                             leftSection={<IconPlus size={16} />}
                             onClick={handleOpenEjerciciosModalWrapper}
-                            disabled={!plan?.draftMode}
+                            disabled={!canEditSession(currentSesionInfo.data)}
                           >
                             Añadir primer ejercicio
                           </Button>
@@ -827,11 +849,11 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                     const esFechaValida = esDiaValido && estaEnRango;
                     
                     return esFechaValida ? (
-                  <Button 
+                    <Button 
                     size="sm" 
                     color="nutroos-green"
                     leftSection={<IconBarbell size={16} />}
-                        disabled={!plan?.draftMode}
+                        disabled={!canCreateSession(currentSesionInfo.fecha)}
                     onClick={() => {
                           handleConfigurarSesion(currentSesionInfo.fecha.toISOString());
                     }}

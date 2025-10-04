@@ -17,8 +17,6 @@ import {
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import GlobalNotificationOverlay from '../components/atoms/GlobalNotificationOverlay';
-import { BREADCRUMBS_TRAINING_BASE } from '../constants/training';
-import { createBreadcrumbItems } from '../components/common/BreadcrumbUtils';
 import { PageLayout } from '../components/common/PageLayout';
 import { useClientData } from '../hooks/useClientData';
 import { OBJETIVOS_ENTRENAMIENTO } from '../constants/objectives';
@@ -37,15 +35,8 @@ const SeleccionarObjetivoPlantillaPage: React.FC = () => {
     navigate(`/training/planes/tipo?clientId=${clientId}`);
   };
 
-  const items = createBreadcrumbItems(BREADCRUMBS_TRAINING_BASE, [
-    { title: 'Seleccionar tipo de plan', href: `/training/planes/tipo?clientId=${clientId}` },
-    { title: 'Seleccionar objetivo', href: '#', icon: undefined }
-  ]);
-
-
   return (
     <PageLayout
-      breadcrumbItems={items}
       title="Seleccionar Objetivo"
       subtitle="Elige el objetivo principal del plan de entrenamiento"
       icon={<IconTarget size="1.5rem" />}

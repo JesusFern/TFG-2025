@@ -5,14 +5,18 @@ import { DatosSaludYNutricion, DatosActividadFisica, ProfileFormData, UserProfil
 import { Container, Text, Stack, Alert, Loader, Center } from '@mantine/core';
 import { IconAlertCircle } from '@tabler/icons-react';
 import { apiRequest } from '../services/api';
+import { useParams } from 'react-router-dom';
 
 const ProfilePage: React.FC = () => {
   const { user, token, updateUser } = useAuth();
+  const { userId } = useParams<{ userId?: string }>();
   const [datosSalud, setDatosSalud] = useState<DatosSaludYNutricion | null>(null);
   const [datosActividad, setDatosActividad] = useState<DatosActividadFisica | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasLoadedData, setHasLoadedData] = useState(false);
+  const [viewingOtherProfile, setViewingOtherProfile] = useState(false);
+  const [otherUserProfile, setOtherUserProfile] = useState<UserProfile | null>(null);
 
   const fetchUserData = useCallback(async () => {
     if (!token || !user) return;
@@ -21,34 +25,55 @@ const ProfilePage: React.FC = () => {
       setIsLoading(true);
       setError(null);
 
-      const response = await apiRequest('/api/users/me');
+      // Determinar si estamos viendo el perfil de otro usuario
+      const isViewingOther = Boolean(userId && userId !== user._id);
+      setViewingOtherProfile(isViewingOther);
 
-      if (response.ok) {
-        const data = await response.json();
-        const userData = data.user;
-        
-        const hasChanges = JSON.stringify(userData) !== JSON.stringify(user);
-        if (hasChanges) {
-          updateUser(userData);
+      let response;
+      if (isViewingOther) {
+        // Cargar perfil de otro usuario
+        console.log('Cargando perfil de usuario:', userId);
+        response = await apiRequest(`/api/users/${userId}`);
+        if (response.ok) {
+          const userData = await response.json();
+          console.log('Datos del usuario cargados:', userData);
+          setOtherUserProfile(userData);
+          setHasLoadedData(true);
+        } else {
+          const errorData = await response.json().catch(() => ({}));
+          console.error('Error al cargar perfil:', response.status, errorData);
+          setError(`Error al cargar el perfil del usuario: ${response.status} ${errorData.message || 'Error desconocido'}`);
         }
-        
-        if (userData.datosSaludYNutricion) {
-          setDatosSalud(userData.datosSaludYNutricion);
-        }
-        if (userData.datosActividadFisica) {
-          setDatosActividad(userData.datosActividadFisica);
-        }
-        
-        setHasLoadedData(true);
       } else {
-        setError('Error al cargar los datos del perfil');
+        // Cargar perfil propio
+        response = await apiRequest('/api/users/me');
+        if (response.ok) {
+          const data = await response.json();
+          const userData = data.user;
+          
+          const hasChanges = JSON.stringify(userData) !== JSON.stringify(user);
+          if (hasChanges) {
+            updateUser(userData);
+          }
+          
+          if (userData.datosSaludYNutricion) {
+            setDatosSalud(userData.datosSaludYNutricion);
+          }
+          if (userData.datosActividadFisica) {
+            setDatosActividad(userData.datosActividadFisica);
+          }
+          
+          setHasLoadedData(true);
+        } else {
+          setError('Error al cargar los datos del perfil');
+        }
       }
     } catch {
       setError('Error de conexión al cargar el perfil');
     } finally {
       setIsLoading(false);
     }
-  }, [token, user, updateUser]);
+  }, [token, user, updateUser, userId]);
 
   useEffect(() => {
     if (user && !hasLoadedData) {
@@ -261,13 +286,33 @@ const ProfilePage: React.FC = () => {
     );
   }
 
+  // Determinar qué perfil mostrar
+  const currentProfile = viewingOtherProfile ? otherUserProfile : user;
+  
+  if (!currentProfile) {
+    return (
+      <Container size="md" py="xl">
+        <Center>
+          <Stack align="center" gap="md">
+            <Loader size="lg" />
+            <Text c="dimmed">
+              {viewingOtherProfile ? 'Cargando perfil del usuario...' : 'Cargando tu perfil...'}
+            </Text>
+          </Stack>
+        </Center>
+      </Container>
+    );
+  }
+
   return (
     <ProfilePageComponent
-      profile={user}
+      profile={currentProfile}
       datosSalud={datosSalud || undefined}
       datosActividad={datosActividad || undefined}
-      onUpdateProfile={handleUpdateProfile}
-      onUpdatePhoto={handleUpdatePhoto}
+      onUpdateProfile={viewingOtherProfile ? async () => {} : handleUpdateProfile}
+      onUpdatePhoto={viewingOtherProfile ? async () => {} : handleUpdatePhoto}
+      viewingOtherProfile={viewingOtherProfile}
+      currentUserRole={user?.role}
     />
   );
 };

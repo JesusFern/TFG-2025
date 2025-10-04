@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Container,
   Title,
@@ -28,18 +29,20 @@ import GlobalNotificationOverlay from '../components/atoms/GlobalNotificationOve
 import { VideoCallModalCitas } from '../components/organisms/VideoCallModalCitas';
 import { VideoCallRoom } from '../components/organisms/VideoCallRoom';
 import { useVideoCallCitas } from '../hooks/useVideoCallCitas';
-import {  
+import {
   IconPlus,
   IconCalendar,
   IconChartBar,
   IconList,
   IconAlertCircle,
-  IconRefresh
+  IconRefresh,
+  IconArrowLeft
 } from '@tabler/icons-react';
 
 const CitasPage: React.FC = () => {
   const { user } = useAuth();
   const isDark = useThemeDetection();
+  const navigate = useNavigate();
   
   // Hook para sincronización con Google Calendar
   const { syncAppointmentOnConfirm, syncAppointmentOnReschedule, syncAppointmentOnCancel } = useAppointmentCalendarSync();
@@ -55,10 +58,11 @@ const CitasPage: React.FC = () => {
     message: string;
   } | null>(null);
 
-  // Estados de filtros
+  // Estados de filtros - Por defecto solo mostrar citas activas
   const [filtros, setFiltros] = useState<FiltrosCitasType>({
     limit: 20,
-    offset: 0
+    offset: 0,
+    estadosActivos: true // Por defecto solo mostrar citas activas (pendientes, confirmadas, en_progreso)
   });
   const [totalCitas, setTotalCitas] = useState(0);
 
@@ -99,6 +103,11 @@ const CitasPage: React.FC = () => {
 
   // Determinar si es profesional
   const esProfesional = user?.role === 'worker';
+
+  // Función para volver al dashboard
+  const handleBackToDashboard = () => {
+    navigate('/dashboard');
+  };
 
   // Hook para videollamadas
   const {
@@ -145,6 +154,11 @@ const CitasPage: React.FC = () => {
 
       // Aplicar filtros basados en el rol del usuario
       const filtrosAplicados = { ...filtros };
+      
+      // Si hay un filtro de estado específico, desactivar el filtro de estados activos
+      if (filtrosAplicados.estado) {
+        delete filtrosAplicados.estadosActivos;
+      }
       
       if (!esProfesional && user?.role !== 'admin') {
         // Los clientes solo ven sus propias citas
@@ -238,7 +252,8 @@ const CitasPage: React.FC = () => {
   const handleLimpiarFiltros = () => {
     setFiltros({
       limit: 20,
-      offset: 0
+      offset: 0,
+      estadosActivos: true // Mantener el filtro por defecto de estados activos
     });
   };
 
@@ -464,11 +479,21 @@ const CitasPage: React.FC = () => {
           
           <Group>
             <Button
-              leftSection={<IconPlus size={16} />}
-              onClick={() => window.location.href = '/citas/crear'}
+              leftSection={<IconArrowLeft size={16} />}
+              variant="light"
+              onClick={handleBackToDashboard}
             >
-              Nueva Cita
+              Volver al Dashboard
             </Button>
+            {/* Solo mostrar botón "Nueva Cita" para clientes, no para profesionales */}
+            {!esProfesional && (
+              <Button
+                leftSection={<IconPlus size={16} />}
+                onClick={() => navigate('/citas/crear')}
+              >
+                Nueva Cita
+              </Button>
+            )}
             <Button
               variant="outline"
               leftSection={<IconRefresh size={16} />}

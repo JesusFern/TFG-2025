@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Container, Title, Tabs, Paper, Loader, Center, Alert, Button, Stack, Text } from '@mantine/core';
-import { IconBarbell, IconApple, IconAlertCircle, IconCreditCard, IconActivity } from '@tabler/icons-react';
+import { Container, Title, Tabs, Paper, Loader, Center, Alert, Button, Stack, Text, Group } from '@mantine/core';
+import { IconBarbell, IconApple, IconAlertCircle, IconCreditCard, IconArrowLeft, IconActivity } from '@tabler/icons-react';
 import { useAuth } from '../hooks/useAuth';
 import { useSuscription } from '../hooks/useSuscription';
+import { useNavigate } from 'react-router-dom';
 import ProgresoEntrenamientoTab from '../components/molecules/ProgresoEntrenamientoTab';
 import ProgresoNutricionTab from '../components/molecules/ProgresoNutricionTab';
 import ProgresoEntrenamientoWorkerTab from '../components/molecules/ProgresoEntrenamientoWorkerTab';
@@ -13,7 +14,12 @@ import MiProgresoWorkerTab from '../components/molecules/MiProgresoWorkerTab';
 const ProgresoSemanalPage: React.FC = () => {
   const { user } = useAuth();
   const { suscriptionStatus, loading: suscriptionLoading } = useSuscription();
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>('mi-progreso');
+
+  const handleBackToDashboard = () => {
+    navigate('/dashboard');
+  };
 
   if (!user || suscriptionLoading) {
     return (
@@ -35,9 +41,18 @@ const ProgresoSemanalPage: React.FC = () => {
     if (!canAccessTraining && !canAccessNutrition) {
       return (
         <Container size="xl" py="xl">
-          <Title order={1} mb="xl" c="nutroos-green">
-            Seguimiento de Clientes
-          </Title>
+          <Group justify="space-between" align="center" mb="xl">
+            <Title order={1} c="nutroos-green">
+              Seguimiento de Clientes
+            </Title>
+            <Button
+              leftSection={<IconArrowLeft size={16} />}
+              variant="light"
+              onClick={handleBackToDashboard}
+            >
+              Volver al Dashboard
+            </Button>
+          </Group>
           
           <Alert
             icon={<IconAlertCircle size={16} />}
@@ -121,9 +136,18 @@ const ProgresoSemanalPage: React.FC = () => {
     // Si puede acceder a ambos, mostrar tabs
     return (
       <Container size="xl" py="xl">
-        <Title order={1} mb="xl" c="nutroos-green">
-          Seguimiento de Clientes
-        </Title>
+        <Group justify="space-between" align="center" mb="xl">
+          <Title order={1} c="nutroos-green">
+            Seguimiento de Clientes
+          </Title>
+          <Button
+            leftSection={<IconArrowLeft size={16} />}
+            variant="light"
+            onClick={handleBackToDashboard}
+          >
+            Volver al Dashboard
+          </Button>
+        </Group>
 
         <Paper shadow="sm" p="md" radius="md">
           <Tabs value={activeTab} onChange={(value: string | null) => setActiveTab(value || 'mi-progreso')}>
@@ -182,9 +206,18 @@ const ProgresoSemanalPage: React.FC = () => {
   if (!suscriptionStatus.hasSuscription) {
     return (
       <Container size="xl" py="xl">
-        <Title order={1} mb="xl" c="nutroos-green">
-          Progreso Semanal
-        </Title>
+        <Group justify="space-between" align="center" mb="xl">
+          <Title order={1} c="nutroos-green">
+            Progreso Semanal
+          </Title>
+          <Button
+            leftSection={<IconArrowLeft size={16} />}
+            variant="light"
+            onClick={handleBackToDashboard}
+          >
+            Volver al Dashboard
+          </Button>
+        </Group>
         
         <Alert
           icon={<IconAlertCircle size={16} />}
@@ -220,9 +253,18 @@ const ProgresoSemanalPage: React.FC = () => {
   if (!canAccessTraining && !canAccessNutrition) {
     return (
       <Container size="xl" py="xl">
-        <Title order={1} mb="xl" c="nutroos-green">
-          Progreso Semanal
-        </Title>
+        <Group justify="space-between" align="center" mb="xl">
+          <Title order={1} c="nutroos-green">
+            Progreso Semanal
+          </Title>
+          <Button
+            leftSection={<IconArrowLeft size={16} />}
+            variant="light"
+            onClick={handleBackToDashboard}
+          >
+            Volver al Dashboard
+          </Button>
+        </Group>
         
         <Alert
           icon={<IconAlertCircle size={16} />}
@@ -253,9 +295,18 @@ const ProgresoSemanalPage: React.FC = () => {
   if (canAccessTraining && !canAccessNutrition) {
     return (
       <Container size="xl" py="xl">
-        <Title order={1} mb="xl" c="nutroos-green">
-          Progreso Semanal
-        </Title>
+        <Group justify="space-between" align="center" mb="xl">
+          <Title order={1} c="nutroos-green">
+            Progreso Semanal
+          </Title>
+          <Button
+            leftSection={<IconArrowLeft size={16} />}
+            variant="light"
+            onClick={handleBackToDashboard}
+          >
+            Volver al Dashboard
+          </Button>
+        </Group>
         <ProgresoEntrenamientoTab />
       </Container>
     );
@@ -264,9 +315,18 @@ const ProgresoSemanalPage: React.FC = () => {
   if (canAccessNutrition && !canAccessTraining) {
     return (
       <Container size="xl" py="xl">
-        <Title order={1} mb="xl" c="nutroos-green">
-          Progreso Semanal
-        </Title>
+        <Group justify="space-between" align="center" mb="xl">
+          <Title order={1} c="nutroos-green">
+            Progreso Semanal
+          </Title>
+          <Button
+            leftSection={<IconArrowLeft size={16} />}
+            variant="light"
+            onClick={handleBackToDashboard}
+          >
+            Volver al Dashboard
+          </Button>
+        </Group>
         <ProgresoNutricionTab />
       </Container>
     );
@@ -275,9 +335,18 @@ const ProgresoSemanalPage: React.FC = () => {
   // Si puede acceder a ambos, mostrar tabs
   return (
     <Container size="xl" py="xl">
-      <Title order={1} mb="xl" c="nutroos-green">
-        Progreso Semanal
-      </Title>
+      <Group justify="space-between" align="center" mb="xl">
+        <Title order={1} c="nutroos-green">
+          Progreso Semanal
+        </Title>
+        <Button
+          leftSection={<IconArrowLeft size={16} />}
+          variant="light"
+          onClick={handleBackToDashboard}
+        >
+          Volver al Dashboard
+        </Button>
+      </Group>
 
       <Paper shadow="sm" p="md" radius="md">
         <Tabs value={activeTab} onChange={(value: string | null) => setActiveTab(value || 'mi-progreso')}>

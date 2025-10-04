@@ -1,13 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Container, SimpleGrid } from '@mantine/core';
-import { IconBarbell, IconTarget } from '@tabler/icons-react';
+import { Container, SimpleGrid, Group, Button, Paper, Title, Text, Stack } from '@mantine/core';
+import { IconBarbell, IconTarget, IconArrowLeft } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
 import { useLoadingState } from '../hooks/useLoadingState';
 import { PlanEntrenamiento } from '../types/training';
 import { trainingService } from '../services/trainingService';
 import LoadingErrorStates from '../components/atoms/LoadingErrorStates';
-import PageHeader from '../components/molecules/PageHeader';
 import EmptyState from '../components/molecules/EmptyState';
 import PlanCard from '../components/molecules/PlanCard';
 
@@ -47,16 +46,35 @@ const ClientTrainingPlansPage: React.FC = () => {
     navigate(`/mis-entrenamientos/${planId}`);
   };
 
+  const handleBackToDashboard = () => {
+    navigate('/dashboard');
+  };
+
   return (
     <LoadingErrorStates loading={loading} error={error}>
       <Container size="lg" py="xl">
-        {/* Header */}
-        <PageHeader
-          title="Mis Planes de Entrenamiento"
-          subtitle="Planes personalizados creados por tu entrenador"
-          badgeText={`${planes.length} Plan${planes.length !== 1 ? 'es' : ''}`}
-          badgeIcon={<IconBarbell size={20} />}
-        />
+        <Stack gap="lg">
+          {/* Header con botón de volver al dashboard */}
+          <Paper p="lg" radius="lg" withBorder>
+            <Group justify="space-between" align="center">
+              <div>
+                <Title order={1}>Mis Planes de Entrenamiento</Title>
+                <Text c="dimmed" size="lg">
+                  Planes personalizados creados por tu entrenador
+                </Text>
+                <Text size="sm" c="dimmed" mt="xs">
+                  {planes.length} Plan{planes.length !== 1 ? 'es' : ''}
+                </Text>
+              </div>
+              <Button
+                leftSection={<IconArrowLeft size={16} />}
+                variant="light"
+                onClick={handleBackToDashboard}
+              >
+                Volver al Dashboard
+              </Button>
+            </Group>
+          </Paper>
         
         {planes.length === 0 ? (
           <EmptyState
@@ -84,6 +102,7 @@ const ClientTrainingPlansPage: React.FC = () => {
             ))}
           </SimpleGrid>
         )}
+        </Stack>
       </Container>
     </LoadingErrorStates>
   );

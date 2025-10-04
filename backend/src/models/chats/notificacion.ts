@@ -5,7 +5,7 @@ export interface NotificacionDocument extends Document {
   usuario: mongoose.Types.ObjectId;
   tipo: 'mensaje' | 'sistema' | 'recordatorio' | 'entrenamiento' | 'nutricion';
   titulo: string;
-  contenido: string;
+  contenido?: string;
   prioridad: 'baja' | 'normal' | 'alta' | 'urgente';
   leida: boolean;
   enviada: boolean;
@@ -51,9 +51,10 @@ const NotificacionSchema = new Schema<NotificacionDocument>({
   },
   contenido: {
     type: String,
-    required: true,
+    required: false,
     trim: true,
-    maxlength: 1000
+    maxlength: 1000,
+    default: ''
   },
   prioridad: {
     type: String,

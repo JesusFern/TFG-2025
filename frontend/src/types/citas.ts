@@ -72,6 +72,7 @@ export interface FiltrosCitas {
   fechaHasta?: string;
   limit?: number;
   offset?: number;
+  estadosActivos?: boolean; // Para filtrar solo citas activas (pendientes, confirmadas, en_progreso)
 }
 
 // Respuesta de API con paginación

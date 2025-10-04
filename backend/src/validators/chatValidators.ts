@@ -10,13 +10,20 @@ export const validarCrearMensaje = [
   body('contenido')
     .isString()
     .trim()
-    .isLength({ min: 1, max: 5000 })
-    .withMessage('El contenido debe tener entre 1 y 5000 caracteres'),
+    .isLength({ min: 0, max: 5000 })
+    .withMessage('El contenido debe tener entre 0 y 5000 caracteres')
+    .custom((value, { req }) => {
+      const adjuntos = req.body.adjuntos;
+      const contenido = value?.trim();
+      
+      // Debe haber al menos contenido O adjuntos
+      if (!contenido && (!adjuntos || adjuntos.length === 0)) {
+        throw new Error('Debe proporcionar contenido o adjuntos');
+      }
+      
+      return true;
+    }),
   
-  body('tipo')
-    .optional()
-    .isIn(['texto', 'imagen', 'archivo', 'sistema'])
-    .withMessage('Tipo de mensaje inválido'),
   
   body('prioridad')
     .optional()
@@ -52,7 +59,7 @@ export const validarCrearMensaje = [
   
   body('adjuntos.*.tamano')
     .optional()
-    .isInt({ min: 1, max: 10485760 }) // 10MB máximo
+    .isInt({ min: 1, max: 52428800 }) // 50MB máximo
     .withMessage('Tamaño de adjunto inválido'),
   
   body('programadoPara')

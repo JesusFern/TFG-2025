@@ -94,7 +94,6 @@ describe('Mensaje API Endpoints', () => {
         expect.objectContaining({
           destinatario: expect.any(String),
           contenido: 'Test message',
-          tipo: 'texto',
           prioridad: 'normal',
           categoria: 'general'
         })

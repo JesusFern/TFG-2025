@@ -86,6 +86,10 @@ const EstadisticasCitas: React.FC<EstadisticasCitasProps> = ({
     ? Math.round((estadisticas.citasConfirmadas / estadisticas.totalCitas) * 100)
     : 0;
 
+  const porcentajePendientes = estadisticas.totalCitas > 0 
+    ? Math.round((estadisticas.citasPendientes / estadisticas.totalCitas) * 100)
+    : 0;
+
   return (
         <Stack gap="lg">
       <Title order={3} c={isDark ? 'white' : 'dark'}>
@@ -178,7 +182,7 @@ const EstadisticasCitas: React.FC<EstadisticasCitasProps> = ({
                   { value: porcentajeConfirmadas, color: 'blue', tooltip: `Confirmadas: ${estadisticas.citasConfirmadas}` },
                   { value: porcentajeCanceladas, color: 'red', tooltip: `Canceladas: ${estadisticas.citasCanceladas}` },
                   { 
-                    value: 100 - porcentajeCompletadas - porcentajeConfirmadas - porcentajeCanceladas, 
+                    value: porcentajePendientes, 
                     color: 'yellow', 
                     tooltip: `Pendientes: ${estadisticas.citasPendientes}` 
                   }

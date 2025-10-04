@@ -153,15 +153,16 @@ export const actualizarPlanEntrenamiento = async (req: AuthenticatedRequest, res
       campos: Object.keys(update)
     });
 
-    // Verificar que el plan existe y no está publicado
+    // Verificar que el plan existe
     const planExistente = await PlanEntrenamiento.findById(id);
     if (!planExistente) {
       res.status(404).json({ message: 'Plan de entrenamiento no encontrado' });
       return;
     }
 
-    if (!planExistente.draftMode) {
-      res.status(403).json({ message: 'No se puede editar un plan de entrenamiento publicado' });
+    // Verificar que el entrenador tiene acceso al plan
+    if (planExistente.entrenador.toString() !== entrenadorId) {
+      res.status(403).json({ message: 'No tienes permisos para editar este plan' });
       return;
     }
 

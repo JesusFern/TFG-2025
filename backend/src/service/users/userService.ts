@@ -289,7 +289,26 @@ export class UserService {
       throw new Error('Usuario no encontrado');
     }
 
-    return {
+    // Extender el tipo para incluir timestamps de Mongoose
+    const userWithTimestamps = user as typeof user & { createdAt: Date; updatedAt: Date };
+
+    const userData: {
+      _id: string;
+      fullName: string;
+      email: string;
+      profilePicture?: string | null;
+      role: string;
+      phoneNumber: string;
+      gender?: string;
+      birthDate?: Date;
+      createdAt: string;
+      updatedAt: string;
+      workerType?: string;
+      biography?: string;
+      availability?: string;
+      isWorkerAvailable?: boolean;
+      satisfactionRating?: number;
+    } = {
       _id: (user._id as Types.ObjectId).toString(),
       fullName: user.fullName,
       email: user.email,
@@ -297,7 +316,20 @@ export class UserService {
       role: user.role,
       phoneNumber: user.phoneNumber,
       gender: user.gender,
-      birthDate: user.birthDate
+      birthDate: user.birthDate,
+      createdAt: userWithTimestamps.createdAt.toISOString(),
+      updatedAt: userWithTimestamps.updatedAt.toISOString()
     };
+
+    // Añadir campos específicos del trabajador
+    if (user.role === 'worker') {
+      userData.workerType = user.workerType;
+      userData.biography = user.biography;
+      userData.availability = user.availability;
+      userData.isWorkerAvailable = user.isWorkerAvailable;
+      userData.satisfactionRating = user.satisfactionRating;
+    }
+
+    return userData;
   }
 }

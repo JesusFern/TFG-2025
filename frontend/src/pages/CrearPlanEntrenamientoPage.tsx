@@ -1,12 +1,11 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { Container, Paper, Breadcrumbs, Title, Avatar, Box, Group } from '@mantine/core';
-import { IconBarbell, IconChevronRight } from '@tabler/icons-react';
+import { Container, Paper, Title, Avatar, Box, Group } from '@mantine/core';
+import { IconBarbell } from '@tabler/icons-react';
 import GlobalNotificationOverlay from '../components/atoms/GlobalNotificationOverlay';
 import { getUserById } from '../services/userService';
 import FormularioCrearPlanEntrenamiento from '../components/forms/training/FormularioCrearPlanEntrenamiento';
-import { BREADCRUMBS_TRAINING_BASE } from '../constants/training';
-import { createBreadcrumbItems, renderClientInfo } from '../components/common/BreadcrumbUtils';
+import { renderClientInfo } from '../components/common/BreadcrumbUtils';
 
 const CrearPlanEntrenamientoPage: React.FC = () => {
   const navigate = useNavigate();
@@ -46,24 +45,8 @@ const CrearPlanEntrenamientoPage: React.FC = () => {
     });
   };
   
-  const items = createBreadcrumbItems(BREADCRUMBS_TRAINING_BASE, [
-    { title: 'Crear plan', href: '#', icon: undefined }
-  ]);
-
   return (
     <Container size="md" py="xl">
-      <Paper 
-        p="md" 
-        mb="lg" 
-        style={{ 
-          backgroundColor: 'var(--app-paper-bg)', 
-          borderBottom: '1px solid var(--app-border-color)' 
-        }}
-      >
-        <Breadcrumbs separator={<IconChevronRight size={14} />}>
-          {items}
-        </Breadcrumbs>
-      </Paper>
 
       <Paper 
         p="lg" 

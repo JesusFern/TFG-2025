@@ -25,11 +25,8 @@ export const formatDateLong = (date: Date): string => {
 };
 
 export const getWeekStartDate = (fechaInicio: Date, currentWeek: number): Date => {
-  const startOfWeek = new Date(fechaInicio);
-  const daysToSubtract = startOfWeek.getDay() === 0 ? 6 : startOfWeek.getDay() - 1;
-  startOfWeek.setDate(startOfWeek.getDate() - daysToSubtract);
-  
-  const weekStartDate = new Date(startOfWeek);
+  // Las semanas empiezan exactamente desde la fecha de inicio del plan
+  const weekStartDate = new Date(fechaInicio);
   weekStartDate.setDate(weekStartDate.getDate() + (currentWeek - 1) * 7);
   
   return weekStartDate;

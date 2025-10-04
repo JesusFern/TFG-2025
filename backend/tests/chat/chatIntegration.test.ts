@@ -303,17 +303,17 @@ describe('Chat Module Integration Tests', () => {
     });
 
     it('debería validar tipos de datos en enums', async () => {
-      // Test tipo de mensaje inválido
-      const mensajeTipoInvalido = await request(app)
+      // Test con prioridad inválida
+      const mensajePrioridadInvalida = await request(app)
         .post('/api/messaging/mensajes')
         .set('Authorization', `Bearer ${authToken}`)
         .send({
           destinatario: testUserId2,
           contenido: 'Test message',
-          tipo: 'invalid-type' as unknown
+          prioridad: 'invalid-priority' as unknown
         });
 
-      expect(mensajeTipoInvalido.statusCode).toEqual(400);
+      expect(mensajePrioridadInvalida.statusCode).toEqual(400);
     });
 
     it('debería validar IDs de MongoDB', async () => {

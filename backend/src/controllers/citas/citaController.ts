@@ -71,6 +71,7 @@ export const obtenerCitas = async (req: AuthenticatedRequest, res: Response): Pr
       fechaHasta?: string;
       limit?: number;
       offset?: number;
+      estadosActivos?: string; // Los query params llegan como strings
     };
 
     // Si no es admin, solo puede ver sus propias citas
@@ -95,11 +96,12 @@ export const obtenerCitas = async (req: AuthenticatedRequest, res: Response): Pr
       }
     }
 
-    // Convertir fechas si existen
+    // Convertir fechas y booleanos si existen
     const filtrosProcesados = {
       ...filtros,
       fechaDesde: filtros.fechaDesde ? new Date(filtros.fechaDesde) : undefined,
-      fechaHasta: filtros.fechaHasta ? new Date(filtros.fechaHasta) : undefined
+      fechaHasta: filtros.fechaHasta ? new Date(filtros.fechaHasta) : undefined,
+      estadosActivos: filtros.estadosActivos === 'true' ? true : filtros.estadosActivos === 'false' ? false : undefined
     };
 
     const resultado = await obtenerCitasService(filtrosProcesados);

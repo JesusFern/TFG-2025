@@ -89,7 +89,7 @@ export interface EstadisticasSemanal {
     sesionesCompletadas: ComparacionBase;
     tiempoEntrenamiento: ComparacionBase;
     cargaUtilizada: ComparacionBase;
-    ejerciciosCompletados: ComparacionBase;
+    seriesCompletadas: ComparacionBase;
   };
   tendencias: TendenciaBase;
   resumen: {
@@ -203,6 +203,7 @@ export interface RegistroEjercicioDetalle {
   completado: boolean;
   notas: string;
   fecha: string;
+  videoCliente?: string;
 }
 
 export interface ClienteDetalleCompleto {

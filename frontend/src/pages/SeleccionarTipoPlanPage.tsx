@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Container, 
   Paper, 
-  Breadcrumbs, 
   Title, 
   Avatar, 
   Box, 
@@ -17,18 +16,17 @@ import {
 } from '@mantine/core';
 import { 
   IconBarbell, 
-  IconChevronRight, 
   IconPlus, 
   IconTemplate,
   IconTarget,
   IconCalendar,
-  IconUsers
+  IconUsers,
+  IconArrowLeft
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import GlobalNotificationOverlay from '../components/atoms/GlobalNotificationOverlay';
 import { getUserById } from '../services/userService';
-import { BREADCRUMBS_TRAINING_BASE } from '../constants/training';
-import { createBreadcrumbItems, renderClientInfo } from '../components/common/BreadcrumbUtils';
+import { renderClientInfo } from '../components/common/BreadcrumbUtils';
 
 const SeleccionarTipoPlanPage: React.FC = () => {
   const navigate = useNavigate();
@@ -58,24 +56,12 @@ const SeleccionarTipoPlanPage: React.FC = () => {
     navigate(`/training/planes/plantillas/objetivos?clientId=${clientId}`);
   };
 
-  const items = createBreadcrumbItems(BREADCRUMBS_TRAINING_BASE, [
-    { title: 'Seleccionar tipo de plan', href: '#', icon: undefined }
-  ]);
+  const handleVolver = () => {
+    navigate(`/worker/dashboard-clients`);
+  };
 
   return (
     <Container size="lg" py="xl">
-      <Paper 
-        p="md" 
-        mb="lg" 
-        style={{ 
-          backgroundColor: 'var(--app-paper-bg)', 
-          borderBottom: '1px solid var(--app-border-color)' 
-        }}
-      >
-        <Breadcrumbs separator={<IconChevronRight size={14} />}>
-          {items}
-        </Breadcrumbs>
-      </Paper>
 
       <Paper 
         p="lg" 
@@ -87,22 +73,31 @@ const SeleccionarTipoPlanPage: React.FC = () => {
           borderColor: 'var(--app-border-color)' 
         }}
       >
-        <Group mb="md" align="flex-start">
-          <Avatar 
-            size="lg" 
-            color="nutroos-green" 
-            radius="xl"
+        <Group justify="space-between" align="flex-start" mb="md">
+          <Group align="flex-start">
+            <Avatar 
+              size="lg" 
+              color="nutroos-green" 
+              radius="xl"
+            >
+              <IconBarbell size="1.5rem" />
+            </Avatar>
+            
+            <Box style={{ flex: 1 }}>
+              <Title order={2} mb={5} c="nutroos-green.6">Crear Plan de Entrenamiento</Title>
+              {renderClientInfo(clienteNombre, clientId)}
+              <Text size="sm" c="dimmed" mt="xs">
+                Elige cómo quieres crear el plan de entrenamiento
+              </Text>
+            </Box>
+          </Group>
+          <Button
+            leftSection={<IconArrowLeft size={16} />}
+            variant="light"
+            onClick={handleVolver}
           >
-            <IconBarbell size="1.5rem" />
-          </Avatar>
-          
-          <Box style={{ flex: 1 }}>
-            <Title order={2} mb={5} c="nutroos-green.6">Crear Plan de Entrenamiento</Title>
-            {renderClientInfo(clienteNombre, clientId)}
-            <Text size="sm" c="dimmed" mt="xs">
-              Elige cómo quieres crear el plan de entrenamiento
-            </Text>
-          </Box>
+            Volver
+          </Button>
         </Group>
       </Paper>
       

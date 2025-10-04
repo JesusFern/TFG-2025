@@ -52,7 +52,7 @@ export const useNavigation = (): UseNavigationReturn => {
   };
 
   const navigateToPlanEdit = (planId: string) => {
-    navigate(`/editar-plan-entrenamiento/${planId}`);
+    navigate(`/training/planes/${planId}/editar`);
   };
 
   const getDietBreadcrumbs = (currentPage: string, clientId?: string): BreadcrumbItem[] => {

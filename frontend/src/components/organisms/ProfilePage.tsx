@@ -44,6 +44,8 @@ interface ProfilePageProps {
   datosActividad?: DatosActividadFisica;
   onUpdateProfile: (data: ProfileFormData) => Promise<void>;
   onUpdatePhoto: (file: File) => Promise<void>;
+  viewingOtherProfile?: boolean;
+  currentUserRole?: string;
 }
 
 export const ProfilePage: React.FC<ProfilePageProps> = ({
@@ -51,13 +53,53 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   datosSalud,
   datosActividad,
   onUpdateProfile,
-  onUpdatePhoto
+  onUpdatePhoto,
+  viewingOtherProfile = false,
+  currentUserRole
 }) => {
   const theme = useMantineTheme();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPhotoUploading, setIsPhotoUploading] = useState(false);
+
+  // Lógica para determinar qué pestañas mostrar
+  const canViewHealthTab = () => {
+    if (viewingOtherProfile) {
+      // Solo mostrar si el perfil visto es de un usuario y el usuario actual es su trabajador
+      return profile.role === 'user' && currentUserRole === 'worker';
+    }
+    return profile.role === 'user';
+  };
+
+  const canViewActivityTab = () => {
+    if (viewingOtherProfile) {
+      // Solo mostrar si el perfil visto es de un usuario y el usuario actual es su trabajador
+      return profile.role === 'user' && currentUserRole === 'worker';
+    }
+    return profile.role === 'user';
+  };
+
+  const canViewRatingsTab = () => {
+    if (viewingOtherProfile) {
+      // Solo mostrar si el perfil visto es de un trabajador
+      return profile.role === 'worker';
+    }
+    return profile.role === 'worker';
+  };
+
+  const canViewClientsTab = () => {
+    if (viewingOtherProfile) {
+      // No mostrar pestaña de clientes cuando se ve perfil de otro trabajador
+      return false;
+    }
+    return profile.role === 'worker';
+  };
+
+  const canViewSettingsTab = () => {
+    // Solo mostrar configuración en el perfil propio
+    return !viewingOtherProfile;
+  };
   const [alert, setAlert] = useState<{
     type: 'success' | 'error';
     title?: string;
@@ -153,11 +195,13 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
             profile={profile}
             onEditProfile={handleEditProfile}
             onEditPhoto={handleEditPhoto}
+            canEdit={!viewingOtherProfile}
           />
         </Paper>
 
-        <Paper p="xl" radius="lg" withBorder>
-          <Tabs defaultValue="overview">
+        {profile.role !== 'admin' && (
+          <Paper p="xl" radius="lg" withBorder>
+            <Tabs defaultValue="overview">
             <Tabs.List>
               <Tabs.Tab 
                 value="overview" 
@@ -166,49 +210,51 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
               >
                 Resumen
               </Tabs.Tab>
-              {profile.role === 'user' && (
-                <>
-                  <Tabs.Tab 
-                    value="health" 
-                    leftSection={<IconHeart size={16} />}
-                    fw={500}
-                  >
-                    Salud
-                  </Tabs.Tab>
-                  <Tabs.Tab 
-                    value="activity" 
-                    leftSection={<IconActivity size={16} />}
-                    fw={500}
-                  >
-                    Actividad
-                  </Tabs.Tab>
-                </>
+              {canViewHealthTab() && (
+                <Tabs.Tab 
+                  value="health" 
+                  leftSection={<IconHeart size={16} />}
+                  fw={500}
+                >
+                  Salud
+                </Tabs.Tab>
               )}
-              {profile.role === 'worker' && (
-                <>
-                  <Tabs.Tab 
-                    value="ratings" 
-                    leftSection={<IconStar size={16} />}
-                    fw={500}
-                  >
-                    Valoraciones
-                  </Tabs.Tab>
-                  <Tabs.Tab 
-                    value="clients" 
-                    leftSection={<IconUsers size={16} />}
-                    fw={500}
-                  >
-                    Clientes
-                  </Tabs.Tab>
-                </>
+              {canViewActivityTab() && (
+                <Tabs.Tab 
+                  value="activity" 
+                  leftSection={<IconActivity size={16} />}
+                  fw={500}
+                >
+                  Actividad
+                </Tabs.Tab>
               )}
-              <Tabs.Tab 
-                value="settings" 
-                leftSection={<IconSettings size={16} />}
-                fw={500}
-              >
-                Configuración
-              </Tabs.Tab>
+              {canViewRatingsTab() && (
+                <Tabs.Tab 
+                  value="ratings" 
+                  leftSection={<IconStar size={16} />}
+                  fw={500}
+                >
+                  Valoraciones
+                </Tabs.Tab>
+              )}
+              {canViewClientsTab() && (
+                <Tabs.Tab 
+                  value="clients" 
+                  leftSection={<IconUsers size={16} />}
+                  fw={500}
+                >
+                  Clientes
+                </Tabs.Tab>
+              )}
+              {canViewSettingsTab() && (
+                <Tabs.Tab 
+                  value="settings" 
+                  leftSection={<IconSettings size={16} />}
+                  fw={500}
+                >
+                  Configuración
+                </Tabs.Tab>
+              )}
             </Tabs.List>
 
             <Box pt="lg">
@@ -220,7 +266,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                 />
               </Tabs.Panel>
 
-              <Tabs.Panel value="health">
+              {canViewHealthTab() && (
+                <Tabs.Panel value="health">
                 {datosSalud ? (
                   <Stack gap="lg">
                     <Title order={3} c={theme.colors.gray[8]}>
@@ -403,8 +450,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                   </Text>
                 )}
               </Tabs.Panel>
+              )}
 
-              <Tabs.Panel value="activity">
+              {canViewActivityTab() && (
+                <Tabs.Panel value="activity">
                 {datosActividad ? (
                   <Stack gap="lg">
                     <Title order={3} c={theme.colors.gray[8]}>
@@ -562,21 +611,22 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                   </Text>
                 )}
               </Tabs.Panel>
-
-              {/* Paneles específicos para trabajadores */}
-              {profile.role === 'worker' && (
-                <>
-                  <Tabs.Panel value="ratings">
-                    <WorkerRatingsTab workerId={profile._id} />
-                  </Tabs.Panel>
-
-                  <Tabs.Panel value="clients">
-                    <WorkerClientsTab workerId={profile._id} />
-                  </Tabs.Panel>
-                </>
               )}
 
-              <Tabs.Panel value="settings">
+              {/* Paneles específicos para trabajadores */}
+              {canViewRatingsTab() && (
+                <Tabs.Panel value="ratings">
+                  <WorkerRatingsTab workerId={profile._id} />
+                </Tabs.Panel>
+              )}
+              {canViewClientsTab() && (
+                <Tabs.Panel value="clients">
+                  <WorkerClientsTab workerId={profile._id} />
+                </Tabs.Panel>
+              )}
+
+              {canViewSettingsTab() && (
+                <Tabs.Panel value="settings">
                 <Stack gap="lg">
                   <Title order={3}>
                     Configuración de la Cuenta
@@ -607,9 +657,11 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                   </Text>
                 </Stack>
               </Tabs.Panel>
+              )}
             </Box>
           </Tabs>
         </Paper>
+        )}
       </Stack>
 
       {/* Modal de edición de perfil */}
@@ -635,6 +687,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
           onSubmit={handleProfileSubmit}
           onCancel={() => setIsEditModalOpen(false)}
           isLoading={isLoading}
+          userRole={profile.role}
         />
       </Modal>
 

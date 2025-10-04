@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { AuthenticatedRequest } from '../../types';
+import fs from 'fs';
 import { 
   crearRegistroEjercicioService,
   obtenerRegistrosEjercicioService,
@@ -12,6 +13,9 @@ import {
 } from '../../service/training/registroEjercicioService';
 import logger from '../../utils/logger';
 import { matchedData } from 'express-validator';
+import multer from 'multer';
+import path from 'path';
+import { randomUUID } from 'crypto';
 
 export const crearRegistroEjercicio = async (req: AuthenticatedRequest, res: Response) => {
   try {
@@ -322,3 +326,87 @@ export const verificarSesionCompleta = async (req: AuthenticatedRequest, res: Re
     });
   }
 };
+
+// Configuración de multer para videos de ejercicios
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    const uploadPath = path.join(__dirname, '../../../uploads/ejercicios');
+    // Crear el directorio si no existe
+    if (!fs.existsSync(uploadPath)) {
+      fs.mkdirSync(uploadPath, { recursive: true });
+    }
+    cb(null, uploadPath);
+  },
+  filename: (req, file, cb) => {
+    const subcarpeta = randomUUID();
+    const filename = `${subcarpeta}/${Date.now()}-${file.originalname}`;
+    
+    // Crear la subcarpeta si no existe
+    const subcarpetaPath = path.join(__dirname, '../../../uploads/ejercicios', subcarpeta);
+    if (!fs.existsSync(subcarpetaPath)) {
+      fs.mkdirSync(subcarpetaPath, { recursive: true });
+    }
+    
+    cb(null, filename);
+  }
+});
+
+const fileFilter = (req: AuthenticatedRequest, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+  // Permitir solo videos
+  if (file.mimetype.startsWith('video/')) {
+    cb(null, true);
+  } else {
+    cb(new Error('Solo se permiten archivos de video'));
+  }
+};
+
+const upload = multer({
+  storage,
+  fileFilter,
+  limits: {
+    fileSize: 100 * 1024 * 1024, // 100MB
+    files: 1
+  }
+});
+
+export const uploadVideoEjercicio = [
+  upload.single('video'),
+  async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ message: 'No se proporcionó ningún archivo de video' });
+      return;
+    }
+
+    const clienteId = req.user?.id;
+    if (!clienteId) {
+      res.status(401).json({ message: 'No autenticado' });
+      return;
+    }
+
+    // Construir la URL del video (incluyendo la URL base del servidor)
+    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+    const videoUrl = `${baseUrl}/uploads/ejercicios/${req.file.filename}`;
+
+    logger.info('Video de ejercicio subido correctamente', {
+      clienteId,
+      filename: req.file.filename,
+      originalName: req.file.originalname,
+      size: req.file.size
+    });
+
+    res.status(200).json({
+      message: 'Video subido correctamente',
+      videoUrl
+    });
+  } catch (error) {
+    logger.error('Error al subir video de ejercicio', {
+      error: error instanceof Error ? error.message : String(error)
+    });
+    res.status(500).json({
+      message: 'Error al subir el video',
+      error: error instanceof Error ? error.message : 'Error desconocido'
+    });
+  }
+  }
+];
