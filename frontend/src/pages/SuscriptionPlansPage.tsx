@@ -14,7 +14,7 @@ import {
 import { useNavigate } from 'react-router-dom';
 import { PricingCard } from '../components/molecules/PricingCard';
 import { getPlansWithUserStatus, SuscriptionPlan as ApiSuscriptionPlan } from '../services/suscriptionPlanService';
-import { createCheckoutSession, CheckoutResponse } from '../services/paymentService';
+import { createCheckoutSession, createUpgradeCheckoutSession, CheckoutResponse } from '../services/paymentService';
 import { useAuth } from '../hooks/useAuth';
 import Layout from '../components/layout/Layout';
 import { notifications } from '@mantine/notifications';
@@ -33,13 +33,16 @@ const SuscriptionPlansPage: React.FC = () => {
   // Función para agrupar planes por tipo
   const groupPlansByType = (planes: ApiSuscriptionPlan[]) => {
     const grouped = {
+      'Gratuito': [] as ApiSuscriptionPlan[],
       'Nutricion': [] as ApiSuscriptionPlan[],
       'Entrenamiento personal': [] as ApiSuscriptionPlan[],
       'Nutrición y entrenamiento personal': [] as ApiSuscriptionPlan[]
     };
     
     planes.forEach(plan => {
-      if (plan.tipoPlan && grouped[plan.tipoPlan as keyof typeof grouped]) {
+      if (plan.tipoPrecio === 'Gratuito') {
+        grouped['Gratuito'].push(plan);
+      } else if (plan.tipoPlan && grouped[plan.tipoPlan as keyof typeof grouped]) {
         grouped[plan.tipoPlan as keyof typeof grouped].push(plan);
       }
     });
@@ -50,6 +53,8 @@ const SuscriptionPlansPage: React.FC = () => {
   // Función para obtener el título del tipo de plan
   const getTypeTitle = (tipoPlan: string) => {
     switch (tipoPlan) {
+      case 'Gratuito':
+        return 'Plan Gratuito';
       case 'Nutricion':
         return 'Nutrición';
       case 'Entrenamiento personal':
@@ -65,6 +70,95 @@ const SuscriptionPlansPage: React.FC = () => {
     const fetchData = async () => {
       setIsLoading(true);
       try {
+        // Verificar si hay parámetros de éxito de Stripe
+        const urlParams = new URLSearchParams(window.location.search);
+        const success = urlParams.get('success');
+        const sessionId = urlParams.get('sessionId');
+        const upgrade = urlParams.get('upgrade');
+        
+        if (success === 'true' && (sessionId || upgrade === 'true')) {
+          console.log('Procesando pago completado de Stripe:', sessionId || 'upgrade=true');
+          
+          // Mostrar notificación de procesamiento
+          notifications.show({
+            id: 'processing-payment-return',
+            title: 'Procesando pago...',
+            message: 'Estamos activando tu suscripción, por favor espera.',
+            color: 'blue',
+            loading: true,
+            autoClose: false,
+          });
+          
+          try {
+            let confirmUrl;
+            
+            if (sessionId) {
+              // Si tenemos sessionId, usarlo directamente
+              confirmUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/suscription-plans/payment/confirm?sessionId=${sessionId}`;
+            } else {
+              // Si no tenemos sessionId pero tenemos upgrade=true, procesar upgrades pendientes
+              confirmUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/suscription-plans/process-pending-upgrades`;
+            }
+            
+            // Confirmar el pago en el backend
+            console.log('Llamando a:', confirmUrl);
+            console.log('Método:', sessionId ? 'GET' : 'POST');
+            
+            const response = await fetch(confirmUrl, {
+              method: sessionId ? 'GET' : 'POST',
+              headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                'Content-Type': 'application/json'
+              }
+            });
+            
+            console.log('Respuesta del servidor:', response.status, response.statusText);
+            
+            // Cerrar notificación de procesamiento
+            notifications.hide('processing-payment-return');
+            
+            if (response.ok) {
+              // Verificar si es un cambio de plan (upgrade=true en la URL)
+              if (upgrade === 'true') {
+                notifications.show({
+                  title: '¡Plan actualizado!',
+                  message: 'Tu plan de suscripción ha sido cambiado correctamente',
+                  color: 'green'
+                });
+                
+                // Redirigir a la página de profesionales después de un breve delay
+                setTimeout(() => {
+                  navigate('/profesionales');
+                }, 2000);
+              } else {
+                notifications.show({
+                  title: '¡Pago procesado!',
+                  message: 'Tu suscripción ha sido activada correctamente',
+                  color: 'green'
+                });
+              }
+            } else {
+              console.error('Error confirmando pago:', await response.text());
+              notifications.show({
+                title: 'Error',
+                message: 'Hubo un problema al procesar tu pago. Por favor, contacta con soporte.',
+                color: 'red'
+              });
+            }
+          } catch (error) {
+            console.error('Error procesando pago:', error);
+            notifications.hide('processing-payment-return');
+            notifications.show({
+              title: 'Error de conexión',
+              message: 'Hubo un problema al procesar tu pago. Por favor, intenta nuevamente.',
+              color: 'red'
+            });
+          }
+          
+          // Limpiar la URL
+          window.history.replaceState({}, document.title, window.location.pathname);
+        }
+        
         // Comprobar primero si hay un token expirado y eliminarlo
         const token = localStorage.getItem('authToken');
         if (token) {
@@ -102,13 +196,32 @@ const SuscriptionPlansPage: React.FC = () => {
         console.log('SuscriptionPlansPage: Respuesta de suscripción recibida:', subscriptionResponse);
         
         if (planesResponse && planesResponse.success && planesResponse.data.plans && planesResponse.data.plans.length > 0) {
-          // Filtrar el plan gratuito y usar los beneficios de la API directamente
-          const planesConBeneficios = planesResponse.data.plans
-            .filter(plan => plan.tipoPrecio !== 'Gratuito') // Filtrar el plan gratuito
-            .map(plan => ({
-              ...plan,
-              beneficios: plan.beneficios || []
-            }));
+          // Agregar plan gratuito personalizado si no existe
+          let planesConBeneficios = planesResponse.data.plans.map(plan => ({
+            ...plan,
+            beneficios: plan.beneficios || []
+          }));
+
+          // Si no hay plan gratuito en la respuesta, agregar uno personalizado
+          const hasFreePlan = planesConBeneficios.some(plan => plan.tipoPrecio === 'Gratuito');
+          if (!hasFreePlan) {
+            const planGratuito = {
+              _id: 'gratuito-personalizado',
+              nombre: 'Plan Gratuito',
+              descripcion: 'Acceso básico gratuito a la plataforma',
+              tipoPrecio: 'Gratuito' as const,
+              tipoPlan: null,
+              precioMensual: 0,
+              precioTrimestral: 0,
+              precioAnual: 0,
+              beneficios: [
+                'Acceso a las dietas plantilla de la aplicación',
+                'Acceso a los entrenamientos plantilla de la aplicación'
+              ],
+              isUserSubscribed: isAuthenticated && (!currentSubscription || !currentSubscription.subscription)
+            };
+            planesConBeneficios = [planGratuito, ...planesConBeneficios];
+          }
           
           console.log('SuscriptionPlansPage: Planes procesados:', planesConBeneficios);
           setPlanes(planesConBeneficios);
@@ -119,6 +232,19 @@ const SuscriptionPlansPage: React.FC = () => {
 
         // Establecer la suscripción actual
         setCurrentSubscription(subscriptionResponse);
+        
+        // Actualizar el estado de suscripción del plan gratuito
+        setPlanes(prevPlanes => 
+          prevPlanes.map(plan => {
+            if (plan.tipoPrecio === 'Gratuito') {
+              return {
+                ...plan,
+                isUserSubscribed: isAuthenticated && (!subscriptionResponse || !subscriptionResponse.subscription)
+              };
+            }
+            return plan;
+          })
+        );
       } catch (error) {
         console.error('SuscriptionPlansPage: Error al obtener los datos:', error);
         setPlanes([]);
@@ -208,13 +334,24 @@ const SuscriptionPlansPage: React.FC = () => {
       autoClose: false,
     });
     
-    createCheckoutSession(planId, frecuenciaPago)
+    // Determinar si es un upgrade
+    const currentPlan = currentSubscription?.subscription?.planId;
+    const planSeleccionado = planes.find(plan => plan._id === planId);
+    
+    // Si el usuario tiene una suscripción activa, cualquier cambio es un "esChange"
+    const esChange = currentPlan && planSeleccionado && currentPlan.tipoPlan !== planSeleccionado.tipoPlan;
+    
+    const paymentFunction = esChange ? 
+      createUpgradeCheckoutSession(planId, frecuenciaPago) : 
+      createCheckoutSession(planId, frecuenciaPago);
+    
+    paymentFunction
       .then((response) => {
-        console.log('Respuesta de createCheckoutSession:', response);
+        console.log('Respuesta de checkout:', response);
         handlePaymentResponse(response);
       })
       .catch((error) => {
-        console.error('Error en createCheckoutSession:', error);
+        console.error('Error en checkout:', error);
         handlePaymentError(error);
       })
       .finally(() => setIsSubmitting(null));
@@ -237,9 +374,31 @@ const SuscriptionPlansPage: React.FC = () => {
       });
       return;
     }
+
+    // Verificar si el usuario puede suscribirse a este plan
     
-    if (planSeleccionado.tipoPrecio === 'Gratuito' && !isAuthenticated) {
-      navigate('/register');
+    // Manejo especial para plan gratuito
+    if (planSeleccionado.tipoPrecio === 'Gratuito') {
+      if (!isAuthenticated) {
+        navigate('/register');
+        return;
+      }
+      
+      if (planSeleccionado.isUserSubscribed) {
+        notifications.show({
+          title: 'Plan actual',
+          message: 'Ya tienes acceso al plan gratuito',
+          color: 'blue'
+        });
+        return;
+      }
+      
+      // Para el plan gratuito, no necesitamos modal de confirmación
+      notifications.show({
+        title: 'Plan gratuito activado',
+        message: 'Ya tienes acceso a las dietas y entrenamientos plantilla',
+        color: 'green'
+      });
       return;
     }
     
@@ -271,22 +430,48 @@ const SuscriptionPlansPage: React.FC = () => {
     
     console.log('Usuario autenticado, abriendo modal de confirmación');
     
+    // Verificar si es un cambio de plan
+    const currentPlanForChange = currentSubscription?.subscription?.planId;
+    const esChange = currentPlanForChange && currentPlanForChange.tipoPlan !== planSeleccionado.tipoPlan;
+    
+    console.log('🔍 Debug change logic:');
+    console.log('currentPlanForChange:', currentPlanForChange);
+    console.log('planSeleccionado.tipoPlan:', planSeleccionado.tipoPlan);
+    console.log('esChange:', esChange);
+    
     try {
       console.log('Intentando abrir modal...');
       const modalResult = modals.openConfirmModal({
-        title: `Suscripción al plan ${planSeleccionado.nombre}`,
+        title: esChange ? 
+          `Cambiar a ${planSeleccionado.nombre}` : 
+          `Suscripción al plan ${planSeleccionado.nombre}`,
         children: (
           <Text size="sm">
-            ¿Estás seguro de que quieres suscribirte al plan {planSeleccionado.nombre} con pago {frecuenciaPago}?
-            {frecuenciaPago === 'mensual' && 
-              ` El costo será de ${planSeleccionado.precioMensual}€ al mes.`}
-            {frecuenciaPago === 'trimestral' && 
-              ` El costo será de ${planSeleccionado.precioTrimestral}€ cada tres meses.`}
-            {frecuenciaPago === 'anual' && 
-              ` El costo será de ${planSeleccionado.precioAnual}€ al año.`}
+            {esChange ? (
+              <>
+                ¿Estás seguro de que quieres cambiar tu plan de suscripción a {planSeleccionado.nombre}?
+                <br /><br />
+                <strong>Precio completo:</strong> 
+                {frecuenciaPago === 'mensual' && ` ${planSeleccionado.precioMensual}€ al mes`}
+                {frecuenciaPago === 'trimestral' && ` ${planSeleccionado.precioTrimestral}€ cada tres meses`}
+                {frecuenciaPago === 'anual' && ` ${planSeleccionado.precioAnual}€ al año`}
+                <br />
+                <em>Se actualizarán las fechas de inicio y fin de tu suscripción.</em>
+              </>
+            ) : (
+              <>
+                ¿Estás seguro de que quieres suscribirte al plan {planSeleccionado.nombre} con pago {frecuenciaPago}?
+                {frecuenciaPago === 'mensual' && 
+                  ` El costo será de ${planSeleccionado.precioMensual}€ al mes.`}
+                {frecuenciaPago === 'trimestral' && 
+                  ` El costo será de ${planSeleccionado.precioTrimestral}€ cada tres meses.`}
+                {frecuenciaPago === 'anual' && 
+                  ` El costo será de ${planSeleccionado.precioAnual}€ al año.`}
+              </>
+            )}
           </Text>
         ),
-        labels: { confirm: 'Continuar con el pago', cancel: 'Cancelar' },
+        labels: { confirm: esChange ? 'Cambiar mi plan de suscripción' : 'Continuar con el pago', cancel: 'Cancelar' },
         confirmProps: { color: 'nutroos-green' },
         size: 'md',
         centered: true,
@@ -393,9 +578,17 @@ const SuscriptionPlansPage: React.FC = () => {
                             }}
                             frecuenciaPago={frecuenciaPago}
                             onSelectPlan={handleSelectPlan}
-                            isUserSubscribed={plan.isUserSubscribed}
+                            isUserSubscribed={plan.tipoPrecio === 'Gratuito' ? 
+                              (isAuthenticated && (!currentSubscription || !currentSubscription.subscription)) : 
+                              plan.isUserSubscribed}
                             isSubmitting={isSubmitting === plan._id}
-                            destacado={false}
+                            destacado={tipoPlan === 'Gratuito'}
+                            hasActiveSubscription={!!(currentSubscription && currentSubscription.subscription)}
+                            currentPlan={currentSubscription?.subscription?.planId ? {
+                              ...currentSubscription.subscription.planId,
+                              id: currentSubscription.subscription.planId._id,
+                              tipoPrecio: currentSubscription.subscription.planId.tipoPrecio as "Gratuito" | "Básico" | "Pro"
+                            } : null}
                           />
                         ))}
                       </Stack>

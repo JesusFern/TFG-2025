@@ -8,7 +8,7 @@ export const PlatoSchema = new mongoose.Schema({
     ingrediente: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Ingrediente',
-      required: true
+      required: false // Permitir null para ingredientes de OpenFoodFacts
     },
     peso: { 
       type: Number, 
@@ -76,13 +76,18 @@ PlatoSchema.methods.calcularInformacionNutricional = async function() {
       const peso = item.peso;
       pesoTotal += peso;
 
-      // Calcular valores nutricionales basados en el peso del ingrediente
-      const factor = peso / 100; // Los valores nutricionales están por 100g
-      
-      totalCalorias += ingrediente.calorias * factor;
-      totalProteinas += ingrediente.proteinas * factor;
-      totalGrasas += ingrediente.grasas * factor;
-      totalHidratosCarbono += ingrediente.hidratosCarbono * factor;
+      // Solo calcular si el ingrediente existe (ingredientes locales)
+      if (ingrediente) {
+        // Calcular valores nutricionales basados en el peso del ingrediente
+        const factor = peso / 100; // Los valores nutricionales están por 100g
+        
+        totalCalorias += ingrediente.calorias * factor;
+        totalProteinas += ingrediente.proteinas * factor;
+        totalGrasas += ingrediente.grasas * factor;
+        totalHidratosCarbono += ingrediente.hidratosCarbono * factor;
+      }
+      // Los ingredientes de OpenFoodFacts (ingrediente: null) no se calculan aquí
+      // porque su información nutricional se maneja en el frontend
     }
 
     return {

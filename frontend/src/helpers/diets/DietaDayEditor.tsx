@@ -25,6 +25,7 @@ interface DietaDayEditorProps {
   hasChanges?: boolean;
   onSaveSuccess?: () => void;
   onRecalcularCalorias?: () => void;
+  onRecargarDieta?: () => Promise<void>;
 }
 
 const DietaDayEditor: React.FC<DietaDayEditorProps> = ({ 
@@ -35,7 +36,8 @@ const DietaDayEditor: React.FC<DietaDayEditorProps> = ({
   customTitle,
   hideTitle = false,
   dietaId,
-  onRecalcularCalorias
+  onRecalcularCalorias,
+  onRecargarDieta
 }) => {
   const { colorScheme } = useMantineColorScheme();
   
@@ -184,6 +186,7 @@ const DietaDayEditor: React.FC<DietaDayEditorProps> = ({
               dietaId={dietaId}
               diaCompleto={day}
               onRecalcularCalorias={onRecalcularCalorias}
+              onRecargarDieta={onRecargarDieta}
             />
           </Paper>
         ))}

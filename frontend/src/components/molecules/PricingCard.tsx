@@ -21,6 +21,8 @@ interface PricingCardProps {
   onSelectPlan: (planId: string) => void;
   isUserSubscribed?: boolean;
   isSubmitting?: boolean;
+  hasActiveSubscription?: boolean;
+  currentPlan?: PricingPlan | null;
 }
 
 export const PricingCard: React.FC<PricingCardProps> = ({ 
@@ -29,7 +31,9 @@ export const PricingCard: React.FC<PricingCardProps> = ({
   destacado = false,
   onSelectPlan,
   isUserSubscribed = false,
-  isSubmitting = false
+  isSubmitting = false,
+  hasActiveSubscription = false,
+  currentPlan = null
 }) => {
   const getPrecio = () => {
     switch (frecuenciaPago) {
@@ -45,6 +49,14 @@ export const PricingCard: React.FC<PricingCardProps> = ({
   };
 
   const precio = getPrecio();
+  
+  
+  
+  // Verificar si el usuario ya tiene un plan del mismo tipo
+  const tienePlanDelMismoTipo = currentPlan && 
+                               currentPlan.tipoPlan !== 'Nutrición y entrenamiento personal' && 
+                               plan.tipoPlan === currentPlan.tipoPlan;
+
   
   const getPeriodoTexto = () => {
     switch (frecuenciaPago) {
@@ -83,12 +95,20 @@ export const PricingCard: React.FC<PricingCardProps> = ({
   const getButtonVariant = () => {
     if (isUserSubscribed) return 'light';
     if (plan.tipoPrecio === 'Gratuito') return 'outline';
+    if (tienePlanDelMismoTipo) return 'outline';
     return 'filled';
   };
 
   const getButtonText = () => {
     if (isUserSubscribed) return 'Tu plan actual';
-    if (plan.tipoPrecio === 'Gratuito') return 'Comenzar ahora';
+    if (plan.tipoPrecio === 'Gratuito') return 'Acceder gratis';
+    if (tienePlanDelMismoTipo) return 'Ya tienes este tipo de plan';
+    
+    // Si el usuario tiene una suscripción activa, mostrar "Cambiar mi plan de suscripción"
+    if (currentPlan) {
+      return 'Cambiar mi plan de suscripción';
+    }
+    
     return 'Suscribirse';
   };
 
@@ -170,18 +190,23 @@ export const PricingCard: React.FC<PricingCardProps> = ({
           ))}
         </List>
         
-        <Button 
-          fullWidth 
-          color={getColor()}
-          onClick={() => onSelectPlan(plan.id)}
-          variant={getButtonVariant()}
-          disabled={isUserSubscribed || isSubmitting}
-          loading={isSubmitting}
-          size="sm"
-          style={{ marginTop: 'auto' }}
-        >
-          {getButtonText()}
-        </Button>
+
+
+        {/* Mostrar botón siempre, pero deshabilitado si no puede suscribirse */}
+        {!(plan.tipoPrecio === 'Gratuito' && hasActiveSubscription) && (
+          <Button 
+            fullWidth 
+            color={tienePlanDelMismoTipo ? 'orange' : getColor()}
+            onClick={() => onSelectPlan(plan.id)}
+            variant={getButtonVariant()}
+            disabled={isUserSubscribed || isSubmitting || !!tienePlanDelMismoTipo}
+            loading={isSubmitting}
+            size="sm"
+            style={{ marginTop: 'auto' }}
+          >
+            {getButtonText()}
+          </Button>
+        )}
       </Stack>
     </Card>
   );

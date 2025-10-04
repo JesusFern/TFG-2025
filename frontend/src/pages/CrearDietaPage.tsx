@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Container, 
   Title, 
+  Text,
   Alert, 
   Space,
   Group,
@@ -14,9 +15,10 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import FormularioCrearDieta from '../components/forms/diets/FormularioCrearDieta';
 import TipoCreacionDieta, { TipoCreacion } from '../components/forms/diets/TipoCreacionDieta';
 import { DietaResponse } from '../types';
-import { IconAlertCircle, IconUser, IconChevronLeft } from '@tabler/icons-react';
-import { motion } from 'framer-motion';
 import { renderClientInfo } from '../components/common/BreadcrumbUtils';
+import { IconAlertCircle, IconUser, IconChevronLeft, IconArrowLeft } from '@tabler/icons-react';
+import { motion } from 'framer-motion';
+import { getUserById } from '../services/userService';
 
 const CrearDietaPage: React.FC = () => {
   const { clienteId } = useParams<{ clienteId?: string }>();
@@ -28,6 +30,7 @@ const CrearDietaPage: React.FC = () => {
     id: clienteId || "",
     nombre: state?.clienteNombre || ""
   });
+  const [loadingCliente, setLoadingCliente] = useState(false);
   
   const [mensaje, setMensaje] = useState<{ tipo: 'error', texto: string } | null>(null);
   const [pasoActual, setPasoActual] = useState<'seleccion' | 'formulario'>('seleccion');
@@ -47,6 +50,23 @@ const CrearDietaPage: React.FC = () => {
   const handleClienteInfoUpdate = (nombre: string) => {
     setClienteInfo(prev => ({ ...prev, nombre }));
   };
+
+  // Cargar nombre del cliente si no está disponible
+  useEffect(() => {
+    if (clienteId && !clienteInfo.nombre) {
+      setLoadingCliente(true);
+      (async () => {
+        try {
+          const userData = await getUserById(clienteId);
+          setClienteInfo(prev => ({ ...prev, nombre: userData.fullName }));
+        } catch (error) {
+          console.error('Error al cargar datos del cliente:', error);
+        } finally {
+          setLoadingCliente(false);
+        }
+      })();
+    }
+  }, [clienteId, clienteInfo.nombre]);
 
   const handleSeleccionarTipo = (tipo: TipoCreacion, datosExtra?: {
     tipoArquetipo?: string;
@@ -87,6 +107,9 @@ const CrearDietaPage: React.FC = () => {
     setTimeout(() => setMensaje(null), 5000);
   };
 
+  const handleBackToClients = () => {
+    navigate('/worker/dashboard-clients');
+  };
 
   const getTituloPaso = () => {
     if (pasoActual === 'seleccion') {
@@ -107,7 +130,6 @@ const CrearDietaPage: React.FC = () => {
 
   return (
     <Container size="md" py="xl">
-
       <Paper 
         p="lg" 
         mb="xl" 
@@ -130,21 +152,36 @@ const CrearDietaPage: React.FC = () => {
             
             <Box style={{ flex: 1 }}>
               <Title order={2} mb={5} c="nutroos-green.6">{getTituloPaso()}</Title>
-              {renderClientInfo(clienteInfo.nombre, clienteInfo.id)}
+              <Text size="sm" c="dimmed">
+                Para cliente: {loadingCliente ? 'Cargando...' : (clienteInfo.nombre || 'Cliente no encontrado')}
+              </Text>
             </Box>
           </Group>
 
-          {pasoActual === 'formulario' && (
-            <Button
-              variant="outline"
-              color="gray"
-              leftSection={<IconChevronLeft size={16} />}
-              onClick={handleVolverSeleccion}
-              size="sm"
-            >
-              Cambiar tipo
-            </Button>
-          )}
+          <Group gap="sm">
+            {pasoActual === 'formulario' && (
+              <Button
+                variant="outline"
+                color="gray"
+                leftSection={<IconChevronLeft size={16} />}
+                onClick={handleVolverSeleccion}
+                size="sm"
+              >
+                Cambiar tipo
+              </Button>
+            )}
+            {pasoActual === 'seleccion' && (
+              <Button
+                variant="subtle"
+                leftSection={<IconArrowLeft size={16} />}
+                onClick={handleBackToClients}
+                color="gray"
+                size="sm"
+              >
+                Volver a gestión de clientes
+              </Button>
+            )}
+          </Group>
         </Group>
       </Paper>
       

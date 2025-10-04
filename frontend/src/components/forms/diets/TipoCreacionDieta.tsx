@@ -183,13 +183,6 @@ const TipoCreacionDieta: React.FC<TipoCreacionDietaProps> = ({ onSeleccionarTipo
     ))
   );
 
-  // Debug: Log del usuario actual
-  console.log('🔍 Debug TipoCreacionDieta - Usuario actual:', {
-    id: user?._id,
-    role: user?.role,
-    workerType: user?.workerType,
-    esNutricionista
-  });
 
   useEffect(() => {
     const cargarDatos = async () => {

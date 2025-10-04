@@ -22,6 +22,7 @@ const authorizeUser = (req: AuthenticatedRequest, res: Response, next: NextFunct
   next();
 };
 
+
 // Rutas públicas para ver planes
 router.get('/', SuscriptionPlanController.getAllPlans);
 router.get('/with-user-status', authenticateToken, SuscriptionPlanController.getPlansWithUserStatus);
@@ -37,6 +38,42 @@ router.put(
   validateRequest,
   SuscriptionPlanController.subscribeToPlan
 );
+
+router.put(
+  '/upgrade', 
+  authenticateToken, 
+  authorizeUser,
+  validateSubscriptionRequest,
+  validateRequest,
+  SuscriptionPlanController.upgradeSubscription
+);
+
+// Ruta para procesar upgrades pendientes (para debugging)
+router.post(
+  '/process-pending-upgrades',
+  authenticateToken,
+  authorizeUser,
+  SuscriptionPlanController.processPendingUpgrades
+);
+
+// Ruta para simular renovación (solo desarrollo)
+router.post(
+  '/simulate-renewal',
+  authenticateToken,
+  authorizeUser,
+  SuscriptionPlanController.simulateRenewal
+);
+
+// Ruta para obtener historial de renovaciones
+router.get(
+  '/renewal-history',
+  authenticateToken,
+  authorizeUser,
+  SuscriptionPlanController.getRenewalHistory
+);
+
+// Ruta temporal para debug de pagos
+router.get('/debug-payments', SuscriptionPlanController.debugPayments);
 
 // Ruta para confirmar pagos después de completarlos en Stripe
 // Esta ruta debe ser pública ya que es un callback de Stripe

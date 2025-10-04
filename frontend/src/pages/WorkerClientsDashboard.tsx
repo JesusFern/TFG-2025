@@ -17,7 +17,7 @@ import {
 	useMantineColorScheme,
 	TextInput
 } from '@mantine/core';
-import { IconAlertCircle, IconUser, IconWeight, IconRuler, IconNotes, IconSearch } from '@tabler/icons-react';
+import { IconAlertCircle, IconUser, IconWeight, IconRuler, IconNotes, IconSearch, IconArrowLeft } from '@tabler/icons-react';
 import { getClientesAsignados, ClienteAsignado } from '../services/workerService';
 import { getUserData } from '../services/authService';
 
@@ -83,6 +83,10 @@ const WorkerClientsDashboard: React.FC = () => {
 	const handleVerPlanes = (clienteId: string) => {
 		navigate(`/worker/dashboard-clients/${clienteId}/training`);
 	};
+
+	const handleBackToDashboard = () => {
+		navigate('/dashboard');
+	};
 	
 	const getBadgeColor = (genero?: string) => {
 		if (!genero) return 'gray';
@@ -138,9 +142,18 @@ const WorkerClientsDashboard: React.FC = () => {
 						<Title order={2} mb="xs">Panel de Nutricionista</Title>
 						<Text c="dimmed">Bienvenido/a, {user?.fullName}</Text>
 					</div>
-					<Badge size="lg" color="nutroos-green">
-						{clientes.length} {clientes.length === 1 ? 'cliente asignado' : 'clientes asignados'}
-					</Badge>
+					<Group gap="md">
+						<Badge size="lg" color="nutroos-green">
+							{clientes.length} {clientes.length === 1 ? 'cliente asignado' : 'clientes asignados'}
+						</Badge>
+						<Button
+							leftSection={<IconArrowLeft size={16} />}
+							variant="light"
+							onClick={handleBackToDashboard}
+						>
+							Volver al Dashboard
+						</Button>
+					</Group>
 				</Group>
 			</Paper>
       

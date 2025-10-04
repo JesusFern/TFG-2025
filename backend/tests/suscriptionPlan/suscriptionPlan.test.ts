@@ -182,17 +182,17 @@ describe('SuscriptionPlanController', () => {
     it('devuelve planes filtrados por tipo de precio', async () => {
       // Arrange
       const mockPlans = [
-        { nombre: 'Plan Premium', tipoPrecio: 'Premium' },
-        { nombre: 'Plan Premium Plus', tipoPrecio: 'Premium' }
+        { nombre: 'Plan Pro', tipoPrecio: 'Pro' },
+        { nombre: 'Plan Pro Plus', tipoPrecio: 'Pro' }
       ];
-      req.params = { tipoPrecio: 'Premium' };
+      req.params = { tipoPrecio: 'Pro' };
       (SuscriptionPlan.find as jest.Mock).mockResolvedValue(mockPlans);
 
       // Act
       await SuscriptionPlanController.getPlansByPriceType(req as Request, res as Response);
 
       // Assert
-      expect(SuscriptionPlan.find).toHaveBeenCalledWith({ tipoPrecio: 'Premium' });
+      expect(SuscriptionPlan.find).toHaveBeenCalledWith({ tipoPrecio: 'Pro' });
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({ 
         success: true, 
@@ -211,13 +211,13 @@ describe('SuscriptionPlanController', () => {
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({ 
         success: false, 
-        message: 'Tipo de precio no válido. Debe ser Gratuito, Básico o Premium' 
+        message: 'Tipo de precio no válido. Debe ser Pro' 
       });
     });
 
     it('maneja errores de base de datos', async () => {
       // Arrange
-      req.params = { tipoPrecio: 'Premium' };
+      req.params = { tipoPrecio: 'Pro' };
       (SuscriptionPlan.find as jest.Mock).mockRejectedValue(new Error('Database error'));
 
       // Act
@@ -391,12 +391,12 @@ describe('SuscriptionPlanController', () => {
   describe('getPlansByPriceType', () => {
     it('devuelve planes filtrados por tipo de precio', async () => {
       // Configurar request params
-      req.params = { tipoPrecio: 'Básico' };
+      req.params = { tipoPrecio: 'Pro' };
       
       // Mock de los datos
       const mockPlans = [
-        { _id: 'plan1', nombre: 'Plan Básico 1', tipoPrecio: 'Básico' },
-        { _id: 'plan2', nombre: 'Plan Básico 2', tipoPrecio: 'Básico' }
+        { _id: 'plan1', nombre: 'Plan Pro 1', tipoPrecio: 'Pro' },
+        { _id: 'plan2', nombre: 'Plan Pro 2', tipoPrecio: 'Pro' }
       ];
       
       // Configurar el mock para devolver planes
@@ -406,7 +406,7 @@ describe('SuscriptionPlanController', () => {
       await SuscriptionPlanController.getPlansByPriceType(req as Request, res as Response);
 
       // Verificar que se llamó correctamente al modelo
-      expect(SuscriptionPlan.find).toHaveBeenCalledWith({ tipoPrecio: 'Básico' });
+      expect(SuscriptionPlan.find).toHaveBeenCalledWith({ tipoPrecio: 'Pro' });
       
       // Verificar la respuesta
       expect(res.status).toHaveBeenCalledWith(200);
@@ -430,13 +430,13 @@ describe('SuscriptionPlanController', () => {
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith({
         success: false,
-        message: 'Tipo de precio no válido. Debe ser Gratuito, Básico o Premium'
+        message: 'Tipo de precio no válido. Debe ser Pro'
       });
     });
     
     it('maneja errores de base de datos', async () => {
       // Configurar request params
-      req.params = { tipoPrecio: 'Básico' };
+      req.params = { tipoPrecio: 'Pro' };
       
       // Simular error de base de datos
       const error = new Error('Error de conexión');
@@ -608,9 +608,8 @@ describe('SuscriptionPlanController', () => {
       
       // Mock del resultado del servicio para plan gratuito
       const mockResult = {
-        freeSubscription: true,
-        redirect: '/dashboard',
-        success: true
+        sessionId: 'mock-session-id',
+        url: 'https://checkout.stripe.com/pay/mock-session'
       };
       
       // Configurar el mock del servicio
@@ -623,8 +622,8 @@ describe('SuscriptionPlanController', () => {
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith({
         success: true,
-        message: 'Suscripción gratuita activada correctamente',
-        redirect: '/dashboard'
+        sessionId: 'mock-session-id',
+        checkoutUrl: 'https://checkout.stripe.com/pay/mock-session'
       });
     });
     

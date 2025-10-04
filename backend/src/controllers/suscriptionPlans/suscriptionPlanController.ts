@@ -77,10 +77,10 @@ export class SuscriptionPlanController {
     try {
       const { tipoPrecio } = req.params;
       
-      if (!['Gratuito', 'Básico', 'Premium'].includes(tipoPrecio)) {
+      if (tipoPrecio !== 'Pro') {
         res.status(400).json({
           success: false,
-          message: 'Tipo de precio no válido. Debe ser Gratuito, Básico o Premium'
+          message: 'Tipo de precio no válido. Debe ser Pro'
         });
         return;
       }
@@ -205,15 +205,6 @@ export class SuscriptionPlanController {
         cancelUrl
       );
       
-      // Si es una suscripción gratuita, devolver directamente
-      if (result.freeSubscription) {
-        res.status(200).json({
-          success: true,
-          message: 'Suscripción gratuita activada correctamente',
-          redirect: result.redirect
-        });
-        return;
-      }
       
       // Para suscripciones de pago, devolver la URL de checkout de Stripe
       res.status(200).json({
@@ -235,6 +226,324 @@ export class SuscriptionPlanController {
     }
   }
 
+  static async upgradeSubscription(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { planId, frecuenciaPago } = req.body;
+      const { user } = req;
+      
+      if (!user || !user.id) {
+        res.status(401).json({
+          success: false,
+          message: 'Usuario no autenticado'
+        });
+        return;
+      }
+
+      if (!planId || !frecuenciaPago) {
+        res.status(400).json({
+          success: false,
+          message: 'Datos incompletos. Se requiere planId y frecuenciaPago'
+        });
+        return;
+      }
+
+      // Validar frecuencia de pago
+      if (!['mensual', 'trimestral', 'anual'].includes(frecuenciaPago)) {
+        res.status(400).json({
+          success: false,
+          message: 'Frecuencia de pago no válida. Debe ser mensual, trimestral o anual'
+        });
+        return;
+      }
+
+      const successUrl = `${process.env.FRONTEND_URL}/planes-suscripcion?success=true&upgrade=true`;
+      const cancelUrl = `${process.env.FRONTEND_URL}/planes-suscripcion?canceled=true`;
+      
+      const result = await SuscriptionPlanService.createUpgradeCheckoutSession(
+        user.id,
+        planId,
+        frecuenciaPago as 'mensual' | 'trimestral' | 'anual',
+        successUrl,
+        cancelUrl
+      );
+      
+      res.status(200).json({
+        success: true,
+        sessionId: result.sessionId,
+        checkoutUrl: result.url
+      });
+      
+    } catch (error: unknown) {
+      console.error('Error al hacer upgrade de suscripción:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      res.status(500).json({
+        success: false,
+        message: errorMessage
+      });
+    }
+  }
+
+  static async debugPayments(req: Request, res: Response): Promise<void> {
+    try {
+      const payments = await Payment.find({})
+        .sort({ createdAt: -1 })
+        .limit(10)
+        .populate('userId', 'email')
+        .populate('suscriptionPlanId', 'nombre tipoPlan');
+      
+      res.status(200).json({
+        success: true,
+        payments: payments.map(p => ({
+          id: p._id,
+          userId: p.userId,
+          planId: p.suscriptionPlanId,
+          stripeSessionId: p.stripeSessionId,
+          status: p.status,
+          amount: p.amount,
+          metadata: p.metadata,
+          createdAt: new Date()
+        }))
+      });
+    } catch (error) {
+      console.error('Error obteniendo pagos:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error interno del servidor'
+      });
+    }
+  }
+
+  static async getRenewalHistory(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { user } = req;
+
+      if (!user || !user.id) {
+        res.status(401).json({
+          success: false,
+          message: 'Usuario no autenticado'
+        });
+        return;
+      }
+
+      // Buscar suscripción del usuario
+      const UserSuscription = (await import('../../models/suscriptionPlans/userSuscription')).default;
+      const userSubscription = await UserSuscription.findOne({ 
+        userId: new mongoose.Types.ObjectId(user.id),
+      }).populate('planId', 'nombre tipoPlan');
+
+      if (!userSubscription) {
+        res.status(404).json({
+          success: false,
+          message: 'No se encontró suscripción recurrente'
+        });
+        return;
+      }
+
+      // Buscar pagos relacionados
+      const Payment = (await import('../../models/payments/payment')).default;
+      const payments = await Payment.find({
+        userId: new mongoose.Types.ObjectId(user.id),
+        stripeSubscriptionId: userSubscription.stripeSubscriptionId
+      }).sort({ createdAt: -1 });
+
+      res.status(200).json({
+        success: true,
+        subscription: {
+          id: userSubscription._id,
+          plan: userSubscription.planId,
+          fechaInicio: userSubscription.fechaInicio,
+          fechaFin: userSubscription.fechaFin,
+          fechaProximoPago: userSubscription.fechaProximoPago,
+          estadoPago: userSubscription.estadoPago,
+          stripeSubscriptionId: userSubscription.stripeSubscriptionId
+        },
+        payments: payments.map(payment => ({
+          id: payment._id,
+          amount: payment.amount,
+          currency: payment.currency,
+          status: payment.status,
+          paymentDate: payment.paymentDate,
+          createdAt: (payment as unknown as { createdAt: Date }).createdAt,
+          frecuenciaPago: payment.frecuenciaPago
+        })),
+        renewalInfo: {
+          totalPayments: payments.length,
+          lastPayment: payments[0]?.paymentDate || null,
+          nextPayment: userSubscription.fechaProximoPago,
+          isActive: userSubscription.fechaFin > new Date() && userSubscription.estadoPago === 'pagado'
+        }
+      });
+
+    } catch (error) {
+      console.error('Error obteniendo historial de renovaciones:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      
+      res.status(500).json({
+        success: false,
+        message: errorMessage
+      });
+    }
+  }
+
+  static async simulateRenewal(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { user } = req;
+
+      if (!user || !user.id) {
+        res.status(401).json({
+          success: false,
+          message: 'Usuario no autenticado'
+        });
+        return;
+      }
+
+      // Solo permitir en desarrollo
+      if (process.env.NODE_ENV !== 'development') {
+        res.status(403).json({
+          success: false,
+          message: 'Esta función solo está disponible en desarrollo'
+        });
+        return;
+      }
+
+      // Buscar suscripción activa del usuario
+      const UserSuscription = (await import('../../models/suscriptionPlans/userSuscription')).default;
+      const userSubscription = await UserSuscription.findOne({ 
+        userId: new mongoose.Types.ObjectId(user.id),
+      });
+
+      if (!userSubscription) {
+        res.status(404).json({
+          success: false,
+          message: 'No se encontró suscripción recurrente activa'
+        });
+        return;
+      }
+
+      console.log('Simulando renovación para suscripción:', userSubscription._id);
+      
+      // Simular renovación
+      await userSubscription.renovarSuscripcion();
+      
+      console.log('Renovación simulada exitosamente:', userSubscription._id);
+
+      res.status(200).json({
+        success: true,
+        message: 'Renovación simulada exitosamente',
+        subscription: {
+          id: userSubscription._id,
+          fechaInicio: userSubscription.fechaInicio,
+          fechaFin: userSubscription.fechaFin,
+          fechaProximoPago: userSubscription.fechaProximoPago,
+          estadoPago: userSubscription.estadoPago
+        }
+      });
+
+    } catch (error) {
+      console.error('Error simulando renovación:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      
+      res.status(500).json({
+        success: false,
+        message: errorMessage
+      });
+    }
+  }
+
+  static async processPendingUpgrades(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const { user } = req;
+
+      if (!user || !user.id) {
+        res.status(401).json({
+          success: false,
+          message: 'Usuario no autenticado'
+        });
+        return;
+      }
+
+      // Buscar cambios pendientes del usuario autenticado
+      const pendingUpgrades = await Payment.find({
+        userId: user.id,
+        status: 'pending',
+        'metadata.isChange': 'true'
+      }).sort({ createdAt: -1 }); // Más recientes primero
+
+      console.log(`Encontrados ${pendingUpgrades.length} cambios pendientes para usuario ${user.id}`);
+
+      if (pendingUpgrades.length === 0) {
+        res.status(200).json({
+          success: true,
+          message: 'No hay cambios pendientes para procesar',
+          results: []
+        });
+        return;
+      }
+
+      const results = [];
+
+      for (const payment of pendingUpgrades) {
+        try {
+          console.log(`Procesando upgrade pendiente: ${payment._id} para usuario ${user.id}`);
+          
+          // Verificar que el plan existe
+          const plan = await SuscriptionPlan.findById(payment.suscriptionPlanId);
+          if (!plan) {
+            console.error(`Plan no encontrado: ${payment.suscriptionPlanId}`);
+            results.push({
+              paymentId: payment._id,
+              success: false,
+              error: 'Plan de suscripción no encontrado'
+            });
+            continue;
+          }
+
+          // Marcar como completado
+          payment.status = 'completed';
+          payment.paymentDate = new Date();
+          await payment.save();
+
+          // Procesar la suscripción
+          const subscription = await SuscriptionPlanService.confirmPayment(payment.stripeSessionId);
+          
+          results.push({
+            paymentId: payment._id,
+            success: true,
+            subscriptionId: subscription._id,
+            planName: plan.nombre
+          });
+
+          console.log(`Upgrade procesado exitosamente: ${payment._id} -> Plan: ${plan.nombre}`);
+        } catch (error) {
+          console.error(`Error procesando upgrade ${payment._id}:`, error);
+          results.push({
+            paymentId: payment._id,
+            success: false,
+            error: error instanceof Error ? error.message : 'Error desconocido'
+          });
+        }
+      }
+
+      const successCount = results.filter(r => r.success).length;
+      const failCount = results.filter(r => !r.success).length;
+
+      res.status(200).json({
+        success: true,
+        message: `Procesados ${successCount} upgrades exitosamente, ${failCount} fallaron`,
+        results
+      });
+
+    } catch (error) {
+      console.error('Error procesando upgrades pendientes:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      
+      res.status(500).json({
+        success: false,
+        message: errorMessage
+      });
+    }
+  }
+
   static async confirmPayment(req: Request, res: Response): Promise<void> {
     try {
       const { sessionId } = req.query;
@@ -247,18 +556,32 @@ export class SuscriptionPlanController {
         return;
       }
       
+      console.log('Confirmando pago para sesión:', sessionId);
+      
       // Buscar el pago por sessionId
       const payment = await Payment.findOne({ 
         stripeSessionId: sessionId
       });
       
       if (!payment) {
+        console.error('Pago no encontrado para sesión:', sessionId);
+        console.log('Buscando todos los pagos con sessionId similar...');
+        const similarPayments = await Payment.find({ 
+          stripeSessionId: { $regex: sessionId.substring(0, 20), $options: 'i' }
+        });
+        console.log('Pagos similares encontrados:', similarPayments.length);
+        similarPayments.forEach(p => {
+          console.log(`- ${p._id}: ${p.stripeSessionId} (${p.status})`);
+        });
+        
         res.status(404).json({
           success: false,
           message: 'Pago no encontrado'
         });
         return;
       }
+      
+      console.log('Pago encontrado:', payment._id, 'Estado:', payment.status, 'Metadata:', payment.metadata);
       
       // Usar el userId del pago para buscar la suscripción
       const userId = payment.userId;
@@ -278,13 +601,19 @@ export class SuscriptionPlanController {
       
       // Si el pago está pendiente, confirmar manualmente
       if (payment.status === 'pending') {
+        console.log('Procesando pago pendiente:', payment._id);
+        
         // Actualizar el estado del pago
         payment.status = 'completed';
         payment.paymentDate = new Date();
         await payment.save();
         
-        // Crear la suscripción
+        console.log('Pago marcado como completado, procesando suscripción...');
+        
+        // Procesar la suscripción
         const subscription = await SuscriptionPlanService.confirmPayment(sessionId);
+        
+        console.log('Suscripción procesada exitosamente:', subscription._id);
         
         res.status(200).json({
           success: true,
@@ -488,11 +817,6 @@ export class SuscriptionPlanController {
           canAccessNutrition = true;
           canAccessTraining = true;
           message = 'Tienes acceso completo al progreso de nutrición y entrenamiento personal.';
-        } else if (plan?.tipoPrecio === 'Gratuito') {
-          // Plan gratuito - acceso limitado
-          canAccessNutrition = true;
-          canAccessTraining = true;
-          message = 'Plan gratuito activo. Acceso básico al progreso.';
         }
       } else {
         message = 'Tu suscripción ha expirado. Renueva tu plan para continuar accediendo al progreso.';

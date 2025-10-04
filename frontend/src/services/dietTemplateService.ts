@@ -36,20 +36,12 @@ export interface CrearDietaDesdeExistenteDTO {
 export const dietTemplateService = {
   // Obtener tipos de arquetipo disponibles
   async obtenerTiposArquetipo(): Promise<{ success: boolean; data: TipoArquetipo[] }> {
-    console.log('🔍 Debug dietTemplateService - Obteniendo tipos de arquetipo');
     const response = await apiRequest('/api/diets/templates/arquetipos', {
       method: 'GET'
     });
     
-    console.log('🔍 Debug dietTemplateService - Respuesta:', {
-      status: response.status,
-      ok: response.ok,
-      statusText: response.statusText
-    });
-    
     if (!response.ok) {
       const errorText = await response.text().catch(() => 'Error desconocido');
-      console.error('🔍 Debug dietTemplateService - Error response:', errorText);
       throw new Error(`Error al obtener tipos de arquetipo: ${response.status} - ${errorText}`);
     }
     

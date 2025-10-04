@@ -5,12 +5,18 @@ export interface PaymentDocument extends mongoose.Document {
   suscriptionPlanId: mongoose.Types.ObjectId;
   userSuscriptionId?: mongoose.Types.ObjectId; // Opcional inicialmente
   stripeSessionId: string;
+  stripeSubscriptionId?: string; // Para suscripciones recurrentes
   stripeCustomerId?: string;
   amount: number;
   currency: string;
   status: 'pending' | 'completed' | 'failed' | 'refunded';
   paymentDate?: Date;
   frecuenciaPago: 'mensual' | 'trimestral' | 'anual';
+  metadata?: {
+    isChange?: string;
+    currentSubscriptionId?: string;
+    newPlanId?: string;
+  };
   
   // Métodos
   markAsCompleted(): Promise<PaymentDocument>;
@@ -39,6 +45,10 @@ const PaymentSchema = new mongoose.Schema({
     required: true,
     unique: true
   },
+  stripeSubscriptionId: {
+    type: String,
+    required: false
+  },
   stripeCustomerId: {
     type: String
   },
@@ -63,6 +73,14 @@ const PaymentSchema = new mongoose.Schema({
     type: String,
     enum: ['mensual', 'trimestral', 'anual'],
     required: true
+  },
+  metadata: {
+    type: {
+      isChange: String,
+      currentSubscriptionId: String,
+      newPlanId: String
+    },
+    required: false
   }
 }, { timestamps: true });
 
@@ -91,9 +109,15 @@ PaymentSchema.post('save', async function(doc) {
   try {
     const payment = doc as unknown as {
       _id: mongoose.Types.ObjectId;
-      userSuscriptionId: mongoose.Types.ObjectId;
+      userSuscriptionId?: mongoose.Types.ObjectId;
       status: 'pending' | 'completed' | 'failed' | 'refunded';
     };
+    
+    // Solo procesar si hay una suscripción asociada
+    if (!payment.userSuscriptionId) {
+      console.log('Pago sin suscripción asociada, saltando actualización de estado');
+      return;
+    }
     
     const UserSuscription = mongoose.model('UserSuscription');
     
