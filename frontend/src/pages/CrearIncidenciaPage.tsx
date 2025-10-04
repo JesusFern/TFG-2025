@@ -82,6 +82,7 @@ const CrearIncidenciaPage: React.FC = () => {
     }
   };
 
+
   return (
     <Container size="lg" py="md">
       <Paper p="xl" withBorder>

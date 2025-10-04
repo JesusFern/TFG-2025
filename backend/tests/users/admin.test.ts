@@ -39,9 +39,9 @@ describe('Admin Management Endpoints', () => {
 
     // Crear un plan de suscripción de prueba
     await SuscriptionPlan.create({
-      nombre: "Plan Básico",
-      descripcion: "Plan básico de prueba",
-      tipoPrecio: "Básico",
+      nombre: "Plan Pro",
+      descripcion: "Plan pro de prueba",
+      tipoPrecio: "Pro",
       tipoPlan: "Nutricion",
       precioMensual: 29.99,
       precioTrimestral: 79.99,

@@ -56,6 +56,59 @@ export interface SubscriptionResponse {
   message?: string;
 }
 
+export const createUpgradeCheckoutSession = async (
+  planId: string,
+  frecuenciaPago: 'mensual' | 'trimestral' | 'anual'
+): Promise<CheckoutResponse> => {
+  try {
+    const token = localStorage.getItem('authToken');
+    console.log('Token de autenticación:', token ? 'Presente' : 'No encontrado');
+    console.log('URL de la API:', API_BASE_URL);
+    console.log('Plan ID:', planId);
+    console.log('Frecuencia de pago:', frecuenciaPago);
+    
+    if (!token) {
+      console.error('No hay token de autenticación');
+      return {
+        success: false,
+        message: 'Usuario no autenticado'
+      };
+    }
+
+    const requestData = { planId, frecuenciaPago };
+    const requestUrl = `${API_BASE_URL}/suscription-plans/upgrade`;
+    
+    console.log('Enviando petición de upgrade a:', requestUrl);
+    console.log('Datos de la petición:', requestData);
+
+    const response = await axios.put<CheckoutResponse>(
+      requestUrl,
+      requestData,
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    console.log('Respuesta del servidor (upgrade):', response.data);
+    return response.data;
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError<ErrorResponse>;
+    console.error('Error completo al crear sesión de upgrade:', error);
+    console.error('Error de Axios:', axiosError);
+    console.error('Respuesta del error:', axiosError.response);
+    console.error('Status del error:', axiosError.response?.status);
+    console.error('Datos del error:', axiosError.response?.data);
+    
+    return {
+      success: false,
+      message: axiosError.response?.data?.message || 'Error al procesar el upgrade'
+    };
+  }
+};
+
 export const createCheckoutSession = async (
   planId: string,
   frecuenciaPago: 'mensual' | 'trimestral' | 'anual'

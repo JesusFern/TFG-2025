@@ -119,14 +119,6 @@ export const authorizeUserWithValidSubscription = async (req: AuthenticatedReque
       return;
     }
     
-    // Verificar que la suscripción no sea gratuita
-    const plan = subscription.planId as unknown as SuscriptionPlanDocument;
-    if (plan.tipoPrecio === 'Gratuito') {
-      res.status(403).json({ 
-        message: 'Tu plan gratuito no incluye acceso a trabajadores. Actualiza tu suscripción para acceder a esta funcionalidad.' 
-      });
-      return;
-    }
     
     // Verificar que la suscripción esté activa
     const now = new Date();
@@ -184,15 +176,6 @@ export const authorizeUserWithValidSubscriptionForWorker = async (req: Authentic
       return;
     }
 
-    const plan = userSubscription.planId as unknown as SuscriptionPlanDocument;
-    
-    // Verificar que la suscripción no sea gratuita
-    if (plan.tipoPrecio === 'Gratuito') {
-      res.status(403).json({ 
-        message: 'Tu plan gratuito no incluye acceso a trabajadores. Actualiza tu suscripción para solicitar asignaciones.' 
-      });
-      return;
-    }
 
     // Verificar que la suscripción esté activa
     const now = new Date();
@@ -204,6 +187,7 @@ export const authorizeUserWithValidSubscriptionForWorker = async (req: Authentic
     }
 
     // Verificar compatibilidad entre el plan del usuario y el tipo de trabajador
+    const plan = userSubscription.planId as unknown as SuscriptionPlanDocument;
     const userPlanType = plan.tipoPlan;
     const workerType = worker.workerType;
 
