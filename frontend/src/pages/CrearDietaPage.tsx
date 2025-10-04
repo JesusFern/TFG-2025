@@ -15,7 +15,6 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import FormularioCrearDieta from '../components/forms/diets/FormularioCrearDieta';
 import TipoCreacionDieta, { TipoCreacion } from '../components/forms/diets/TipoCreacionDieta';
 import { DietaResponse } from '../types';
-import { renderClientInfo } from '../components/common/BreadcrumbUtils';
 import { IconAlertCircle, IconUser, IconChevronLeft, IconArrowLeft } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { getUserById } from '../services/userService';
