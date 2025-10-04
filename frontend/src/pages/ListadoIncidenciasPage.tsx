@@ -30,7 +30,8 @@ import {
   IconSearch,
   IconFilter,
   IconCheck,
-  IconClock
+  IconClock,
+  IconArrowLeft
 } from '@tabler/icons-react';
 import { IncidentService, IncidenciaResponse } from '../services/incidentService';
 import { useAuth } from '../hooks/useAuth';
@@ -150,6 +151,10 @@ const ListadoIncidenciasPage: React.FC = () => {
     navigate('/incidencias/crear');
   };
 
+  const handleBackToDashboard = () => {
+    navigate('/dashboard');
+  };
+
   const handleEliminarIncidencia = async (incidenciaId: string) => {
     if (!confirm('¿Estás seguro de que quieres eliminar esta incidencia?')) {
       return;
@@ -252,6 +257,13 @@ const ListadoIncidenciasPage: React.FC = () => {
                   Crear Incidencia
                 </Button>
               )}
+              <Button
+                leftSection={<IconArrowLeft size={16} />}
+                variant="light"
+                onClick={handleBackToDashboard}
+              >
+                Volver al Dashboard
+              </Button>
               <Badge color="blue" variant="light" size="lg">
                 {incidencias.length} incidencias
               </Badge>
