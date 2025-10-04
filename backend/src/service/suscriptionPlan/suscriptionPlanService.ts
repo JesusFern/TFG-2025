@@ -178,10 +178,8 @@ export class SuscriptionPlanService {
       throw new Error('Plan de suscripción no encontrado');
     }
 
-    // Si tiene suscripción, verificar que es un upgrade válido
+    // Si tiene suscripción, permitir cambios entre cualquier plan
     if (currentSubscription) {
-      const currentPlan = currentSubscription.planId as any;
-      
       // Permitir cambios entre cualquier plan
     }
 
@@ -227,7 +225,7 @@ export class SuscriptionPlanService {
       metadata: {
         userId: userId,
         newPlanId: newPlanId,
-        currentSubscriptionId: currentSubscription ? (currentSubscription._id as any).toString() : null,
+        currentSubscriptionId: currentSubscription ? String(currentSubscription._id) : null,
         isChange: 'true',
         frecuenciaPago: frecuenciaPago
       },
@@ -244,7 +242,7 @@ export class SuscriptionPlanService {
       frecuenciaPago: frecuenciaPago,
       metadata: {
         isChange: 'true',
-        currentSubscriptionId: currentSubscription ? (currentSubscription._id as any).toString() : null,
+        currentSubscriptionId: currentSubscription ? String(currentSubscription._id) : null,
         newPlanId: newPlanId
       }
     });
@@ -309,13 +307,13 @@ export class SuscriptionPlanService {
     });
 
     // Verificar si es un cambio
-    const isChange = (payment as any).metadata?.isChange === 'true';
+    const isChange = payment.metadata?.isChange === 'true';
     console.log('confirmPayment: Es cambio?', isChange);
     
     if (isChange) {
       // Manejar cambio de suscripción
-      const currentSubscriptionId = (payment as any).metadata?.currentSubscriptionId;
-      const newPlanId = (payment as any).metadata?.newPlanId;
+      const currentSubscriptionId = payment.metadata?.currentSubscriptionId;
+      const newPlanId = payment.metadata?.newPlanId;
       
       console.log('confirmPayment: Datos de cambio:', {
         currentSubscriptionId,
@@ -373,7 +371,7 @@ export class SuscriptionPlanService {
       
       // Calcular nuevas fechas
       const now = new Date();
-      let nuevaFechaFin = new Date(now);
+      const nuevaFechaFin = new Date(now);
       
       // Calcular nueva fecha de fin según la frecuencia de pago
       switch (payment.frecuenciaPago) {
@@ -389,7 +387,7 @@ export class SuscriptionPlanService {
       }
       
       // Actualizar o crear la suscripción
-      userSubscription.planId = newPlanId;
+      userSubscription.planId = new mongoose.Types.ObjectId(newPlanId);
       userSubscription.fechaInicio = now;
       userSubscription.fechaFin = nuevaFechaFin;
       userSubscription.frecuenciaDePago = convertirFrecuenciaPago(payment.frecuenciaPago);
@@ -403,8 +401,8 @@ export class SuscriptionPlanService {
       }
       
       console.log('Upgrade de suscripción completado', {
-        userId: (payment as any).userId,
-        oldPlanId: (payment as any).planId,
+        userId: payment.userId,
+        oldPlanId: payment.suscriptionPlanId,
         newPlanId: newPlanId,
         subscriptionId: userSubscription._id,
         action: currentSubscriptionId ? 'updated' : 'created'
@@ -464,7 +462,9 @@ export class SuscriptionPlanService {
 
     // Determinar si es una suscripción recurrente
     const stripeSubscriptionId = stripeSession.subscription 
-      ? (stripeSession.subscription as any).id 
+      ? (typeof stripeSession.subscription === 'string' 
+          ? stripeSession.subscription 
+          : stripeSession.subscription.id)
       : undefined;
 
     const userSubscription = new UserSuscription({

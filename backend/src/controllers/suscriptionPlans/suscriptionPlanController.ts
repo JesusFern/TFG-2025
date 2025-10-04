@@ -80,7 +80,7 @@ export class SuscriptionPlanController {
       if (tipoPrecio !== 'Pro') {
         res.status(400).json({
           success: false,
-          message: 'Tipo de precio no válido. Solo se permite Pro'
+          message: 'Tipo de precio no válido. Debe ser Pro'
         });
         return;
       }
