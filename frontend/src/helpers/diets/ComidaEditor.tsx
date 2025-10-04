@@ -42,9 +42,10 @@ interface ComidaEditorProps {
   dietaId?: string;
   diaCompleto?: DiaDieta; // Para tener acceso a todas las comidas del día
   onRecalcularCalorias?: () => void;
+  onRecargarDieta?: () => Promise<void>;
 }
 
-const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaIndex, onUpdate, dietaId, diaCompleto, onRecalcularCalorias }) => {
+const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaIndex, onUpdate, dietaId, diaCompleto, onRecalcularCalorias, onRecargarDieta }) => {
   
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
@@ -215,6 +216,20 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
           
           const respuestaBackend = await actualizarPlatos([platoConIndices]);
           
+          showNotification(`Plato "${platoFinal.nombre}" actualizado correctamente`, 'success');
+          
+          // ✅ RECARGAR DIETA COMPLETA TRAS ACTUALIZAR EL PLATO
+          if (onRecargarDieta) {
+            console.log('🔄 Recargando dieta completa tras actualizar plato...');
+            await onRecargarDieta();
+            // Cerrar modal y salir - no actualizar estado local porque la dieta ya se recargó
+            closeModal();
+            setEditingPlato(null);
+            setEditingPlatoIndex(null);
+            setIsLoading(false);
+            return;
+          }
+          
           // IMPORTANTE: Usar los datos devueltos por el backend para asegurar consistencia
           // respuestaBackend es un array de platos directamente (ver platoService.ts línea 80)
           if (respuestaBackend && Array.isArray(respuestaBackend) && respuestaBackend[0]) {
@@ -230,8 +245,6 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
             updatedPlatos[editingPlatoIndex] = platoFinal;
           }
           
-          showNotification(`Plato "${platoFinal.nombre}" actualizado correctamente`, 'success');
-          
           // ✅ ACTUALIZAR AUTOMÁTICAMENTE EL DÍA DE DIETA TRAS GUARDAR EL PLATO
           if (diaCompleto && onRecalcularCalorias) {
             console.log('🔄 Actualizando día de dieta automáticamente tras guardar plato...');
@@ -240,14 +253,24 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
         } else if (dietaId) {
           const platoCreado = await crearPlato(dietaId, diaIndex, comidaIndex, platoFinal);
           platoFinal = { ...platoFinal, _id: platoCreado._id };
-          updatedPlatos[editingPlatoIndex] = platoFinal;
           showNotification(`Plato "${platoFinal.nombre}" creado correctamente`, 'success');
           
-          // ✅ ACTUALIZAR AUTOMÁTICAMENTE EL DÍA DE DIETA TRAS CREAR EL PLATO
-          if (diaCompleto && onRecalcularCalorias) {
+          // ✅ RECARGAR DIETA COMPLETA TRAS CREAR EL PLATO
+          if (onRecargarDieta) {
+            console.log('🔄 Recargando dieta completa tras crear plato...');
+            await onRecargarDieta();
+            // Cerrar modal y salir - no actualizar estado local porque la dieta ya se recargó
+            closeModal();
+            setEditingPlato(null);
+            setEditingPlatoIndex(null);
+            setIsLoading(false);
+            return;
+          } else if (diaCompleto && onRecalcularCalorias) {
             console.log('🔄 Actualizando día de dieta automáticamente tras crear plato...');
             onRecalcularCalorias();
           }
+          
+          updatedPlatos[editingPlatoIndex] = platoFinal;
         }
       } else {
         // Creando un plato nuevo
@@ -261,8 +284,17 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
           platoFinal = { ...platoFinal, _id: platoCreado._id };
           showNotification(`Plato "${platoFinal.nombre}" añadido correctamente`, 'success');
           
-          // ✅ ACTUALIZAR AUTOMÁTICAMENTE EL DÍA DE DIETA TRAS CREAR EL PLATO
-          if (diaCompleto && onRecalcularCalorias) {
+          // ✅ RECARGAR DIETA COMPLETA TRAS CREAR EL PLATO
+          if (onRecargarDieta) {
+            console.log('🔄 Recargando dieta completa tras crear plato...');
+            await onRecargarDieta();
+            // Cerrar modal y salir - no actualizar estado local porque la dieta ya se recargó
+            closeModal();
+            setEditingPlato(null);
+            setEditingPlatoIndex(null);
+            setIsLoading(false);
+            return;
+          } else if (diaCompleto && onRecalcularCalorias) {
             console.log('🔄 Actualizando día de dieta automáticamente tras crear plato...');
             onRecalcularCalorias();
           }
@@ -331,8 +363,15 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
           await eliminarPlato(platoId);
           showNotification(`Plato "${platoToDelete.nombre}" eliminado correctamente`, 'success');
           
-          // ✅ ACTUALIZAR AUTOMÁTICAMENTE EL DÍA DE DIETA TRAS ELIMINAR EL PLATO
-          if (diaCompleto && onRecalcularCalorias) {
+          // ✅ RECARGAR DIETA COMPLETA TRAS ELIMINAR EL PLATO
+          if (onRecargarDieta) {
+            console.log('🔄 Recargando dieta completa tras eliminar plato...');
+            await onRecargarDieta();
+            // Cerrar modal y salir - no actualizar estado local porque la dieta ya se recargó
+            closeModal();
+            setIsLoading(false);
+            return;
+          } else if (diaCompleto && onRecalcularCalorias) {
             console.log('🔄 Actualizando día de dieta automáticamente tras eliminar plato...');
             onRecalcularCalorias();
           }
@@ -348,7 +387,7 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
         }
       }
       
-      // Actualizar la lista de platos localmente
+      // Actualizar la lista de platos localmente (solo si no se recargó la dieta)
       let updatedPlatos = comida.platos.filter((_, i) => i !== index);
       
       // Reordenar los platos restantes

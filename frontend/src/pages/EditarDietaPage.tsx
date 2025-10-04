@@ -76,18 +76,74 @@ const EditarDietaPage: React.FC = () => {
     }
   };
 
-  const recalcularCaloriasDia = (dayIndex: number) => {
-    if (!dieta || !ingredientes.length) return;
+  const recargarDieta = async () => {
+    if (!dietaId) return;
     
-    const diaActualizado = actualizarNutricionDia(dieta.dias[dayIndex], ingredientes);
+    try {
+      console.log(`🔄 Recargando dieta completa desde el backend...`);
+      const data = await obtenerDieta(dietaId);
+      
+      // Extraer IDs únicos de ingredientes de la dieta
+      const ingredientesIds = new Set<string>();
+      data.dias.forEach(dia => {
+        dia.comidas.forEach(comida => {
+          comida.platos.forEach(plato => {
+            if (plato.ingredientesPersonalizados) {
+              plato.ingredientesPersonalizados.forEach(ing => {
+                const ingredienteId = typeof ing.ingrediente === 'string' 
+                  ? ing.ingrediente 
+                  : (ing.ingrediente as { _id?: string; id?: string })._id || (ing.ingrediente as { _id?: string; id?: string }).id || '';
+                if (ingredienteId) {
+                  ingredientesIds.add(ingredienteId);
+                }
+              });
+            }
+          });
+        });
+      });
+      
+      // Cargar solo los ingredientes necesarios
+      if (ingredientesIds.size > 0) {
+        const ingredientesData = await obtenerIngredientesPorIds(Array.from(ingredientesIds));
+        setIngredientes(ingredientesData);
+      }
+      
+      setDieta(data);
+      console.log(`✅ Dieta recargada correctamente`);
+    } catch (error) {
+      console.error('❌ Error al recargar la dieta:', error);
+    }
+  };
+
+  const recalcularCaloriasDia = (dayIndex: number) => {
+    if (!dieta) return;
+    
+    console.log(`🔄 Recalculando calorías del día ${dayIndex + 1}...`);
+    
+    // Recalcular valores nutricionales del día
+    const diaActualizado = ingredientes.length > 0 
+      ? actualizarNutricionDia(dieta.dias[dayIndex], ingredientes)
+      : dieta.dias[dayIndex];
     
     const diasActualizados = [...dieta.dias];
     diasActualizados[dayIndex] = diaActualizado;
     
-    setDieta({
+    const dietaActualizada = {
       ...dieta,
-      dias: diasActualizados
+      dias: diasActualizados,
+      // Forzar re-render con timestamp único
+      _lastUpdated: Date.now(),
+      _forceUpdate: `recalc-${Date.now()}-${Math.random()}`
+    };
+    
+    console.log(`✅ Día ${dayIndex + 1} actualizado:`, {
+      calorias: diaActualizado.caloriasTotales,
+      proteinas: diaActualizado.proteinas,
+      hidratosCarbono: diaActualizado.hidratosCarbono,
+      grasas: diaActualizado.grasas
     });
+    
+    setDieta(dietaActualizada);
   };
 
   const daysRange = useMemo(() => {
@@ -507,6 +563,7 @@ const EditarDietaPage: React.FC = () => {
                   dietaId={dietaId}
                   hasChanges={false}
                   onRecalcularCalorias={() => recalcularCaloriasDia(parseInt(activeTab))}
+                  onRecargarDieta={recargarDieta}
                   onSaveSuccess={() => {
                     // ✅ NO HAY CAMBIOS PENDIENTES - SE ACTUALIZA AUTOMÁTICAMENTE
                     setSuccessMessage("Día actualizado correctamente");

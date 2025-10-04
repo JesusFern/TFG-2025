@@ -9,7 +9,7 @@ export interface CalculoNutricional {
 }
 
 interface IngredientePersonalizado {
-  ingrediente: mongoose.Types.ObjectId;
+  ingrediente?: mongoose.Types.ObjectId | null; // opcional: ObjectId para ingredientes locales, null para OpenFoodFacts, undefined para campos no definidos
   peso: number;
 }
 
@@ -52,22 +52,33 @@ export async function calcularNutricionPlato(plato: Plato): Promise<CalculoNutri
   let totalHidratosCarbono = 0;
   let totalGrasas = 0;
 
-  // Obtener los ingredientes de la base de datos
-  const ingredientesIds = plato.ingredientesPersonalizados.map((item: IngredientePersonalizado) => item.ingrediente.toString());
-  const ingredientes = await Ingrediente.find({ _id: { $in: ingredientesIds } });
+  // Obtener los ingredientes de la base de datos (solo los que tienen ID de MongoDB)
+  const ingredientesConId = plato.ingredientesPersonalizados.filter(item => 
+    item.ingrediente !== null && item.ingrediente !== undefined && mongoose.Types.ObjectId.isValid(item.ingrediente)
+  );
+  const ingredientesIds = ingredientesConId.map((item: IngredientePersonalizado) => item.ingrediente!.toString());
+  const ingredientes = ingredientesIds.length > 0 ? await Ingrediente.find({ _id: { $in: ingredientesIds } }) : [];
 
   for (const item of plato.ingredientesPersonalizados) {
-    const ingrediente = ingredientes.find(ing => ing._id.toString() === item.ingrediente.toString());
-    
-    if (ingrediente) {
-      const peso = item.peso;
-      const factor = peso / 100; // Los valores nutricionales están por 100g
+    // Solo procesar ingredientes que tienen ID de MongoDB válido (ingredientes locales)
+    if (item.ingrediente !== null && 
+        item.ingrediente !== undefined && 
+        mongoose.Types.ObjectId.isValid(item.ingrediente)) {
       
-      totalCalorias += ingrediente.calorias * factor;
-      totalProteinas += ingrediente.proteinas * factor;
-      totalHidratosCarbono += ingrediente.hidratosCarbono * factor;
-      totalGrasas += ingrediente.grasas * factor;
+      const ingrediente = ingredientes.find(ing => ing._id.toString() === item.ingrediente!.toString());
+      
+      if (ingrediente) {
+        const peso = item.peso;
+        const factor = peso / 100; // Los valores nutricionales están por 100g
+        
+        totalCalorias += ingrediente.calorias * factor;
+        totalProteinas += ingrediente.proteinas * factor;
+        totalHidratosCarbono += ingrediente.hidratosCarbono * factor;
+        totalGrasas += ingrediente.grasas * factor;
+      }
     }
+    // Los ingredientes de OpenFoodFacts (ingrediente: null) no se procesan aquí
+    // porque su información nutricional se maneja en el frontend
   }
 
   return {
