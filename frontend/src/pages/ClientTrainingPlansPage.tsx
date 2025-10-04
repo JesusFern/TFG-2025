@@ -7,7 +7,6 @@ import { useLoadingState } from '../hooks/useLoadingState';
 import { PlanEntrenamiento } from '../types/training';
 import { trainingService } from '../services/trainingService';
 import LoadingErrorStates from '../components/atoms/LoadingErrorStates';
-import PageHeader from '../components/molecules/PageHeader';
 import EmptyState from '../components/molecules/EmptyState';
 import PlanCard from '../components/molecules/PlanCard';
 
