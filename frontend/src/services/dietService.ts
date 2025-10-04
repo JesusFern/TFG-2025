@@ -215,15 +215,8 @@ export const getMyDiets = async (): Promise<{ dietas: DietaResponse[], count: nu
 
 export const getMyCreatedDiets = async (): Promise<{ dietas: DietaResponse[], count: number, message: string }> => {
   try {
-    console.log('🔍 Debug getMyCreatedDiets - Iniciando llamada a /api/diets/my-created-diets');
     const response = await apiRequest('/api/diets/my-created-diets', {
       method: 'GET'
-    });
-    
-    console.log('🔍 Debug getMyCreatedDiets - Respuesta del servidor:', {
-      status: response.status,
-      ok: response.ok,
-      statusText: response.statusText
     });
     
     if (!response.ok) {
@@ -232,7 +225,6 @@ export const getMyCreatedDiets = async (): Promise<{ dietas: DietaResponse[], co
     }
     
     const data = await response.json();
-    console.log('🔍 Debug getMyCreatedDiets - Datos recibidos:', data);
     return data;
   } catch (error) {
     console.error('Error al obtener mis dietas creadas:', error);

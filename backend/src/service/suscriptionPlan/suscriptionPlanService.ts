@@ -36,11 +36,6 @@ export class SuscriptionPlanService {
       throw new Error('Plan de suscripción no encontrado');
     }
 
-    if (plan.tipoPrecio === 'Gratuito') {
-      // Para el plan gratuito, no necesitamos procesar pago
-      await this.createFreeSubscription(userId, planId);
-      return { success: true, redirect: successUrl, freeSubscription: true };
-    }
 
     // Determinar el precio según la frecuencia de pago
     let amount = 0;
@@ -58,7 +53,52 @@ export class SuscriptionPlanService {
         throw new Error('Frecuencia de pago no válida');
     }
 
-    // Crear la sesión de pago en Stripe
+    // Determinar el intervalo de facturación
+    let interval: 'day' | 'week' | 'month' | 'year';
+    let intervalCount: number;
+    
+    // En modo de desarrollo, usar intervalos más cortos para pruebas
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    
+    if (isDevelopment) {
+      // Intervalos de prueba para desarrollo
+      switch (frecuenciaPago) {
+        case 'mensual':
+          interval = 'day';
+          intervalCount = 1; // 1 día para pruebas
+          break;
+        case 'trimestral':
+          interval = 'day';
+          intervalCount = 3; // 3 días para pruebas
+          break;
+        case 'anual':
+          interval = 'day';
+          intervalCount = 7; // 7 días para pruebas
+          break;
+        default:
+          throw new Error('Frecuencia de pago no válida');
+      }
+    } else {
+      // Intervalos de producción
+      switch (frecuenciaPago) {
+        case 'mensual':
+          interval = 'month';
+          intervalCount = 1;
+          break;
+        case 'trimestral':
+          interval = 'month';
+          intervalCount = 3;
+          break;
+        case 'anual':
+          interval = 'year';
+          intervalCount = 1;
+          break;
+        default:
+          throw new Error('Frecuencia de pago no válida');
+      }
+    }
+
+    // Crear la sesión de suscripción en Stripe
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: [
@@ -70,11 +110,15 @@ export class SuscriptionPlanService {
               description: plan.descripcion,
             },
             unit_amount: Math.round(amount * 100), // Stripe trabaja en centavos
+            recurring: {
+              interval: interval,
+              interval_count: intervalCount,
+            },
           },
           quantity: 1,
         },
       ],
-      mode: 'payment',
+      mode: 'subscription',
       success_url: `${successUrl}`,
       cancel_url: cancelUrl,
       customer_email: user.email,
@@ -104,36 +148,113 @@ export class SuscriptionPlanService {
     };
   }
 
+
   /**
-   * Crea una suscripción gratuita sin proceso de pago
+   * Crea una sesión de checkout para upgrade de suscripción
    */
-  private static async createFreeSubscription(userId: string, planId: string) {
-    // Verificar si el usuario ya tiene una suscripción
-    const existingSub = await UserSuscription.findOne({ userId });
-    if (existingSub) {
-      throw new Error('El usuario ya tiene una suscripción activa');
+  static async createUpgradeCheckoutSession(
+    userId: string, 
+    newPlanId: string, 
+    frecuenciaPago: 'mensual' | 'trimestral' | 'anual',
+    successUrl: string,
+    cancelUrl: string
+  ) {
+    const user = await User.findById(userId);
+    if (!user) {
+      throw new Error('Usuario no encontrado');
     }
 
-    const plan = await SuscriptionPlan.findById(planId);
-    if (!plan || plan.tipoPrecio !== 'Gratuito') {
-      throw new Error('Plan gratuito no válido');
+    if (user.role !== 'user') {
+      throw new Error('Solo los usuarios pueden hacer upgrade de suscripción');
     }
 
-    // Crear suscripción gratuita
-    const fechaInicio = new Date();
-    const fechaFin = new Date();
-    fechaFin.setFullYear(fechaFin.getFullYear() + 1); // Las suscripciones gratuitas duran 1 año
+    // Buscar suscripción actual (opcional)
+    const currentSubscription = await UserSuscription.findOne({ userId })
+      .populate('planId');
+    
+    const newPlan = await SuscriptionPlan.findById(newPlanId);
+    
+    if (!newPlan) {
+      throw new Error('Plan de suscripción no encontrado');
+    }
 
-    const userSubscription = new UserSuscription({
-      userId,
-      planId,
-      fechaInicio,
-      fechaFin,
-      frecuenciaDePago: 'Anual',
+    // Si tiene suscripción, verificar que es un upgrade válido
+    if (currentSubscription) {
+      const currentPlan = currentSubscription.planId as any;
+      
+      // Permitir cambios entre cualquier plan
+    }
+
+    // Usar precio completo del plan combinado (sin rebaja)
+    let fullPrice = 0;
+    
+    switch (frecuenciaPago) {
+      case 'mensual':
+        fullPrice = newPlan.precioMensual;
+        break;
+      case 'trimestral':
+        fullPrice = newPlan.precioTrimestral;
+        break;
+      case 'anual':
+        fullPrice = newPlan.precioAnual;
+        break;
+    }
+    
+    if (fullPrice <= 0) {
+      throw new Error('El plan no tiene precio válido');
+    }
+
+    // Crear sesión de Stripe
+    const session = await stripe.checkout.sessions.create({
+      payment_method_types: ['card'],
+      customer_email: user.email, // Pasar el correo electrónico del usuario
+      line_items: [
+        {
+          price_data: {
+            currency: 'eur',
+            product_data: {
+              name: `Mejora a ${newPlan.nombre}`,
+              description: `Precio completo por ${frecuenciaPago}`,
+            },
+            unit_amount: Math.round(fullPrice * 100), // Stripe usa centavos
+          },
+          quantity: 1,
+        },
+      ],
+      mode: 'payment',
+      success_url: successUrl,
+      cancel_url: cancelUrl,
+      metadata: {
+        userId: userId,
+        newPlanId: newPlanId,
+        currentSubscriptionId: currentSubscription ? (currentSubscription._id as any).toString() : null,
+        isChange: 'true',
+        frecuenciaPago: frecuenciaPago
+      },
     });
 
-    await userSubscription.save();
-    return userSubscription;
+    // Guardar el registro de pago para el upgrade
+    const payment = new Payment({
+      userId: userId,
+      suscriptionPlanId: newPlanId,
+      stripeSessionId: session.id,
+      amount: fullPrice,
+      currency: 'eur',
+      status: 'pending',
+      frecuenciaPago: frecuenciaPago,
+      metadata: {
+        isChange: 'true',
+        currentSubscriptionId: currentSubscription ? (currentSubscription._id as any).toString() : null,
+        newPlanId: newPlanId
+      }
+    });
+
+    await payment.save();
+
+    return {
+      sessionId: session.id,
+      url: session.url,
+    };
   }
 
   /**
@@ -141,6 +262,8 @@ export class SuscriptionPlanService {
    * Se llama desde el webhook de Stripe cuando un pago se completa
    */
   static async confirmPayment(sessionId: string) {
+    console.log('confirmPayment: Iniciando confirmación para sesión:', sessionId);
+    
     // Convertir frecuencia de pago a formato esperado por el modelo
     const convertirFrecuenciaPago = (frecuencia: string) => {
       switch (frecuencia) {
@@ -158,14 +281,139 @@ export class SuscriptionPlanService {
     // Buscar el pago por ID de sesión
     const payment = await Payment.findOne({ stripeSessionId: sessionId });
     if (!payment) {
+      console.error('confirmPayment: Pago no encontrado para sesión:', sessionId);
       throw new Error(`No se encontró registro de pago para la sesión ${sessionId}`);
     }
 
+    console.log('confirmPayment: Pago encontrado:', {
+      id: payment._id,
+      status: payment.status,
+      userId: payment.userId,
+      planId: payment.suscriptionPlanId,
+      metadata: payment.metadata
+    });
+
     if (payment.status !== 'completed') {
+      console.error('confirmPayment: Pago no está completado, estado:', payment.status);
       throw new Error(`El pago para la sesión ${sessionId} no está completado`);
     }
 
-    // Verificar si ya existe una suscripción para este usuario
+    // Obtener información de la sesión de Stripe para suscripciones recurrentes
+    const stripeSession = await stripe.checkout.sessions.retrieve(sessionId, {
+      expand: ['subscription']
+    });
+
+    console.log('confirmPayment: Sesión de Stripe:', {
+      mode: stripeSession.mode,
+      subscription: stripeSession.subscription
+    });
+
+    // Verificar si es un cambio
+    const isChange = (payment as any).metadata?.isChange === 'true';
+    console.log('confirmPayment: Es cambio?', isChange);
+    
+    if (isChange) {
+      // Manejar cambio de suscripción
+      const currentSubscriptionId = (payment as any).metadata?.currentSubscriptionId;
+      const newPlanId = (payment as any).metadata?.newPlanId;
+      
+      console.log('confirmPayment: Datos de cambio:', {
+        currentSubscriptionId,
+        newPlanId,
+        metadata: payment.metadata
+      });
+      
+      if (!newPlanId) {
+        console.error('confirmPayment: Falta newPlanId en metadata');
+        throw new Error('Información de cambio incompleta - falta newPlanId');
+      }
+      
+      // Verificar que el plan existe
+      const plan = await SuscriptionPlan.findById(newPlanId);
+      if (!plan) {
+        console.error('confirmPayment: Plan no encontrado:', newPlanId);
+        throw new Error(`Plan de suscripción no encontrado: ${newPlanId}`);
+      }
+      
+      console.log('confirmPayment: Plan encontrado:', {
+        id: plan._id,
+        nombre: plan.nombre,
+        tipoPlan: plan.tipoPlan
+      });
+      
+      let userSubscription;
+      
+      if (currentSubscriptionId) {
+        // Si existe una suscripción actual, actualizarla
+        userSubscription = await UserSuscription.findById(currentSubscriptionId);
+        if (!userSubscription) {
+          throw new Error('Suscripción actual no encontrada');
+        }
+        
+        console.log('Actualizando suscripción existente:', currentSubscriptionId);
+      } else {
+        // Si no existe suscripción, buscar si hay alguna para el usuario
+        userSubscription = await UserSuscription.findOne({ userId: payment.userId });
+        
+        if (!userSubscription) {
+          // Crear nueva suscripción si no existe ninguna
+          console.log('Creando nueva suscripción para usuario:', payment.userId);
+          userSubscription = new UserSuscription({
+            userId: payment.userId,
+            planId: newPlanId,
+            fechaInicio: new Date(),
+            fechaFin: new Date(),
+            frecuenciaDePago: convertirFrecuenciaPago(payment.frecuenciaPago),
+            estadoPago: 'pagado'
+          });
+        } else {
+          console.log('Actualizando suscripción existente del usuario:', payment.userId);
+        }
+      }
+      
+      // Calcular nuevas fechas
+      const now = new Date();
+      let nuevaFechaFin = new Date(now);
+      
+      // Calcular nueva fecha de fin según la frecuencia de pago
+      switch (payment.frecuenciaPago) {
+        case 'mensual':
+          nuevaFechaFin.setMonth(nuevaFechaFin.getMonth() + 1);
+          break;
+        case 'trimestral':
+          nuevaFechaFin.setMonth(nuevaFechaFin.getMonth() + 3);
+          break;
+        case 'anual':
+          nuevaFechaFin.setFullYear(nuevaFechaFin.getFullYear() + 1);
+          break;
+      }
+      
+      // Actualizar o crear la suscripción
+      userSubscription.planId = newPlanId;
+      userSubscription.fechaInicio = now;
+      userSubscription.fechaFin = nuevaFechaFin;
+      userSubscription.frecuenciaDePago = convertirFrecuenciaPago(payment.frecuenciaPago);
+      userSubscription.estadoPago = 'pagado';
+      await userSubscription.save();
+      
+      // Actualizar el pago con la referencia a la suscripción
+      if (!payment.userSuscriptionId) {
+        (payment as any).userSuscriptionId = userSubscription._id;
+        await payment.save();
+      }
+      
+      console.log('Upgrade de suscripción completado', {
+        userId: (payment as any).userId,
+        oldPlanId: (payment as any).planId,
+        newPlanId: newPlanId,
+        subscriptionId: userSubscription._id,
+        action: currentSubscriptionId ? 'updated' : 'created'
+      });
+      
+      return userSubscription;
+    }
+    
+    // Verificar si ya existe una suscripción para este usuario (suscripción normal)
     const existingSub = await UserSuscription.findOne({ userId: payment.userId });
     if (existingSub) {
       // Si la suscripción existe, actualizar la fecha de fin basada en la frecuencia de pago
@@ -214,19 +462,34 @@ export class SuscriptionPlanService {
         break;
     }
 
+    // Determinar si es una suscripción recurrente
+    const stripeSubscriptionId = stripeSession.subscription 
+      ? (stripeSession.subscription as any).id 
+      : undefined;
+
     const userSubscription = new UserSuscription({
       userId: payment.userId,
       planId: payment.suscriptionPlanId,
       fechaInicio,
       fechaFin,
-      frecuenciaDePago: convertirFrecuenciaPago(payment.frecuenciaPago)
+      frecuenciaDePago: convertirFrecuenciaPago(payment.frecuenciaPago),
+      stripeSubscriptionId: stripeSubscriptionId,
+      estadoPago: 'pagado'
     });
 
     await userSubscription.save();
     
-    // Actualizar el pago con la referencia a la nueva suscripción
+    // Actualizar el pago con la referencia a la nueva suscripción y Stripe
     payment.userSuscriptionId = userSubscription._id as mongoose.Types.ObjectId;
+    if (stripeSubscriptionId) {
+      payment.stripeSubscriptionId = stripeSubscriptionId;
+    }
     await payment.save();
+    
+    console.log('Nueva suscripción creada:', {
+      id: userSubscription._id,
+      stripeSubscriptionId: stripeSubscriptionId
+    });
     
     return userSubscription;
   }

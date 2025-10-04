@@ -9,8 +9,10 @@ export interface UserSuscriptionDocument extends mongoose.Document {
   ultimoPago?: mongoose.Types.ObjectId;
   estadoPago: 'pendiente' | 'pagado' | 'vencido';
   fechaProximoPago?: Date;
+  stripeSubscriptionId?: string; // Para suscripciones recurrentes
   
   actualizarEstadoPago(paymentId: mongoose.Types.ObjectId, estado: 'pendiente' | 'pagado' | 'vencido'): Promise<UserSuscriptionDocument>;
+  renovarSuscripcion(): Promise<UserSuscriptionDocument>;
   isActive(): boolean;
 }
 
@@ -52,7 +54,11 @@ const UserSuscriptionSchema = new mongoose.Schema({
   },
   fechaProximoPago: {
     type: Date
-  }
+  },
+  stripeSubscriptionId: {
+    type: String,
+    required: false
+  },
 }, { timestamps: true });
 
 // Validar que la fecha de fin sea posterior a la fecha de inicio
@@ -77,11 +83,6 @@ UserSuscriptionSchema.pre('save', async function(next) {
       return next(new Error('El plan de suscripción no existe'));
     }
     
-    // Si es plan gratuito, no importa la frecuencia de pago
-    if (plan.tipo === 'Gratuito') {
-      next();
-      return;
-    }
     
     // Verificar que el precio para la frecuencia elegida no sea 0
     if (frecuenciaDePago === 'Mensual' && plan.precioMensual <= 0) {
@@ -176,6 +177,48 @@ UserSuscriptionSchema.methods.actualizarEstadoPago = async function(paymentId: m
       this.fechaProximoPago = new Date(fechaActual.setFullYear(fechaActual.getFullYear() + 1));
     }
   }
+  
+  await this.save();
+  return this;
+};
+
+// Método para renovar una suscripción
+UserSuscriptionSchema.methods.renovarSuscripcion = async function() {
+  const now = new Date();
+  const nuevaFechaFin = new Date(now);
+  
+  // Calcular nueva fecha de fin según la frecuencia
+  switch (this.frecuenciaDePago) {
+    case 'Mensual':
+      nuevaFechaFin.setMonth(nuevaFechaFin.getMonth() + 1);
+      break;
+    case 'Trimestral':
+      nuevaFechaFin.setMonth(nuevaFechaFin.getMonth() + 3);
+      break;
+    case 'Anual':
+      nuevaFechaFin.setFullYear(nuevaFechaFin.getFullYear() + 1);
+      break;
+  }
+  
+  // Actualizar fechas
+  this.fechaInicio = now;
+  this.fechaFin = nuevaFechaFin;
+  this.estadoPago = 'pagado';
+  
+  // Calcular próxima fecha de pago
+  const proximaFechaPago = new Date(now);
+  switch (this.frecuenciaDePago) {
+    case 'Mensual':
+      proximaFechaPago.setMonth(proximaFechaPago.getMonth() + 1);
+      break;
+    case 'Trimestral':
+      proximaFechaPago.setMonth(proximaFechaPago.getMonth() + 3);
+      break;
+    case 'Anual':
+      proximaFechaPago.setFullYear(proximaFechaPago.getFullYear() + 1);
+      break;
+  }
+  this.fechaProximoPago = proximaFechaPago;
   
   await this.save();
   return this;
