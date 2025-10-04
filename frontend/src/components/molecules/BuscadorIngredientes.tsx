@@ -190,9 +190,6 @@ const BuscadorIngredientes: React.FC<BuscadorIngredientesProps> = ({
   };
 
   // Funciones auxiliares para acceder a propiedades de manera segura
-  const obtenerId = (ingrediente: IngredienteUnificado): string | null => {
-    return esIngredienteLocal(ingrediente) ? ingrediente._id : null; // null para OpenFoodFacts
-  };
 
 
   const obtenerCalificacionNutricional = (ingrediente: IngredienteUnificado): string | undefined => {
