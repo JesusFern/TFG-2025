@@ -11,9 +11,10 @@ import {
   Stack, 
   Text, 
   useMantineTheme,
-  Paper
+  Paper,
+  Button
 } from '@mantine/core';
-import { IconAlertCircle, IconCheck, IconClock, IconCalendar, IconTarget, IconBarbell } from '@tabler/icons-react';
+import { IconAlertCircle, IconCheck, IconClock, IconCalendar, IconTarget, IconBarbell, IconArrowLeft } from '@tabler/icons-react';
 import { usePermissions } from '../hooks/usePermissions';
 import { useThemeDetection } from '../hooks/useThemeDetection';
 import { useTrainingPlans } from '../hooks/useTrainingPlans';
@@ -55,6 +56,10 @@ const WorkerClientTrainingPlansList: React.FC = () => {
     }
   };
 
+  const handleBackToDashboard = () => {
+    navigate('/worker/dashboard-clients');
+  };
+
   // formatDate ya está importado desde trainingUtils
 
   return (
@@ -73,29 +78,40 @@ const WorkerClientTrainingPlansList: React.FC = () => {
           boxShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.4)' : '0 1px 2px rgba(0, 0, 0, 0.05)'
         }}
       >
-        <Title order={2} mb="xs">
-          Planes de Entrenamiento de{' '}
-          {loadingClient ? (
-            <>
-              <Text span inherit>este cliente</Text>
-              <Loader size="xs" ml="sm" display="inline" />
-            </>
-          ) : (
-            <Text span c="nutroos-green" fw={700} inherit>
-              {clientInfo ? clientInfo.fullName : "este cliente"}
+        <Group justify="space-between" align="flex-start" mb="xs">
+          <div>
+            <Title order={2} mb="xs">
+              Planes de Entrenamiento de{' '}
+              {loadingClient ? (
+                <>
+                  <Text span inherit>este cliente</Text>
+                  <Loader size="xs" ml="sm" display="inline" />
+                </>
+              ) : (
+                <Text span c="nutroos-green" fw={700} inherit>
+                  {clientInfo ? clientInfo.fullName : "este cliente"}
+                </Text>
+              )}
+            </Title>
+            <Text c="dimmed">
+              Listado de planes de entrenamiento creados para{' '}
+              {loadingClient ? (
+                <Text span inherit>este usuario <Loader size="xs" ml="sm" display="inline" /></Text>
+              ) : (
+                <Text span fw={500} inherit>
+                  {clientInfo ? clientInfo.fullName : "este usuario"}
+                </Text>
+              )}
             </Text>
-          )}
-        </Title>
-        <Text c="dimmed">
-          Listado de planes de entrenamiento creados para{' '}
-          {loadingClient ? (
-            <Text span inherit>este usuario <Loader size="xs" ml="sm" display="inline" /></Text>
-          ) : (
-            <Text span fw={500} inherit>
-              {clientInfo ? clientInfo.fullName : "este usuario"}
-            </Text>
-          )}
-        </Text>
+          </div>
+          <Button
+            leftSection={<IconArrowLeft size={16} />}
+            variant="light"
+            onClick={handleBackToDashboard}
+          >
+            Volver
+          </Button>
+        </Group>
       </Paper>
       
       {planes.length === 0 ? (

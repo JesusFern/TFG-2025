@@ -3,7 +3,6 @@ import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Container, 
   Paper, 
-  Breadcrumbs, 
   Title, 
   Avatar, 
   Box, 
@@ -21,7 +20,6 @@ import {
   Divider
 } from '@mantine/core';
 import { 
-  IconChevronRight, 
   IconTarget,
   IconArrowLeft,
   IconCalendar,
@@ -33,8 +31,7 @@ import {
 import { motion } from 'framer-motion';
 import GlobalNotificationOverlay from '../components/atoms/GlobalNotificationOverlay';
 import { getUserById } from '../services/userService';
-import { BREADCRUMBS_TRAINING_BASE } from '../constants/training';
-import { createBreadcrumbItems, renderClientInfo } from '../components/common/BreadcrumbUtils';
+import { renderClientInfo } from '../components/common/BreadcrumbUtils';
 import DatePickerInput from '../components/atoms/DatePickerInput';
 import trainingService from '../services/trainingService';
 
@@ -189,26 +186,8 @@ const ConfigurarPlantillaPage: React.FC = () => {
     navigate(`/training/planes/plantillas/objetivos?clientId=${clientId}`);
   };
 
-  const items = createBreadcrumbItems(BREADCRUMBS_TRAINING_BASE, [
-    { title: 'Seleccionar tipo de plan', href: `/training/planes/tipo?clientId=${clientId}` },
-    { title: 'Seleccionar objetivo', href: `/training/planes/plantillas/objetivos?clientId=${clientId}` },
-    { title: 'Configurar plantilla', href: '#', icon: undefined }
-  ]);
-
   return (
     <Container size="md" py="xl">
-      <Paper 
-        p="md" 
-        mb="lg" 
-        style={{ 
-          backgroundColor: 'var(--app-paper-bg)', 
-          borderBottom: '1px solid var(--app-border-color)' 
-        }}
-      >
-        <Breadcrumbs separator={<IconChevronRight size={14} />}>
-          {items}
-        </Breadcrumbs>
-      </Paper>
 
       <Paper 
         p="lg" 

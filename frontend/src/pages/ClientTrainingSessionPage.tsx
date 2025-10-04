@@ -620,7 +620,8 @@ const ClientTrainingSessionPage: React.FC = () => {
             nivelEsfuerzo: selectedRegistro.nivelEsfuerzo,
             completado: selectedRegistro.completado,
             notas: selectedRegistro.notas || '',
-            fecha: selectedRegistro.fecha
+            fecha: selectedRegistro.fecha,
+            videoCliente: selectedRegistro.videoCliente
           }}
         />
       )}

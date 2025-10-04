@@ -8,12 +8,14 @@ interface ProfileHeaderProps {
   profile: UserProfile;
   onEditProfile: () => void;
   onEditPhoto: () => void;
+  canEdit?: boolean;
 }
 
 export const ProfileHeader: React.FC<ProfileHeaderProps> = ({ 
   profile, 
   onEditProfile, 
-  onEditPhoto 
+  onEditPhoto,
+  canEdit = true
 }) => {
   const theme = useMantineTheme();
   
@@ -106,15 +108,17 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             </Group>
           </Stack>
           
-          <ActionIcon
-            size="lg"
-            variant="light"
-            color="nutroos-green"
-            radius="md"
-            onClick={onEditProfile}
-          >
-            <IconEdit size={20} />
-          </ActionIcon>
+          {canEdit && (
+            <ActionIcon
+              size="lg"
+              variant="light"
+              color="nutroos-green"
+              radius="md"
+              onClick={onEditProfile}
+            >
+              <IconEdit size={20} />
+            </ActionIcon>
+          )}
         </Group>
 
         <Text size="lg" c={theme.colors.gray[6]}>
@@ -139,38 +143,40 @@ export const ProfileHeader: React.FC<ProfileHeaderProps> = ({
           </Text>
         )}
 
-        <Group gap="xs">
-          <Text size="sm" c={theme.colors.gray[6]}>
-            <strong>Valoración:</strong>
-          </Text>
-          <Group gap={4}>
-            {(() => {
-              // Usar la calificación en tiempo real si es un trabajador, sino usar la del perfil
-              const rating = profile.role === 'worker' ? satisfactionRating : profile.satisfactionRating;
-              
-              return rating && rating > 0 ? (
-                <>
-                  {[1, 2, 3, 4, 5].map((star) => (
-                    <Text
-                      key={star}
-                      size="sm"
-                      c={star <= rating ? 'yellow' : theme.colors.gray[4]}
-                    >
-                      ★
+        {profile.role === 'worker' && (
+          <Group gap="xs">
+            <Text size="sm" c={theme.colors.gray[6]}>
+              <strong>Valoración:</strong>
+            </Text>
+            <Group gap={4}>
+              {(() => {
+                // Usar la calificación en tiempo real para trabajadores
+                const rating = satisfactionRating;
+                
+                return rating && rating > 0 ? (
+                  <>
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <Text
+                        key={star}
+                        size="sm"
+                        c={star <= rating ? 'yellow' : theme.colors.gray[4]}
+                      >
+                        ★
+                      </Text>
+                    ))}
+                    <Text size="sm" c="yellow" fw={500}>
+                      ({rating.toFixed(1)})
                     </Text>
-                  ))}
-                  <Text size="sm" c="yellow" fw={500}>
-                    ({rating.toFixed(1)})
+                  </>
+                ) : (
+                  <Text size="sm" c={theme.colors.gray[5]}>
+                    Sin calificar
                   </Text>
-                </>
-              ) : (
-                <Text size="sm" c={theme.colors.gray[5]}>
-                  Sin calificar
-                </Text>
-              );
-            })()}
+                );
+              })()}
+            </Group>
           </Group>
-        </Group>
+        )}
       </Stack>
     </Group>
   );

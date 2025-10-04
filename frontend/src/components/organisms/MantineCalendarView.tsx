@@ -55,6 +55,7 @@ const MantineCalendarView: React.FC<MantineCalendarViewProps> = ({ className }) 
   const [editingEvent, setEditingEvent] = useState<GoogleCalendarEvent | null>(null);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [isDateSelected, setIsDateSelected] = useState(false);
 
   // Obtener eventos para el mes actual
   const getEventsForMonth = useCallback((date: Date) => {
@@ -95,6 +96,7 @@ const MantineCalendarView: React.FC<MantineCalendarViewProps> = ({ className }) 
   // Manejar selección de fecha
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
+    setIsDateSelected(true);
     setShowCreateModal(true);
   };
 
@@ -179,7 +181,11 @@ const MantineCalendarView: React.FC<MantineCalendarViewProps> = ({ className }) 
           <Group gap="sm">
             <Button
               leftSection={<IconPlus size={16} />}
-              onClick={() => setShowCreateModal(true)}
+              onClick={() => {
+                setIsDateSelected(false);
+                setSelectedDate(null);
+                setShowCreateModal(true);
+              }}
               size="sm"
             >
               Nuevo Evento
@@ -231,13 +237,24 @@ const MantineCalendarView: React.FC<MantineCalendarViewProps> = ({ className }) 
       {/* Modal para crear evento */}
       <CreateEventModal
         opened={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
+        onClose={() => {
+          setShowCreateModal(false);
+          setIsDateSelected(false);
+          setSelectedDate(null);
+        }}
         onSubmit={handleCreateEvent}
         loading={loading}
-        initialValues={{
-          startDate: selectedDate || new Date(),
+        initialValues={isDateSelected && selectedDate ? {
+          // Si se seleccionó una fecha específica, usar esa fecha
+          startDate: selectedDate,
           startTime: format(new Date(), 'HH:mm'),
-          endDate: selectedDate || new Date(),
+          endDate: selectedDate,
+          endTime: format(new Date(Date.now() + 60 * 60 * 1000), 'HH:mm'), // +1 hora
+        } : {
+          // Si se hizo clic en "Nuevo evento", usar fecha actual
+          startDate: new Date(),
+          startTime: format(new Date(), 'HH:mm'),
+          endDate: new Date(),
           endTime: format(new Date(Date.now() + 60 * 60 * 1000), 'HH:mm'), // +1 hora
         }}
       />

@@ -28,7 +28,8 @@ import {
   IconTrash,
   IconMessage,
   IconUsers,
-  IconClipboardList
+  IconClipboardList,
+  IconArrowLeft
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
@@ -257,6 +258,10 @@ const MyWorkersPage: React.FC = () => {
     navigate(`/citas?trabajador=${worker._id}`);
   };
 
+  const handleBackToDashboard = () => {
+    navigate('/dashboard');
+  };
+
   const openConfirmModal = (
     requestId: string, 
     action: 'accept' | 'reject' | 'cancel',
@@ -326,14 +331,23 @@ const MyWorkersPage: React.FC = () => {
     return (
       <Container size="lg" py="xl">
         <Stack gap="xl">
-          <Box>
-            <Title order={1} mb="xs">
-              Solicitudes Recibidas
-            </Title>
-            <Text c="dimmed" size="lg">
-              Gestiona las solicitudes de asignación que has recibido
-            </Text>
-          </Box>
+          <Group justify="space-between" align="center">
+            <Box>
+              <Title order={1} mb="xs">
+                Solicitudes Recibidas
+              </Title>
+              <Text c="dimmed" size="lg">
+                Gestiona las solicitudes de asignación que has recibido
+              </Text>
+            </Box>
+            <Button
+              leftSection={<IconArrowLeft size={16} />}
+              variant="light"
+              onClick={handleBackToDashboard}
+            >
+              Volver al Dashboard
+            </Button>
+          </Group>
 
           {requests.length === 0 ? (
             <Card p="xl" radius="lg" withBorder>
@@ -494,14 +508,23 @@ const MyWorkersPage: React.FC = () => {
   return (
     <Container size="lg" py="xl">
       <Stack gap="xl">
-        <Box>
-          <Title order={1} mb="xs">
-            Mis Trabajadores
-          </Title>
-          <Text c="dimmed" size="lg">
-            Gestiona tus trabajadores asignados y solicitudes pendientes
-          </Text>
-        </Box>
+        <Group justify="space-between" align="center">
+          <Box>
+            <Title order={1} mb="xs">
+              Mis Trabajadores
+            </Title>
+            <Text c="dimmed" size="lg">
+              Gestiona tus trabajadores asignados y solicitudes pendientes
+            </Text>
+          </Box>
+          <Button
+            leftSection={<IconArrowLeft size={16} />}
+            variant="light"
+            onClick={handleBackToDashboard}
+          >
+            Volver al Dashboard
+          </Button>
+        </Group>
 
         <Tabs defaultValue="assigned" variant="outline">
           <Tabs.List>

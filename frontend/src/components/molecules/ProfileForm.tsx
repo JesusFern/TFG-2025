@@ -19,13 +19,15 @@ interface ProfileFormProps {
   onSubmit: (data: ProfileFormData) => void;
   onCancel: () => void;
   isLoading?: boolean;
+  userRole?: string;
 }
 
 export const ProfileForm: React.FC<ProfileFormProps> = ({
   initialData,
   onSubmit,
   onCancel,
-  isLoading = false
+  isLoading = false,
+  userRole
 }) => {
   const theme = useMantineTheme();
   const [formData, setFormData] = useState<ProfileFormData>(initialData);
@@ -62,6 +64,13 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
       newErrors.phoneNumber = 'El número de teléfono no es válido';
     }
 
+    // Para admins, solo validar campos básicos
+    if (userRole === 'admin') {
+      setErrors(newErrors);
+      return Object.keys(newErrors).length === 0;
+    }
+
+    // Validaciones adicionales para otros roles
     if (!formData.gender) {
       newErrors.gender = 'El género es obligatorio';
     }
@@ -142,34 +151,38 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             />
           </Group>
 
-          <Group grow>
-            <TextInput
-              label="Número de teléfono"
-              placeholder="+34 123 456 789"
-              value={formData.phoneNumber}
-              onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
-              error={errors.phoneNumber}
-              required
-            />
-            
-            <Select
-              label="Género"
-              placeholder="Selecciona tu género"
-              data={genderOptions}
-              value={formData.gender}
-              onChange={(value) => handleInputChange('gender', value)}
-              error={errors.gender}
-              required
-            />
-          </Group>
-
-          <DatePickerInput
-            label="Fecha de nacimiento"
-            value={formData.birthDate || null}
-            onChange={(value) => handleInputChange('birthDate', value)}
-            error={errors.birthDate}
+          <TextInput
+            label="Número de teléfono"
+            placeholder="+34 123 456 789"
+            value={formData.phoneNumber}
+            onChange={(e) => handleInputChange('phoneNumber', e.target.value)}
+            error={errors.phoneNumber}
             required
           />
+
+          {userRole !== 'admin' && (
+            <>
+              <Group grow>
+                <Select
+                  label="Género"
+                  placeholder="Selecciona tu género"
+                  data={genderOptions}
+                  value={formData.gender}
+                  onChange={(value) => handleInputChange('gender', value)}
+                  error={errors.gender}
+                  required
+                />
+              </Group>
+
+              <DatePickerInput
+                label="Fecha de nacimiento"
+                value={formData.birthDate || null}
+                onChange={(value) => handleInputChange('birthDate', value)}
+                error={errors.birthDate}
+                required
+              />
+            </>
+          )}
         </Stack>
 
         {/* Información de Trabajador (solo si es worker) */}

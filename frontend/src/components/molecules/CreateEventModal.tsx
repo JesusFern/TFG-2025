@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import {
   Modal,
   Group,
@@ -43,6 +43,25 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
       endTime: (value) => (value.length < 1 ? 'La hora de fin es requerida' : null),
     }
   });
+
+  const formRef = useRef(form);
+  formRef.current = form;
+
+  // Actualizar el formulario cuando cambien los initialValues
+  useEffect(() => {
+    if (initialValues && Object.keys(initialValues).length > 0) {
+      formRef.current.setValues({
+        title: initialValues.title || '',
+        description: initialValues.description || '',
+        startDate: initialValues.startDate || new Date(),
+        startTime: initialValues.startTime || '',
+        endDate: initialValues.endDate || new Date(),
+        endTime: initialValues.endTime || '',
+        location: initialValues.location || '',
+        attendees: initialValues.attendees || [],
+      });
+    }
+  }, [initialValues]);
 
   const handleSubmit = async (values: CalendarEventFormData) => {
     try {

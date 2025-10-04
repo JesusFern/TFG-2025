@@ -7,11 +7,10 @@ import {
   Alert
 } from '@mantine/core';
 import { 
-  IconHome,
   IconCheck,
-  IconAlertCircle
+  IconAlertCircle,
+  IconArrowLeft
 } from '@tabler/icons-react';
-import TrainingBreadcrumbs from '../atoms/TrainingBreadcrumbs';
 import { useNavigation } from '../../hooks/useNavigation';
 import type { PlanEntrenamiento } from '../../types/training';
 
@@ -26,16 +25,11 @@ const EditarPlanHeader: React.FC<EditarPlanHeaderProps> = ({
   publishLoading,
   onPublish
 }) => {
-  const { getTrainingBreadcrumbs } = useNavigation();
 
-  const breadcrumbs = getTrainingBreadcrumbs('editar').map(item => ({
-    ...item,
-    icon: item.title === 'Inicio' ? <IconHome size={14} /> : item.icon
-  }));
-
+  const { navigateToClientPlans } = useNavigation();
+  
   return (
     <>
-      <TrainingBreadcrumbs items={breadcrumbs} />
       
       <Group justify="space-between" mb="md" wrap="wrap">
         <Group gap="md" align="center">
@@ -49,17 +43,28 @@ const EditarPlanHeader: React.FC<EditarPlanHeaderProps> = ({
           )}
         </Group>
         
-        {plan.draftMode && (
+        <Group gap="sm">
           <Button
-            color="green"
-            leftSection={<IconCheck size={18} />}
-            onClick={onPublish}
-            loading={publishLoading}
-            size="md"
+            variant="outline"
+            color="nutroos-green"
+            leftSection={<IconArrowLeft size={18} />}
+            onClick={() => navigateToClientPlans(plan)}
+            size="sm"
           >
-            Publicar entrenamiento
+            Volver a planes del cliente
           </Button>
-        )}
+          {plan.draftMode && (
+            <Button
+              color="green"
+              leftSection={<IconCheck size={18} />}
+              onClick={onPublish}
+              loading={publishLoading}
+              size="md"
+            >
+              Publicar entrenamiento
+            </Button>
+          )}
+        </Group>
       </Group>
       
       {!plan.draftMode && (

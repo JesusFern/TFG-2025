@@ -1290,7 +1290,8 @@ export const obtenerDetallesClienteService = async (trabajadorId: string, client
           nivelEsfuerzo: registro.nivelEsfuerzo,
           completado: registro.completado,
           notas: registro.notas,
-          fecha: registro.fecha
+          fecha: registro.fecha,
+          videoCliente: registro.videoCliente
         })),
         estadisticas: estadisticasGenerales,
         estadisticasSemanal: estadisticasSemanales,

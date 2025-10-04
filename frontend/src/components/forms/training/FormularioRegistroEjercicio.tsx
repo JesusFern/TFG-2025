@@ -26,6 +26,7 @@ import {
 } from '@tabler/icons-react';
 import { useThemeDetection } from '../../../hooks/useThemeDetection';
 import { CrearRegistroEjercicioDTO } from '../../../types/training';
+import { ejercicioVideoService } from '../../../services/ejercicioVideoService';
 
 interface FormularioRegistroEjercicioProps {
   ejercicio: {
@@ -92,9 +93,21 @@ const FormularioRegistroEjercicio: React.FC<FormularioRegistroEjercicioProps> = 
         values.duracionEjercicio = Math.round(duracionMs / 1000); // en segundos
       }
 
+      // Subir video si se seleccionó uno
+      if (videoFile) {
+        try {
+          const videoResponse = await ejercicioVideoService.uploadVideo(videoFile);
+          values.videoCliente = videoResponse.videoUrl;
+        } catch (videoError) {
+          console.error('Error al subir video:', videoError);
+          throw new Error('Error al subir el video. Intenta de nuevo.');
+        }
+      }
+
       await onSubmit(values);
     } catch (error) {
       console.error('Error al enviar formulario:', error);
+      throw error; // Re-lanzar el error para que se muestre en el modal
     }
   };
 

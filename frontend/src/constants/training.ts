@@ -1,6 +1,6 @@
 // Constantes compartidas para el módulo de entrenamiento
 
-export const DIAS_SEMANA = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+export const DIAS_SEMANA = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'];
 
 export const DIAS_SEMANA_OPTIONS = [
   { value: 0, label: 'Domingo' },

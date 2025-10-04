@@ -17,7 +17,8 @@ import {
   IconAlertCircle
 } from '@tabler/icons-react';
 import { useAuth } from '../../hooks/useAuth';
-import { CrearMensajeDTO } from '../../types/chat';
+import { CrearMensajeDTO, Adjunto } from '../../types/chat';
+import { chatService } from '../../services/chatService';
 
 interface ChatInputProps {
   onSendMessage: (message: CrearMensajeDTO) => void;
@@ -32,43 +33,59 @@ export const ChatInput: React.FC<ChatInputProps> = ({
 }) => {
   const { user } = useAuth();
   const [contenido, setContenido] = useState('');
-  const [tipo, setTipo] = useState<'texto' | 'imagen' | 'archivo'>('texto');
   const [prioridad, setPrioridad] = useState<'baja' | 'normal' | 'alta' | 'urgente'>('baja');
   const [categoria, setCategoria] = useState<'general' | 'entrenamiento' | 'nutricion' | 'consulta'>('general');
   const [archivos, setArchivos] = useState<File[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [subiendoArchivos, setSubiendoArchivos] = useState(false);
 
-  const handleSend = () => {
+  const handleSend = async () => {
     if (!contenido.trim() && archivos.length === 0) return;
     if (!user) return;
 
-    const mensaje: CrearMensajeDTO = {
-      destinatario: '', // Se debe obtener de la conversación activa
-      contenido: contenido.trim(),
-      tipo,
-      prioridad,
-      categoria,
-      adjuntos: archivos.map(file => ({
-        nombre: file.name,
-        tipo: file.type,
-        tamano: file.size,
-        url: '' // Se debe subir el archivo y obtener la URL
-      }))
-    };
+    try {
+      setSubiendoArchivos(true);
+      setError(null);
 
-    onSendMessage(mensaje);
-    setContenido('');
-    setArchivos([]);
-    setError(null);
+      // Subir archivos si hay alguno
+      let adjuntosSubidos: Adjunto[] = [];
+      if (archivos.length > 0) {
+        const archivosSubidos = await chatService.subirArchivos(archivos);
+        adjuntosSubidos = archivosSubidos.map(archivo => ({
+          nombre: archivo.nombre,
+          url: archivo.url,
+          tipo: archivo.tipo,
+          tamano: archivo.tamano
+        }));
+      }
+
+      const mensaje: CrearMensajeDTO = {
+        destinatario: '', // Se debe obtener de la conversación activa
+        contenido: contenido.trim(),
+        prioridad,
+        categoria,
+        adjuntos: adjuntosSubidos
+      };
+
+      onSendMessage(mensaje);
+      setContenido('');
+      setArchivos([]);
+      setError(null);
+    } catch (err) {
+      setError('Error al subir archivos. Inténtalo de nuevo.');
+      console.error('Error al subir archivos:', err);
+    } finally {
+      setSubiendoArchivos(false);
+    }
   };
 
   const handleFileUpload = (files: File[] | null) => {
     if (!files) return;
     
-    const maxSize = 10 * 1024 * 1024; // 10MB
+    const maxSize = 50 * 1024 * 1024; // 50MB
     const validFiles = files.filter(file => {
       if (file.size > maxSize) {
-        setError(`El archivo ${file.name} es demasiado grande. Máximo 10MB.`);
+        setError(`El archivo ${file.name} es demasiado grande. Máximo 50MB.`);
         return false;
       }
       return true;
@@ -125,21 +142,15 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           </Group>
         )}
 
+        {/* Aviso cuando no hay contenido ni archivos */}
+        {!contenido.trim() && archivos.length === 0 && (
+          <Text size="sm" c="dimmed" ta="center">
+            Escribe un mensaje o adjunta un archivo para enviar
+          </Text>
+        )}
+
         {/* Controles */}
         <Group gap="sm" wrap="wrap">
-          <Select
-            label="Tipo"
-            value={tipo}
-            onChange={(value) => setTipo(value as 'texto' | 'imagen' | 'archivo')}
-            data={[
-              { value: 'texto', label: 'Texto' },
-              { value: 'imagen', label: 'Imagen' },
-              { value: 'archivo', label: 'Archivo' }
-            ]}
-            size="sm"
-            style={{ minWidth: 120 }}
-          />
-          
           <Select
             label="Prioridad"
             value={prioridad}
@@ -192,7 +203,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
           
           <FileInput
             placeholder="Adjuntar archivo"
-            accept="image/*,.pdf,.doc,.docx,.txt"
+            accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip,.rar,.7z"
             multiple
             onChange={handleFileUpload}
             disabled={disabled}
@@ -205,9 +216,10 @@ export const ChatInput: React.FC<ChatInputProps> = ({
             variant="filled"
             color="blue"
             onClick={handleSend}
-            disabled={disabled || (!contenido.trim() && archivos.length === 0)}
+            disabled={disabled || subiendoArchivos}
+            loading={subiendoArchivos}
           >
-            <IconSend size={20} />
+            {!subiendoArchivos && <IconSend size={20} />}
           </ActionIcon>
         </Group>
 

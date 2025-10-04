@@ -75,7 +75,6 @@ export const mensajeService = {
     if (filtros.conversacionId) queryParams.append('conversacionId', filtros.conversacionId);
     if (filtros.remitente) queryParams.append('remitente', filtros.remitente);
     if (filtros.destinatario) queryParams.append('destinatario', filtros.destinatario);
-    if (filtros.tipo) queryParams.append('tipo', filtros.tipo);
     if (filtros.estado) queryParams.append('estado', filtros.estado);
     if (filtros.categoria) queryParams.append('categoria', filtros.categoria);
     if (filtros.prioridad) queryParams.append('prioridad', filtros.prioridad);
@@ -397,5 +396,59 @@ export const chatService = {
     ]);
 
     return { mensaje, conversacion };
+  },
+
+  // ===== ARCHIVOS =====
+  
+  // Subir un archivo
+  async subirArchivo(archivo: File): Promise<{
+    nombre: string;
+    url: string;
+    tipo: string;
+    tamano: number;
+    filename: string;
+  }> {
+    const formData = new FormData();
+    formData.append('archivo', archivo);
+
+    const response = await apiRequest('/api/chat/archivos/single', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Error al subir archivo: ${response.status} ${response.statusText} - ${errorData.message || 'Error desconocido'}`);
+    }
+
+    const responseData = await response.json();
+    return responseData.archivo;
+  },
+
+  // Subir múltiples archivos
+  async subirArchivos(archivos: File[]): Promise<{
+    nombre: string;
+    url: string;
+    tipo: string;
+    tamano: number;
+    filename: string;
+  }[]> {
+    const formData = new FormData();
+    archivos.forEach(archivo => {
+      formData.append('archivos', archivo);
+    });
+
+    const response = await apiRequest('/api/chat/archivos/multiple', {
+      method: 'POST',
+      body: formData
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(`Error al subir archivos: ${response.status} ${response.statusText} - ${errorData.message || 'Error desconocido'}`);
+    }
+
+    const responseData = await response.json();
+    return responseData.archivos;
   }
 };

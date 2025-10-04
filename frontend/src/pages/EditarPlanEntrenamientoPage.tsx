@@ -117,6 +117,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
 
     sesionesFiltradas.sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime());
     
+    // Calcular el número de semanas completas a partir de la fecha de inicio
     const totalWeeks = Math.ceil(plan.duracionDias / 7);
     
     const weekStartDate = getWeekStartDate(fechaInicio, currentWeek);
@@ -129,9 +130,14 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     
     const sesionesInfo: SesionInfo[] = [];
     
-    for (let i = 0; i < 7; i++) {
+    // Solo generar los días que están configurados en el plan
+    for (let i = 0; i < plan.diasSemana.length; i++) {
+      const diaSemana = plan.diasSemana[i];
       const fechaDelDia = new Date(weekStartDate);
-      fechaDelDia.setDate(fechaDelDia.getDate() + i);
+      
+      // Calcular cuántos días hay que sumar para llegar al día de la semana deseado
+      const diasHastaDiaSemana = (diaSemana - weekStartDate.getDay() + 7) % 7;
+      fechaDelDia.setDate(fechaDelDia.getDate() + diasHastaDiaSemana);
       
       // Buscar sesión para este día
       const sesionDelDia = sesionesDeLaSemana.find(sesion => {
@@ -142,10 +148,10 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
       sesionesInfo.push({
         weekDayIndex: i,
         sesionIndex: i,
-        weekDayName: DIAS_SEMANA[i],
+        weekDayName: DIAS_SEMANA[diaSemana],
         fecha: fechaDelDia,
         fechaFormateada: formatDateWithLocale(fechaDelDia),
-        nombreCompleto: `${DIAS_SEMANA[i]} ${formatDateWithLocale(fechaDelDia)}`,
+        nombreCompleto: `${DIAS_SEMANA[diaSemana]} ${formatDateWithLocale(fechaDelDia)}`,
         data: sesionDelDia || null
       });
     }
@@ -292,6 +298,14 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     hoy.setHours(0, 0, 0, 0);
     
     return fechaSesion > hoy; // Solo sesiones futuras se pueden editar
+  };
+
+  // Función auxiliar para verificar si se puede crear una nueva sesión
+  const canCreateSession = (fecha: Date): boolean => {
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    
+    return fecha > hoy; // Solo fechas futuras se pueden crear
   };
 
   const handleReorderEjercicios = async (newOrder: EjercicioSesion[]) => {
@@ -839,7 +853,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
                     size="sm" 
                     color="nutroos-green"
                     leftSection={<IconBarbell size={16} />}
-                        disabled={!canEditSession(currentSesionInfo.data)}
+                        disabled={!canCreateSession(currentSesionInfo.fecha)}
                     onClick={() => {
                           handleConfigurarSesion(currentSesionInfo.fecha.toISOString());
                     }}

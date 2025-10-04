@@ -29,13 +29,14 @@ import GlobalNotificationOverlay from '../components/atoms/GlobalNotificationOve
 import { VideoCallModalCitas } from '../components/organisms/VideoCallModalCitas';
 import { VideoCallRoom } from '../components/organisms/VideoCallRoom';
 import { useVideoCallCitas } from '../hooks/useVideoCallCitas';
-import {  
+import {
   IconPlus,
   IconCalendar,
   IconChartBar,
   IconList,
   IconAlertCircle,
-  IconRefresh
+  IconRefresh,
+  IconArrowLeft
 } from '@tabler/icons-react';
 
 const CitasPage: React.FC = () => {
@@ -102,6 +103,11 @@ const CitasPage: React.FC = () => {
 
   // Determinar si es profesional
   const esProfesional = user?.role === 'worker';
+
+  // Función para volver al dashboard
+  const handleBackToDashboard = () => {
+    navigate('/dashboard');
+  };
 
   // Hook para videollamadas
   const {
@@ -472,6 +478,13 @@ const CitasPage: React.FC = () => {
           </div>
           
           <Group>
+            <Button
+              leftSection={<IconArrowLeft size={16} />}
+              variant="light"
+              onClick={handleBackToDashboard}
+            >
+              Volver al Dashboard
+            </Button>
             {/* Solo mostrar botón "Nueva Cita" para clientes, no para profesionales */}
             {!esProfesional && (
               <Button

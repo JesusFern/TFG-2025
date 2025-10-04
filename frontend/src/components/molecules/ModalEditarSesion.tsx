@@ -132,6 +132,7 @@ const ModalEditarSesion: React.FC<ModalEditarSesionProps> = ({
             }
             data={tiposEntrenamiento}
             required
+            comboboxProps={{ zIndex: 3000 }}
           />
           
           <NumberInput

@@ -40,6 +40,8 @@ interface UserDocument extends mongoose.Document {
   };
   
   // ===== CAMPOS DEL SISTEMA =====
+  createdAt: Date;
+  updatedAt: Date;
   isNew: boolean;
 }
 

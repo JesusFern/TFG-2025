@@ -4,8 +4,7 @@ import mongoose, { Document, Schema } from 'mongoose';
 export interface MensajeDocument extends Document {
   remitente: mongoose.Types.ObjectId;
   destinatario: mongoose.Types.ObjectId;
-  contenido: string;
-  tipo: 'texto' | 'imagen' | 'archivo' | 'sistema';
+  contenido?: string;
   estado: 'enviado' | 'entregado' | 'leido' | 'archivado';
   prioridad: 'baja' | 'normal' | 'alta' | 'urgente';
   categoria: 'general' | 'entrenamiento' | 'nutricion' | 'consulta' | 'recordatorio';
@@ -42,14 +41,10 @@ const MensajeSchema = new Schema<MensajeDocument>({
   },
   contenido: {
     type: String,
-    required: true,
+    required: false,
     trim: true,
-    maxlength: 5000
-  },
-  tipo: {
-    type: String,
-    enum: ['texto', 'imagen', 'archivo', 'sistema'],
-    default: 'texto'
+    maxlength: 5000,
+    default: ''
   },
   estado: {
     type: String,

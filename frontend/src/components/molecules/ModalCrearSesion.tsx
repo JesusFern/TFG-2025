@@ -133,6 +133,7 @@ const ModalCrearSesion: React.FC<ModalCrearSesionProps> = ({
             }
             data={tiposEntrenamiento}
             required
+            comboboxProps={{ zIndex: 3000 }}
           />
           
           <NumberInput

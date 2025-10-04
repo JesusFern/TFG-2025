@@ -342,10 +342,10 @@ const DashboardPage: React.FC = () => {
         badge: user?.role === 'worker' ? 'Gestionar' : 'Programar'
       },
       {
-        title: 'Solicitudes',
+        title: user?.role === 'worker' ? 'Solicitudes' : 'Mis Trabajadores',
         description: user?.role === 'worker' 
           ? 'Gestiona las solicitudes de asignación que has recibido'
-          : 'Revisa el estado de tus solicitudes de asignación',
+          : 'Ve tus trabajadores asignados y solicitudes de asignación',
         icon: <IconClipboardList size={32} />,
         color: 'pink',
         onClick: () => navigate('/solicitudes'),

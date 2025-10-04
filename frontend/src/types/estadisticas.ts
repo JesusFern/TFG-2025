@@ -203,6 +203,7 @@ export interface RegistroEjercicioDetalle {
   completado: boolean;
   notas: string;
   fecha: string;
+  videoCliente?: string;
 }
 
 export interface ClienteDetalleCompleto {

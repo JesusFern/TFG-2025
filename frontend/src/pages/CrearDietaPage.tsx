@@ -6,7 +6,6 @@ import {
   Space,
   Group,
   Avatar,
-  Breadcrumbs,
   Paper,
   Box,
   Button
@@ -15,10 +14,9 @@ import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import FormularioCrearDieta from '../components/forms/diets/FormularioCrearDieta';
 import TipoCreacionDieta, { TipoCreacion } from '../components/forms/diets/TipoCreacionDieta';
 import { DietaResponse } from '../types';
-import { IconAlertCircle, IconUser, IconChevronRight, IconChevronLeft } from '@tabler/icons-react';
+import { IconAlertCircle, IconUser, IconChevronLeft } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
-import { BREADCRUMBS_DIET_BASE } from '../constants/training';
-import { createBreadcrumbItems, renderClientInfo } from '../components/common/BreadcrumbUtils';
+import { renderClientInfo } from '../components/common/BreadcrumbUtils';
 
 const CrearDietaPage: React.FC = () => {
   const { clienteId } = useParams<{ clienteId?: string }>();
@@ -89,10 +87,6 @@ const CrearDietaPage: React.FC = () => {
     setTimeout(() => setMensaje(null), 5000);
   };
 
-  const items = createBreadcrumbItems(BREADCRUMBS_DIET_BASE, [
-    { title: 'Detalles del cliente', href: `/clientes/${clienteInfo.id}` },
-    { title: 'Crear dieta', href: '#' }
-  ]);
 
   const getTituloPaso = () => {
     if (pasoActual === 'seleccion') {
@@ -113,18 +107,6 @@ const CrearDietaPage: React.FC = () => {
 
   return (
     <Container size="md" py="xl">
-      <Paper 
-        p="md" 
-        mb="lg" 
-        style={{ 
-          backgroundColor: 'var(--app-paper-bg)', 
-          borderBottom: '1px solid var(--app-border-color)' 
-        }}
-      >
-        <Breadcrumbs separator={<IconChevronRight size={14} />}>
-          {items}
-        </Breadcrumbs>
-      </Paper>
 
       <Paper 
         p="lg" 

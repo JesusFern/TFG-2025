@@ -1,19 +1,17 @@
 import React from 'react';
-import { Box, Text, Badge, Group, ActionIcon, Paper, Avatar, Stack } from '@mantine/core';
-import { IconArrowBackUp, IconTrash, IconCheck, IconChecks, IconClock, IconPaperclip } from '@tabler/icons-react';
+import { Box, Text, Badge, Group, ActionIcon, Paper, Avatar, Stack, Image } from '@mantine/core';
+import { IconTrash, IconCheck, IconChecks, IconClock, IconPaperclip, IconDownload } from '@tabler/icons-react';
 import { Mensaje } from '../../types/chat';
 
 interface ChatMessageProps {
   mensaje: Mensaje;
   esMio: boolean;
-  onReply?: (mensajeId: string) => void;
   onDelete?: (mensajeId: string) => void;
 }
 
 export const ChatMessage: React.FC<ChatMessageProps> = ({
   mensaje,
   esMio,
-  onReply,
   onDelete
 }) => {
   const getPriorityColor = (prioridad: string) => {
@@ -59,6 +57,39 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
   };
 
   const canManageMessage = esMio;
+
+  // Función para determinar si un archivo es una imagen
+  const esImagen = (tipo: string) => {
+    return tipo.startsWith('image/');
+  };
+
+  // Función para determinar si un archivo es un video
+  const esVideo = (tipo: string) => {
+    return tipo.startsWith('video/');
+  };
+
+  // Función para determinar si un archivo es audio
+  const esAudio = (tipo: string) => {
+    return tipo.startsWith('audio/');
+  };
+
+  // Función para formatear el tamaño del archivo
+  const formatearTamano = (tamano: number) => {
+    if (tamano < 1024) return `${tamano} B`;
+    if (tamano < 1024 * 1024) return `${(tamano / 1024).toFixed(1)} KB`;
+    return `${(tamano / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
+  // Función para descargar archivo
+  const descargarArchivo = (adjunto: { nombre: string; url: string; tipo: string; tamano: number }) => {
+    const link = document.createElement('a');
+    link.href = adjunto.url;
+    link.download = adjunto.nombre;
+    link.target = '_blank';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <Box
@@ -127,87 +158,161 @@ export const ChatMessage: React.FC<ChatMessageProps> = ({
           </Group>
 
           {/* Acciones del mensaje */}
-          {canManageMessage && (
+          {canManageMessage && onDelete && (
             <Group gap="xs">
-              {onReply && (
-                <ActionIcon
-                  variant="subtle"
-                  size="sm"
-                  color="blue"
-                  onClick={() => onReply(mensaje._id)}
-                >
-                  <IconArrowBackUp size={16} />
-                </ActionIcon>
-              )}
-              
-              
-              
-              {onDelete && (
-                <ActionIcon
-                  variant="subtle"
-                  size="sm"
-                  color="red"
-                  onClick={() => onDelete(mensaje._id)}
-                >
-                  <IconTrash size={16} />
-                </ActionIcon>
-              )}
+              <ActionIcon
+                variant="subtle"
+                size="sm"
+                color="red"
+                onClick={() => onDelete(mensaje._id)}
+              >
+                <IconTrash size={16} />
+              </ActionIcon>
             </Group>
           )}
         </Group>
 
         {/* Contenido del mensaje */}
         <Box mb="xs" style={{ wordBreak: 'break-word', overflowWrap: 'break-word' }}>
-          {mensaje.tipo === 'texto' && (
-            <Text 
-              size="sm" 
-              style={{ 
-                whiteSpace: 'pre-wrap',
-                wordBreak: 'break-word',
-                overflowWrap: 'break-word',
-                maxWidth: '100%'
-              }}
-            >
-              {mensaje.contenido}
-            </Text>
-          )}
+          <Text 
+            size="sm" 
+            style={{ 
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word',
+              maxWidth: '100%'
+            }}
+          >
+            {mensaje.contenido}
+          </Text>
           
-          {mensaje.tipo === 'imagen' && (
-            <Box>
-              <img 
-                src={mensaje.contenido} 
-                alt="Imagen del mensaje"
-                style={{ 
-                  maxWidth: '100%', 
-                  borderRadius: '8px',
-                  maxHeight: '300px',
-                  objectFit: 'cover'
-                }} 
-              />
-            </Box>
-          )}
-          
-          {mensaje.tipo === 'archivo' && (
-            <Group gap="xs">
-              <IconPaperclip size={16} />
-              <Text size="sm" fw={500}>
-                Archivo adjunto
-              </Text>
-            </Group>
-          )}
-          
-          {mensaje.tipo === 'sistema' && (
-            <Text 
-              size="sm" 
-              c="dimmed" 
-              style={{ 
-                fontStyle: 'italic',
-                wordBreak: 'break-word',
-                overflowWrap: 'break-word'
-              }}
-            >
-              {mensaje.contenido}
-            </Text>
+          {/* Mostrar adjuntos si existen */}
+          {mensaje.adjuntos && mensaje.adjuntos.length > 0 && (
+            <Stack gap="sm" mt="sm">
+              {mensaje.adjuntos.map((adjunto, index) => (
+                <Box key={index}>
+                  {esImagen(adjunto.tipo) ? (
+                    // Mostrar imagen
+                    <Box>
+                      <Image
+                        src={adjunto.url}
+                        alt={adjunto.nombre}
+                        style={{
+                          maxWidth: '300px',
+                          maxHeight: '300px',
+                          borderRadius: '8px',
+                          cursor: 'pointer'
+                        }}
+                        onClick={() => window.open(adjunto.url, '_blank')}
+                        fallbackSrc="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlbiBubyBkaXNwb25pYmxlPC90ZXh0Pjwvc3ZnPg=="
+                      />
+                      <Group gap="xs" mt="xs" align="center">
+                        <Text size="xs" c="dimmed">
+                          {adjunto.nombre} • {formatearTamano(adjunto.tamano)}
+                        </Text>
+                        <ActionIcon
+                          size="sm"
+                          variant="subtle"
+                          color="blue"
+                          onClick={() => descargarArchivo(adjunto)}
+                        >
+                          <IconDownload size={14} />
+                        </ActionIcon>
+                      </Group>
+                    </Box>
+                  ) : esVideo(adjunto.tipo) ? (
+                    // Mostrar video
+                    <Box>
+                      <video
+                        controls
+                        style={{
+                          maxWidth: '400px',
+                          maxHeight: '300px',
+                          borderRadius: '8px',
+                          backgroundColor: '#000'
+                        }}
+                        preload="metadata"
+                        crossOrigin="anonymous"
+                      >
+                        <source src={adjunto.url} type={adjunto.tipo} />
+                        <source src={adjunto.url} type="video/mp4" />
+                        <p>Tu navegador no soporta el elemento video. 
+                          <a href={adjunto.url} target="_blank" rel="noopener noreferrer">
+                            Descargar video
+                          </a>
+                        </p>
+                      </video>
+                      <Group gap="xs" mt="xs" align="center">
+                        <Text size="xs" c="dimmed">
+                          {adjunto.nombre} • {formatearTamano(adjunto.tamano)}
+                        </Text>
+                        <ActionIcon
+                          size="sm"
+                          variant="subtle"
+                          color="blue"
+                          onClick={() => descargarArchivo(adjunto)}
+                        >
+                          <IconDownload size={14} />
+                        </ActionIcon>
+                      </Group>
+                    </Box>
+                  ) : esAudio(adjunto.tipo) ? (
+                    // Mostrar audio
+                    <Box>
+                      <audio
+                        controls
+                        style={{
+                          width: '100%',
+                          maxWidth: '400px'
+                        }}
+                        preload="metadata"
+                      >
+                        <source src={adjunto.url} type={adjunto.tipo} />
+                        Tu navegador no soporta el elemento audio.
+                      </audio>
+                      <Group gap="xs" mt="xs" align="center">
+                        <Text size="xs" c="dimmed">
+                          {adjunto.nombre} • {formatearTamano(adjunto.tamano)}
+                        </Text>
+                        <ActionIcon
+                          size="sm"
+                          variant="subtle"
+                          color="blue"
+                          onClick={() => descargarArchivo(adjunto)}
+                        >
+                          <IconDownload size={14} />
+                        </ActionIcon>
+                      </Group>
+                    </Box>
+                  ) : (
+                    // Mostrar archivo no-imagen
+                    <Group gap="xs" p="xs" style={{ 
+                      backgroundColor: 'var(--mantine-color-gray-0)', 
+                      borderRadius: '8px',
+                      border: '1px solid var(--mantine-color-gray-3)'
+                    }}>
+                      <IconPaperclip size={16} />
+                      <Box style={{ flex: 1 }}>
+                        <Text size="sm" fw={500} truncate>
+                          {adjunto.nombre}
+                        </Text>
+                        <Text size="xs" c="dimmed">
+                          {formatearTamano(adjunto.tamano)}
+                        </Text>
+                      </Box>
+                      <ActionIcon
+                        size="sm"
+                        variant="subtle"
+                        color="blue"
+                        onClick={() => descargarArchivo(adjunto)}
+                      >
+                        <IconDownload size={14} />
+                      </ActionIcon>
+                    </Group>
+                  )}
+                </Box>
+              ))}
+            </Stack>
           )}
         </Box>
 

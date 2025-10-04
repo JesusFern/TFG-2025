@@ -3,7 +3,6 @@ export interface Mensaje {
   remitente: UsuarioResumido;
   destinatario: UsuarioResumido;
   contenido: string;
-  tipo: 'texto' | 'imagen' | 'archivo' | 'sistema';
   estado: 'enviado' | 'entregado' | 'leido' | 'archivado';
   prioridad: 'baja' | 'normal' | 'alta' | 'urgente';
   categoria: 'general' | 'entrenamiento' | 'nutricion' | 'consulta' | 'recordatorio';
@@ -126,7 +125,6 @@ export interface AccionNotificacion {
 export interface CrearMensajeDTO {
   destinatario: string;
   contenido: string;
-  tipo?: 'texto' | 'imagen' | 'archivo' | 'sistema';
   prioridad?: 'baja' | 'normal' | 'alta' | 'urgente';
   categoria?: 'general' | 'entrenamiento' | 'nutricion' | 'consulta' | 'recordatorio';
   adjuntos?: Adjunto[];
@@ -162,7 +160,6 @@ export interface FiltrosMensajes {
   conversacionId?: string;
   remitente?: string;
   destinatario?: string;
-  tipo?: string;
   estado?: string;
   categoria?: string;
   prioridad?: string;

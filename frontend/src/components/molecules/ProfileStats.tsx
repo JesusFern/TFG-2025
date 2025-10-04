@@ -5,7 +5,8 @@ import {
   IconCalendar, 
   IconTarget,
   IconHeart,
-  IconActivity
+  IconActivity,
+  IconTrophy
 } from '@tabler/icons-react';
 import { UserProfile, DatosSaludYNutricion, DatosActividadFisica } from '../../types/profile';
 
@@ -34,6 +35,22 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
     return age;
   };
 
+  const formatDate = (dateString: string) => {
+    try {
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) {
+        return 'Fecha no disponible';
+      }
+      return date.toLocaleDateString('es-ES', { 
+        year: 'numeric', 
+        month: 'long' 
+      });
+    } catch (error) {
+      console.error('Error formateando fecha:', error);
+      return 'Fecha no disponible';
+    }
+  };
+
   const calculateBMI = () => {
     if (!datosSalud?.altura || !datosSalud?.pesoActual) return null;
     const heightInMeters = datosSalud.altura / 100;
@@ -48,7 +65,8 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
     return { category: 'Obesidad', color: 'red' };
   };
 
-  const stats = [
+  const stats = profile.role === 'worker' ? [
+    // Badges para trabajadores
     {
       icon: IconUser,
       label: 'Edad',
@@ -58,10 +76,7 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
     {
       icon: IconCalendar,
       label: 'Miembro desde',
-      value: new Date(profile.createdAt).toLocaleDateString('es-ES', { 
-        year: 'numeric', 
-        month: 'long' 
-      }),
+      value: formatDate(profile.createdAt),
       color: 'nutroos-green'
     },
     {
@@ -69,6 +84,32 @@ export const ProfileStats: React.FC<ProfileStatsProps> = ({
       label: 'Especialidades',
       value: profile.workerType || 'No especificado',
       color: 'orange'
+    }
+  ] : [
+    // Badges para usuarios/clientes
+    {
+      icon: IconUser,
+      label: 'Edad',
+      value: getAge(profile.birthDate) ? `${getAge(profile.birthDate)} años` : 'No especificada',
+      color: 'blue'
+    },
+    {
+      icon: IconCalendar,
+      label: 'Miembro desde',
+      value: formatDate(profile.createdAt),
+      color: 'nutroos-green'
+    },
+    {
+      icon: IconTarget,
+      label: 'Objetivo de peso',
+      value: datosSalud?.objetivoPeso ? `${datosSalud.objetivoPeso} kg` : 'No especificado',
+      color: 'orange'
+    },
+    {
+      icon: IconTrophy,
+      label: 'Nivel de actividad',
+      value: datosActividad?.frecuenciaEjercicio || 'No especificado',
+      color: 'purple'
     }
   ];
 

@@ -6,6 +6,7 @@ import EstadoBadge from '../atoms/EstadoBadge';
 import InformacionSesion from '../atoms/InformacionSesion';
 import MetricasEjercicio from '../atoms/MetricasEjercicio';
 import NotasEjercicio from '../atoms/NotasEjercicio';
+import VideoCliente from '../atoms/VideoCliente';
 import BotonCerrar from '../atoms/BotonCerrar';
 
 interface ContenidoRegistroEjercicioProps {
@@ -58,6 +59,14 @@ export const ContenidoRegistroEjercicio: React.FC<ContenidoRegistroEjercicioProp
 
       {/* Notas del ejercicio */}
       <NotasEjercicio notas={registro.notas} />
+
+      {/* Video del cliente */}
+      {registro.videoCliente && (
+        <VideoCliente 
+          videoUrl={registro.videoCliente}
+          height={250}
+        />
+      )}
 
       <BotonCerrar onClose={onClose} />
     </Stack>

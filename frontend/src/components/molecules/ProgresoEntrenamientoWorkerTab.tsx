@@ -315,9 +315,12 @@ const ProgresoEntrenamientoWorkerTab: React.FC = () => {
                         <ActionIcon 
                           variant="light" 
                           color="gray"
-                          onClick={() => {
+                          onClick={async () => {
                             setClienteNotas(cliente);
                             setModalNotasAbierto(true);
+                            if (!clienteDetalle || clienteDetalle.id !== cliente.id) {
+                              await cargarDetallesCliente(cliente.id);
+                            }
                           }}
                         >
                           <IconNotes size={16} />

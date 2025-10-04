@@ -8,7 +8,6 @@ export interface CrearMensajeData {
   remitente: string;
   destinatario: string;
   contenido: string;
-  tipo?: 'texto' | 'imagen' | 'archivo' | 'sistema';
   prioridad?: 'baja' | 'normal' | 'alta' | 'urgente';
   categoria?: 'general' | 'entrenamiento' | 'nutricion' | 'consulta' | 'recordatorio';
   adjuntos?: Array<{
@@ -32,7 +31,6 @@ export interface FiltrosMensajes {
   conversacionId?: string;
   remitente?: string;
   destinatario?: string;
-  tipo?: string;
   estado?: string;
   categoria?: string;
   prioridad?: string;
@@ -149,9 +147,6 @@ export async function obtenerMensajesService(filtros: FiltrosMensajes): Promise<
       filtrosConsulta.destinatario = restoFiltros.destinatario;
     }
     
-    if (restoFiltros.tipo) {
-      filtrosConsulta.tipo = restoFiltros.tipo;
-    }
     
     if (restoFiltros.estado) {
       filtrosConsulta.estado = restoFiltros.estado;

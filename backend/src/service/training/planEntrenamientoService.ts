@@ -39,15 +39,22 @@ async function crearSesionesParaCliente(
   const sesiones = [];
   const fechaInicioDate = new Date(fechaInicio);
   
+  // Calcular el número de semanas completas
+  const numeroSemanas = Math.ceil(duracionDias / 7);
+  
   // Calcular todas las fechas de sesiones
   const fechasSesiones = [];
-  for (let dia = 0; dia < duracionDias; dia++) {
-    const fechaActual = new Date(fechaInicioDate);
-    fechaActual.setDate(fechaActual.getDate() + dia);
-    
-    const diaSemana = fechaActual.getDay(); // 0 = Domingo, 1 = Lunes, etc.
-    
-    if (diasSemana.includes(diaSemana)) {
+  for (let semana = 0; semana < numeroSemanas; semana++) {
+    for (const diaSemana of diasSemana) {
+      const fechaActual = new Date(fechaInicioDate);
+      
+      // Calcular el primer día de la semana (domingo = 0)
+      const primerDiaSemana = fechaInicioDate.getDay();
+      const diasHastaPrimerDia = (diaSemana - primerDiaSemana + 7) % 7;
+      
+      // Añadir días hasta el día de la semana deseado + semanas completas
+      fechaActual.setDate(fechaActual.getDate() + diasHastaPrimerDia + (semana * 7));
+      
       fechasSesiones.push(fechaActual);
     }
   }

@@ -7,10 +7,9 @@ import {
 } from '@mantine/core';
 import { 
   IconArrowLeft,
-  IconHome,
-  IconCalendarEvent
+  IconCalendarEvent,
+  IconEdit
 } from '@tabler/icons-react';
-import TrainingBreadcrumbs from '../atoms/TrainingBreadcrumbs';
 import { useNavigation } from '../../hooks/useNavigation';
 import type { PlanEntrenamiento } from '../../types/training';
 
@@ -23,16 +22,11 @@ const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
   plan, 
   fechaInicioFormateada 
 }) => {
-  const { navigateToClientPlans, getTrainingBreadcrumbs } = useNavigation();
+  const { navigateToClientPlans, navigateToPlanEdit } = useNavigation();
 
-  const breadcrumbs = getTrainingBreadcrumbs('ver').map(item => ({
-    ...item,
-    icon: item.title === 'Inicio' ? <IconHome size={14} /> : item.icon
-  }));
 
   return (
     <>
-      <TrainingBreadcrumbs items={breadcrumbs} />
       
       <Group justify="space-between" mb="xs" wrap="wrap">
         <Group gap="md" align="center">
@@ -43,14 +37,25 @@ const TrainingPlanHeader: React.FC<TrainingPlanHeaderProps> = ({
             Publicado
           </Badge>
         </Group>
-        <Button
-          variant="outline"
-          color="nutroos-green"
-          leftSection={<IconArrowLeft size={18} />}
-          onClick={() => navigateToClientPlans(plan)}
-        >
-          Volver a planes del cliente
-        </Button>
+        <Group gap="sm">
+          <Button
+            variant="outline"
+            color="nutroos-green"
+            leftSection={<IconArrowLeft size={18} />}
+            onClick={() => navigateToClientPlans(plan)}
+          >
+            Volver a planes del cliente
+          </Button>
+          <Button
+            variant="filled"
+            color="nutroos-green"
+            leftSection={<IconEdit size={18} />}
+            onClick={() => plan._id && navigateToPlanEdit(plan._id)}
+            disabled={!plan._id}
+          >
+            Editar plan
+          </Button>
+        </Group>
       </Group>
       
       <Text size="sm" c="dimmed" mb="md">
