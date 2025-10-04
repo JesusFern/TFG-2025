@@ -396,7 +396,7 @@ export class SuscriptionPlanService {
       
       // Actualizar el pago con la referencia a la suscripción
       if (!payment.userSuscriptionId) {
-        (payment as any).userSuscriptionId = userSubscription._id;
+        payment.userSuscriptionId = userSubscription._id as mongoose.Types.ObjectId;
         await payment.save();
       }
       
