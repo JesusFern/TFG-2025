@@ -29,11 +29,16 @@ const CrearRecetaPage: React.FC = () => {
     setTimeout(() => setMensaje(null), 5000);
   };
 
+  const handleVolverAlListado = () => {
+    navigate('/mis-recetas');
+  };
+
   return (
     <Container size="md" py="xl">
       <RecetaPageHeader 
         title="Crear Nueva Receta"
         subtitle="Crea una nueva receta con ingredientes, pasos de preparación e información nutricional"
+        onVolver={handleVolverAlListado}
       />
       
       <StatusMessage 

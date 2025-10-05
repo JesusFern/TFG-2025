@@ -8,8 +8,7 @@ import {
   SegmentedControl, 
   Box,
   Center,
-  Loader,
-  SimpleGrid
+  Loader
 } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 import { PricingCard } from '../components/molecules/PricingCard';
@@ -599,36 +598,6 @@ const SuscriptionPlansPage: React.FC = () => {
             </Box>
           )}
           
-          <Box mt="xl" pt="xl">
-            <Stack gap="md" maw={800} mx="auto">
-              <Title order={3} ta="center" c="nutroos-green.7">
-                Preguntas Frecuentes
-              </Title>
-              
-              <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
-                <Box p="md" style={{ textAlign: 'center' }}>
-                  <Text fw={600} size="sm" mb="xs">¿Puedo cambiar de plan?</Text>
-                  <Text c="dimmed" size="sm">
-                    Sí, puedes cambiar cuando quieras.
-                  </Text>
-                </Box>
-                
-                <Box p="md" style={{ textAlign: 'center' }}>
-                  <Text fw={600} size="sm" mb="xs">¿Hay permanencia?</Text>
-                  <Text c="dimmed" size="sm">
-                    No, puedes cancelar cuando quieras.
-                  </Text>
-                </Box>
-                
-                <Box p="md" style={{ textAlign: 'center' }}>
-                  <Text fw={600} size="sm" mb="xs">¿Qué métodos de pago aceptan?</Text>
-                  <Text c="dimmed" size="sm">
-                    Tarjetas de crédito y débito.
-                  </Text>
-                </Box>
-              </SimpleGrid>
-            </Stack>
-          </Box>
         </Stack>
       </Container>
     </Layout>

@@ -18,7 +18,7 @@ import {
 } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
 import { obtenerMisRecetas, RecetaResponse } from '../services/recetaService';
-import { IconAlertCircle, IconChefHat, IconPlus, IconEye, IconClock, IconUsers } from '@tabler/icons-react';
+import { IconAlertCircle, IconChefHat, IconPlus, IconEye, IconClock, IconUsers, IconArrowLeft } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 
 const MisRecetasPage: React.FC = () => {
@@ -50,6 +50,10 @@ const MisRecetasPage: React.FC = () => {
 
   const handleVerReceta = (recetaId: string) => {
     navigate(`/recetas/${recetaId}`);
+  };
+
+  const handleBackToDashboard = () => {
+    navigate('/dashboard');
   };
 
   const formatDate = (dateString: string) => {
@@ -103,14 +107,23 @@ const MisRecetasPage: React.FC = () => {
             </Box>
           </Group>
 
-          <Button
-            leftSection={<IconPlus size={16} />}
-            onClick={handleCrearReceta}
-            color="nutroos-green"
-            size="md"
-          >
-            Crear Nueva Receta
-          </Button>
+          <Group gap="sm">
+            <Button
+              leftSection={<IconArrowLeft size={16} />}
+              variant="light"
+              onClick={handleBackToDashboard}
+            >
+              Volver al Dashboard
+            </Button>
+            <Button
+              leftSection={<IconPlus size={16} />}
+              onClick={handleCrearReceta}
+              color="nutroos-green"
+              size="md"
+            >
+              Crear Nueva Receta
+            </Button>
+          </Group>
         </Group>
       </Paper>
 
