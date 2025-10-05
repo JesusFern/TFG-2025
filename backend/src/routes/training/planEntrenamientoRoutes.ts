@@ -2,6 +2,7 @@ import { Router } from 'express';
 import {
   crearPlanEntrenamiento,
   obtenerPlanesEntrenamiento,
+  obtenerMisPlanes,
   obtenerPlanEntrenamientoPorId,
   actualizarPlanEntrenamiento,
   eliminarPlanEntrenamiento,
@@ -30,6 +31,7 @@ const router = Router();
 // Rutas para planes de entrenamiento
 router.post('/', authenticateToken, authorizeWorker, crearPlanEntrenamientoValidator, validateRequest, crearPlanEntrenamiento);
 router.get('/', authenticateToken, filtrosPlanesValidator, validateRequest, obtenerPlanesEntrenamiento);
+router.get('/mis-planes', authenticateToken, authorizeWorker, obtenerMisPlanes);
 router.get('/:id', authenticateToken, idValidator, validateRequest, obtenerPlanEntrenamientoPorId);
 router.put('/:id', authenticateToken, authorizeWorker, actualizarPlanEntrenamientoValidator, validateRequest, actualizarPlanEntrenamiento);
 router.delete('/:id', authenticateToken, authorizeWorker, idValidator, validateRequest, eliminarPlanEntrenamiento);

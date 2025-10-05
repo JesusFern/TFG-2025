@@ -30,6 +30,7 @@ type PlanCreateAllowed = {
   diasSemana: number[];
   clientes: string[];
   publico: boolean;
+  crearSesionesAutomaticamente?: boolean;
 };
 
 type PlanUpdateAllowed = Partial<Omit<PlanCreateAllowed, 'entrenadorId'>>;
@@ -53,6 +54,7 @@ export const crearPlanEntrenamiento = async (req: AuthenticatedRequest, res: Res
       diasSemana: number[];
       clientes: string[];
       publico: boolean;
+      crearSesionesAutomaticamente?: boolean;
     };
 
     logger.debug('Procesando datos para crear plan de entrenamiento', {
@@ -60,7 +62,8 @@ export const crearPlanEntrenamiento = async (req: AuthenticatedRequest, res: Res
       nombre: data.nombre,
       objetivo: data.objetivo,
       duracionDias: data.duracionDias,
-      sesionesPorSemana: data.sesionesPorSemana
+      sesionesPorSemana: data.sesionesPorSemana,
+      crearSesionesAutomaticamente: data.crearSesionesAutomaticamente
     });
 
     const payload: PlanCreateAllowed = {
@@ -73,7 +76,8 @@ export const crearPlanEntrenamiento = async (req: AuthenticatedRequest, res: Res
       fechaInicio: data.fechaInicio,
       diasSemana: data.diasSemana,
       clientes: Array.isArray(data.clientes) ? data.clientes : [],
-      publico: data.publico
+      publico: data.publico,
+      crearSesionesAutomaticamente: data.crearSesionesAutomaticamente
     };
 
     const plan = await crearPlanEntrenamientoService(payload);
@@ -112,6 +116,34 @@ export const obtenerPlanesEntrenamiento = async (req: AuthenticatedRequest, res:
     res.status(400).json({
       message: 'Error al obtener planes de entrenamiento',
       error: error instanceof Error ? error.message : error
+    });
+  }
+};
+
+export const obtenerMisPlanes = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const entrenadorId = req.user?.id;
+    if (!entrenadorId) {
+      res.status(401).json({ message: 'No autenticado' });
+      return;
+    }
+
+    // Obtener solo los planes creados por el usuario actual
+    const planes = await obtenerPlanesEntrenamientoService({ entrenador: entrenadorId });
+
+    logger.info('Mis planes de entrenamiento obtenidos correctamente', { 
+      entrenadorId, 
+      count: planes.length 
+    });
+    res.status(200).json({ planes });
+  } catch (error) {
+    logger.error('Error al obtener mis planes de entrenamiento', { 
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined
+    });
+    res.status(400).json({ 
+      message: 'Error al obtener mis planes de entrenamiento', 
+      error: (error as Error).message 
     });
   }
 };

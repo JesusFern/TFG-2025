@@ -84,7 +84,10 @@ export const trainingService = {
       method: 'POST',
       body: JSON.stringify(data)
     });
-    if (!res.ok) throw new Error((await res.json()).message || 'Error al crear plan');
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || errorData.error || 'Error al crear plan');
+    }
     const response = await res.json();
     return response.plan || response;
   },
@@ -98,6 +101,14 @@ export const trainingService = {
     if (!res.ok) throw new Error((await res.json()).message || 'Error al obtener planes');
     const data = await res.json();
     
+    return data.planes || data.items || data;
+  },
+
+  // Obtener planes creados por el usuario actual
+  async obtenerMisPlanes(): Promise<PlanEntrenamiento[]> {
+    const res = await apiRequest(`${base}/planes/mis-planes`);
+    if (!res.ok) throw new Error((await res.json()).message || 'Error al obtener mis planes');
+    const data = await res.json();
     return data.planes || data.items || data;
   },
 

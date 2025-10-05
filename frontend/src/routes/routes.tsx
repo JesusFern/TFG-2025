@@ -93,6 +93,7 @@ import CrearPlanEntrenamientoPage from '../pages/CrearPlanEntrenamientoPage';
 import EditarPlanEntrenamientoPage from '../pages/EditarPlanEntrenamientoPage';
 import VerPlanEntrenamientoPage from '../pages/VerPlanEntrenamientoPage';
 import SeleccionarTipoPlanPage from '../pages/SeleccionarTipoPlanPage';
+import SeleccionarPlanExistentePage from '../pages/SeleccionarPlanExistentePage';
 import SeleccionarObjetivoPlantillaPage from '../pages/SeleccionarObjetivoPlantillaPage';
 import ConfigurarPlantillaPage from '../pages/ConfigurarPlantillaPage';
 import CrearRecetaPage from '../pages/CrearRecetaPage';
@@ -289,6 +290,13 @@ const AppRoutes: React.FC = () => {
         <ProtectedRoute workerRoute={true}>
           <Layout>
             <ConfigurarPlantillaPage />
+          </Layout>
+        </ProtectedRoute>
+      } />
+      <Route path="/training/planes/seleccionar-existente" element={
+        <ProtectedRoute workerRoute={true}>
+          <Layout>
+            <SeleccionarPlanExistentePage />
           </Layout>
         </ProtectedRoute>
       } />

@@ -31,6 +31,7 @@ export interface PlanEntrenamiento {
   publico: boolean;
   activo?: boolean;
   draftMode: boolean;
+  crearSesionesAutomaticamente?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
