@@ -1,6 +1,6 @@
 import React from 'react';
 import { Paper, Group, Title, Text, Badge, Button, Box, ThemeIcon, Container } from '@mantine/core';
-import { IconArrowLeft, IconCalendarEvent, IconClock, IconTarget, IconLeaf } from '@tabler/icons-react';
+import { IconArrowLeft, IconCalendarEvent, IconClock, IconTarget, IconLeaf, IconEdit } from '@tabler/icons-react';
 import { Dieta } from '../../types';
 import { dietaStyles as styles } from '../../helpers/diets/DietaHelper';
 
@@ -11,6 +11,8 @@ interface DietaHeaderProps {
   userRole?: string;
   onBackNavigation: () => void;
   isMobile?: boolean;
+  isCreator?: boolean;
+  onEditDiet?: () => void;
 }
 
 const DietaHeader: React.FC<DietaHeaderProps> = ({
@@ -19,7 +21,9 @@ const DietaHeader: React.FC<DietaHeaderProps> = ({
   fechaInicioFormateada,
   userRole,
   onBackNavigation,
-  isMobile = false
+  isMobile = false,
+  isCreator = false,
+  onEditDiet
 }) => {
   const containerSize = isMobile ? "sm" : "xl";
   const headerPadding = isMobile ? "md" : "lg";
@@ -91,15 +95,29 @@ const DietaHeader: React.FC<DietaHeaderProps> = ({
             </Group>
           </Box>
           
-          <Button
-            variant="outline"
-            color="gray"
-            leftSection={<IconArrowLeft size={18} />}
-            size={buttonSize}
-            onClick={onBackNavigation}
-          >
-            {userRole === 'user' ? 'Volver a mis dietas' : 'Volver a dietas del cliente'}
-          </Button>
+          <Group gap="md">
+            {isCreator && onEditDiet && (
+              <Button
+                variant="filled"
+                color="nutroos-green"
+                leftSection={<IconEdit size={18} />}
+                size={buttonSize}
+                onClick={onEditDiet}
+                style={{ fontWeight: 600 }}
+              >
+                Editar dieta
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              color="gray"
+              leftSection={<IconArrowLeft size={18} />}
+              size={buttonSize}
+              onClick={onBackNavigation}
+            >
+              {userRole === 'user' ? 'Volver a mis dietas' : 'Volver a dietas del cliente'}
+            </Button>
+          </Group>
         </Group>
       </Paper>
     </Container>

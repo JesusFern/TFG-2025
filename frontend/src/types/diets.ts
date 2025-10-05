@@ -197,7 +197,7 @@ export interface Dieta {
   comidasDiarias: number;
   dias: DiaDieta[];
   fechaInicio: string;
-  creador?: string;
+  creador?: string | { _id: string; fullName: string; email: string };
   asignadaA: string[];
   createdAt?: string;
   updatedAt?: string;

@@ -20,7 +20,8 @@ import {
   IconAlertCircle, 
   IconChevronLeft,
   IconEye,
-  IconShoppingCart
+  IconShoppingCart,
+  IconEdit
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -187,6 +188,35 @@ const VerDietaPage: React.FC = () => {
   const handleVerListaCompra = () => {
     navigate(`/lista-compra/${dietaId}/semana/${currentWeek}`);
   };
+
+  // Función para navegar a la página de edición de dieta
+  const handleEditarDieta = () => {
+    navigate(`/editar-dieta/${dietaId}`);
+  };
+
+  // Función para verificar si el usuario actual es el creador de la dieta
+  const isCreator = useMemo(() => {
+    if (!user || !dieta?.creador) {
+      return false;
+    }
+    
+    // Solo workers y admins pueden editar dietas
+    if (user.role !== 'worker' && user.role !== 'admin') {
+      return false;
+    }
+    
+    // Obtener el ID del creador (puede ser string o objeto)
+    let creadorId: string;
+    if (typeof dieta.creador === 'string') {
+      creadorId = dieta.creador;
+    } else if (typeof dieta.creador === 'object' && dieta.creador._id) {
+      creadorId = dieta.creador._id;
+    } else {
+      return false;
+    }
+    
+    return user._id === creadorId;
+  }, [user, dieta?.creador]);
 
   // Función para manejar la navegación del botón de volver
   const handleBackNavigation = () => {
@@ -404,6 +434,8 @@ const VerDietaPage: React.FC = () => {
           userRole={user?.role}
           onBackNavigation={handleBackNavigation}
           isMobile={true}
+          isCreator={isCreator}
+          onEditDiet={handleEditarDieta}
         />
         
         {/* Vista móvil */}
@@ -422,6 +454,8 @@ const VerDietaPage: React.FC = () => {
         userRole={user?.role}
         onBackNavigation={handleBackNavigation}
         isMobile={false}
+        isCreator={isCreator}
+        onEditDiet={handleEditarDieta}
       />
 
       <Container size="xl" py="md" px="sm" style={{ maxWidth: '1800px' }}>
