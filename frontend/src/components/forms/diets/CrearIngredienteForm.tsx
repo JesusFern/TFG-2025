@@ -7,7 +7,6 @@ import {
   Stack,
   Text,
   Alert,
-  useMantineColorScheme,
   LoadingOverlay,
   Box
 } from '@mantine/core';
@@ -125,7 +124,7 @@ const CrearIngredienteForm: React.FC<CrearIngredienteFormProps> = ({
         setSuccessMessage('Ingrediente creado exitosamente');
         
         // Convertir el ingrediente al formato esperado por el PlatoForm
-        const ingredienteFormateado = {
+        const ingredienteFormateado: Ingrediente = {
           nombre: data.ingrediente.nombre,
           peso: 100, // Peso por defecto
           informacionNutricional: {
@@ -141,7 +140,7 @@ const CrearIngredienteForm: React.FC<CrearIngredienteFormProps> = ({
           marca: '',
           imagenIngrediente: '',
           fuente: 'Trabajador',
-          id: data.ingrediente._id
+          id: String(data.ingrediente._id)
         };
 
         console.log('📦 Ingrediente formateado:', ingredienteFormateado);
