@@ -74,12 +74,7 @@ export const verificarPermisosCreador = (
   return true;
 };
 
-export const verificarDietaEditable = (
-  dieta: typeof Dieta.prototype, 
-  userId: string, 
-  res: Response,
-  operacion: string
-): boolean => {
+export const verificarDietaEditable = (): boolean => {
   // Permitir edición de dietas publicadas
   return true;
 };
