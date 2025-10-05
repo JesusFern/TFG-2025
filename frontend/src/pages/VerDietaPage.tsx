@@ -20,8 +20,7 @@ import {
   IconAlertCircle, 
   IconChevronLeft,
   IconEye,
-  IconShoppingCart,
-  IconEdit
+  IconShoppingCart
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';

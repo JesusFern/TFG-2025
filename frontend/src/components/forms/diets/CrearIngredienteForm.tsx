@@ -13,9 +13,10 @@ import {
 } from '@mantine/core';
 import { IconAlertCircle, IconCheck } from '@tabler/icons-react';
 import { useAuth } from '../../../hooks/useAuth';
+import { Ingrediente } from '../../../types/diets';
 
 interface CrearIngredienteFormProps {
-  onIngredienteCreado: (ingrediente: any) => void;
+  onIngredienteCreado: (ingrediente: Ingrediente) => void;
   onCancel?: () => void;
 }
 
@@ -23,8 +24,6 @@ const CrearIngredienteForm: React.FC<CrearIngredienteFormProps> = ({
   onIngredienteCreado,
   onCancel
 }) => {
-  const { colorScheme } = useMantineColorScheme();
-  const isDark = colorScheme === 'dark';
   const { user } = useAuth();
   
   const [formData, setFormData] = useState({

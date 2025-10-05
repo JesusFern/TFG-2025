@@ -10,14 +10,12 @@ import {
   Loader,
   Combobox,
   useCombobox,
-  InputBase,
-  Tabs
+  InputBase
 } from '@mantine/core';
-import { IconSearch, IconX, IconPlus } from '@tabler/icons-react';
+import { IconSearch, IconX } from '@tabler/icons-react';
 import { Plato, Receta, Ingrediente } from '../../../types';
 import { buscarRecetas } from '../../../services/dietService';
 import { obtenerIngredientes } from '../../../services/ingredienteService';
-import CrearIngredienteForm from './CrearIngredienteForm';
 
 interface PlatoFormProps {
   plato: Plato;
@@ -36,7 +34,6 @@ const PlatoForm: React.FC<PlatoFormProps> = ({ plato, onSave, onCancel }) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(false);
   const [hasSearched, setHasSearched] = useState<boolean>(false);
-  const [activeTab, setActiveTab] = useState<string | null>('buscar');
   
   const combobox = useCombobox({
     onDropdownClose: () => combobox.resetSelectedOption(),
@@ -159,13 +156,6 @@ const PlatoForm: React.FC<PlatoFormProps> = ({ plato, onSave, onCancel }) => {
     });
   };
 
-  const handleIngredienteCreado = (ingrediente: any) => {
-    // Agregar el ingrediente creado a la lista
-    setIngredientes(prev => [...prev, ingrediente]);
-    
-    // Cambiar al tab de buscar para mostrar el ingrediente agregado
-    setActiveTab('buscar');
-  };
 
   // Obtener la receta seleccionada para mostrar sus detalles
   const recetaSeleccionada = formData.receta ? 

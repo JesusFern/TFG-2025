@@ -538,7 +538,7 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
     }
   };
 
-  const handleIngredienteCreado = (ingrediente: any) => {
+  const handleIngredienteCreado = (ingrediente: Ingrediente) => {
     console.log('🎯 handleIngredienteCreado llamado con:', ingrediente);
     
     // Agregar el ingrediente creado a la lista
