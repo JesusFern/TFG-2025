@@ -105,7 +105,7 @@ const MiProgresoWorkerTab: React.FC = () => {
         <Select
           label="Cliente"
           placeholder="Seleccionar cliente"
-          data={clientes.map(c => ({ value: c.clienteId, label: c.cliente.fullName }))}
+          data={Array.from(new Map(clientes.map(c => [c.clienteId, { value: c.clienteId, label: c.cliente.fullName }])).values())}
           value={clienteSeleccionado}
           onChange={setClienteSeleccionado}
         />

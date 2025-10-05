@@ -1,4 +1,5 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Button, 
   Group, 
@@ -19,7 +20,8 @@ import {
   useMantineColorScheme,
   Checkbox,
   CheckboxGroup,
-  Stack
+  Stack,
+  Loader
 } from '@mantine/core';
 import { 
   IconAlertCircle, 
@@ -30,14 +32,15 @@ import {
   IconChevronLeft,
   IconUser,
   IconCalendar,
-  IconCheck
+  IconCheck,
+  IconInfoCircle
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { rem } from '@mantine/core';
 import trainingService from '../../../services/trainingService';
 import { getUserById } from '../../../services/userService';
 import DatePickerInput from '../../atoms/DatePickerInput';
-import type { CrearPlanDTO } from '../../../types/training';
+import type { CrearPlanDTO, PlanEntrenamiento } from '../../../types/training';
 import { OBJETIVOS_ENTRENAMIENTO, DIAS_SEMANA_OPTIONS } from '../../../constants/training';
 
 interface FormularioCrearPlanEntrenamientoProps {
@@ -58,19 +61,46 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
   const [clienteNombre, setClienteNombre] = useState(initialClienteNombre || '');
+  const [searchParams] = useSearchParams();
+  const planId = searchParams.get('planId');
+  const tipo = searchParams.get('tipo');
+  const [planOriginal, setPlanOriginal] = useState<PlanEntrenamiento | null>(null);
+  const [loadingPlan, setLoadingPlan] = useState(false);
+  const planCargadoRef = useRef(false);
   
-  const [form, setForm] = useState<Omit<CrearPlanDTO, 'fechaInicio'> & { clientes: string[]; publico: boolean; fechaInicio: Date | null; diasSemana: number[] }>({
-    nombre: '',
-    descripcion: '',
-    objetivo: '',
-    duracionDias: 30,
-    sesionesPorSemana: 3,
-    fechaInicio: new Date(),
-    diasSemana: [],
-    clientes: clientId ? [clientId] : [],
-    publico: false,
-    draftMode: true,
-  });
+  // Inicializar formulario
+  const getInitialForm = () => {
+    const baseForm = {
+      nombre: '',
+      descripcion: '',
+      objetivo: '',
+      duracionDias: 30,
+      sesionesPorSemana: 3,
+      fechaInicio: new Date(),
+      diasSemana: [],
+      clientes: clientId ? [clientId] : [],
+      publico: false,
+      draftMode: true,
+    };
+
+    // Si es una copia, usar datos del plan original
+    if (tipo === 'copia' && planOriginal) {
+      return {
+        ...baseForm,
+        nombre: `${planOriginal.nombre} (Copia)`,
+        descripcion: planOriginal.descripcion || '',
+        objetivo: planOriginal.objetivo,
+        duracionDias: planOriginal.duracionDias,
+        sesionesPorSemana: planOriginal.sesionesPorSemana,
+        diasSemana: planOriginal.diasSemana,
+        publico: planOriginal.publico,
+      };
+    }
+
+    return baseForm;
+  };
+
+  const [form, setForm] = useState<Omit<CrearPlanDTO, 'fechaInicio'> & { clientes: string[]; publico: boolean; fechaInicio: Date | null; diasSemana: number[] }>(getInitialForm());
   
   const [activeStep, setActiveStep] = useState(0);
   const [stepError, setStepError] = useState<string | null>(null);
@@ -92,6 +122,37 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
       fetchClienteData();
     }
   }, [clientId, clienteNombre, onClienteNombreLoaded]);
+
+  // Cargar plan original si es una copia
+  useEffect(() => {
+    if (tipo === 'copia' && planId && !planCargadoRef.current) {
+      const cargarPlanOriginal = async () => {
+        try {
+          setLoadingPlan(true);
+          planCargadoRef.current = true;
+          const plan = await trainingService.obtenerPlanPorId(planId);
+          setPlanOriginal(plan);
+          
+          // Actualizar el formulario con los datos del plan original
+          setForm(prev => ({
+            ...prev,
+            nombre: `${plan.nombre} (Copia)`,
+            descripcion: plan.descripcion || '',
+            objetivo: plan.objetivo,
+            duracionDias: plan.duracionDias,
+            sesionesPorSemana: plan.sesionesPorSemana,
+            diasSemana: plan.diasSemana,
+            publico: plan.publico,
+          }));
+        } catch {
+          onError(new Error('Error al cargar el plan original'));
+        } finally {
+          setLoadingPlan(false);
+        }
+      };
+      cargarPlanOriginal();
+    }
+  }, [tipo, planId, onError]);
 
   const handleChange = (field: keyof (Omit<CrearPlanDTO, 'fechaInicio'> & { clientes: string[]; publico: boolean; fechaInicio: Date | null; diasSemana: number[] }), value: unknown) => {
     setForm(prev => ({ ...prev, [field]: value }));
@@ -149,14 +210,91 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
         diasSemana: form.diasSemana,
         clientes: form.clientes,
         publico: form.publico,
-        draftMode: form.draftMode
+        draftMode: form.draftMode,
+        // No crear sesiones automáticamente si estamos copiando un plan
+        crearSesionesAutomaticamente: tipo !== 'copia'
       };
 
       const response = await trainingService.crearPlan(planData);
+      
+      // Si es una copia, copiar las sesiones del plan original
+      if (tipo === 'copia' && planOriginal && response._id) {
+        try {
+          // Obtener las sesiones del plan original
+          const sesionesOriginales = await trainingService.obtenerSesiones({ plan: planOriginal._id! });
+          
+          // Distribuir las sesiones en los días configurados del nuevo plan
+          const fechaInicioNueva = new Date(form.fechaInicio!);
+          const diasSemanaOrdenados = [...form.diasSemana].sort((a, b) => a - b);
+          
+          // Copiar cada sesión
+          for (let i = 0; i < sesionesOriginales.length; i++) {
+            const sesion = sesionesOriginales[i];
+            
+            // Calcular en qué semana y día debe ir esta sesión
+            const semanaActual = Math.floor(i / form.sesionesPorSemana);
+            const indiceDiaEnSemana = i % form.sesionesPorSemana;
+            
+            // Obtener el día de la semana correspondiente del nuevo plan
+            const diaAsignado = diasSemanaOrdenados[indiceDiaEnSemana % diasSemanaOrdenados.length];
+            
+            // Calcular la fecha exacta
+            const nuevaFecha = new Date(fechaInicioNueva);
+            
+            // Avanzar a la semana correspondiente
+            nuevaFecha.setDate(nuevaFecha.getDate() + (semanaActual * 7));
+            
+            // Ajustar al día de la semana correcto
+            const diaSemanaActual = nuevaFecha.getDay();
+            let diasHastaObjetivo = (diaAsignado - diaSemanaActual + 7) % 7;
+            
+            // Si el día objetivo es hoy y no es la primera sesión, ir a la próxima semana
+            if (diasHastaObjetivo === 0 && i > 0) {
+              diasHastaObjetivo = 7;
+            }
+            
+            nuevaFecha.setDate(nuevaFecha.getDate() + diasHastaObjetivo);
+            
+            // Mapear ejercicios
+            const ejerciciosMapeados = sesion.ejercicios.map((ej) => {
+              const ejercicioId = typeof ej.ejercicio === 'object' ? (ej.ejercicio as { _id: string })._id : ej.ejercicio;
+              
+              return {
+                ejercicio: ejercicioId,
+                series: ej.series,
+                repeticiones: ej.repeticiones,
+                peso: ej.peso,
+                tiempoDescanso: ej.tiempoDescanso,
+                nivelIntensidad: ej.nivelIntensidad,
+                ejerciciosAlternativos: ej.ejerciciosAlternativos,
+                opcionesProgresion: ej.opcionesProgresion,
+                orden: ej.orden
+              };
+            });
+            
+            const nuevaSesion = {
+              clienteId: form.clientes[0] || '', // Usar el primer cliente asignado
+              planId: response._id,
+              fecha: nuevaFecha.toISOString(),
+              tipoEntrenamiento: sesion.tipoEntrenamiento,
+              duracion: sesion.duracion,
+              ejercicios: ejerciciosMapeados
+            };
+            
+            await trainingService.crearSesion(nuevaSesion);
+          }
+        } catch (copyError) {
+          console.error('Error al copiar sesiones:', copyError);
+          // No fallar la creación del plan si hay error copiando sesiones
+        }
+      }
+      
       onSuccess({ _id: response._id || '' });
     } catch (error) {
       console.error('Error al crear el plan:', error);
-      onError(error instanceof Error ? error : new Error('Error al crear el plan'));
+      // Mostrar el mensaje específico del backend si está disponible
+      const errorMessage = error instanceof Error ? error.message : 'Error al crear el plan';
+      onError(new Error(errorMessage));
     } finally {
       setIsSubmitting(false);
     }
@@ -168,6 +306,22 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
         return (
           <>
             <Title order={4} mb="md" c="nutroos-green.6">Información básica</Title>
+            
+            {/* Mostrar información si es una copia */}
+            {tipo === 'copia' && planOriginal && (
+              <Alert
+                icon={<IconInfoCircle size={16} />}
+                title="Copiando plan existente"
+                color="orange"
+                variant="light"
+                mb="md"
+                radius="lg"
+              >
+                <Text size="sm">
+                  Estás copiando el plan: <Text span fw={600}>{planOriginal.nombre}</Text>
+                </Text>
+              </Alert>
+            )}
             
             <Paper p="md" radius="md" withBorder style={{ backgroundColor: 'var(--app-paper-bg)' }}>
               <Stack gap="md">
@@ -375,10 +529,11 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
         
         {activeStep === 3 ? (
           <Button 
-            type="submit"
+            onClick={handleSubmit}
             loading={isSubmitting} 
             leftSection={isSubmitting ? undefined : <IconCheck size={rem(18)} />}
             color="nutroos-green"
+            type="button"
           >
             {isSubmitting ? 'Creando...' : 'Crear Plan'}
           </Button>
@@ -396,6 +551,17 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
       </Group>
     );
   };
+
+  if (loadingPlan) {
+    return (
+      <Card withBorder radius="md" p="lg" style={{ backgroundColor: 'var(--app-paper-bg)' }}>
+        <Stack align="center" gap="md" py="xl">
+          <Loader size="lg" color="nutroos-green" />
+          <Text ta="center" c="dimmed">Cargando plan original...</Text>
+        </Stack>
+      </Card>
+    );
+  }
 
   return (
     <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }}>

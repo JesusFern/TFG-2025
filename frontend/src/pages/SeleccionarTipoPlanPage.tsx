@@ -21,7 +21,8 @@ import {
   IconTarget,
   IconCalendar,
   IconUsers,
-  IconArrowLeft
+  IconArrowLeft,
+  IconCopy
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import GlobalNotificationOverlay from '../components/atoms/GlobalNotificationOverlay';
@@ -54,6 +55,10 @@ const SeleccionarTipoPlanPage: React.FC = () => {
 
   const handleUsarPlantilla = () => {
     navigate(`/training/planes/plantillas/objetivos?clientId=${clientId}`);
+  };
+
+  const handleCrearDesdeExistente = () => {
+    navigate(`/training/planes/seleccionar-existente?clientId=${clientId}`);
   };
 
   const handleVolver = () => {
@@ -109,7 +114,7 @@ const SeleccionarTipoPlanPage: React.FC = () => {
         />
       )}
 
-      <SimpleGrid cols={{ base: 1, md: 2 }} spacing="xl">
+      <SimpleGrid cols={{ base: 1, md: 3 }} spacing="xl">
         {/* Opción 1: Crear desde cero */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -237,6 +242,70 @@ const SeleccionarTipoPlanPage: React.FC = () => {
                 onClick={handleUsarPlantilla}
               >
                 Usar Plantilla
+              </Button>
+            </Stack>
+          </Card>
+        </motion.div>
+
+        {/* Opción 3: Crear desde plan existente */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.3, delay: 0.2 }}
+        >
+          <Card
+            p="xl"
+            radius="md"
+            withBorder
+            style={{ 
+              backgroundColor: 'var(--app-paper-bg)', 
+              borderColor: 'var(--app-border-color)',
+              cursor: 'pointer',
+              transition: 'all 0.2s ease'
+            }}
+            onClick={handleCrearDesdeExistente}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(0, 0, 0, 0.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
+            <Stack align="center" gap="md">
+              <Avatar size="xl" color="orange" radius="xl">
+                <IconCopy size="2rem" />
+              </Avatar>
+              
+              <Title order={3} ta="center">Desde Plan Existente</Title>
+              
+              <Text size="sm" c="dimmed" ta="center">
+                Copia uno de tus planes anteriores y personalízalo
+              </Text>
+
+              <Stack gap="xs" w="100%">
+                <Group gap="xs">
+                  <IconTarget size={16} color="var(--mantine-color-orange-6)" />
+                  <Text size="sm">Planes probados</Text>
+                </Group>
+                <Group gap="xs">
+                  <IconCalendar size={16} color="var(--mantine-color-orange-6)" />
+                  <Text size="sm">Configuración rápida</Text>
+                </Group>
+                <Group gap="xs">
+                  <IconUsers size={16} color="var(--mantine-color-orange-6)" />
+                  <Text size="sm">Adaptación personal</Text>
+                </Group>
+              </Stack>
+
+              <Button 
+                color="orange" 
+                fullWidth 
+                leftSection={<IconCopy size={16} />}
+                onClick={handleCrearDesdeExistente}
+              >
+                Copiar Plan
               </Button>
             </Stack>
           </Card>

@@ -113,7 +113,8 @@ export const crearPlanEntrenamientoValidator = [
   body('diasSemana.*').isInt({ min: 0, max: 6 }).toInt().withMessage('Cada día debe ser un número entre 0 (Domingo) y 6 (Sábado)'),
   body('clientes').isArray({ min: 0 }).withMessage('Los clientes deben ser un array'),
   body('clientes.*').isMongoId().withMessage('Cada cliente debe tener un ID válido'),
-  body('publico').isBoolean().toBoolean().withMessage('El campo público debe ser un booleano')
+  body('publico').isBoolean().toBoolean().withMessage('El campo público debe ser un booleano'),
+  body('crearSesionesAutomaticamente').optional().isBoolean().toBoolean().withMessage('El campo crearSesionesAutomaticamente debe ser un booleano')
 ];
 
 export const actualizarPlanEntrenamientoValidator = [

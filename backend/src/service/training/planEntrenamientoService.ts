@@ -89,7 +89,8 @@ export async function crearPlanEntrenamientoService({
   fechaInicio,
   diasSemana,
   clientes,
-  publico
+  publico,
+  crearSesionesAutomaticamente = true
 }: {
   entrenadorId: string;
   nombre: string;
@@ -101,6 +102,7 @@ export async function crearPlanEntrenamientoService({
   diasSemana: number[];
   clientes: string[];
   publico: boolean;
+  crearSesionesAutomaticamente?: boolean;
 }) {
   // Validar que el entrenador es un worker
   const entrenadorUser = await User.findById(entrenadorId);
@@ -151,16 +153,19 @@ export async function crearPlanEntrenamientoService({
 
   await plan.save();
 
-  // Crear sesiones automáticamente para cada cliente
-  const sesionesCreadas = [];
-  for (const clienteId of clientes) {
-    const sesionesDelCliente = await crearSesionesParaCliente(plan._id.toString(), clienteId, entrenadorId, fechaInicio, diasSemana, duracionDias);
-    sesionesCreadas.push(...sesionesDelCliente);
-  }
+  // Crear sesiones automáticamente solo si se especifica
+  // Cuando se copia un plan, las sesiones se crearán manualmente desde el frontend
+  if (crearSesionesAutomaticamente) {
+    const sesionesCreadas = [];
+    for (const clienteId of clientes) {
+      const sesionesDelCliente = await crearSesionesParaCliente(plan._id.toString(), clienteId, entrenadorId, fechaInicio, diasSemana, duracionDias);
+      sesionesCreadas.push(...sesionesDelCliente);
+    }
 
-  // Actualizar el plan con las sesiones creadas
-  plan.sesiones = sesionesCreadas.map(sesion => sesion._id);
-  await plan.save();
+    // Actualizar el plan con las sesiones creadas
+    plan.sesiones = sesionesCreadas.map(sesion => sesion._id);
+    await plan.save();
+  }
 
   return plan;
 }
