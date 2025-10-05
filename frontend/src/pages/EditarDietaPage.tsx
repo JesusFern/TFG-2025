@@ -203,11 +203,7 @@ const EditarDietaPage: React.FC = () => {
           console.log('No se encontraron ingredientes en la dieta');
         }
         
-        if (!data.draftMode) {
-          console.log('Dieta publicada. Redirigiendo a vista de solo lectura...');
-          navigate(`/ver-dieta/${dietaId}${location.search}`);
-          return;
-        }
+        // Permitir edición de dietas publicadas
         
         if (!data.dias || data.dias.length === 0) {
           const diasInicializados: DiaDieta[] = [];
@@ -417,7 +413,7 @@ const EditarDietaPage: React.FC = () => {
             </Text>
           </Box>
           <Group gap="md">
-            {dieta.draftMode && (
+            {dieta.draftMode ? (
               <Button
                 color="green"
                 leftSection={<IconCheck size={18} />}
@@ -425,6 +421,14 @@ const EditarDietaPage: React.FC = () => {
                 loading={publishLoading}
               >
                 Publicar dieta
+              </Button>
+            ) : (
+              <Button
+                color="blue"
+                leftSection={<IconCheck size={18} />}
+                disabled
+              >
+                Dieta publicada
               </Button>
             )}
           </Group>
@@ -473,16 +477,6 @@ const EditarDietaPage: React.FC = () => {
           </motion.div>
         )}
         
-        {!dieta.draftMode && (
-          <Alert 
-            icon={<IconCheck size={16} />}
-            title="Dieta publicada" 
-            color="blue" 
-            mb="md"
-          >
-            Esta dieta ha sido publicada y está en modo de solo lectura. Los usuarios asignados ya pueden acceder a ella.
-          </Alert>
-        )}
       </Paper>
       
       <Paper 
@@ -551,75 +545,24 @@ const EditarDietaPage: React.FC = () => {
           
           {activeTab !== null && (
             <Tabs.Panel value={activeTab} pt="lg">
-              {dieta.draftMode ? (
-                <DietaDayEditor 
-                  day={dieta.dias[parseInt(activeTab)]}
-                  dayNumber={parseInt(activeTab) + 1}
-                  onUpdate={(updatedDay) => {
-                    handleUpdateDay(parseInt(activeTab), updatedDay);
-                  }}
-                  comidasDiarias={dieta.comidasDiarias}
-                  customTitle={currentDayInfo?.nombreCompleto || `Día ${parseInt(activeTab) + 1}`}
-                  dietaId={dietaId}
-                  hasChanges={false}
-                  onRecalcularCalorias={() => recalcularCaloriasDia(parseInt(activeTab))}
-                  onRecargarDieta={recargarDieta}
-                  onSaveSuccess={() => {
-                    // ✅ NO HAY CAMBIOS PENDIENTES - SE ACTUALIZA AUTOMÁTICAMENTE
-                    setSuccessMessage("Día actualizado correctamente");
-                    setTimeout(() => setSuccessMessage(null), 3000);
-                  }}
-                />
-              ) : (
-                <Box p="md">
-                  <Alert 
-                    icon={<IconAlertCircle size={16} />}
-                    title="Dieta publicada" 
-                    color="blue" 
-                    mb="md"
-                  >
-                    Esta dieta ha sido publicada y no puede ser editada. Los usuarios asignados ya pueden verla.
-                  </Alert>
-                  
-                  <Paper p="md" withBorder>
-                    <Text fw={500} size="lg" mb="md">
-                      {currentDayInfo?.nombreCompleto || `Día ${parseInt(activeTab) + 1}`}
-                    </Text>
-                    
-                    {dieta.dias[parseInt(activeTab)].comidas.map((comida, comidaIndex) => (
-                      <Box key={comidaIndex} mb="lg">
-                        <Text fw={500} c="nutroos-green">
-                          {comidaIndex + 1}. {comida.nombreComida || `Comida ${comidaIndex + 1}`} 
-                          {comida.horaEstimada && ` (${comida.horaEstimada})`}
-                        </Text>
-                        
-                        {comida.platos.length > 0 ? (
-                          <Box ml="md" mt="xs">
-                            {comida.platos.map((plato, platoIndex) => (
-                              <Text key={platoIndex} mb="xs">
-                                • {plato.nombre || 'Plato sin nombre'}
-                                {plato.receta && <Text component="span" size="sm" c="dimmed"> (Con receta)</Text>}
-                              </Text>
-                            ))}
-                          </Box>
-                        ) : (
-                          <Text size="sm" c="dimmed" ml="md" mt="xs">
-                            No hay platos en esta comida.
-                          </Text>
-                        )}
-                      </Box>
-                    ))}
-                    
-                    {dieta.dias[parseInt(activeTab)].caloriasTotales && (
-                      <Text size="sm" mt="md">
-                        <strong>Calorías totales:</strong> {dieta.dias[parseInt(activeTab)].caloriasTotales} kcal
-                      </Text>
-                    )}
-                    
-                    
-                  </Paper>
-                </Box>
-              )}
+              <DietaDayEditor 
+                day={dieta.dias[parseInt(activeTab)]}
+                dayNumber={parseInt(activeTab) + 1}
+                onUpdate={(updatedDay) => {
+                  handleUpdateDay(parseInt(activeTab), updatedDay);
+                }}
+                comidasDiarias={dieta.comidasDiarias}
+                customTitle={currentDayInfo?.nombreCompleto || `Día ${parseInt(activeTab) + 1}`}
+                dietaId={dietaId}
+                hasChanges={false}
+                onRecalcularCalorias={() => recalcularCaloriasDia(parseInt(activeTab))}
+                onRecargarDieta={recargarDieta}
+                onSaveSuccess={() => {
+                  // ✅ NO HAY CAMBIOS PENDIENTES - SE ACTUALIZA AUTOMÁTICAMENTE
+                  setSuccessMessage("Día actualizado correctamente");
+                  setTimeout(() => setSuccessMessage(null), 3000);
+                }}
+              />
             </Tabs.Panel>
           )}
         </Tabs>

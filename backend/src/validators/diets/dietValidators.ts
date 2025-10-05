@@ -74,26 +74,8 @@ export const verificarPermisosCreador = (
   return true;
 };
 
-export const verificarDietaEditable = (
-  dieta: typeof Dieta.prototype, 
-  userId: string, 
-  res: Response,
-  operacion: string
-): boolean => {
-  if (dieta.draftMode === false) {
-    logger.warn(`Intento de ${operacion} dieta publicada`, { 
-      dietaId: dieta._id, 
-      userId 
-    });
-    
-    let mensaje = 'No se puede actualizar una dieta que ya ha sido publicada';
-    if (operacion === 'actualizar platos') {
-      mensaje = 'No se pueden actualizar platos de una dieta que ya ha sido publicada';
-    }
-    
-    res.status(403).json({ message: mensaje });
-    return false;
-  }
+export const verificarDietaEditable = (): boolean => {
+  // Permitir edición de dietas publicadas
   return true;
 };
 

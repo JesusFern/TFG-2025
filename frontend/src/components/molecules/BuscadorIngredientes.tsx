@@ -79,6 +79,14 @@ const BuscadorIngredientes: React.FC<BuscadorIngredientesProps> = ({
 
   const handleKeyPress = (event: React.KeyboardEvent) => {
     if (event.key === 'Enter') {
+      event.preventDefault(); // Prevenir el envío del formulario padre
+      handleBuscar();
+    }
+  };
+
+  const handleKeyDown = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter') {
+      event.preventDefault(); // Prevenir el envío del formulario padre
       handleBuscar();
     }
   };
@@ -233,6 +241,7 @@ const BuscadorIngredientes: React.FC<BuscadorIngredientesProps> = ({
           value={termino}
           onChange={(e) => handleInputChange(e.target.value)}
           onKeyPress={handleKeyPress}
+          onKeyDown={handleKeyDown}
           leftSection={<IconSearch size={16} />}
           style={{ flex: 1 }}
         />
@@ -292,9 +301,6 @@ const BuscadorIngredientes: React.FC<BuscadorIngredientesProps> = ({
             <Group gap="xs">
               <Badge size="xs" variant="light" color="green">
                 🏠 Local
-              </Badge>
-              <Badge size="xs" variant="light" color="blue">
-                🌍 OpenFoodFacts
               </Badge>
             </Group>
           </Group>

@@ -1,10 +1,71 @@
 import { Router } from 'express';
-import { guardarIngredienteOpenFoodFacts, obtenerIngredientePorId, obtenerTodosLosIngredientes, buscarIngredientes, obtenerIngredientesPorIds } from '../../controllers/alimentos/ingredientesController';
-import { authenticateToken } from '../../middlewares/authMiddleware';
+import { crearIngrediente, guardarIngredienteOpenFoodFacts, obtenerIngredientePorId, obtenerTodosLosIngredientes, buscarIngredientes, obtenerIngredientesPorIds } from '../../controllers/alimentos/ingredientesController';
+import { authenticateToken, authorizeNutricionista } from '../../middlewares/authMiddleware';
 import { validateRequest } from '../../middlewares/validationMiddleware';
 import { body, param, query } from 'express-validator';
 
 const router = Router();
+
+// Validaciones para crear ingrediente
+const validarCrearIngrediente = [
+  body('nombre')
+    .notEmpty()
+    .withMessage('El nombre es requerido')
+    .isString()
+    .withMessage('El nombre debe ser una cadena de texto')
+    .trim()
+    .isLength({ min: 2, max: 100 })
+    .withMessage('El nombre debe tener entre 2 y 100 caracteres'),
+  
+  body('calorias')
+    .isNumeric()
+    .withMessage('Las calorías deben ser un número')
+    .isFloat({ min: 0, max: 10000 })
+    .withMessage('Las calorías deben estar entre 0 y 10000'),
+  
+  body('proteinas')
+    .isNumeric()
+    .withMessage('Las proteínas deben ser un número')
+    .isFloat({ min: 0, max: 100 })
+    .withMessage('Las proteínas deben estar entre 0 y 100'),
+  
+  body('grasas')
+    .isNumeric()
+    .withMessage('Las grasas deben ser un número')
+    .isFloat({ min: 0, max: 100 })
+    .withMessage('Las grasas deben estar entre 0 y 100'),
+  
+  body('hidratosCarbono')
+    .isNumeric()
+    .withMessage('Los hidratos de carbono deben ser un número')
+    .isFloat({ min: 0, max: 100 })
+    .withMessage('Los hidratos de carbono deben estar entre 0 y 100'),
+  
+  body('fuente')
+    .notEmpty()
+    .withMessage('La fuente es requerida')
+    .isIn(['Interna', 'Openfoodfacts', 'Trabajador'])
+    .withMessage('La fuente debe ser una de: Interna, Openfoodfacts, Trabajador'),
+  
+  body('creador')
+    .optional()
+    .isMongoId()
+    .withMessage('El creador debe ser un ID válido')
+];
+
+/**
+ * @route POST /api/ingredientes
+ * @desc Crea un nuevo ingrediente
+ * @access Private (Worker)
+ */
+router.post(
+  '/',
+  authenticateToken,
+  authorizeNutricionista,
+  validarCrearIngrediente,
+  validateRequest,
+  crearIngrediente
+);
 
 /**
  * @route GET /api/ingredientes

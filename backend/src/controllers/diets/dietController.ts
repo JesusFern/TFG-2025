@@ -86,7 +86,7 @@ export const actualizarPlatos = async (req: AuthenticatedRequest, res: Response)
       
       if (!verificarPermisosCreador(dieta, userId, res, 'actualizar platos')) return;
       
-      if (!verificarDietaEditable(dieta, userId, res, 'actualizar platos')) return;
+      if (!verificarDietaEditable()) return;
     }
     
     const actualizados = await actualizarPlatosService(platos);
@@ -132,7 +132,7 @@ export const actualizarDieta = async (req: AuthenticatedRequest, res: Response):
     
     if (!verificarPermisosCreador(dieta, userId, res, 'actualizar dieta')) return;
     
-    if (!verificarDietaEditable(dieta, userId, res, 'actualizar dieta')) return;
+    if (!verificarDietaEditable()) return;
     
     const dietaActualizada = await actualizarDietaService(dietaId, userId, datosActualizacion);
     
@@ -169,7 +169,7 @@ export const actualizarDiaDieta = async (req: AuthenticatedRequest, res: Respons
     
     if (!verificarPermisosCreador(dieta, userId, res, 'actualizar día de dieta')) return;
     
-    if (!verificarDietaEditable(dieta, userId, res, 'actualizar día')) return;
+    if (!verificarDietaEditable()) return;
     
     const diaActualizado = await actualizarDiaDietaService(dietaId, userId, diaIndex, datosDia);
     
@@ -246,7 +246,7 @@ export const crearPlato = async (req: AuthenticatedRequest, res: Response): Prom
     
     if (!verificarPermisosCreador(dieta, userId, res, 'crear plato')) return;
     
-    if (!verificarDietaEditable(dieta, userId, res, 'crear plato')) return;
+    if (!verificarDietaEditable()) return;
     
     if (!dieta.dias[diaIndex]) {
       res.status(400).json({ message: 'El día especificado no existe' });
@@ -315,7 +315,7 @@ export const eliminarPlato = async (req: AuthenticatedRequest, res: Response): P
     
     if (!verificarPermisosCreador(dieta, userId, res, 'eliminar plato')) return;
     
-    if (!verificarDietaEditable(dieta, userId, res, 'eliminar plato')) return;
+    if (!verificarDietaEditable()) return;
     
     let platoEliminado = null;
     let diaIndex = -1;

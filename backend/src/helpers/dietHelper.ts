@@ -46,19 +46,25 @@ export async function buscarDietaYVerificarPermisos(
     throw new Error('Dieta no encontrada');
   }
 
-  // Si es una dieta pública, permitir acceso sin restricciones de permisos
-  if (dieta.publica) {
-    return dieta;
-  }
-
   // Verificar permisos para dietas normales
   if (verificarCreador) {
+    // Si es una dieta pública, permitir acceso sin restricciones de permisos
+    if (dieta.publica) {
+      return dieta;
+    }
+    
+    // Para dietas no públicas, verificar que sea el creador
     const esCreador = dieta.creador && 
       (dieta.creador._id?.toString() === userId || dieta.creador.toString() === userId);
     
     if (!esCreador) {
       throw new Error('No tienes permisos para actualizar esta dieta');
     }
+    return dieta;
+  }
+  
+  // Si es una dieta pública, permitir acceso sin restricciones de permisos
+  if (dieta.publica) {
     return dieta;
   }
 

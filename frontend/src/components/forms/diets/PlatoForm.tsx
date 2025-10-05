@@ -156,6 +156,7 @@ const PlatoForm: React.FC<PlatoFormProps> = ({ plato, onSave, onCancel }) => {
     });
   };
 
+
   // Obtener la receta seleccionada para mostrar sus detalles
   const recetaSeleccionada = formData.receta ? 
     (recetaCompleta || safeRecetas.find(r => r._id === formData.receta)) || 
