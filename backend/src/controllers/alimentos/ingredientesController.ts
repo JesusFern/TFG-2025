@@ -6,6 +6,140 @@ import { verificarAutenticacion } from '../../validators/commonValidators';
 import mongoose from 'mongoose';
 
 /**
+ * Crea un nuevo ingrediente
+ */
+export const crearIngrediente = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    console.log('🚀 Backend: Iniciando creación de ingrediente');
+    console.log('📝 Backend: Body recibido:', req.body);
+    
+    // Verificar autenticación
+    const userId = verificarAutenticacion(req, res, 'crear ingrediente');
+    if (!userId) return;
+
+    const { 
+      nombre, 
+      calorias, 
+      proteinas, 
+      grasas, 
+      hidratosCarbono,
+      fuente,
+      creador
+    } = req.body;
+
+    // Validar datos requeridos
+    if (!nombre || typeof nombre !== 'string' || nombre.trim().length === 0) {
+      res.status(400).json({
+        message: 'El nombre del ingrediente es requerido'
+      });
+      return;
+    }
+
+    if (typeof calorias !== 'number' || calorias < 0 || calorias > 10000) {
+      res.status(400).json({
+        message: 'Las calorías deben ser un número entre 0 y 10000'
+      });
+      return;
+    }
+
+    if (typeof proteinas !== 'number' || proteinas < 0 || proteinas > 100) {
+      res.status(400).json({
+        message: 'Las proteínas deben ser un número entre 0 y 100'
+      });
+      return;
+    }
+
+    if (typeof grasas !== 'number' || grasas < 0 || grasas > 100) {
+      res.status(400).json({
+        message: 'Las grasas deben ser un número entre 0 y 100'
+      });
+      return;
+    }
+
+    if (typeof hidratosCarbono !== 'number' || hidratosCarbono < 0 || hidratosCarbono > 100) {
+      res.status(400).json({
+        message: 'Los hidratos de carbono deben ser un número entre 0 y 100'
+      });
+      return;
+    }
+
+    // Validar fuente
+    const fuentesValidas = ['Interna', 'Openfoodfacts', 'Trabajador'];
+    if (!fuente || !fuentesValidas.includes(fuente)) {
+      res.status(400).json({
+        message: 'La fuente debe ser una de: ' + fuentesValidas.join(', ')
+      });
+      return;
+    }
+
+    // Si la fuente es 'Trabajador', debe tener creador
+    if (fuente === 'Trabajador' && !creador) {
+      res.status(400).json({
+        message: 'Los ingredientes con fuente "Trabajador" deben tener un creador'
+      });
+      return;
+    }
+
+    const nombreLimpio = nombre.trim();
+
+    // Verificar si ya existe un ingrediente con ese nombre
+    const ingredienteExistente = await Ingrediente.findOne({ nombre: nombreLimpio });
+    
+    if (ingredienteExistente) {
+      res.status(409).json({
+        message: 'Ya existe un ingrediente con ese nombre en la base de datos',
+        ingredienteExistente: {
+          _id: ingredienteExistente._id,
+          nombre: ingredienteExistente.nombre,
+          fuente: ingredienteExistente.fuente
+        }
+      });
+      return;
+    }
+
+    // Crear nuevo ingrediente
+    const nuevoIngrediente = new Ingrediente({
+      nombre: nombreLimpio,
+      calorias,
+      proteinas,
+      grasas,
+      hidratosCarbono,
+      fuente,
+      creador: fuente === 'Trabajador' ? creador : undefined
+    });
+
+    await nuevoIngrediente.save();
+
+    console.log('✅ Backend: Ingrediente creado exitosamente:', nuevoIngrediente);
+
+    logger.info('Ingrediente creado correctamente', {
+      userId,
+      ingredienteId: nuevoIngrediente._id,
+      nombre: nombreLimpio,
+      fuente,
+      creador: fuente === 'Trabajador' ? creador : 'Sistema'
+    });
+
+    res.status(201).json({
+      message: 'Ingrediente creado correctamente',
+      ingrediente: nuevoIngrediente
+    });
+
+  } catch (error) {
+    const mensaje = error instanceof Error ? error.message : 'Error desconocido al crear ingrediente';
+    logger.error('Error en controlador crearIngrediente', {
+      userId: req.user?.id,
+      error: mensaje,
+      body: req.body
+    });
+
+    res.status(500).json({
+      message: 'Error interno del servidor al crear ingrediente'
+    });
+  }
+};
+
+/**
  * Guarda un ingrediente de OpenFoodFacts en la base de datos local
  */
 export const guardarIngredienteOpenFoodFacts = async (req: AuthenticatedRequest, res: Response): Promise<void> => {

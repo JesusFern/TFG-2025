@@ -15,12 +15,14 @@ import {
   Combobox,
   useCombobox,
   InputBase,
-  Loader
+  Loader,
+  Tabs
 } from '@mantine/core';
-import { IconTrash, IconAlertCircle, IconSearch, IconX, IconChefHat } from '@tabler/icons-react';
+import { IconTrash, IconAlertCircle, IconSearch, IconX, IconChefHat, IconPlus } from '@tabler/icons-react';
 import { Plato, Ingrediente, Receta } from '../../../types/diets';
 import BuscadorIngredientes from '../../molecules/BuscadorIngredientes';
 import { buscarRecetas } from '../../../services/dietService';
+import CrearIngredienteForm from './CrearIngredienteForm';
 
 interface PlatoFormConIngredientesProps {
   plato: Plato;
@@ -48,6 +50,7 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
   const [hasSearched, setHasSearched] = useState<boolean>(false);
   const [hasTriedSubmit, setHasTriedSubmit] = useState<boolean>(false);
   const [forceRender, setForceRender] = useState<number>(0); // Para forzar re-renders cuando sea necesario
+  const [activeIngredientesTab, setActiveIngredientesTab] = useState<string | null>('buscar');
   
   // Ref para evitar múltiples cargas del mismo plato
   const lastProcessedPlatoId = useRef<string | null>(null);
@@ -535,6 +538,45 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
     }
   };
 
+  const handleIngredienteCreado = (ingrediente: any) => {
+    console.log('🎯 handleIngredienteCreado llamado con:', ingrediente);
+    
+    // Agregar el ingrediente creado a la lista
+    const newIngredientes = [...ingredientes, ingrediente];
+    console.log('📋 Nuevos ingredientes:', newIngredientes);
+    setIngredientes(newIngredientes);
+    
+    // Actualizar ingredientesPersonalizados del plato
+    const ingredientesPersonalizadosActualizados = newIngredientes
+      .filter(ing => ing.id !== undefined || ing.codigoBarras)
+      .map(ing => ({
+        ingrediente: ing.id || ing.codigoBarras || null,
+        peso: ing.peso || 100
+      }));
+
+    console.log('🔧 Ingredientes personalizados actualizados:', ingredientesPersonalizadosActualizados);
+
+    const platoActualizado = {
+      ...formData,
+      ingredientesPersonalizados: ingredientesPersonalizadosActualizados
+    };
+    
+    console.log('🍽️ Plato actualizado:', platoActualizado);
+    setFormData(platoActualizado);
+    
+    // Propagar al padre
+    if (onUpdate) {
+      console.log('📤 Propagando al padre...');
+      onUpdate(platoActualizado);
+    } else {
+      console.log('⚠️ onUpdate no está definido');
+    }
+    
+    // Cambiar al tab de buscar para mostrar el ingrediente agregado
+    setActiveIngredientesTab('buscar');
+    console.log('✅ Proceso completado');
+  };
+
   const removeIngrediente = (index: number) => {
     const newIngredientes = ingredientes.filter((_, i) => i !== index);
     setIngredientes(newIngredientes);
@@ -888,17 +930,51 @@ const PlatoFormConIngredientes: React.FC<PlatoFormConIngredientesProps> = ({
               Ingredientes del plato
             </Text>
             <Text size="xs" c="dimmed" mb="sm">
-              Busca ingredientes para añadirlos al plato. Cada plato debe tener al menos un ingrediente.
+              Busca ingredientes existentes o crea nuevos para añadirlos al plato. Cada plato debe tener al menos un ingrediente.
             </Text>
 
-            {/* Buscador de ingredientes */}
-            <BuscadorIngredientes 
-              onSeleccionar={addIngrediente}
-              placeholder="Buscar ingrediente (ej: manzana, pollo, arroz...)"
-              ingredientesAgregados={ingredientes}
-              onEliminarIngrediente={removeIngrediente}
-              onActualizarPeso={updateIngredientePeso}
-            />
+            {/* Tabs para buscar/crear ingredientes */}
+            <Tabs 
+              value={activeIngredientesTab} 
+              onChange={setActiveIngredientesTab}
+              color="nutroos-green"
+              variant="pills"
+              mb="md"
+            >
+              <Tabs.List>
+                <Tabs.Tab value="buscar" leftSection={<IconSearch size={16} />}>
+                  Buscar ingredientes
+                </Tabs.Tab>
+                <Tabs.Tab value="crear" leftSection={<IconPlus size={16} />}>
+                  Crear ingrediente
+                </Tabs.Tab>
+              </Tabs.List>
+
+              <Tabs.Panel value="buscar" pt="md">
+                <Box 
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
+                >
+                  <BuscadorIngredientes 
+                    onSeleccionar={addIngrediente}
+                    placeholder="Buscar ingrediente (ej: manzana, pollo, arroz...)"
+                    ingredientesAgregados={ingredientes}
+                    onEliminarIngrediente={removeIngrediente}
+                    onActualizarPeso={updateIngredientePeso}
+                  />
+                </Box>
+              </Tabs.Panel>
+
+              <Tabs.Panel value="crear" pt="md">
+                <CrearIngredienteForm
+                  onIngredienteCreado={handleIngredienteCreado}
+                />
+              </Tabs.Panel>
+            </Tabs>
             
             {errors.ingredientes && hasTriedSubmit && (
               <Alert 

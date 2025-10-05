@@ -19,7 +19,8 @@ import {
   Divider,
   Badge,
   Image,
-  NumberInput
+  NumberInput,
+  Tabs
 } from '@mantine/core';
 import { 
   IconCheck, 
@@ -30,7 +31,8 @@ import {
   IconPhoto,
   IconAlertCircle,
   IconUpload,
-  IconX
+  IconX,
+  IconSearch
 } from '@tabler/icons-react';
 import { useMediaQuery } from '@mantine/hooks';
 import { crearReceta, actualizarReceta, CrearRecetaDTO, ApiRecetaResponse, RecetaResponse } from '../../../services/recetaService';
@@ -38,6 +40,7 @@ import { Ingrediente, IngredientePoblado } from '../../../types/diets';
 import { guardarIngredientesOpenFoodFacts } from '../../../services/ingredientesService';
 import { useThemeDetection } from '../../../hooks/useThemeDetection';
 import BuscadorIngredientes from '../../molecules/BuscadorIngredientes';
+import CrearIngredienteForm from '../diets/CrearIngredienteForm';
 
 interface FormularioCrearRecetaProps {
   onSuccess: (recetaData: ApiRecetaResponse) => void;
@@ -67,6 +70,7 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
   const [imagenes, setImagenes] = useState<File[]>([]);
   const [imagenesExistentes, setImagenesExistentes] = useState<string[]>([]);
   const [imagenesAEliminar, setImagenesAEliminar] = useState<string[]>([]);
+  const [activeIngredientesTab, setActiveIngredientesTab] = useState<string | null>('buscar');
   
   // Estados de validación
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -165,6 +169,19 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
       peso: nuevoPeso
     };
     setIngredientes(newIngredientes);
+  };
+
+  const handleIngredienteCreado = (ingrediente: Ingrediente) => {
+    console.log('🎯 handleIngredienteCreado llamado con:', ingrediente);
+    
+    // Agregar el ingrediente creado a la lista
+    const newIngredientes = [...ingredientes, ingrediente];
+    console.log('📋 Nuevos ingredientes:', newIngredientes);
+    setIngredientes(newIngredientes);
+    
+    // Cambiar al tab de buscar para mostrar el ingrediente agregado
+    setActiveIngredientesTab('buscar');
+    console.log('✅ Proceso completado');
   };
 
   const addPaso = () => {
@@ -314,14 +331,48 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
             </Title>
             
             <Text size="sm" c="dimmed">
-              Busca ingredientes para obtener automáticamente su información nutricional
+              Busca ingredientes existentes o crea nuevos para obtener automáticamente su información nutricional
             </Text>
 
-            {/* Buscador de ingredientes */}
-            <BuscadorIngredientes 
-              onSeleccionar={addIngrediente}
-              placeholder="Buscar ingrediente (ej: manzana, pollo, arroz...)"
-            />
+            {/* Tabs para buscar/crear ingredientes */}
+            <Tabs 
+              value={activeIngredientesTab} 
+              onChange={setActiveIngredientesTab}
+              color="nutroos-green"
+              variant="pills"
+              mb="md"
+            >
+              <Tabs.List>
+                <Tabs.Tab value="buscar" leftSection={<IconSearch size={16} />}>
+                  Buscar ingredientes
+                </Tabs.Tab>
+                <Tabs.Tab value="crear" leftSection={<IconPlus size={16} />}>
+                  Crear ingrediente
+                </Tabs.Tab>
+              </Tabs.List>
+
+              <Tabs.Panel value="buscar" pt="md">
+                <Box 
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      e.stopPropagation();
+                    }
+                  }}
+                >
+                  <BuscadorIngredientes 
+                    onSeleccionar={addIngrediente}
+                    placeholder="Buscar ingrediente (ej: manzana, pollo, arroz...)"
+                  />
+                </Box>
+              </Tabs.Panel>
+
+              <Tabs.Panel value="crear" pt="md">
+                <CrearIngredienteForm
+                  onIngredienteCreado={handleIngredienteCreado}
+                />
+              </Tabs.Panel>
+            </Tabs>
             
             {/* Lista de ingredientes seleccionados */}
             {ingredientes.length > 0 && (
