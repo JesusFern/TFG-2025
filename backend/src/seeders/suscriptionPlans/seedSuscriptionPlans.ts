@@ -3,27 +3,25 @@ import SuscriptionPlan from '../../models/suscriptionPlans/suscriptionPlan';
 function getBeneficios(tipoPlan: string): string[] {
   const beneficiosEspecificos: Record<string, string[]> = {
     'Nutricion': [
-      'Plan nutricional personalizado avanzado',
-      'Ajustes semanales de la dieta',
-      'Videoconferencias con nutricionista',
-      'Acceso a dietas especializadas',
-      'Soporte prioritario 24/7'
+      'Asignación de un nutricionista personal',
+      'Citas y videollamadas con el nutricionista',
+      'Creación de dietas por parte del nutricionista',
+      'Registro del seguimiento y progreso semanal',
+      'Chat con nutricionista'
     ],
     'Entrenamiento personal': [
-      'Plan de entrenamiento avanzado',
-      'Ajustes semanales del entrenamiento',
-      'Videoconferencias con entrenador personal',
-      'Acceso a rutinas especializadas',
-      'Soporte prioritario 24/7'
+      'Asignación de un entrenador personal',
+      'Citas y videollamadas con el entrenador personal',
+      'Creación de planes de entrenamiento por parte del entrenador',
+      'Registro del seguimiento y progreso semanal',
+      'Chat con entrenador personal'
     ],
     'Nutrición y entrenamiento personal': [
-      'Plan nutricional personalizado avanzado',
-      'Plan de entrenamiento avanzado',
-      'Ajustes semanales de dieta y entrenamiento',
-      'Videoconferencias con nutricionista y entrenador',
-      'Acceso a dietas y rutinas especializadas',
-      'Soporte prioritario 24/7',
-      'Análisis de composición corporal'
+      'Asignación de nutricionista y entrenador personal',
+      'Citas y videollamadas con los profesionales',
+      'Creación de dietas y planes de entrenamiento por parte de los profesionales',
+      'Registro del seguimiento y progreso semanal',
+      'Chat con nutricionista y entrenador personal'
     ]
   };
 

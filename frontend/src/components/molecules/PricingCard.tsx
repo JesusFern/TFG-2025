@@ -115,13 +115,13 @@ export const PricingCard: React.FC<PricingCardProps> = ({
   return (
     <Card 
       shadow="sm" 
-      p="sm" 
+      p="md" 
       radius="md" 
       withBorder
       style={{ 
         width: '100%',
         maxWidth: '300px',
-        height: '480px',
+        height: '520px',
         display: 'flex',
         flexDirection: 'column',
         transform: destacado ? 'scale(1.02)' : 'scale(1)',
@@ -145,33 +145,38 @@ export const PricingCard: React.FC<PricingCardProps> = ({
         e.currentTarget.style.boxShadow = 'var(--mantine-shadow-sm)';
       }}
     >
-      <Stack gap="xs" style={{ height: '100%' }}>
-        {isUserSubscribed && (
-          <Badge color="green" variant="light" size="sm" style={{ alignSelf: 'center' }}>
-            ✓ Tu plan actual
-          </Badge>
-        )}
-        
-        <Title order={4} fw={700} c={getColor()} ta="center" size="md">
-          {nombrePlan}
-        </Title>
-        
-        <Group justify="center" align="end" wrap="nowrap">
-          <div style={{ textAlign: 'center' }}>
-            <Text size="lg" fw={700}>
-              {plan.tipoPrecio === 'Gratuito' ? 'Gratis' : `${precio}€`}
-            </Text>
-            {plan.tipoPrecio !== 'Gratuito' && (
-              <Text size="xs" c="dimmed">
-                {getPeriodoTexto()}
+      <Stack gap="sm" style={{ height: '100%', justifyContent: 'space-between' }}>
+        <div>
+          {isUserSubscribed && (
+            <Badge color="green" variant="light" size="sm" style={{ alignSelf: 'center', marginBottom: '8px' }}>
+              ✓ Tu plan actual
+            </Badge>
+          )}
+          
+          <Title order={4} fw={700} c={getColor()} ta="center" size="md" mb="xs">
+            {nombrePlan}
+          </Title>
+          
+          <Group justify="center" align="end" wrap="nowrap" mb="sm">
+            <div style={{ textAlign: 'center' }}>
+              <Text size="lg" fw={700}>
+                {plan.tipoPrecio === 'Gratuito' ? 'Gratis' : `${precio}€`}
               </Text>
-            )}
+              {plan.tipoPrecio !== 'Gratuito' && (
+                <Text size="xs" c="dimmed">
+                  {getPeriodoTexto()}
+                </Text>
+              )}
+            </div>
+          </Group>
+          
+          {/* Contenedor con altura fija para la descripción */}
+          <div style={{ height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <Text size="sm" c="dimmed" ta="center" lineClamp={2} style={{ wordBreak: 'break-word' }}>
+              {plan.descripcion}
+            </Text>
           </div>
-        </Group>
-        
-        <Text size="sm" c="dimmed" ta="center" lineClamp={2} style={{ wordBreak: 'break-word' }}>
-          {plan.descripcion}
-        </Text>
+        </div>
         
         <List
           size="sm"
@@ -181,10 +186,10 @@ export const PricingCard: React.FC<PricingCardProps> = ({
               <IconCheck size={10} stroke={1.5} />
             </ThemeIcon>
           }
-          style={{ flex: 1, overflow: 'hidden' }}
+          style={{ flex: 1, overflow: 'hidden', marginBottom: '16px' }}
         >
           {beneficios.map((beneficio) => (
-            <List.Item key={beneficio} style={{ fontSize: '11px', lineHeight: '1.3', wordBreak: 'break-word' }}>
+            <List.Item key={beneficio} style={{ fontSize: '11px', lineHeight: '1.4', wordBreak: 'break-word', marginBottom: '4px' }}>
               {beneficio}
             </List.Item>
           ))}
@@ -202,7 +207,7 @@ export const PricingCard: React.FC<PricingCardProps> = ({
             disabled={isUserSubscribed || isSubmitting || !!tienePlanDelMismoTipo}
             loading={isSubmitting}
             size="sm"
-            style={{ marginTop: 'auto' }}
+            style={{ alignSelf: 'flex-end' }}
           >
             {getButtonText()}
           </Button>
