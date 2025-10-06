@@ -3,8 +3,8 @@
 ## Gestión de Clientes
 Organiza y gestiona todos tus clientes de manera eficiente con herramientas profesionales de seguimiento.
 
+## Herramientas generación dietas y planes
+Agiliza la creación de tus dietas y planes de entrenamiento mediante nuestras herramientas y plantillas
+
 ## Seguimiento de Progreso
 Monitorea el progreso de tus clientes con informes detallados y estadísticas en tiempo real.
-
-## Seguridad y Privacidad
-Protegemos la información de tus clientes con los más altos estándares de seguridad y privacidad.

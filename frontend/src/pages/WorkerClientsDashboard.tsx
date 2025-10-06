@@ -98,7 +98,26 @@ const WorkerClientsDashboard: React.FC = () => {
 	};
 
   
-	const filteredClients = clientes.filter(cliente => 
+	// Agrupar clientes por ID para manejar múltiples asignaciones
+	const clientesAgrupados = clientes.reduce((acc, cliente) => {
+		const clienteId = cliente.clienteId;
+		if (!acc[clienteId]) {
+			acc[clienteId] = {
+				...cliente,
+				tiposAsignacion: [cliente.tipoAsignacion]
+			};
+		} else {
+			// Si el cliente ya existe, agregar el nuevo tipo de asignación
+			if (!acc[clienteId].tiposAsignacion.includes(cliente.tipoAsignacion)) {
+				acc[clienteId].tiposAsignacion.push(cliente.tipoAsignacion);
+			}
+		}
+		return acc;
+	}, {} as Record<string, ClienteAsignado & { tiposAsignacion: string[] }>);
+
+	const clientesUnicos = Object.values(clientesAgrupados);
+
+	const filteredClients = clientesUnicos.filter(cliente => 
 		(cliente.cliente?.fullName && cliente.cliente.fullName.toLowerCase().includes(searchQuery.toLowerCase())) ||
 		(cliente.cliente?.email && cliente.cliente.email.toLowerCase().includes(searchQuery.toLowerCase()))
 	);
@@ -139,13 +158,13 @@ const WorkerClientsDashboard: React.FC = () => {
 			>
 				<Group justify="space-between">
 					<div>
-						<Title order={2} mb="xs">Panel de Nutricionista</Title>
+						<Title order={2} mb="xs">Panel de Gestión de clientes</Title>
 						<Text c="dimmed">Bienvenido/a, {user?.fullName}</Text>
 					</div>
 					<Group gap="md">
-						<Badge size="lg" color="nutroos-green">
-							{clientes.length} {clientes.length === 1 ? 'cliente asignado' : 'clientes asignados'}
-						</Badge>
+					<Badge size="lg" color="nutroos-green">
+						{clientesUnicos.length} {clientesUnicos.length === 1 ? 'cliente asignado' : 'clientes asignados'}
+					</Badge>
 						<Button
 							leftSection={<IconArrowLeft size={16} />}
 							variant="light"
@@ -157,7 +176,7 @@ const WorkerClientsDashboard: React.FC = () => {
 				</Group>
 			</Paper>
       
-			{clientes.length > 0 && (
+			{clientesUnicos.length > 0 && (
 				<TextInput
 					placeholder="Buscar cliente por nombre o email..."
 					leftSection={<IconSearch size={16} />}
@@ -167,7 +186,7 @@ const WorkerClientsDashboard: React.FC = () => {
 				/>
 			)}
 
-			{clientes.length === 0 ? (
+			{clientesUnicos.length === 0 ? (
 				<Card 
 					p="xl" 
 					radius="md" 
@@ -245,14 +264,15 @@ const WorkerClientsDashboard: React.FC = () => {
 												{cliente.cliente.gender}
 											</Badge>
 										)}
-										{cliente.tipoAsignacion && (
+										{cliente.tiposAsignacion?.map((tipo, index) => (
 											<Badge 
-												color={cliente.tipoAsignacion === 'Nutricionista' ? 'nutroos-green' : 'blue'} 
+												key={index}
+												color={tipo === 'Nutricionista' ? 'nutroos-green' : 'blue'} 
 												size="sm"
 											>
-												{cliente.tipoAsignacion === 'Nutricionista' ? 'Cliente de nutrición' : 'Cliente de entrenamiento'}
+												{tipo === 'Nutricionista' ? 'Cliente de nutrición' : 'Cliente de entrenamiento'}
 											</Badge>
-										)}
+										))}
 									</Group>
 								</Group>
                 
@@ -312,12 +332,14 @@ const WorkerClientsDashboard: React.FC = () => {
 									)}
 								</Stack>
                 
-												<Group grow mt="auto">
-													{cliente.tipoAsignacion === 'Nutricionista' ? (
-														<>
+												<Stack gap="xs" mt="auto">
+													{/* Botones de Dieta */}
+													{cliente.tiposAsignacion?.includes('Nutricionista') && (
+														<Group grow>
 															<Button 
 																color="nutroos-green"
 																onClick={() => handleCrearDieta(cliente.clienteId)}
+																size="sm"
 															>
 																Crear dieta
 															</Button>
@@ -325,58 +347,34 @@ const WorkerClientsDashboard: React.FC = () => {
 																variant="outline"
 																color="nutroos-green"
 																onClick={() => handleVerDietas(cliente.clienteId)}
+																size="sm"
 															>
 																Ver dietas
 															</Button>
-														</>
-													) : cliente.tipoAsignacion === 'Entrenador personal' ? (
-														<>
-															<Button 
-																color="blue"
-																onClick={() => handleCrearPlan(cliente.clienteId)}
-															>
-																Crear plan
-															</Button>
-															<Button 
-																variant="outline"
-																color="blue"
-																onClick={() => handleVerPlanes(cliente.clienteId)}
-															>
-																Ver planes
-															</Button>
-														</>
-													) : (
-														// Fallback: mostrar todos los botones si no hay tipo de asignación definido
-														<>
-															<Button 
-																color="nutroos-green"
-																onClick={() => handleCrearDieta(cliente.clienteId)}
-															>
-																Crear dieta
-															</Button>
-															<Button 
-																variant="outline"
-																color="nutroos-green"
-																onClick={() => handleVerDietas(cliente.clienteId)}
-															>
-																Ver dietas
-															</Button>
-															<Button 
-																color="blue"
-																onClick={() => handleCrearPlan(cliente.clienteId)}
-															>
-																Crear plan
-															</Button>
-															<Button 
-																variant="outline"
-																color="blue"
-																onClick={() => handleVerPlanes(cliente.clienteId)}
-															>
-																Ver planes
-															</Button>
-														</>
+														</Group>
 													)}
-												</Group>
+													
+													{/* Botones de Entrenamiento */}
+													{cliente.tiposAsignacion?.includes('Entrenador personal') && (
+														<Group grow>
+															<Button 
+																color="blue"
+																onClick={() => handleCrearPlan(cliente.clienteId)}
+																size="sm"
+															>
+																Crear plan
+															</Button>
+															<Button 
+																variant="outline"
+																color="blue"
+																onClick={() => handleVerPlanes(cliente.clienteId)}
+																size="sm"
+															>
+																Ver planes
+															</Button>
+														</Group>
+													)}
+												</Stack>
 							</Card>
 						</Grid.Col>
 					))}

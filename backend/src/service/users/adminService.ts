@@ -414,6 +414,13 @@ export async function getUsersService(
       [users, totalUsers] = await Promise.all([
         User.find(baseQuery)
           .select('-password') // Excluir la contraseña
+          .populate({
+            path: 'suscripcion',
+            populate: {
+              path: 'planId',
+              model: 'SuscriptionPlan'
+            }
+          })
           .sort({ createdAt: -1 }) // Ordenar por fecha de creación descendente
           .skip(skip)
           .limit(limit)
@@ -452,7 +459,16 @@ export async function getUsersService(
 
 export async function getUserByIdService(userId: string): Promise<unknown> {
   try {
-    const user = await User.findById(userId).select('-password');
+    const user = await User.findById(userId)
+      .select('-password')
+      .populate({
+        path: 'suscripcion',
+        populate: {
+          path: 'planId',
+          model: 'SuscriptionPlan'
+        }
+      })
+      .lean();
     if (!user) {
       throw new Error('Usuario no encontrado');
     }

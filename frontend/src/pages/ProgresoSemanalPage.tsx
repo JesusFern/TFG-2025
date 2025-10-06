@@ -291,48 +291,7 @@ const ProgresoSemanalPage: React.FC = () => {
     );
   }
 
-  // Si solo puede acceder a uno, mostrar solo ese tab
-  if (canAccessTraining && !canAccessNutrition) {
-    return (
-      <Container size="xl" py="xl">
-        <Group justify="space-between" align="center" mb="xl">
-          <Title order={1} c="nutroos-green">
-            Progreso Semanal
-          </Title>
-          <Button
-            leftSection={<IconArrowLeft size={16} />}
-            variant="light"
-            onClick={handleBackToDashboard}
-          >
-            Volver al Dashboard
-          </Button>
-        </Group>
-        <ProgresoEntrenamientoTab />
-      </Container>
-    );
-  }
-
-  if (canAccessNutrition && !canAccessTraining) {
-    return (
-      <Container size="xl" py="xl">
-        <Group justify="space-between" align="center" mb="xl">
-          <Title order={1} c="nutroos-green">
-            Progreso Semanal
-          </Title>
-          <Button
-            leftSection={<IconArrowLeft size={16} />}
-            variant="light"
-            onClick={handleBackToDashboard}
-          >
-            Volver al Dashboard
-          </Button>
-        </Group>
-        <ProgresoNutricionTab />
-      </Container>
-    );
-  }
-
-  // Si puede acceder a ambos, mostrar tabs
+  // Vista unificada con tabs (si puede acceder a al menos uno)
   return (
     <Container size="xl" py="xl">
       <Group justify="space-between" align="center" mb="xl">
@@ -351,9 +310,7 @@ const ProgresoSemanalPage: React.FC = () => {
       <Paper shadow="sm" p="md" radius="md">
         <Tabs value={activeTab} onChange={(value: string | null) => setActiveTab(value || 'mi-progreso')}>
           <Tabs.List>
-            {suscriptionStatus?.suscription?.plan?.tipoPrecio !== 'Gratuito' && (
-              <Tabs.Tab value="mi-progreso" leftSection={<IconActivity size={16} />}>Mi Progreso</Tabs.Tab>
-            )}
+            <Tabs.Tab value="mi-progreso" leftSection={<IconActivity size={16} />}>Mi Progreso</Tabs.Tab>
             {canAccessTraining && (
               <Tabs.Tab 
                 value="entrenamiento" 
@@ -383,11 +340,9 @@ const ProgresoSemanalPage: React.FC = () => {
               <ProgresoNutricionTab />
             </Tabs.Panel>
           )}
-          {suscriptionStatus?.suscription?.plan?.tipoPrecio !== 'Gratuito' && (
-            <Tabs.Panel value="mi-progreso" pt="md">
-              <MiProgresoTab />
-            </Tabs.Panel>
-          )}
+          <Tabs.Panel value="mi-progreso" pt="md">
+            <MiProgresoTab />
+          </Tabs.Panel>
         </Tabs>
       </Paper>
     </Container>
