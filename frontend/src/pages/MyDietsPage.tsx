@@ -28,6 +28,7 @@ import {
   IconTarget,
   IconChevronRight
 } from '@tabler/icons-react';
+import { IconArrowLeft } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { format } from 'date-fns';
@@ -42,6 +43,10 @@ const MyDietsPage: React.FC = () => {
   const navigate = useNavigate();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
+  
+  const handleBackToDashboard = () => {
+    navigate('/dashboard');
+  };
 
   useEffect(() => {
     const cargarDietas = async () => {
@@ -128,18 +133,27 @@ const MyDietsPage: React.FC = () => {
           {/* Header */}
           <Paper p="xl" radius="lg" withBorder>
             <Stack gap="md">
-              <Group align="center" gap="md">
-                <ThemeIcon size="xl" color="nutroos-green" variant="light">
-                  <IconSoup size={32} />
-                </ThemeIcon>
-                <div>
-                  <Title order={1} c={isDark ? "white" : "dark"}>
-                    Mis Dietas
-                  </Title>
-                  <Text size="lg" c="dimmed">
-                    Dietas personalizadas creadas por tus profesionales
-                  </Text>
-                </div>
+              <Group justify="space-between" align="center">
+                <Group align="center" gap="md">
+                  <ThemeIcon size="xl" color="nutroos-green" variant="light">
+                    <IconSoup size={32} />
+                  </ThemeIcon>
+                  <div>
+                    <Title order={1} c={isDark ? "white" : "dark"}>
+                      Mis Dietas
+                    </Title>
+                    <Text size="lg" c="dimmed">
+                      Dietas personalizadas creadas por tus profesionales
+                    </Text>
+                  </div>
+                </Group>
+                <Button
+                  leftSection={<IconArrowLeft size={16} />}
+                  variant="light"
+                  onClick={handleBackToDashboard}
+                >
+                  Volver al Dashboard
+                </Button>
               </Group>
               
               <Group>

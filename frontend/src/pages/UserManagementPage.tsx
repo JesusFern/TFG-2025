@@ -3,7 +3,6 @@ import { Container, Title, Paper, Button, Group, Text, Stack, Badge, Loader, Cen
 import { useNavigate } from 'react-router-dom';
 import { IconArrowLeft, IconUser, IconCalendar, IconCrown, IconAlertCircle, IconSearch, IconFilter } from '@tabler/icons-react';
 import { apiRequest } from '../services/api';
-import { getSuscriptionPlanById } from '../services/suscriptionPlanService';
 import { formatDate, calculateAge } from '../utils/dateUtils';
 import AdminAccessGuard from '../components/common/AdminAccessGuard';
 import UserCard from '../components/common/UserCard';
@@ -15,7 +14,18 @@ interface User {
   gender?: string;
   birthDate?: string;
   role: string;
-  suscripcion?: string;
+  suscripcion?: string | {
+    _id: string;
+    planId?: {
+      _id: string;
+      nombre: string;
+      tipoPrecio: string;
+      tipoPlan: string | null;
+    };
+    fechaInicio?: string;
+    fechaFin?: string;
+    estadoPago?: 'pendiente' | 'pagado' | 'vencido';
+  };
   createdAt: string;
   updatedAt: string;
 }
@@ -54,7 +64,6 @@ const UserManagementPage: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [userPlans, setUserPlans] = useState<Record<string, { nombre: string; tipoPrecio: string; tipoPlan: string | null }>>({});
   const [totalUsersInApp, setTotalUsersInApp] = useState(0);
   const [totalFilteredUsers, setTotalFilteredUsers] = useState(0);
   
@@ -105,28 +114,6 @@ const UserManagementPage: React.FC = () => {
       setPagination(result.pagination);
       setTotalUsersInApp(result.totalUsersInApp || 0);
       setTotalFilteredUsers(result.totalUsers || 0);
-
-      // Obtener información completa de planes para usuarios con suscripción
-      const plansMap: Record<string, { nombre: string; tipoPrecio: string; tipoPlan: string | null }> = {};
-      const planPromises = result.data
-        .filter(user => user.suscripcion)
-        .map(async (user) => {
-          try {
-            const plan = await getSuscriptionPlanById(user.suscripcion!);
-            if (plan) {
-              plansMap[user._id] = {
-                nombre: plan.nombre,
-                tipoPrecio: plan.tipoPrecio,
-                tipoPlan: plan.tipoPlan
-              };
-            }
-          } catch (error) {
-            console.error(`Error fetching plan for user ${user._id}:`, error);
-          }
-        });
-
-      await Promise.all(planPromises);
-      setUserPlans(plansMap);
     } catch (error) {
       console.error('Error fetching users:', error);
       setError(error instanceof Error ? error.message : 'Error al cargar usuarios');
@@ -405,26 +392,26 @@ const UserManagementPage: React.FC = () => {
                   
                   <Group gap="xs">
                     <IconCrown size={16} color="var(--mantine-color-gray-6)" />
-                    {user.suscripcion && userPlans[user._id] ? (
+                    {user.suscripcion && typeof user.suscripcion !== 'string' && user.suscripcion.planId ? (
                       <Group gap="xs">
                         <Badge 
-                          color={userPlans[user._id].tipoPrecio === 'Gratuito' ? 'blue' : 
-                                 userPlans[user._id].tipoPrecio === 'Básico' ? 'yellow' : 'purple'} 
+                          color={user.suscripcion.planId.tipoPrecio === 'Gratuito' ? 'blue' : 
+                                 user.suscripcion.planId.tipoPrecio === 'Básico' ? 'yellow' : 'purple'} 
                           variant="light" 
                           size="sm"
                         >
-                          {userPlans[user._id].tipoPrecio}
+                          {user.suscripcion.planId.tipoPrecio}
                         </Badge>
-                        {userPlans[user._id].tipoPlan && (
+                        {user.suscripcion.planId.tipoPlan && (
                           <Badge 
                             color="green" 
                             variant="outline" 
                             size="sm"
                           >
-                            {userPlans[user._id].tipoPlan === 'Nutricion' ? 'Nutrición' :
-                             userPlans[user._id].tipoPlan === 'Entrenamiento personal' ? 'Entrenamiento' :
-                             userPlans[user._id].tipoPlan === 'Nutrición y entrenamiento personal' ? 'Nutri + Entreno' :
-                             userPlans[user._id].tipoPlan}
+                            {user.suscripcion.planId.tipoPlan === 'Nutricion' ? 'Nutrición' :
+                             user.suscripcion.planId.tipoPlan === 'Entrenamiento personal' ? 'Entrenamiento' :
+                             user.suscripcion.planId.tipoPlan === 'Nutrición y entrenamiento personal' ? 'Nutri + Entreno' :
+                             user.suscripcion.planId.tipoPlan}
                           </Badge>
                         )}
                       </Group>

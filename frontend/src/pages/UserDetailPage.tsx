@@ -15,7 +15,14 @@ interface User {
   gender?: string;
   birthDate?: string;
   role: string;
-  suscripcion?: string;
+  suscripcion?: string | {
+    _id: string;
+    planId?: SuscriptionPlan | string;
+    fechaInicio?: string;
+    fechaFin?: string;
+    estadoPago?: 'pendiente' | 'pagado' | 'vencido';
+    frecuenciaDePago?: 'Mensual' | 'Trimestral' | 'Anual';
+  };
   profilePicture?: string;
   datosSaludYNutricion?: {
     _id: string;
@@ -55,9 +62,15 @@ const UserDetailPage: React.FC = () => {
       const user = await response.json();
       setUserData(user);
 
-      // Si el usuario tiene suscripción, obtener los detalles del plan
+      // Si el usuario tiene suscripción, obtener detalles del plan
       if (user.suscripcion) {
-        await fetchSubscriptionPlan(user.suscripcion);
+        // Caso 1: backend pobló el plan (preferido)
+        if (typeof user.suscripcion !== 'string' && user.suscripcion.planId && typeof user.suscripcion.planId !== 'string') {
+          setSubscriptionPlan(user.suscripcion.planId);
+        } else if (typeof user.suscripcion !== 'string' && typeof user.suscripcion.planId === 'string') {
+          // Caso 2: tenemos el id del plan
+          await fetchSubscriptionPlan(user.suscripcion.planId);
+        }
       }
     } catch (error) {
       console.error('Error fetching user details:', error);
@@ -73,9 +86,9 @@ const UserDetailPage: React.FC = () => {
     }
   }, [userId, fetchUserDetails]);
 
-  const fetchSubscriptionPlan = async (subscriptionId: string) => {
+  const fetchSubscriptionPlan = async (planId: string) => {
     try {
-      const plan = await getSuscriptionPlanById(subscriptionId);
+      const plan = await getSuscriptionPlanById(planId);
       setSubscriptionPlan(plan);
     } catch (error) {
       console.error('Error fetching subscription plan:', error);
@@ -239,6 +252,28 @@ const UserDetailPage: React.FC = () => {
                           <Text size="sm" c="dimmed">Tipo de Plan</Text>
                           <Text fw={500}>{subscriptionPlan.tipoPrecio}</Text>
                         </div>
+                        {typeof userData.suscripcion !== 'string' && (
+                          <>
+                            {userData.suscripcion.fechaInicio && (
+                              <div>
+                                <Text size="sm" c="dimmed">Inicio</Text>
+                                <Text fw={500}>{new Date(userData.suscripcion.fechaInicio).toLocaleDateString('es-ES')}</Text>
+                              </div>
+                            )}
+                            {userData.suscripcion.fechaFin && (
+                              <div>
+                                <Text size="sm" c="dimmed">Fin</Text>
+                                <Text fw={500}>{new Date(userData.suscripcion.fechaFin).toLocaleDateString('es-ES')}</Text>
+                              </div>
+                            )}
+                            {userData.suscripcion.estadoPago && (
+                              <div>
+                                <Text size="sm" c="dimmed">Estado de pago</Text>
+                                <Text fw={500}>{userData.suscripcion.estadoPago}</Text>
+                              </div>
+                            )}
+                          </>
+                        )}
                       </Stack>
                     )}
                   </Stack>
