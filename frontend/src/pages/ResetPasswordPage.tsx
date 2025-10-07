@@ -46,7 +46,7 @@ const ResetPasswordPage: React.FC = () => {
     }
 
     try {
-      const response = await fetch(`http://localhost:5000/api/users/verify-reset-token/${token}`);
+      const response = await fetch(`/api/users/verify-reset-token/${token}`);
       const data = await response.json();
 
       if (response.ok && data.valid) {
@@ -83,7 +83,7 @@ const ResetPasswordPage: React.FC = () => {
     try {
       setIsLoading(true);
 
-      const response = await fetch('http://localhost:5000/api/users/reset-password', {
+      const response = await fetch('/api/users/reset-password', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

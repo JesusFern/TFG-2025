@@ -1,7 +1,9 @@
 // Configuración del socket
+// En desarrollo: Vite proxy redirige a http://backend:5000
+// En producción: nginx redirige al backend
 export const SOCKET_CONFIG = {
-  // URL del servidor backend
-  url: 'http://localhost:5000',
+  // URL relativa - el navegador usará el mismo host que la página
+  url: window.location.origin,
   
   // Opciones de conexión
   options: {
@@ -13,7 +15,8 @@ export const SOCKET_CONFIG = {
     reconnectionDelayMax: 5000,
     timeout: 20000,
     forceNew: true,
-    withCredentials: true
+    withCredentials: true,
+    path: '/socket.io/' // Path del socket
   }
 };
 

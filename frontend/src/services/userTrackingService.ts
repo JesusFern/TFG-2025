@@ -7,7 +7,7 @@ export const userTrackingService = {
    * Obtener todos los registros de seguimiento del usuario autenticado
    */
   getMe: async () => {
-    const res = await apiClient.get('/api/user-tracking/me');
+    const res = await apiClient.get('/user-tracking/me');
     return res.data as { success: boolean; data: UserTrackingDto[] };
   },
 
@@ -16,7 +16,7 @@ export const userTrackingService = {
    * Actualizar un registro de seguimiento existente
    */
   update: async (id: string, data: UpdateUserTrackingDto) => {
-    const res = await apiClient.put(`/api/user-tracking/${id}`, data);
+    const res = await apiClient.put(`/user-tracking/${id}`, data);
     return res.data as { success: boolean; data: UserTrackingDto };
   },
 
@@ -26,7 +26,7 @@ export const userTrackingService = {
    * Guardar seguimiento completo (crear nuevo registro)
    */
   guardarSeguimientoCompleto: async (data: CreateUserTrackingDto) => {
-    const res = await apiClient.post('/api/user-tracking/me/guardar', data);
+    const res = await apiClient.post('/user-tracking/me/guardar', data);
     return res.data as { success: boolean; data: UserTrackingDto };
   },
 
@@ -36,7 +36,7 @@ export const userTrackingService = {
   uploadArchivoMultimedia: async (trackingId: string, archivo: File) => {
     const formData = new FormData();
     formData.append('archivo', archivo);
-    const res = await apiClient.post(`/api/user-tracking/${trackingId}/archivos`, formData, {
+    const res = await apiClient.post(`/user-tracking/${trackingId}/archivos`, formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
     });
     return res.data as { success: boolean; data: UserTrackingDto; archivo: ArchivoMultimedia };
@@ -46,7 +46,7 @@ export const userTrackingService = {
    * Eliminar archivo multimedia de un registro específico
    */
   removeArchivoMultimedia: async (trackingId: string, archivoPath: string) => {
-    const res = await apiClient.delete(`/api/user-tracking/${trackingId}/archivos/${encodeURIComponent(archivoPath)}`);
+    const res = await apiClient.delete(`/user-tracking/${trackingId}/archivos/${encodeURIComponent(archivoPath)}`);
     return res.data as { success: boolean; data: UserTrackingDto };
   },
 
@@ -54,7 +54,7 @@ export const userTrackingService = {
    * Obtener seguimiento de un cliente para un trabajador
    */
   getByUserIdForWorker: async (userId: string) => {
-    const res = await apiClient.get(`/api/user-tracking/cliente/${userId}`);
+    const res = await apiClient.get(`/user-tracking/cliente/${userId}`);
     return res.data as { success: boolean; data: UserTrackingDto[] };
   }
 };

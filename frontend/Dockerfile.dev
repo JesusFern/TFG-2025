@@ -10,4 +10,5 @@ COPY . .
 
 EXPOSE 5173
 
-CMD ["npm", "run", "dev"]
+# Modificar para solo iniciar el servidor de desarrollo
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]

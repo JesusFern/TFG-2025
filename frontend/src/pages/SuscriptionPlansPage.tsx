@@ -93,10 +93,10 @@ const SuscriptionPlansPage: React.FC = () => {
             
             if (sessionId) {
               // Si tenemos sessionId, usarlo directamente
-              confirmUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/suscription-plans/payment/confirm?sessionId=${sessionId}`;
+              confirmUrl = `/api/suscription-plans/payment/confirm?sessionId=${sessionId}`;
             } else {
               // Si no tenemos sessionId pero tenemos upgrade=true, procesar upgrades pendientes
-              confirmUrl = `${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/suscription-plans/process-pending-upgrades`;
+              confirmUrl = `/api/suscription-plans/process-pending-upgrades`;
             }
             
             // Confirmar el pago en el backend

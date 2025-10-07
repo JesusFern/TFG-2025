@@ -1,6 +1,5 @@
-import axios, { AxiosError } from 'axios';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+import { apiClient } from './apiClient';
+import { AxiosError } from 'axios';
 
 export interface CheckoutResponse {
   success: boolean;
@@ -63,7 +62,6 @@ export const createUpgradeCheckoutSession = async (
   try {
     const token = localStorage.getItem('authToken');
     console.log('Token de autenticación:', token ? 'Presente' : 'No encontrado');
-    console.log('URL de la API:', API_BASE_URL);
     console.log('Plan ID:', planId);
     console.log('Frecuencia de pago:', frecuenciaPago);
     
@@ -76,20 +74,13 @@ export const createUpgradeCheckoutSession = async (
     }
 
     const requestData = { planId, frecuenciaPago };
-    const requestUrl = `${API_BASE_URL}/suscription-plans/upgrade`;
     
-    console.log('Enviando petición de upgrade a:', requestUrl);
+    console.log('Enviando petición de upgrade');
     console.log('Datos de la petición:', requestData);
 
-    const response = await axios.put<CheckoutResponse>(
-      requestUrl,
-      requestData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      }
+    const response = await apiClient.put<CheckoutResponse>(
+      '/suscription-plans/upgrade',
+      requestData
     );
 
     console.log('Respuesta del servidor (upgrade):', response.data);
@@ -116,7 +107,6 @@ export const createCheckoutSession = async (
   try {
     const token = localStorage.getItem('authToken');
     console.log('Token de autenticación:', token ? 'Presente' : 'No encontrado');
-    console.log('URL de la API:', API_BASE_URL);
     console.log('Plan ID:', planId);
     console.log('Frecuencia de pago:', frecuenciaPago);
     
@@ -129,24 +119,13 @@ export const createCheckoutSession = async (
     }
 
     const requestData = { planId, frecuenciaPago };
-    const requestUrl = `${API_BASE_URL}/suscription-plans/subscribe`;
     
-    console.log('Enviando petición a:', requestUrl);
+    console.log('Enviando petición de suscripción');
     console.log('Datos de la petición:', requestData);
-    console.log('Headers:', {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json'
-    });
 
-    const response = await axios.put<CheckoutResponse>(
-      requestUrl,
-      requestData,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      }
+    const response = await apiClient.put<CheckoutResponse>(
+      '/suscription-plans/subscribe',
+      requestData
     );
 
     console.log('Respuesta del servidor:', response.data);
@@ -177,13 +156,8 @@ export const checkPaymentStatus = async (sessionId: string): Promise<PaymentStat
       };
     }
 
-    const response = await axios.get<PaymentStatus>(
-      `${API_BASE_URL}/suscription-plans/payment/status/${sessionId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
+    const response = await apiClient.get<PaymentStatus>(
+      `/suscription-plans/payment/status/${sessionId}`
     );
 
     return response.data;
@@ -208,13 +182,8 @@ export const confirmPayment = async (sessionId: string): Promise<PaymentStatus> 
       };
     }
 
-    const response = await axios.get<PaymentStatus>(
-      `${API_BASE_URL}/suscription-plans/payment/confirm?sessionId=${sessionId}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
+    const response = await apiClient.get<PaymentStatus>(
+      `/suscription-plans/payment/confirm?sessionId=${sessionId}`
     );
 
     return response.data;
@@ -239,13 +208,8 @@ export const getUserSubscription = async (): Promise<SubscriptionResponse> => {
       };
     }
 
-    const response = await axios.get<SubscriptionResponse>(
-      `${API_BASE_URL}/suscription-plans/my-subscription`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      }
+    const response = await apiClient.get<SubscriptionResponse>(
+      `/suscription-plans/my-subscription`
     );
 
     return response.data;

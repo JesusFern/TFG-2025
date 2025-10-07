@@ -274,10 +274,10 @@ const MiProgresoWorkerTab: React.FC = () => {
                                 {esImagen ? (
                                   <Box
                                     style={{ cursor: 'pointer' }}
-                                    onClick={() => ampliarImagen(`http://localhost:5000/uploads/${archivoPath}`, `Archivo ${archivoIndex + 1}`)}
+                                    onClick={() => ampliarImagen(`/uploads/${archivoPath}`, `Archivo ${archivoIndex + 1}`)}
                                   >
                                     <Image
-                                      src={`http://localhost:5000/uploads/${archivoPath}`}
+                                      src={`/uploads/${archivoPath}`}
                                       alt={`Archivo ${archivoIndex + 1}`}
                                       w={250}
                                       h={200}
@@ -306,7 +306,7 @@ const MiProgresoWorkerTab: React.FC = () => {
                                       controls
                                       preload="metadata"
                                     >
-                                      <source src={`http://localhost:5000/uploads/${archivoPath}`} type="video/mp4" />
+                                      <source src={`/uploads/${archivoPath}`} type="video/mp4" />
                                       Tu navegador no soporta el elemento video.
                                     </video>
                                     <Box
