@@ -11,12 +11,15 @@ import {
   Stack, 
   Text, 
   useMantineTheme,
-  Paper
+  Paper,
+  Button,
+  Modal
 } from '@mantine/core';
-import { IconAlertCircle, IconCheck, IconClock, IconCalendar, IconList, IconApple } from '@tabler/icons-react';
-import { getDietsByWorkerAndClient } from '../services/dietService';
+import { IconAlertCircle, IconCheck, IconClock, IconCalendar, IconList, IconApple, IconTrash } from '@tabler/icons-react';
+import { getDietsByWorkerAndClient, eliminarDieta } from '../services/dietService';
 import { DietaResponse } from '../types/diets';
 import { getUserData, getClientById } from '../services/authService';
+import { notifications } from '@mantine/notifications';
 
 const WorkerClientDietsList: React.FC = () => {
   const navigate = useNavigate();
@@ -29,6 +32,9 @@ const WorkerClientDietsList: React.FC = () => {
   // Actualizar el tipo para que coincida con la estructura de UserData
   const [clientInfo, setClientInfo] = useState<{id: string; fullName: string; email: string; role: string} | null>(null);
   const [loadingClient, setLoadingClient] = useState(true);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [dietaToDelete, setDietaToDelete] = useState<{ id: string; nombre: string } | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   // Hooks de Mantine deben ir aquí, dentro del componente
   const theme = useMantineTheme();
@@ -126,6 +132,48 @@ const WorkerClientDietsList: React.FC = () => {
     } else {
       navigate(`/ver-dieta/${dietaId}`);
     }
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent, dietaId: string, dietaNombre: string) => {
+    e.stopPropagation(); // Evitar que se dispare el onClick del Card
+    setDietaToDelete({ id: dietaId, nombre: dietaNombre });
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!dietaToDelete) return;
+
+    try {
+      setDeleting(true);
+      await eliminarDieta(dietaToDelete.id);
+      
+      // Actualizar la lista de dietas
+      setDietas(dietas.filter(d => d._id !== dietaToDelete.id));
+      
+      notifications.show({
+        title: 'Dieta eliminada',
+        message: `La dieta "${dietaToDelete.nombre}" ha sido eliminada correctamente`,
+        color: 'green',
+        position: 'top-right'
+      });
+
+      setShowDeleteModal(false);
+      setDietaToDelete(null);
+    } catch (error) {
+      notifications.show({
+        title: 'Error al eliminar',
+        message: error instanceof Error ? error.message : 'No se pudo eliminar la dieta',
+        color: 'red',
+        position: 'top-right'
+      });
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
+    setDietaToDelete(null);
   };
   
   return (
@@ -236,8 +284,8 @@ const WorkerClientDietsList: React.FC = () => {
                 }
               }}
             >
-              <Group justify="space-between" align="flex-start">
-                <div>
+              <Group justify="space-between" align="flex-start" wrap="nowrap">
+                <div style={{ flex: 1 }}>
                   <Title order={4} mb={4} fw={600} c={isDark ? "gray.0" : "gray.9"}>
                     {dieta.nombre}
                   </Title>
@@ -314,28 +362,46 @@ const WorkerClientDietsList: React.FC = () => {
                     </Text>
                   </Group>
                 </div>
-                <Badge
-                  size="lg"
-                  color={dieta.draftMode === false ? 'nutroos-green' : (isDark ? 'gray.6' : 'gray')}
-                  variant={dieta.draftMode === false ? 'filled' : (isDark ? 'light' : 'outline')}
-                  leftSection={
-                    dieta.draftMode === false 
-                      ? <IconCheck size={16} stroke={1.5} /> 
-                      : <IconClock size={16} stroke={1.5} />
-                  }
-                  fw={700}
-                  tt="uppercase"
-                  c={isDark && dieta.draftMode ? theme.white : undefined}
-                  style={{
-                    letterSpacing: 0.5,
-                    minWidth: 120,
-                    justifyContent: 'center',
-                    boxShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.25)' : 'none',
-                    transition: 'all 0.3s ease'
-                  }}
-                >
-                  {dieta.draftMode === false ? 'Publicada' : 'No publicada'}
-                </Badge>
+                <Stack gap="xs" align="flex-end">
+                  <Badge
+                    size="lg"
+                    color={dieta.draftMode === false ? 'nutroos-green' : (isDark ? 'gray.6' : 'gray')}
+                    variant={dieta.draftMode === false ? 'filled' : (isDark ? 'light' : 'outline')}
+                    leftSection={
+                      dieta.draftMode === false 
+                        ? <IconCheck size={16} stroke={1.5} /> 
+                        : <IconClock size={16} stroke={1.5} />
+                    }
+                    fw={700}
+                    tt="uppercase"
+                    c={isDark && dieta.draftMode ? theme.white : undefined}
+                    style={{
+                      letterSpacing: 0.5,
+                      minWidth: 120,
+                      justifyContent: 'center',
+                      boxShadow: isDark ? '0 2px 4px rgba(0, 0, 0, 0.25)' : 'none',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    {dieta.draftMode === false ? 'Publicada' : 'No publicada'}
+                  </Badge>
+                  
+                  {/* Botón de eliminar solo para dietas en draft mode */}
+                  {dieta.draftMode && (
+                    <Button
+                      size="xs"
+                      color="red"
+                      variant="light"
+                      leftSection={<IconTrash size={14} />}
+                      onClick={(e) => handleDeleteClick(e, dieta._id, dieta.nombre)}
+                      style={{
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      Eliminar
+                    </Button>
+                  )}
+                </Stack>
               </Group>
               <Text 
                 c={isDark ? "gray.2" : "gray.6"} 
@@ -357,6 +423,52 @@ const WorkerClientDietsList: React.FC = () => {
           ))}
         </Stack>
       )}
+
+      {/* Modal de confirmación para eliminar */}
+      <Modal
+        opened={showDeleteModal}
+        onClose={handleCancelDelete}
+        title="Confirmar eliminación"
+        centered
+        size="md"
+      >
+        <Stack gap="md">
+          <Alert
+            icon={<IconAlertCircle size={16} />}
+            color="red"
+            variant="light"
+          >
+            ¿Estás seguro de que deseas eliminar la dieta{' '}
+            <Text span fw={700}>
+              "{dietaToDelete?.nombre}"
+            </Text>
+            ?
+          </Alert>
+          
+          <Text size="sm" c="dimmed">
+            Esta acción no se puede deshacer. La dieta será eliminada permanentemente.
+          </Text>
+
+          <Group justify="flex-end" mt="md">
+            <Button
+              variant="subtle"
+              color="gray"
+              onClick={handleCancelDelete}
+              disabled={deleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              color="red"
+              leftSection={<IconTrash size={16} />}
+              onClick={handleConfirmDelete}
+              loading={deleting}
+            >
+              Eliminar dieta
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Container>
   );
 };

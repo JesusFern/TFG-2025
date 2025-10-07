@@ -14,20 +14,24 @@ import {
   Divider,
   Pagination,
   Badge,
-  Select
+  Select,
+  Modal,
+  Stack
 } from '@mantine/core';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { 
   IconAlertCircle, 
   IconCalendarEvent,
-  IconCheck
+  IconCheck,
+  IconTrash
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { format, getDay } from 'date-fns';
 import DietaDayEditor from '../helpers/diets/DietaDayEditor';
-import { obtenerDieta, publicarDieta } from '../services/dietService';
+import { obtenerDieta, publicarDieta, eliminarDieta } from '../services/dietService';
 import { obtenerIngredientesPorIds } from '../services/ingredienteService';
 import { Dieta, DiaDieta, Ingrediente } from '../types';
+import { notifications } from '@mantine/notifications';
 import { 
   DIAS_SEMANA, 
   convertirDiaSemana, 
@@ -59,6 +63,8 @@ const EditarDietaPage: React.FC = () => {
   
   // ✅ VARIABLES DE CAMBIOS PENDIENTES ELIMINADAS - SE ACTUALIZA AUTOMÁTICAMENTE
   const [publishLoading, setPublishLoading] = useState<boolean>(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   const handlePublicarDieta = async () => {
     if (!dieta || !dietaId) return;
@@ -74,6 +80,43 @@ const EditarDietaPage: React.FC = () => {
     } finally {
       setPublishLoading(false);
     }
+  };
+
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!dietaId || !dieta) return;
+
+    try {
+      setDeleting(true);
+      await eliminarDieta(dietaId);
+      
+      notifications.show({
+        title: 'Dieta eliminada',
+        message: `La dieta "${dieta.nombre}" ha sido eliminada correctamente`,
+        color: 'green',
+        position: 'top-right'
+      });
+
+      // Redirigir a la lista de clientes después de eliminar
+      navigate('/worker/dashboard-clients');
+    } catch (error) {
+      notifications.show({
+        title: 'Error al eliminar',
+        message: error instanceof Error ? error.message : 'No se pudo eliminar la dieta',
+        color: 'red',
+        position: 'top-right'
+      });
+    } finally {
+      setDeleting(false);
+      setShowDeleteModal(false);
+    }
+  };
+
+  const handleCancelDelete = () => {
+    setShowDeleteModal(false);
   };
 
   const recargarDieta = async () => {
@@ -414,14 +457,25 @@ const EditarDietaPage: React.FC = () => {
           </Box>
           <Group gap="md">
             {dieta.draftMode ? (
-              <Button
-                color="green"
-                leftSection={<IconCheck size={18} />}
-                onClick={handlePublicarDieta}
-                loading={publishLoading}
-              >
-                Publicar dieta
-              </Button>
+              <>
+                <Button
+                  color="green"
+                  leftSection={<IconCheck size={18} />}
+                  onClick={handlePublicarDieta}
+                  loading={publishLoading}
+                >
+                  Publicar dieta
+                </Button>
+                <Button
+                  color="red"
+                  variant="light"
+                  leftSection={<IconTrash size={18} />}
+                  onClick={handleDeleteClick}
+                  disabled={deleting}
+                >
+                  Eliminar dieta
+                </Button>
+              </>
             ) : (
               <Button
                 color="blue"
@@ -583,6 +637,52 @@ const EditarDietaPage: React.FC = () => {
       </Paper>
       
       {/* ✅ MODAL DE CAMBIOS SIN GUARDAR ELIMINADO - SE ACTUALIZA AUTOMÁTICAMENTE */}
+
+      {/* Modal de confirmación para eliminar */}
+      <Modal
+        opened={showDeleteModal}
+        onClose={handleCancelDelete}
+        title="Confirmar eliminación"
+        centered
+        size="md"
+      >
+        <Stack gap="md">
+          <Alert
+            icon={<IconAlertCircle size={16} />}
+            color="red"
+            variant="light"
+          >
+            ¿Estás seguro de que deseas eliminar la dieta{' '}
+            <Text span fw={700}>
+              "{dieta?.nombre}"
+            </Text>
+            ?
+          </Alert>
+          
+          <Text size="sm" c="dimmed">
+            Esta acción no se puede deshacer. La dieta será eliminada permanentemente.
+          </Text>
+
+          <Group justify="flex-end" mt="md">
+            <Button
+              variant="subtle"
+              color="gray"
+              onClick={handleCancelDelete}
+              disabled={deleting}
+            >
+              Cancelar
+            </Button>
+            <Button
+              color="red"
+              leftSection={<IconTrash size={16} />}
+              onClick={handleConfirmDelete}
+              loading={deleting}
+            >
+              Eliminar dieta
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Container>
   );
 };
