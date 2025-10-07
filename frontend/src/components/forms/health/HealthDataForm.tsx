@@ -173,7 +173,7 @@ const HealthDataForm: React.FC<HealthDataFormProps> = ({
   };
 
   return (
-    <form onSubmit={form.onSubmit(handleSubmit)}>
+    <form onSubmit={form.onSubmit(handleSubmit)}> 
       <Stack gap="lg">
         <Alert
           icon={<IconAlertCircle size={16} />}
@@ -184,7 +184,7 @@ const HealthDataForm: React.FC<HealthDataFormProps> = ({
           Esta información es confidencial y será utilizada únicamente para personalizar tus planes de nutrición y entrenamiento.
         </Alert>
 
-        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+        <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md"> 
           <NumberInput
             label="Altura (cm)"
             placeholder="Ej: 175"
@@ -214,6 +214,9 @@ const HealthDataForm: React.FC<HealthDataFormProps> = ({
         </SimpleGrid>
 
         <MultiSelect
+          comboboxProps={{
+            zIndex: 1000
+          }}
           label="Condiciones Médicas"
           placeholder="Selecciona las condiciones que aplican"
           data={condicionesMedicasOptions}
@@ -223,6 +226,9 @@ const HealthDataForm: React.FC<HealthDataFormProps> = ({
         />
 
         <MultiSelect
+          comboboxProps={{
+            zIndex: 1000
+          }}
           label="Restricciones Dietéticas"
           placeholder="Selecciona las restricciones que aplican"
           data={restriccionesDieteticasOptions}
@@ -232,6 +238,9 @@ const HealthDataForm: React.FC<HealthDataFormProps> = ({
         />
 
         <MultiSelect
+          comboboxProps={{
+            zIndex: 1000
+          }}
           label="Alergias e Intolerancias"
           placeholder="Selecciona las alergias que aplican"
           data={alergiasOptions}
@@ -241,6 +250,9 @@ const HealthDataForm: React.FC<HealthDataFormProps> = ({
         />
 
         <MultiSelect
+          comboboxProps={{
+            zIndex: 1000
+          }}
           label="Medicación Actual"
           placeholder="Selecciona las medicaciones que tomas"
           data={medicacionActualOptions}
@@ -250,6 +262,9 @@ const HealthDataForm: React.FC<HealthDataFormProps> = ({
         />
 
         <MultiSelect
+          comboboxProps={{
+            zIndex: 1000
+          }}
           label="Preferencias Alimentarias"
           placeholder="Selecciona tus preferencias"
           data={preferenciasAlimentariasOptions}
@@ -275,6 +290,9 @@ const HealthDataForm: React.FC<HealthDataFormProps> = ({
             {mealTimes.map((meal, index) => (
               <Group key={index} gap="sm">
                 <Select
+                  comboboxProps={{
+                    zIndex: 1000
+                  }}
                   placeholder="Comida"
                   data={comidasOptions}
                   value={meal.comida}

@@ -9,7 +9,6 @@ import {
   Text,
   Alert,
   Box,
-  SimpleGrid,
   Textarea
 } from '@mantine/core';
 import { useForm } from '@mantine/form';
@@ -18,7 +17,13 @@ import { DatosActividadFisica } from '../../../types/profile';
 
 interface ActivityDataFormProps {
   initialData?: DatosActividadFisica;
-  onSubmit: (data: any) => Promise<void>;
+  onSubmit: (data: {
+    frecuenciaEjercicio: string;
+    tipoEjercicioPractica: string[];
+    objetivosPrincipales: string[];
+    preferenciasEjercicios: string[];
+    limitacionesFisicas: string[];
+  }) => Promise<void>;
   onCancel: () => void;
   isLoading?: boolean;
 }
@@ -77,19 +82,6 @@ const ActivityDataForm: React.FC<ActivityDataFormProps> = ({
     { value: 'Rehabilitación', label: 'Rehabilitación' }
   ];
 
-  const limitacionesFisicasComunes = [
-    'Problemas de rodilla',
-    'Problemas de espalda',
-    'Lesiones en hombro',
-    'Problemas de cuello',
-    'Lesiones en tobillo',
-    'Artritis',
-    'Osteoporosis',
-    'Problemas cardíacos',
-    'Asma',
-    'Otra'
-  ];
-
   const addPreferencia = () => {
     setPreferenciasEjercicios([...preferenciasEjercicios, '']);
   };
@@ -143,6 +135,9 @@ const ActivityDataForm: React.FC<ActivityDataFormProps> = ({
         </Alert>
 
         <Select
+          comboboxProps={{
+            zIndex: 1000
+          }}
           label="Frecuencia de Ejercicio"
           placeholder="Selecciona tu frecuencia actual"
           data={frecuenciaEjercicioOptions}
@@ -151,6 +146,9 @@ const ActivityDataForm: React.FC<ActivityDataFormProps> = ({
         />
 
         <MultiSelect
+          comboboxProps={{
+            zIndex: 1000
+          }}
           label="Tipos de Ejercicio que Practicas"
           placeholder="Selecciona los tipos de ejercicio que realizas"
           data={tipoEjercicioOptions}
@@ -160,6 +158,9 @@ const ActivityDataForm: React.FC<ActivityDataFormProps> = ({
         />
 
         <MultiSelect
+          comboboxProps={{
+            zIndex: 1000
+          }}
           label="Objetivos Principales"
           placeholder="Selecciona tus objetivos principales"
           data={objetivosOptions}

@@ -55,6 +55,7 @@ const ModalEditHealthData: React.FC<ModalEditHealthDataProps> = ({
 
   return (
     <Modal
+      zIndex={1000}
       opened={opened}
       onClose={handleCancel}
       title="Editar Datos de Salud y Nutrición"

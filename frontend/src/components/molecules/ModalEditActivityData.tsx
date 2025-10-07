@@ -48,6 +48,7 @@ const ModalEditActivityData: React.FC<ModalEditActivityDataProps> = ({
 
   return (
     <Modal
+      zIndex={1000}
       opened={opened}
       onClose={handleCancel}
       title="Editar Datos de Actividad Física"
