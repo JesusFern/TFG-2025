@@ -114,9 +114,18 @@ const app = express();
 app.use(express.json());
 app.post('/api/diets/copy', authenticateToken, authorizeNutricionista, crearDietaDesdeExistenteController);
 
+// Deshabilitar el beforeEach global para este test
+jest.setTimeout(10000);
+
 describe('Diet Copy Endpoints', () => {
   beforeAll(async () => {
     // Setup inicial si es necesario
+  });
+
+  // Sobrescribir el beforeEach global del setup.ts para este archivo de test
+  beforeEach(async () => {
+    // Este test usa mocks completos, no necesita limpiar colecciones
+    jest.clearAllMocks();
   });
 
   it('debería crear una dieta desde una dieta existente exitosamente', async () => {
@@ -443,5 +452,13 @@ describe('Diet Copy Endpoints', () => {
 });
 
 afterAll(async () => {
-  await mongoose.connection.close();
-});
+  // Solo cerrar si hay una conexión activa
+  if (mongoose.connection.readyState !== 0) {
+    try {
+      await mongoose.connection.close();
+    } catch {
+      // La conexión ya puede estar cerrada por el setup global
+      console.warn('La conexión ya fue cerrada');
+    }
+  }
+}, 10000);

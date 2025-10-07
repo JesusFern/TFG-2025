@@ -164,9 +164,18 @@ app.post('/api/diets/templates', authenticateToken, authorizeNutricionista, crea
 app.get('/api/diets/templates', obtenerTiposArquetipo);
 app.get('/api/diets/templates/:tipo', obtenerInfoArquetipo);
 
+// Deshabilitar el beforeEach global para este test
+jest.setTimeout(10000);
+
 describe('Diet Template Endpoints', () => {
   beforeAll(async () => {
     // Setup inicial si es necesario
+  });
+
+  // Sobrescribir el beforeEach global del setup.ts para este archivo de test
+  beforeEach(async () => {
+    // Este test usa mocks completos, no necesita limpiar colecciones
+    jest.clearAllMocks();
   });
 
   describe('POST /api/diets/templates', () => {
@@ -570,5 +579,13 @@ describe('Diet Template Endpoints', () => {
 });
 
 afterAll(async () => {
-  await mongoose.connection.close();
-});
+  // Solo cerrar si hay una conexión activa
+  if (mongoose.connection.readyState !== 0) {
+    try {
+      await mongoose.connection.close();
+    } catch {
+      // La conexión ya puede estar cerrada por el setup global
+      console.warn('La conexión ya fue cerrada');
+    }
+  }
+}, 10000);

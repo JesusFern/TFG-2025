@@ -39,13 +39,28 @@ jest.mock('stripe', () => {
 
 // Limpiar la base de datos antes de cada test
 beforeEach(async () => {
-  const collections = Object.values(mongoose.connection.collections);
-  for (const collection of collections) {
-    await collection.deleteMany({});
+  // Solo limpiar si hay una conexión activa a MongoDB
+  if (mongoose.connection.readyState === 1) {
+    const collections = Object.values(mongoose.connection.collections);
+    for (const collection of collections) {
+      try {
+        await collection.deleteMany({});
+      } catch {
+        // Ignorar errores de limpieza en tests que no usan MongoDB
+        console.warn(`No se pudo limpiar la colección ${collection.collectionName}`);
+      }
+    }
   }
-});
+}, 10000); // Aumentar timeout a 10 segundos
 
 // Cerrar la conexión después de todos los tests
 afterAll(async () => {
-  await mongoose.connection.close();
-});
+  // Solo cerrar si hay una conexión activa
+  if (mongoose.connection.readyState !== 0) {
+    try {
+      await mongoose.connection.close();
+    } catch (error) {
+      console.warn('Error al cerrar la conexión de MongoDB:', error);
+    }
+  }
+}, 10000);

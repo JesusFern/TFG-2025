@@ -231,3 +231,22 @@ export const getMyCreatedDiets = async (): Promise<{ dietas: DietaResponse[], co
     throw error;
   }
 };
+
+export const eliminarDieta = async (dietaId: string): Promise<{ success: boolean; message: string }> => {
+  try {
+    const response = await apiRequest(`/api/diets/${dietaId}`, {
+      method: 'DELETE'
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al eliminar la dieta');
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error('Error al eliminar la dieta:', error);
+    throw error;
+  }
+};

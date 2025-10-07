@@ -346,9 +346,11 @@ export interface CrearDietaDesdeTemplateDTO {
   duracion: number;
   comidasDiarias: number;
   fechaInicio: Date;
-  creador: mongoose.Types.ObjectId;
+  creador: mongoose.Types.ObjectId | null; // null para dietas generadas por clientes
   asignadaA?: mongoose.Types.ObjectId[];
   tipoArquetipo: string;
+  publica?: boolean; // true para dietas generadas por clientes
+  draftMode?: boolean; // false para dietas listas para usar
 }
 
 export async function crearDietaDesdeTemplate(dto: CrearDietaDesdeTemplateDTO): Promise<mongoose.Document> {
@@ -382,8 +384,8 @@ export async function crearDietaDesdeTemplate(dto: CrearDietaDesdeTemplateDTO): 
     fechaInicio: dto.fechaInicio,
     creador: dto.creador,
     asignadaA: dto.asignadaA || [],
-    publica: false,
-    draftMode: true
+    publica: dto.publica !== undefined ? dto.publica : false,
+    draftMode: dto.draftMode !== undefined ? dto.draftMode : true
   });
 
   await dieta.save();

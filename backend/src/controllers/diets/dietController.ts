@@ -490,3 +490,72 @@ export const getMyCreatedDiets = async (req: AuthenticatedRequest, res: Response
     manejarErrorDieta(error, res, 'obtener dietas creadas');
   }
 };
+
+// Eliminar dieta (solo si está en draftMode y el usuario es el creador)
+export const eliminarDieta = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const creadorId = verificarAutenticacion(req, res, 'eliminar dieta');
+    if (!creadorId) return;
+    
+    const { id } = req.params;
+    
+    // Validar que el ID es válido
+    if (!esIdValido(id)) {
+      res.status(400).json({
+        success: false,
+        message: 'El ID de dieta proporcionado no es válido'
+      });
+      return;
+    }
+    
+    // Buscar la dieta
+    const dieta = await Dieta.findById(id);
+    
+    if (!dieta) {
+      res.status(404).json({
+        success: false,
+        message: 'Dieta no encontrada'
+      });
+      return;
+    }
+    
+    // Verificar que la dieta está en modo borrador
+    if (!dieta.draftMode) {
+      res.status(403).json({
+        success: false,
+        message: 'Solo se pueden eliminar dietas que estén en modo borrador (no publicadas)'
+      });
+      return;
+    }
+    
+    // Verificar que el usuario es el creador
+    if (!dieta.creador || dieta.creador.toString() !== creadorId) {
+      res.status(403).json({
+        success: false,
+        message: 'No tienes permisos para eliminar esta dieta. Solo el creador puede eliminarla.'
+      });
+      return;
+    }
+    
+    // Eliminar la dieta
+    await Dieta.findByIdAndDelete(id);
+    
+    logger.info('Dieta eliminada correctamente', {
+      dietaId: id,
+      creadorId,
+      nombre: dieta.nombre
+    });
+    
+    res.json({
+      success: true,
+      message: 'Dieta eliminada correctamente'
+    });
+    
+  } catch (error) {
+    logger.error('Error al eliminar dieta', {
+      error: error instanceof Error ? error.message : String(error),
+      userId: req.user?.id
+    });
+    manejarErrorDieta(error, res, 'eliminar dieta');
+  }
+};
