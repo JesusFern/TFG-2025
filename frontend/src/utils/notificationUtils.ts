@@ -6,28 +6,32 @@ import { Notificacion } from '../types/notifications';
  * @returns La notificación convertida con fechas como strings ISO
  */
 export const convertNotificationToStandard = (notificacion: Notificacion): Notificacion => {
+  // Helper para convertir fecha a ISO string de forma segura (campos opcionales)
+  const toISOStringSafe = (fecha: Date | string | undefined): string | undefined => {
+    if (!fecha) return undefined;
+    if (typeof fecha === 'string') return fecha;
+    if (fecha instanceof Date && !isNaN(fecha.getTime())) {
+      return fecha.toISOString();
+    }
+    return undefined;
+  };
+  
+  // Helper para convertir fecha a ISO string (campos obligatorios con fallback)
+  const toISOStringRequired = (fecha: Date | string | undefined): string => {
+    if (!fecha) return new Date().toISOString();
+    if (typeof fecha === 'string') return fecha;
+    if (fecha instanceof Date && !isNaN(fecha.getTime())) {
+      return fecha.toISOString();
+    }
+    return new Date().toISOString();
+  };
+  
   return {
     ...notificacion,
-    programadaPara: notificacion.programadaPara ? 
-      (typeof notificacion.programadaPara === 'string' ? 
-        notificacion.programadaPara : 
-        notificacion.programadaPara.toISOString()) : 
-      undefined,
-    expiraEn: notificacion.expiraEn ? 
-      (typeof notificacion.expiraEn === 'string' ? 
-        notificacion.expiraEn : 
-        notificacion.expiraEn.toISOString()) : 
-      undefined,
-    createdAt: notificacion.createdAt ? 
-      (typeof notificacion.createdAt === 'string' ? 
-        notificacion.createdAt : 
-        notificacion.createdAt.toISOString()) : 
-      new Date().toISOString(),
-    updatedAt: notificacion.updatedAt ? 
-      (typeof notificacion.updatedAt === 'string' ? 
-        notificacion.updatedAt : 
-        notificacion.updatedAt.toISOString()) : 
-      new Date().toISOString()
+    programadaPara: toISOStringSafe(notificacion.programadaPara),
+    expiraEn: toISOStringSafe(notificacion.expiraEn),
+    createdAt: toISOStringRequired(notificacion.createdAt),
+    updatedAt: toISOStringRequired(notificacion.updatedAt)
   };
 };
 
@@ -37,27 +41,33 @@ export const convertNotificationToStandard = (notificacion: Notificacion): Notif
  * @returns La notificación convertida con fechas como objetos Date
  */
 export const convertNotificationToDate = (notificacion: Notificacion): Notificacion => {
+  // Helper para convertir a Date de forma segura (campos opcionales)
+  const toDateSafe = (fecha: Date | string | undefined): Date | undefined => {
+    if (!fecha) return undefined;
+    if (fecha instanceof Date && !isNaN(fecha.getTime())) return fecha;
+    if (typeof fecha === 'string') {
+      const date = new Date(fecha);
+      return !isNaN(date.getTime()) ? date : undefined;
+    }
+    return undefined;
+  };
+  
+  // Helper para convertir a Date (campos obligatorios con fallback)
+  const toDateRequired = (fecha: Date | string | undefined): Date => {
+    if (!fecha) return new Date();
+    if (fecha instanceof Date && !isNaN(fecha.getTime())) return fecha;
+    if (typeof fecha === 'string') {
+      const date = new Date(fecha);
+      return !isNaN(date.getTime()) ? date : new Date();
+    }
+    return new Date();
+  };
+  
   return {
     ...notificacion,
-    programadaPara: notificacion.programadaPara ? 
-      (typeof notificacion.programadaPara === 'string' ? 
-        new Date(notificacion.programadaPara) : 
-        notificacion.programadaPara) : 
-      undefined,
-    expiraEn: notificacion.expiraEn ? 
-      (typeof notificacion.expiraEn === 'string' ? 
-        new Date(notificacion.expiraEn) : 
-        notificacion.expiraEn) : 
-      undefined,
-    createdAt: notificacion.createdAt ? 
-      (typeof notificacion.createdAt === 'string' ? 
-        new Date(notificacion.createdAt) : 
-        notificacion.createdAt) : 
-      new Date(),
-    updatedAt: notificacion.updatedAt ? 
-      (typeof notificacion.updatedAt === 'string' ? 
-        new Date(notificacion.updatedAt) : 
-        notificacion.updatedAt) : 
-      new Date()
+    programadaPara: toDateSafe(notificacion.programadaPara),
+    expiraEn: toDateSafe(notificacion.expiraEn),
+    createdAt: toDateRequired(notificacion.createdAt),
+    updatedAt: toDateRequired(notificacion.updatedAt)
   };
 };

@@ -4,6 +4,7 @@ import { Button } from '../atoms/ButtonLayout';
 import { Container } from '../atoms/Container';
 import { useMantineColorScheme } from '@mantine/core';
 import { useNavigate } from 'react-router-dom';
+import { AppShowcase } from '../molecules/AppShowcase';
 
 const HeroContainer = styled.section<{ isDark: boolean }>`
   min-height: 100vh;
@@ -55,23 +56,15 @@ const ButtonGroup = styled.div`
   }
 `;
 
-const ImageWrapper = styled.div<{ isDark: boolean }>`
+const ShowcaseWrapper = styled.div`
   flex: 1;
   display: flex;
   justify-content: center;
-  
-  img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 10px;
-    box-shadow: ${props => props.isDark 
-      ? '0 10px 30px rgba(0, 0, 0, 0.4)' 
-      : '0 10px 30px rgba(0, 0, 0, 0.1)'};
-    filter: ${props => props.isDark ? 'brightness(0.85)' : 'none'};
-  }
+  align-items: center;
   
   @media (max-width: 768px) {
-    margin-top: 2rem;
+    margin-top: 3rem;
+    width: 100%;
   }
 `;
 
@@ -122,9 +115,9 @@ export const Hero: React.FC = () => {
               <Button onClick={handleSaberMas}>Saber Más</Button>
             </ButtonGroup>
           </Content>
-          <ImageWrapper isDark={isDark}>
-            <img src="/images/nutroos-app-preview.jpg" alt="Nutroos App Preview" />
-          </ImageWrapper>
+          <ShowcaseWrapper>
+            <AppShowcase />
+          </ShowcaseWrapper>
         </ResponsiveLayout>
       </Container>
     </HeroContainer>
