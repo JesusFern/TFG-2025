@@ -62,7 +62,7 @@ const ForgotPasswordPage: React.FC = () => {
       } else {
         setError(data.message || 'Error al solicitar la recuperación de contraseña');
       }
-    } catch (err) {
+    } catch {
       setError('Error de conexión. Por favor intenta nuevamente.');
     } finally {
       setIsLoading(false);

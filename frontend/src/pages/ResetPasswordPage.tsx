@@ -54,7 +54,7 @@ const ResetPasswordPage: React.FC = () => {
       } else {
         setError('El enlace de recuperación es inválido o ha expirado');
       }
-    } catch (err) {
+    } catch {
       setError('Error al verificar el token');
     } finally {
       setIsVerifying(false);
@@ -104,7 +104,7 @@ const ResetPasswordPage: React.FC = () => {
       } else {
         setError(data.message || 'Error al restablecer la contraseña');
       }
-    } catch (err) {
+    } catch {
       setError('Error de conexión. Por favor intenta nuevamente.');
     } finally {
       setIsLoading(false);
