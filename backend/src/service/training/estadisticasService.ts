@@ -1247,7 +1247,7 @@ export const obtenerDetallesClienteService = async (trabajadorId: string, client
             fecha: sesion.fecha,
             completada: sesion.completada,
             ejercicios: sesion.ejercicios.map((ej: any) => ({
-              id: ej.ejercicio._id,
+              id: ej.ejercicio?._id || 'sin-id',
               nombre: ej.ejercicio?.nombre || 'Ejercicio',
               series: ej.series,
               repeticiones: ej.repeticiones,
@@ -1263,7 +1263,7 @@ export const obtenerDetallesClienteService = async (trabajadorId: string, client
           fecha: sesion.fecha,
           completada: sesion.completada,
           ejercicios: sesion.ejercicios.map((ej: any) => ({
-            id: ej.ejercicio._id,
+            id: ej.ejercicio?._id || 'sin-id',
             nombre: ej.ejercicio?.nombre || 'Ejercicio',
             series: ej.series,
             repeticiones: ej.repeticiones,
@@ -1274,11 +1274,11 @@ export const obtenerDetallesClienteService = async (trabajadorId: string, client
         registros: registros.map((registro: any) => ({
           id: registro._id,
           ejercicio: {
-            id: registro.ejercicio._id,
+            id: registro.ejercicio?._id || 'sin-id',
             nombre: registro.ejercicio?.nombre || 'Ejercicio'
           },
           sesion: {
-            id: registro.sesion._id,
+            id: registro.sesion?._id || 'sin-id',
             nombre: registro.sesion?.nombre || 'Sesión',
             tipoEntrenamiento: registro.sesion?.tipoEntrenamiento || 'Fuerza',
             fecha: registro.sesion?.fecha || new Date()

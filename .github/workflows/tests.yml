@@ -21,8 +21,14 @@ jobs:
             pattern: 'tests/(diets|alimentos|estadisticas)'
           - name: 'Entrenamiento'
             pattern: 'tests/training'
-          - name: 'Comunicación y Servicios'
-            pattern: 'tests/(chat|citas|google|video|suscriptionPlan|valoraciones|config|incidents)'
+          - name: 'Chat y Mensajería'
+            pattern: 'tests/chat'
+          - name: 'Citas y Calendario'
+            pattern: 'tests/citas'
+          - name: 'Servicios Externos'
+            pattern: 'tests/(google|video)'
+          - name: 'Gestión y Configuración'
+            pattern: 'tests/(suscriptionPlan|valoraciones|config|incidents)'
 
     services:
       mongo:

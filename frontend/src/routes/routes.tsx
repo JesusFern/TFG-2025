@@ -13,6 +13,8 @@ import WorkerClientsDashboard from '../pages/WorkerClientsDashboard';
 import Layout from '../components/layout/Layout';
 import { useAuth } from '../hooks/useAuth';
 import LoginPage from '../pages/LoginPage';
+import ForgotPasswordPage from '../pages/ForgotPasswordPage';
+import ResetPasswordPage from '../pages/ResetPasswordPage';
 import SuscriptionPlansPage from '../pages/SuscriptionPlansPage';
 import PaymentConfirmationPage from '../pages/ConfirmarPagoPage';
 import PaymentCancellationPage from '../pages/CancelarPagoPage';
@@ -129,6 +131,8 @@ const AppRoutes: React.FC = () => {
       <Route path="/profesionales" element={<ProfessionalsPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
+      <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <Route path="/reset-password" element={<ResetPasswordPage />} />
       <Route path="/planes-suscripcion" element={<SuscriptionPlansPage />} />
       <Route path="/payment/confirm" element={<PaymentConfirmationPage />} />
       <Route path="/payment/cancel" element={<PaymentCancellationPage />} />

@@ -11,7 +11,8 @@ import {
   SimpleGrid,
   ActionIcon,
   Tooltip,
-  ThemeIcon
+  ThemeIcon,
+  Alert
 } from '@mantine/core';
 import { 
   IconBarbell, 
@@ -22,7 +23,8 @@ import {
   IconCheck,
   IconEdit,
   IconEye,
-  IconX
+  IconX,
+  IconInfoCircle
 } from '@tabler/icons-react';
 import { useThemeDetection } from '../../hooks/useThemeDetection';
 import { Ejercicio, RegistroEjercicio } from '../../types/training';
@@ -46,6 +48,7 @@ interface EjercicioRegistroCardProps {
   sesionCompletada?: boolean;
   sesionMarcadaCompleta?: boolean;
   sesionFutura?: boolean;
+  planGratuito?: boolean;
 }
 
 const EjercicioRegistroCard: React.FC<EjercicioRegistroCardProps> = ({
@@ -60,7 +63,8 @@ const EjercicioRegistroCard: React.FC<EjercicioRegistroCardProps> = ({
   orden,
   sesionCompletada = false,
   sesionMarcadaCompleta = false,
-  sesionFutura = false
+  sesionFutura = false,
+  planGratuito = false
 }) => {
   const isDark = useThemeDetection();
   const isRegistrado = !!registro;
@@ -258,7 +262,19 @@ const EjercicioRegistroCard: React.FC<EjercicioRegistroCardProps> = ({
           </Button>
           
           <Group gap="xs">
-            {!sesionCompletada && !isRegistrado ? (
+            {planGratuito && !isRegistrado ? (
+              <Alert
+                icon={<IconInfoCircle size={16} />}
+                title="Plan Gratuito"
+                color="blue"
+                variant="light"
+                style={{ flex: 1 }}
+              >
+                <Text size="xs">
+                  El registro de ejercicios y seguimiento de progreso está disponible solo para usuarios con suscripción premium.
+                </Text>
+              </Alert>
+            ) : !sesionCompletada && !isRegistrado ? (
               <>
                 <Button
                   color="nutroos-green"

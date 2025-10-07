@@ -27,13 +27,17 @@ import {
   IconClock,
   IconTarget,
   IconAlertTriangle,
-  IconPhone,
   IconStar,
-  IconUsers
+  IconUsers,
+  IconLock
 } from '@tabler/icons-react';
 import { ProfileHeader } from '../molecules/ProfileHeader';
 import { ProfileStats } from '../molecules/ProfileStats';
 import { ProfileForm } from '../molecules/ProfileForm';
+import ModalEditHealthData from '../molecules/ModalEditHealthData';
+import ModalEditActivityData from '../molecules/ModalEditActivityData';
+import ModalEditPhoto from '../molecules/ModalEditPhoto';
+import ModalChangePassword from '../molecules/ModalChangePassword';
 import WorkerRatingsTab from '../molecules/WorkerRatingsTab';
 import WorkerClientsTab from '../molecules/WorkerClientsTab';
 import { UserProfile, DatosSaludYNutricion, DatosActividadFisica, ProfileFormData } from '../../types/profile';
@@ -60,8 +64,10 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   const theme = useMantineTheme();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [isHealthModalOpen, setIsHealthModalOpen] = useState(false);
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isPhotoUploading, setIsPhotoUploading] = useState(false);
 
   // Lógica para determinar qué pestañas mostrar
   const canViewHealthTab = () => {
@@ -114,6 +120,99 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
     setIsPhotoModalOpen(true);
   };
 
+  const handleEditHealthData = () => {
+    setIsHealthModalOpen(true);
+  };
+
+  const handleEditActivityData = () => {
+    setIsActivityModalOpen(true);
+  };
+
+  const handleChangePassword = () => {
+    setIsPasswordModalOpen(true);
+  };
+
+  const handleSaveHealthData = async (data: {
+    altura: number;
+    pesoActual: number;
+    objetivoPeso: number;
+    condicionesMedicas: string[];
+    restriccionesDieteticas: string[];
+    alergiasIntolerancias: string[];
+    medicacionActual: string[];
+    preferenciasAlimentarias: string[];
+    horariosComidas: Array<{ comida: string; hora: string; }>;
+  }) => {
+    try {
+      setIsLoading(true);
+      
+      // Importar el servicio dinámicamente para evitar problemas de importación circular
+      const { profileService } = await import('../../services/profileService');
+      
+      const response = await profileService.updateHealthData(data);
+      
+      setAlert({
+        type: 'success',
+        title: '¡Datos de salud actualizados!',
+        message: response.message || 'Tu información de salud se ha actualizado correctamente'
+      });
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : 'Error al guardar los datos de salud');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveActivityData = async (data: {
+    frecuenciaEjercicio: string;
+    tipoEjercicioPractica: string[];
+    objetivosPrincipales: string[];
+    preferenciasEjercicios: string[];
+    limitacionesFisicas: string[];
+  }) => {
+    try {
+      setIsLoading(true);
+      
+      // Importar el servicio dinámicamente para evitar problemas de importación circular
+      const { profileService } = await import('../../services/profileService');
+      
+      const response = await profileService.updateActivityData(data);
+      
+      setAlert({
+        type: 'success',
+        title: '¡Datos de actividad actualizados!',
+        message: response.message || 'Tu información de actividad física se ha actualizado correctamente'
+      });
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : 'Error al guardar los datos de actividad');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSavePassword = async (currentPassword: string, newPassword: string) => {
+    try {
+      setIsLoading(true);
+      
+      // Importar el servicio dinámicamente
+      const { profileService } = await import('../../services/profileService');
+      
+      const response = await profileService.changePassword(currentPassword, newPassword);
+      
+      setIsPasswordModalOpen(false);
+      
+      setAlert({
+        type: 'success',
+        title: '¡Contraseña actualizada!',
+        message: response.message || 'Tu contraseña se ha cambiado correctamente'
+      });
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : 'Error al cambiar la contraseña');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleProfileSubmit = async (formData: ProfileFormData) => {
     try {
       setIsLoading(true);
@@ -145,7 +244,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
 
   const handlePhotoSubmit = async (file: File) => {
     try {
-      setIsPhotoUploading(true);
       await onUpdatePhoto(file);
       
       setIsPhotoModalOpen(false);
@@ -166,9 +264,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
         title: 'Error al subir foto',
         message: error instanceof Error ? error.message : 'Error desconocido al subir la foto'
       });
-      
-    } finally {
-      setIsPhotoUploading(false);
+      throw error; // Re-lanzar el error para que el modal lo maneje
     }
   };
 
@@ -318,7 +414,7 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                         </Paper>
                       </Grid.Col>
 
-                      {/* Condiciones Médicas */}
+                      {/* Condiciones Médicas y Medicación */}
                       <Grid.Col span={{ base: 12, md: 6 }}>
                         <Paper p="lg" radius="md" withBorder style={{ height: '100%' }}>
                           <Stack gap="md">
@@ -329,25 +425,55 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                               </Text>
                             </Group>
                             
-                            {datosSalud.condicionesMedicas.length > 0 ? (
+                            <Stack gap="md">
                               <Stack gap="xs">
-                                {datosSalud.condicionesMedicas.map((condicion, index) => (
-                                  <Badge 
-                                    key={index} 
-                                    color="orange" 
-                                    variant="light" 
-                                    size="sm"
-                                    style={{ alignSelf: 'flex-start' }}
-                                  >
-                                    {condicion}
-                                  </Badge>
-                                ))}
+                                <Text size="sm" fw={500} c={theme.colors.gray[7]}>
+                                  Condiciones:
+                                </Text>
+                                {datosSalud.condicionesMedicas.length > 0 ? (
+                                  <Group gap="xs" wrap="wrap">
+                                    {datosSalud.condicionesMedicas.map((condicion, index) => (
+                                      <Badge 
+                                        key={index} 
+                                        color="orange" 
+                                        variant="light" 
+                                        size="sm"
+                                      >
+                                        {condicion}
+                                      </Badge>
+                                    ))}
+                                  </Group>
+                                ) : (
+                                  <Text size="sm" c={theme.colors.gray[5]}>
+                                    Ninguna condición médica
+                                  </Text>
+                                )}
                               </Stack>
-                            ) : (
-                              <Text c={theme.colors.gray[5]} size="sm">
-                                Ninguna condición médica registrada
-                              </Text>
-                            )}
+
+                              <Stack gap="xs">
+                                <Text size="sm" fw={500} c={theme.colors.gray[7]}>
+                                  Medicación actual:
+                                </Text>
+                                {datosSalud.medicacionActual && datosSalud.medicacionActual.length > 0 ? (
+                                  <Group gap="xs" wrap="wrap">
+                                    {datosSalud.medicacionActual.map((medicamento, index) => (
+                                      <Badge 
+                                        key={index} 
+                                        color="teal" 
+                                        variant="light" 
+                                        size="sm"
+                                      >
+                                        {medicamento}
+                                      </Badge>
+                                    ))}
+                                  </Group>
+                                ) : (
+                                  <Text size="sm" c={theme.colors.gray[5]}>
+                                    Ninguna medicación
+                                  </Text>
+                                )}
+                              </Stack>
+                            </Stack>
                           </Stack>
                         </Paper>
                       </Grid.Col>
@@ -580,29 +706,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                           </Paper>
                         </Grid.Col>
                       )}
-
-                      {/* Contacto de Emergencia */}
-                      <Grid.Col span={{ base: 12, md: 6 }}>
-                        <Paper p="lg" radius="md" withBorder style={{ height: '100%' }}>
-                          <Stack gap="md">
-                            <Group gap="xs">
-                              <IconPhone size={20} color={theme.colors.red[6]} />
-                              <Text size="lg" fw={600} c={theme.colors.gray[8]}>
-                                Contacto de Emergencia
-                              </Text>
-                            </Group>
-                            
-                            <Stack gap="xs">
-                              <Text size="sm" c={theme.colors.gray[6]}>
-                                <strong>Número de contacto:</strong>
-                              </Text>
-                              <Text size="sm" fw={500} c={theme.colors.gray[8]}>
-                                {datosActividad.numeroContactoEmergencia}
-                              </Text>
-                            </Stack>
-                          </Stack>
-                        </Paper>
-                      </Grid.Col>
                     </Grid>
                   </Stack>
                 ) : (
@@ -650,6 +753,41 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                     >
                       Cambiar Foto
                     </Button>
+                    
+                    {/* Botón de cambiar contraseña solo para usuarios */}
+                    {profile.role === 'user' && (
+                      <Button
+                        variant="light"
+                        color="violet"
+                        leftSection={<IconLock size={16} />}
+                        onClick={handleChangePassword}
+                      >
+                        Cambiar Contraseña
+                      </Button>
+                    )}
+                    
+                    {/* Botones solo para usuarios */}
+                    {profile.role === 'user' && (
+                      <>
+                        <Button
+                          variant="light"
+                          color="red"
+                          leftSection={<IconHeart size={16} />}
+                          onClick={handleEditHealthData}
+                        >
+                          Editar Datos de Salud
+                        </Button>
+                        
+                        <Button
+                          variant="light"
+                          color="orange"
+                          leftSection={<IconActivity size={16} />}
+                          onClick={handleEditActivityData}
+                        >
+                          Editar Datos de Actividad
+                        </Button>
+                      </>
+                    )}
                   </Group>
                   
                   <Text size="sm" c="dimmed">
@@ -692,33 +830,36 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
       </Modal>
 
       {/* Modal de cambio de foto */}
-      <Modal opened={isPhotoModalOpen} onClose={() => setIsPhotoModalOpen(false)} title="Cambiar Foto de Perfil" size="sm" centered>
-        <Stack gap="lg">
-          <Alert icon={<IconAlertCircle size={16} />} title="Información" color="blue" variant="light">
-            <Text size="sm">
-              • Formatos: JPG, PNG, GIF<br/>
-              • Tamaño máximo: 10MB<br/>
-              • Se recomienda usar imágenes cuadradas
-            </Text>
-          </Alert>
-          <input type="file" accept="image/*" disabled={isPhotoUploading} onChange={(e) => {
-            const file = e.target.files?.[0];
-            if (file) {
-              handlePhotoSubmit(file);
-            }
-          }} style={{ width: '100%' }} />
-          {isPhotoUploading && (
-            <Alert icon={<IconAlertCircle size={16} />} title="Procesando imagen" color="blue" variant="light">
-              <Text size="sm">Comprimiendo y subiendo la imagen... Por favor espera.</Text>
-            </Alert>
-          )}
-          <Group justify="flex-end">
-            <Button variant="light" color="gray" onClick={() => setIsPhotoModalOpen(false)} disabled={isPhotoUploading}>
-              Cancelar
-            </Button>
-          </Group>
-        </Stack>
-      </Modal>
+      <ModalEditPhoto
+        opened={isPhotoModalOpen}
+        onClose={() => setIsPhotoModalOpen(false)}
+        onSave={handlePhotoSubmit}
+        currentPhotoUrl={profile.profilePicture}
+        userName={profile.fullName}
+      />
+
+      {/* Modal de edición de datos de salud */}
+      <ModalEditHealthData
+        opened={isHealthModalOpen}
+        onClose={() => setIsHealthModalOpen(false)}
+        initialData={datosSalud}
+        onSave={handleSaveHealthData}
+      />
+
+      {/* Modal de edición de datos de actividad */}
+      <ModalEditActivityData
+        opened={isActivityModalOpen}
+        onClose={() => setIsActivityModalOpen(false)}
+        initialData={datosActividad}
+        onSave={handleSaveActivityData}
+      />
+
+      {/* Modal de cambio de contraseña */}
+      <ModalChangePassword
+        opened={isPasswordModalOpen}
+        onClose={() => setIsPasswordModalOpen(false)}
+        onSave={handleSavePassword}
+      />
     </Container>
   );
 };

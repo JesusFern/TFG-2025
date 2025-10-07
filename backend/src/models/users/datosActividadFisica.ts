@@ -7,7 +7,6 @@ interface DatosActividadFisicaDocument extends mongoose.Document {
   objetivosPrincipales: string[];
   preferenciasEjercicios: string[];
   limitacionesFisicas: string[];
-  numeroContactoEmergencia: string;
 }
 
 const DatosActividadFisicaSchema = new mongoose.Schema({
@@ -44,12 +43,7 @@ const DatosActividadFisicaSchema = new mongoose.Schema({
   limitacionesFisicas: [{
     type: String,
     required: false
-  }],
-  
-  numeroContactoEmergencia: {
-    type: String,
-    required: false
-  }
+  }]
 }, { timestamps: true });
 
 // Validación para asegurar que solo usuarios con rol 'user' tienen datos de actividad física

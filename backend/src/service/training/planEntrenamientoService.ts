@@ -249,8 +249,8 @@ export async function actualizarPlanEntrenamientoService(
     throw new Error('Plan de entrenamiento no encontrado');
   }
 
-  // Verificar que el usuario es el entrenador del plan
-  if (plan.entrenador.toString() !== entrenadorId) {
+  // Verificar que el usuario es el entrenador del plan (solo si el plan tiene entrenador)
+  if (plan.entrenador && plan.entrenador.toString() !== entrenadorId) {
     throw new Error('No tienes permisos para editar este plan');
   }
 
@@ -307,8 +307,8 @@ export async function eliminarPlanEntrenamientoService(planId: string, entrenado
     throw new Error('Plan de entrenamiento no encontrado');
   }
 
-  // Verificar que el usuario es el entrenador del plan
-  if (plan.entrenador.toString() !== entrenadorId) {
+  // Verificar que el usuario es el entrenador del plan (solo si el plan tiene entrenador)
+  if (plan.entrenador && plan.entrenador.toString() !== entrenadorId) {
     throw new Error('No tienes permisos para eliminar este plan');
   }
 
@@ -325,8 +325,8 @@ export async function asignarClienteService(planId: string, entrenadorId: string
     throw new Error('Plan de entrenamiento no encontrado');
   }
 
-  // Verificar que el usuario es el entrenador del plan
-  if (plan.entrenador.toString() !== entrenadorId) {
+  // Verificar que el usuario es el entrenador del plan (solo si el plan tiene entrenador)
+  if (plan.entrenador && plan.entrenador.toString() !== entrenadorId) {
     throw new Error('No tienes permisos para modificar este plan');
   }
 
@@ -353,8 +353,8 @@ export async function removerClienteService(planId: string, entrenadorId: string
     throw new Error('Plan de entrenamiento no encontrado');
   }
 
-  // Verificar que el usuario es el entrenador del plan
-  if (plan.entrenador.toString() !== entrenadorId) {
+  // Verificar que el usuario es el entrenador del plan (solo si el plan tiene entrenador)
+  if (plan.entrenador && plan.entrenador.toString() !== entrenadorId) {
     throw new Error('No tienes permisos para modificar este plan');
   }
 
@@ -489,7 +489,7 @@ export async function generarPlanDesdePlantillaService({
   publico = false,
   nivelDificultad = 'Intermedio'
 }: {
-  entrenadorId: string;
+  entrenadorId: string | null;
   objetivo: string;
   duracionSemanas: number;
   sesionesPorSemana: number;
@@ -501,10 +501,12 @@ export async function generarPlanDesdePlantillaService({
   publico?: boolean;
   nivelDificultad?: 'Principiante' | 'Intermedio' | 'Avanzado';
 }) {
-  // Validar que el entrenador existe
-  const entrenador = await User.findById(entrenadorId);
-  if (!entrenador || entrenador.role !== 'worker') {
-    throw new Error('Entrenador no encontrado o no válido');
+  // Validar que el entrenador existe (solo si no es null)
+  if (entrenadorId) {
+    const entrenador = await User.findById(entrenadorId);
+    if (!entrenador || entrenador.role !== 'worker') {
+      throw new Error('Entrenador no encontrado o no válido');
+    }
   }
 
   // Validar que todos los clientes existen
@@ -545,8 +547,19 @@ export async function generarPlanDesdePlantillaService({
 
   // Crear el plan de entrenamiento
   const duracionDias = duracionSemanas * 7;
-  const plan = new PlanEntrenamiento({
-    entrenador: entrenadorId,
+  const planData: {
+    nombre: string;
+    descripcion?: string;
+    objetivo: string;
+    duracionDias: number;
+    sesionesPorSemana: number;
+    fechaInicio: Date;
+    diasSemana: number[];
+    clientes: string[];
+    publico: boolean;
+    draftMode: boolean;
+    entrenador?: string;
+  } = {
     nombre,
     descripcion: descripcion || `Plan de ${objetivo.toLowerCase()} - ${sesionesPorSemana} sesiones/semana`,
     objetivo,
@@ -557,7 +570,14 @@ export async function generarPlanDesdePlantillaService({
     clientes,
     publico,
     draftMode: true
-  });
+  };
+
+  // Solo agregar entrenador si no es null
+  if (entrenadorId) {
+    planData.entrenador = entrenadorId;
+  }
+
+  const plan = new PlanEntrenamiento(planData);
 
   await plan.save();
 
@@ -598,16 +618,45 @@ export async function generarPlanDesdePlantillaService({
         opcionesProgresion: ejercicio.opcionesProgresion
       }));
 
-      const sesion = new Sesion({
-        entrenador: entrenadorId,
+      const sesionData: {
+        cliente: string;
+        plan: string;
+        fecha: string;
+        tipoEntrenamiento: string;
+        duracion: number;
+        ejercicios: Array<{
+          ejercicio: string;
+          orden: number;
+          series: number;
+          repeticiones: number;
+          peso: number;
+          tiempoDescanso: number;
+          nivelIntensidad: string;
+          ejerciciosAlternativos: string[];
+          opcionesProgresion: {
+            aumentarPeso: boolean;
+            masRepeticiones: boolean;
+            mayorIntensidad: boolean;
+          };
+        }>;
+        completada: boolean;
+        entrenador?: string;
+      } = {
         cliente: clienteId,
-        plan: plan._id,
+        plan: plan._id.toString(),
         fecha: fechaSesion.toISOString(),
         tipoEntrenamiento: sesionTemplate.tipoEntrenamiento,
         duracion: sesionTemplate.duracion,
         ejercicios: ejerciciosSesion,
         completada: false
-      });
+      };
+
+      // Solo agregar entrenador si no es null
+      if (entrenadorId) {
+        sesionData.entrenador = entrenadorId;
+      }
+
+      const sesion = new Sesion(sesionData);
 
       await sesion.save();
       sesionesCreadas.push(sesion);
@@ -637,8 +686,8 @@ export async function publicarPlanEntrenamientoService(planId: string, entrenado
     throw new Error('Plan de entrenamiento no encontrado');
   }
 
-  // Verificar que el entrenador es el creador del plan
-  if (plan.entrenador.toString() !== entrenadorId) {
+  // Verificar que el entrenador es el creador del plan (solo si el plan tiene entrenador)
+  if (plan.entrenador && plan.entrenador.toString() !== entrenadorId) {
     throw new Error('No tienes permisos para publicar este plan');
   }
 

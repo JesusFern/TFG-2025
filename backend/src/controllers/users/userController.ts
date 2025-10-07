@@ -1,3 +1,4 @@
+import logger from '../../utils/logger';
 import { Request, Response } from 'express';
 import { Types } from 'mongoose';
 import User from '../../models/users/user';
@@ -7,6 +8,7 @@ import { MongoError, AuthenticatedRequest } from '../../types';
 import { PasswordService } from '../../utils/passwordService';
 import { TokenService } from '../../utils/tokenService';
 import { UserService } from '../../service/users/userService';
+import { EmailService } from '../../utils/emailService';
 
 interface ValidationRequest extends Request {
   validationErrors?: Array<{
@@ -118,8 +120,7 @@ export const registerUser = async (req: ValidationRequest, res: Response): Promi
         tipoEjercicioPractica: toStringArray(activity.tipoEjercicio),
         objetivosPrincipales: [String(activity.objetivo)],
         preferenciasEjercicios: toStringArray(activity.preferenciasEjercicios ?? activity.otrosEjercicios),
-        limitacionesFisicas: [],
-        numeroContactoEmergencia: undefined
+        limitacionesFisicas: []
       };
 
       // Crear instancia del modelo y asignar valores de forma explícita
@@ -130,7 +131,6 @@ export const registerUser = async (req: ValidationRequest, res: Response): Promi
       datosActividad.objetivosPrincipales = datosActividadSanitizados.objetivosPrincipales;
       datosActividad.preferenciasEjercicios = datosActividadSanitizados.preferenciasEjercicios;
       datosActividad.limitacionesFisicas = datosActividadSanitizados.limitacionesFisicas;
-      datosActividad.numeroContactoEmergencia = datosActividadSanitizados.numeroContactoEmergencia || '';
       
       await datosActividad.save();
       datosActividadId = datosActividad._id as Types.ObjectId;
@@ -684,5 +684,264 @@ export const getUserById = async (req: AuthenticatedRequest, res: Response): Pro
         error: err.message 
       });
     }
+  }
+};
+
+// Actualizar datos de salud y nutrición
+export const updateHealthData = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: 'No autenticado' });
+      return;
+    }
+
+    const {
+      altura,
+      pesoActual,
+      objetivoPeso,
+      condicionesMedicas,
+      restriccionesDieteticas,
+      alergiasIntolerancias,
+      medicacionActual,
+      preferenciasAlimentarias,
+      horariosComidas
+    } = req.body;
+
+    // Buscar datos de salud existentes
+    let datosSalud = await DatosSaludYNutricion.findOne({ userId });
+
+    if (datosSalud) {
+      // Actualizar datos existentes
+      datosSalud.altura = altura;
+      datosSalud.pesoActual = pesoActual;
+      datosSalud.objetivoPeso = objetivoPeso;
+      datosSalud.condicionesMedicas = condicionesMedicas || [];
+      datosSalud.restriccionesDieteticas = restriccionesDieteticas || [];
+      datosSalud.alergiasIntolerancias = alergiasIntolerancias || [];
+      datosSalud.medicacionActual = medicacionActual || [];
+      datosSalud.preferenciasAlimentarias = preferenciasAlimentarias || [];
+      datosSalud.horariosComidas = horariosComidas || [];
+      
+      await datosSalud.save();
+    } else {
+      // Crear nuevos datos de salud
+      datosSalud = new DatosSaludYNutricion({
+        userId,
+        altura,
+        pesoActual,
+        objetivoPeso,
+        condicionesMedicas: condicionesMedicas || [],
+        restriccionesDieteticas: restriccionesDieteticas || [],
+        alergiasIntolerancias: alergiasIntolerancias || [],
+        medicacionActual: medicacionActual || [],
+        preferenciasAlimentarias: preferenciasAlimentarias || [],
+        horariosComidas: horariosComidas || []
+      });
+      
+      await datosSalud.save();
+
+      // Actualizar referencia en el usuario
+      await User.findByIdAndUpdate(userId, { 
+        datosSaludYNutricion: datosSalud._id 
+      });
+    }
+
+    res.json({
+      message: 'Datos de salud actualizados correctamente',
+      datosSalud
+    });
+  } catch (error) {
+    logger.error('Error al actualizar datos de salud', {
+      error: error instanceof Error ? error.message : String(error),
+      userId: req.user?.id
+    });
+    res.status(500).json({
+      message: 'Error al actualizar datos de salud',
+      error: error instanceof Error ? error.message : error
+    });
+  }
+};
+
+// Actualizar datos de actividad física
+export const updateActivityData = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: 'No autenticado' });
+      return;
+    }
+
+    const {
+      frecuenciaEjercicio,
+      tipoEjercicioPractica,
+      objetivosPrincipales,
+      preferenciasEjercicios,
+      limitacionesFisicas
+    } = req.body;
+
+    // Buscar datos de actividad existentes
+    let datosActividad = await DatosActividadFisica.findOne({ userId });
+
+    if (datosActividad) {
+      // Actualizar datos existentes
+      datosActividad.frecuenciaEjercicio = frecuenciaEjercicio;
+      datosActividad.tipoEjercicioPractica = tipoEjercicioPractica || [];
+      datosActividad.objetivosPrincipales = objetivosPrincipales || [];
+      datosActividad.preferenciasEjercicios = preferenciasEjercicios || [];
+      datosActividad.limitacionesFisicas = limitacionesFisicas || [];
+      
+      await datosActividad.save();
+    } else {
+      // Crear nuevos datos de actividad
+      datosActividad = new DatosActividadFisica({
+        userId,
+        frecuenciaEjercicio,
+        tipoEjercicioPractica: tipoEjercicioPractica || [],
+        objetivosPrincipales: objetivosPrincipales || [],
+        preferenciasEjercicios: preferenciasEjercicios || [],
+        limitacionesFisicas: limitacionesFisicas || []
+      });
+      
+      await datosActividad.save();
+
+      // Actualizar referencia en el usuario
+      await User.findByIdAndUpdate(userId, { 
+        datosActividadFisica: datosActividad._id 
+      });
+    }
+
+    res.json({
+      message: 'Datos de actividad física actualizados correctamente',
+      datosActividad
+    });
+  } catch (error) {
+    logger.error('Error al actualizar datos de actividad', {
+      error: error instanceof Error ? error.message : String(error),
+      userId: req.user?.id
+    });
+    res.status(500).json({
+      message: 'Error al actualizar datos de actividad',
+      error: error instanceof Error ? error.message : error
+    });
+  }
+};
+
+// Solicitar recuperación de contraseña
+export const requestPasswordReset = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      res.status(400).json({ message: 'El email es requerido' });
+      return;
+    }
+
+    // Buscar usuario por email
+    const user = await User.findOne({ email: email.toLowerCase() });
+    
+    // Por seguridad, siempre devolvemos el mismo mensaje, exista o no el usuario
+    // Esto evita que alguien pueda verificar qué emails están registrados
+    if (!user) {
+      logger.info('Intento de recuperación de contraseña para email no registrado', { email });
+      res.status(200).json({ 
+        message: 'Si el email existe en nuestro sistema, recibirás un correo con las instrucciones para recuperar tu contraseña' 
+      });
+      return;
+    }
+
+    // Generar token de recuperación
+    const token = await EmailService.createPasswordResetToken(user._id as Types.ObjectId);
+
+    // Enviar email
+    await EmailService.sendPasswordResetEmail(user.email, token);
+
+    logger.info('Email de recuperación de contraseña enviado', { 
+      userId: user._id, 
+      email: user.email 
+    });
+
+    res.status(200).json({ 
+      message: 'Si el email existe en nuestro sistema, recibirás un correo con las instrucciones para recuperar tu contraseña' 
+    });
+  } catch (error: unknown) {
+    const err = error as Error;
+    logger.error('Error al solicitar recuperación de contraseña', { error: err.message });
+    res.status(500).json({ message: 'Error al procesar la solicitud' });
+  }
+};
+
+// Verificar token de recuperación
+export const verifyResetToken = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token } = req.params;
+
+    if (!token) {
+      res.status(400).json({ message: 'Token es requerido' });
+      return;
+    }
+
+    const userId = await EmailService.verifyResetToken(token);
+
+    if (!userId) {
+      res.status(400).json({ message: 'Token inválido o expirado' });
+      return;
+    }
+
+    res.status(200).json({ 
+      message: 'Token válido',
+      valid: true 
+    });
+  } catch (error: unknown) {
+    const err = error as Error;
+    logger.error('Error al verificar token', { error: err.message });
+    res.status(500).json({ message: 'Error al verificar el token' });
+  }
+};
+
+// Restablecer contraseña con token
+export const resetPassword = async (req: Request, res: Response): Promise<void> => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      res.status(400).json({ message: 'Token y nueva contraseña son requeridos' });
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      res.status(400).json({ message: 'La contraseña debe tener al menos 6 caracteres' });
+      return;
+    }
+
+    // Verificar token
+    const userId = await EmailService.verifyResetToken(token);
+
+    if (!userId) {
+      res.status(400).json({ message: 'Token inválido o expirado' });
+      return;
+    }
+
+    // Buscar usuario
+    const user = await User.findById(userId);
+    if (!user) {
+      res.status(404).json({ message: 'Usuario no encontrado' });
+      return;
+    }
+
+    // Cambiar contraseña
+    user.password = newPassword;
+    await user.save();
+
+    // Eliminar token usado
+    await EmailService.deleteResetToken(token);
+
+    logger.info('Contraseña restablecida exitosamente', { userId: user._id });
+
+    res.status(200).json({ message: 'Contraseña restablecida exitosamente' });
+  } catch (error: unknown) {
+    const err = error as Error;
+    logger.error('Error al restablecer contraseña', { error: err.message });
+    res.status(500).json({ message: 'Error al restablecer la contraseña' });
   }
 };

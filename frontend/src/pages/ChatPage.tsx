@@ -10,6 +10,7 @@ import {
   Loader,
   Center
 } from '@mantine/core';
+import { useLocation } from 'react-router-dom';
 import { ChatSidebar } from '../components/organisms/ChatSidebar';
 import { ChatMain } from '../components/organisms/ChatMain';
 import { VideoCallModal } from '../components/organisms/VideoCallModal';
@@ -23,6 +24,7 @@ import { chatService } from '../services/chatService';
 
 export const ChatPage: React.FC = () => {
   const { user } = useAuth();
+  const location = useLocation();
   const {
     conversaciones,
     conversacionActiva,
@@ -84,6 +86,28 @@ export const ChatPage: React.FC = () => {
 
   // Obtener la conversación activa
   const conversacionActivaId = conversacionActiva?._id || null;
+
+  // Manejar parámetros de URL para abrir conversación específica
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const conversacionId = searchParams.get('conversacion');
+    const mensajeId = searchParams.get('mensaje');
+    
+    if (conversacionId && conversaciones.length > 0) {
+      // Buscar la conversación en la lista
+      const conversacion = conversaciones.find(c => c._id === conversacionId);
+      if (conversacion && conversacionActiva?._id !== conversacionId) {
+        console.log('[ChatPage] Abriendo conversación desde URL:', conversacionId);
+        seleccionarConversacion(conversacionId);
+      }
+    }
+    
+    // Limpiar parámetros de URL después de procesarlos
+    if (conversacionId || mensajeId) {
+      const newUrl = window.location.pathname;
+      window.history.replaceState({}, '', newUrl);
+    }
+  }, [location.search, conversaciones, conversacionActiva, seleccionarConversacion]);
 
   const cargarUsuarios = useCallback(async () => {
     try {

@@ -33,7 +33,11 @@ const SesionSchema = new mongoose.Schema({
   ejercicios: [EjercicioSesionSchema],
   completada: { type: Boolean, default: false },
   notas: { type: String },
-  entrenador: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  entrenador: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User', 
+    required: false // Cambiado a false para permitir sesiones sin entrenador
+  },
   cliente: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }
 }, {
   timestamps: true

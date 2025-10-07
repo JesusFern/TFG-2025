@@ -32,8 +32,8 @@ export const apiRequest = async (endpoint: string, options: RequestInit = {}) =>
   }
 
   const defaultOptions: RequestInit = {
-    headers,
     ...options,
+    headers,
   };
 
   const response = await fetch(url, defaultOptions);

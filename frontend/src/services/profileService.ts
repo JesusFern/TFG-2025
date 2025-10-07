@@ -61,23 +61,6 @@ export const profileService = {
     return data;
   },
 
-  // Cambiar contraseña
-  async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<{ message: string }> {
-    const response = await apiRequest(`/users/${userId}/change-password`, {
-      method: 'PUT',
-      body: JSON.stringify({
-        currentPassword,
-        newPassword,
-      }),
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-    
-    const data = await response.json();
-    return data;
-  },
-
   // Eliminar cuenta
   async deleteAccount(userId: string, password: string): Promise<{ message: string }> {
     const response = await apiRequest(`/users/${userId}`, {
@@ -90,5 +73,66 @@ export const profileService = {
     
     const data = await response.json();
     return data;
+  },
+
+  // Actualizar datos de salud
+  async updateHealthData(data: {
+    altura: number;
+    pesoActual: number;
+    objetivoPeso: number;
+    condicionesMedicas: string[];
+    restriccionesDieteticas: string[];
+    alergiasIntolerancias: string[];
+    medicacionActual: string[];
+    preferenciasAlimentarias: string[];
+    horariosComidas: Array<{ comida: string; hora: string; }>;
+  }): Promise<{ message: string; datosSalud: DatosSaludYNutricion }> {
+    const response = await apiRequest('/api/users/me/health-data', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al actualizar datos de salud');
+    }
+    
+    return await response.json();
+  },
+
+  // Actualizar datos de actividad física
+  async updateActivityData(data: {
+    frecuenciaEjercicio: string;
+    tipoEjercicioPractica: string[];
+    objetivosPrincipales: string[];
+    preferenciasEjercicios: string[];
+    limitacionesFisicas: string[];
+  }): Promise<{ message: string; datosActividad: DatosActividadFisica }> {
+    const response = await apiRequest('/api/users/me/activity-data', {
+      method: 'PUT',
+      body: JSON.stringify(data),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al actualizar datos de actividad');
+    }
+    
+    return await response.json();
+  },
+
+  // Cambiar contraseña
+  async changePassword(currentPassword: string, newPassword: string): Promise<{ message: string }> {
+    const response = await apiRequest('/api/users/me/password', {
+      method: 'PATCH',
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al cambiar la contraseña');
+    }
+    
+    return await response.json();
   }
 };

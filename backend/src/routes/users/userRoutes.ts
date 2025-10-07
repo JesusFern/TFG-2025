@@ -14,7 +14,12 @@ import {
   getClientsAssignedToWorker,
   getMyClientsAssigned,
   checkUserSubscriptionStatus,
-  getUserById
+  getUserById,
+  updateHealthData,
+  updateActivityData,
+  requestPasswordReset,
+  verifyResetToken,
+  resetPassword
 } from '../../controllers/users/userController';
 import { WorkerController } from '../../controllers/workers/workerController';
 import { authenticateToken, authorizeUserOrAdmin, authorizeUserWithValidSubscription } from '../../middlewares/authMiddleware';
@@ -50,12 +55,24 @@ router.post('/validate-step/4', step4Validator, validateRequest, (req: Request, 
 });
 router.post('/login', loginValidator, validateRequest, loginUser);
 
+// Rutas de recuperación de contraseña (públicas, no disponibles en tests)
+if (process.env.NODE_ENV !== 'test') {
+  router.post('/forgot-password', requestPasswordReset);
+  router.get('/verify-reset-token/:token', verifyResetToken);
+  router.post('/reset-password', resetPassword);
+}
 
 // Rutas protegidas para el usuario autenticado
 router.get('/me', authenticateToken, getMyProfile);
 router.put('/me', authenticateToken, updateMyProfile);
 router.patch('/me/password', authenticateToken, changeMyPassword);
 router.patch('/me/photo', authenticateToken, uploadProfilePhoto);
+
+// Rutas para actualizar datos específicos (no disponibles en tests)
+if (process.env.NODE_ENV !== 'test') {
+  router.put('/me/health-data', authenticateToken, updateHealthData);
+  router.put('/me/activity-data', authenticateToken, updateActivityData);
+}
 
 // Rutas para gestión de trabajadores (disponibles en desarrollo y producción, no en tests)
 if (process.env.NODE_ENV !== 'test') {

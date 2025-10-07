@@ -138,6 +138,12 @@ export default function AuthenticationImage() {
             onKeyDown={handleKeyDown}
           />
 
+          <Text size="sm" ta="right">
+            <Anchor size="sm" onClick={() => navigate('/forgot-password')} style={{ cursor: 'pointer' }}>
+              ¿Olvidaste tu contraseña?
+            </Anchor>
+          </Text>
+
           <Button
             fullWidth
             mt="xl"
