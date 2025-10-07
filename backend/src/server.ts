@@ -58,20 +58,16 @@ mongoose
     process.exit(1);
   });
 
-// Servir archivos estáticos con ruta absoluta para compatibilidad con Docker
-const uploadsPath = process.env.UPLOADS_PATH || path.join(__dirname, '..', 'uploads');
-console.log('Sirviendo archivos estáticos desde:', uploadsPath);
-
-app.use('/uploads', express.static(uploadsPath, {
-  setHeaders: (res, filePath) => {
+app.use('/uploads', express.static('uploads', {
+  setHeaders: (res, path) => {
     // Configurar headers para archivos de video
-    if (filePath.endsWith('.mp4') || filePath.endsWith('.webm') || filePath.endsWith('.ogg') || filePath.endsWith('.avi') || filePath.endsWith('.mov')) {
+    if (path.endsWith('.mp4') || path.endsWith('.webm') || path.endsWith('.ogg') || path.endsWith('.avi') || path.endsWith('.mov')) {
       res.setHeader('Content-Type', 'video/mp4');
       res.setHeader('Accept-Ranges', 'bytes');
       res.setHeader('Cache-Control', 'public, max-age=31536000');
     }
     // Configurar headers para archivos de imagen
-    else if (filePath.endsWith('.jpg') || filePath.endsWith('.jpeg') || filePath.endsWith('.png') || filePath.endsWith('.gif') || filePath.endsWith('.webp')) {
+    else if (path.endsWith('.jpg') || path.endsWith('.jpeg') || path.endsWith('.png') || path.endsWith('.gif') || path.endsWith('.webp')) {
       res.setHeader('Content-Type', 'image/jpeg');
       res.setHeader('Cache-Control', 'public, max-age=31536000');
     }
