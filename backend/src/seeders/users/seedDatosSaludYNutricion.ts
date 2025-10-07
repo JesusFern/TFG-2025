@@ -20,7 +20,7 @@ export async function seedDatosSaludYNutricion() {
     const datosSaludUser1 = new DatosSaludYNutricion({
       userId: user1._id,
       altura: 175, // cm
-      pesoActual: 80, // kg
+      pesoActual: 88, // kg
       objetivoPeso: 75, // kg
       condicionesMedicas: ['Ninguna'],
       restriccionesDieteticas: ['Sin gluten'],

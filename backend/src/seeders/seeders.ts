@@ -3,6 +3,7 @@ import { seedWorkers } from './users/seedWorkers';
 import { seedDatosSaludYNutricion } from './users/seedDatosSaludYNutricion';
 import { seedDatosActividadFisica } from './users/seedDatosActividadFisica';
 import { seedUserSuscriptions } from './users/seedUserSuscriptions';
+import { seedUserTracking } from './users/seedUserTracking';
 import { seedSuscriptionPlans } from './suscriptionPlans/seedSuscriptionPlans';
 import { seedIngredientes } from './diets/seedIngredientes';
 import { seedRecetas } from './diets/seedRecetas';
@@ -41,6 +42,9 @@ async function runSeed() {
 
     // Asignar suscripciones a usuarios
     await seedUserSuscriptions();
+
+    // Crear registros de seguimiento para usuarios
+    await seedUserTracking();
 
     // Cargar ingredientes (requiere JSON generado previamente)
     await seedIngredientes();
