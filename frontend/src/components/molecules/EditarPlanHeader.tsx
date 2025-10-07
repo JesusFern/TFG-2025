@@ -9,7 +9,8 @@ import {
 import { 
   IconCheck,
   IconAlertCircle,
-  IconArrowLeft
+  IconArrowLeft,
+  IconTrash
 } from '@tabler/icons-react';
 import { useNavigation } from '../../hooks/useNavigation';
 import type { PlanEntrenamiento } from '../../types/training';
@@ -18,12 +19,16 @@ interface EditarPlanHeaderProps {
   plan: PlanEntrenamiento;
   publishLoading: boolean;
   onPublish: () => void;
+  onDelete?: () => void;
+  deleting?: boolean;
 }
 
 const EditarPlanHeader: React.FC<EditarPlanHeaderProps> = ({ 
   plan, 
   publishLoading,
-  onPublish
+  onPublish,
+  onDelete,
+  deleting = false
 }) => {
 
   const { navigateToClientPlans } = useNavigation();
@@ -53,17 +58,31 @@ const EditarPlanHeader: React.FC<EditarPlanHeaderProps> = ({
           >
             Volver a planes del cliente
           </Button>
-          {plan.draftMode && (
-            <Button
-              color="green"
-              leftSection={<IconCheck size={18} />}
-              onClick={onPublish}
-              loading={publishLoading}
-              size="md"
-            >
-              Publicar entrenamiento
-            </Button>
-          )}
+          {plan.draftMode ? (
+            <>
+              <Button
+                color="green"
+                leftSection={<IconCheck size={18} />}
+                onClick={onPublish}
+                loading={publishLoading}
+                size="md"
+              >
+                Publicar entrenamiento
+              </Button>
+              {onDelete && (
+                <Button
+                  color="red"
+                  variant="light"
+                  leftSection={<IconTrash size={18} />}
+                  onClick={onDelete}
+                  disabled={deleting}
+                  size="md"
+                >
+                  Eliminar plan
+                </Button>
+              )}
+            </>
+          ) : null}
         </Group>
       </Group>
       

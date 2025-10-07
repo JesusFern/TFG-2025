@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   ActionIcon,
   Badge,
@@ -55,12 +55,19 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
     markAllAsRead();
   };
 
+  // Handler para marcar como leída - memoizado para evitar recreaciones
+  const handleMarkAsRead = useCallback((notifId: string) => {
+    markAsRead(notifId);
+  }, [markAsRead]);
+
+  // Handler para eliminar - memoizado para evitar recreaciones
+  const handleDelete = useCallback((notifId: string) => {
+    deleteNotification(notifId);
+  }, [deleteNotification]);
+
   // Función para manejar la acción de redirección
   const handleNotificationAction = (accion: { tipo: 'navegar' | 'abrir_mensaje' | 'abrir_conversacion' | 'abrir_plan' | 'abrir_dieta' | 'abrir_sesion' | 'abrir_dia_dieta'; url?: string; metadata?: Record<string, string | number | boolean> } | undefined) => {
-    console.log('NotificationBell: handleNotificationAction called with:', accion);
-    
     if (!accion) {
-      console.log('NotificationBell: No action provided');
       return;
     }
 
@@ -69,7 +76,6 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
 
     switch (accion.tipo) {
       case 'navegar':
-        console.log('NotificationBell: Navigating to:', accion.url);
         if (accion.url) {
           navigate(accion.url);
         }
@@ -219,19 +225,12 @@ export const NotificationBell: React.FC<NotificationBellProps> = ({
                   // Convertir el tipo Notification a Notificacion
                   const notificacionConvertida = convertNotificationToStandard(notificacion);
                   
-                  // Log para debug
-                  console.log('NotificationBell: Rendering notification:', {
-                    id: notificacion._id,
-                    titulo: notificacion.titulo,
-                    accion: notificacion.accion
-                  });
-                  
                   return (
                     <NotificationItem
                       key={notificacion._id || `notification-${index}`}
                       notificacion={notificacionConvertida}
-                      onMarkAsRead={() => markAsRead(notificacion._id)}
-                      onDelete={() => deleteNotification(notificacion._id)}
+                      onMarkAsRead={() => handleMarkAsRead(notificacion._id)}
+                      onDelete={() => handleDelete(notificacion._id)}
                       onAction={handleNotificationAction}
                       compact
                     />

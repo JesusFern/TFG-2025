@@ -67,9 +67,9 @@ export const Features: React.FC = () => {
       description: 'Comunícate directamente con entrenadores y nutricionistas mediante videollamadas y mensajería.'
     },
     {
-      icon: '🏆',
-      title: 'Sistema de Gamificación',
-      description: 'Mantente motivado con retos, recompensas y competiciones amistosas que hacen más divertido el proceso.'
+      icon: '💬',
+      title: 'Chat y Mensajería en Tiempo Real',
+      description: 'Comunícate instantáneamente con tus profesionales, comparte fotos de tus comidas y recibe feedback al momento.'
     },
     {
       icon: '📱',

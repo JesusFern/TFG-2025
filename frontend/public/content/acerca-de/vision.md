@@ -1,5 +1,5 @@
 # Nuestra Visión
 
-Ser la plataforma líder en gestión nutricional, conectando profesionales 
-de la salud con sus clientes para lograr resultados óptimos en el 
-bienestar y la salud nutricional.
+Convertirnos en la plataforma de referencia en salud y bienestar integral, 
+donde cada persona pueda acceder a asesoramiento profesional personalizado 
+para transformar su vida de forma sostenible y alcanzar su mejor versión.

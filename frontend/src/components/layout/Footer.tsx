@@ -11,11 +11,12 @@ import {
   useMantineColorScheme,
   Box
 } from '@mantine/core';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { IconBrandTwitter, IconBrandYoutube, IconBrandInstagram } from '@tabler/icons-react';
 import logo from '../../assets/images/Logo-Nutroos.svg';
 
 const Footer: React.FC = () => {
+  const navigate = useNavigate();
   const currentYear = new Date().getFullYear();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
@@ -51,8 +52,8 @@ const Footer: React.FC = () => {
                 <Text fw={700} size="lg">NUTROOS</Text>
               </Group>
               <Text size="sm" c="dimmed" maw={400}>
-                Soluciones nutricionales personalizadas para profesionales y clientes.
-                Planifica, monitorea y gestiona dietas de manera eficiente.
+                Tu compañero integral para alcanzar tus objetivos de salud y bienestar.
+                Conectamos profesionales con usuarios para transformar vidas.
               </Text>
             </Stack>
             
@@ -61,17 +62,32 @@ const Footer: React.FC = () => {
                 <Text fw={500}>Enlaces</Text>
                 <Stack gap="xs">
                   <Anchor component={Link} to="/" size="sm" c={isDark ? "blue.3" : "blue.7"}>Inicio</Anchor>
-                  <Anchor component={Link} to="/clientes" size="sm" c={isDark ? "blue.3" : "blue.7"}>Clientes</Anchor>
-                  <Anchor component={Link} to="/dietas" size="sm" c={isDark ? "blue.3" : "blue.7"}>Dietas</Anchor>
+                  <Anchor component={Link} to="/profesionales" size="sm" c={isDark ? "blue.3" : "blue.7"}>Profesionales</Anchor>
+                  <Anchor component={Link} to="/planes-suscripcion" size="sm" c={isDark ? "blue.3" : "blue.7"}>Planes de Suscripción</Anchor>
                 </Stack>
               </Stack>
               
               <Stack gap="xs">
                 <Text fw={500}>Información</Text>
                 <Stack gap="xs">
-                  <Anchor component={Link} to="/acerca" size="sm" c={isDark ? "blue.3" : "blue.7"}>Acerca de</Anchor>
-                  <Anchor component={Link} to="/privacidad" size="sm" c={isDark ? "blue.3" : "blue.7"}>Privacidad</Anchor>
-                  <Anchor component={Link} to="/terminos" size="sm" c={isDark ? "blue.3" : "blue.7"}>Términos</Anchor>
+                  <Anchor component={Link} to="/acerca-de" size="sm" c={isDark ? "blue.3" : "blue.7"}>Acerca de</Anchor>
+                  <Anchor 
+                    component="button"
+                    size="sm" 
+                    c={isDark ? "blue.3" : "blue.7"}
+                    onClick={() => {
+                      navigate('/#faq');
+                      setTimeout(() => {
+                        const faqElement = document.getElementById('faq');
+                        if (faqElement) {
+                          faqElement.scrollIntoView({ behavior: 'smooth' });
+                        }
+                      }, 100);
+                    }}
+                    style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, font: 'inherit' }}
+                  >
+                    Preguntas Frecuentes
+                  </Anchor>
                 </Stack>
               </Stack>
             </Group>
@@ -117,9 +133,9 @@ const Footer: React.FC = () => {
               © {currentYear} Nutroos. Todos los derechos reservados.
             </Text>
             <Group gap="xs" wrap="nowrap">
-              <Anchor component={Link} to="/privacidad" size="xs" c="dimmed">Política de privacidad</Anchor>
+              <Anchor component={Link} to="/acerca-de" size="xs" c="dimmed">Acerca de Nutroos</Anchor>
               <Text size="xs" c="dimmed">•</Text>
-              <Anchor component={Link} to="/terminos" size="xs" c="dimmed">Términos de servicio</Anchor>
+              <Anchor component="a" href="mailto:contacto@nutroos.com" size="xs" c="dimmed">Contacto</Anchor>
             </Group>
           </Group>
         </Stack>

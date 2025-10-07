@@ -152,30 +152,13 @@ export class NotificacionIntegracionService {
     contenido: string
   ): Promise<void> {
     try {
-      // Crear notificación en la base de datos
-      await notificarMensajeChatService(destinatarioId, remitenteId, remitenteNombre, mensajeId, conversacionId, contenido);
+      // Crear notificación en la base de datos (retorna la notificación guardada con _id)
+      const notificacionGuardada = await notificarMensajeChatService(destinatarioId, remitenteId, remitenteNombre, mensajeId, conversacionId, contenido);
       
-      // Enviar notificación en tiempo real
+      // Enviar notificación en tiempo real usando la notificación guardada (que tiene _id)
       if (socketServer) {
-        const notificacion = {
-          usuario: destinatarioId,
-          tipo: 'mensaje',
-          titulo: `Nuevo mensaje de ${remitenteNombre}`,
-          contenido: contenido.length > 100 ? `${contenido.substring(0, 100)}...` : contenido,
-          prioridad: 'normal',
-          accion: {
-            tipo: 'abrir_conversacion',
-            metadata: { conversacionId, mensajeId }
-          },
-          metadata: {
-            mensaje: mensajeId,
-            conversacion: conversacionId,
-          remitente: remitenteId
-        }
-      };
-      
-      await socketServer.sendNotificationToUser(destinatarioId, notificacion);
-    }
+        await socketServer.sendNotificationToUser(destinatarioId, notificacionGuardada as unknown as Record<string, unknown>);
+      }
     } catch (error) {
       logger.error('Error al notificar mensaje:', error);
       throw error;

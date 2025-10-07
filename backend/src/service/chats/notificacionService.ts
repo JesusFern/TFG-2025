@@ -437,7 +437,7 @@ export async function notificarMensajeChatService(
   mensajeId: string,
   conversacionId: string,
   contenido: string
-): Promise<void> {
+): Promise<INotificacion> {
   try {
     const notificacion: CrearNotificacionData = {
       usuario: destinatarioId,
@@ -456,7 +456,8 @@ export async function notificarMensajeChatService(
       }
     };
 
-    await crearNotificacionService(notificacion);
+    const notificacionGuardada = await crearNotificacionService(notificacion);
+    return notificacionGuardada;
   } catch (error) {
     if (error instanceof Error) {
       throw new Error(`Error al crear notificación de mensaje: ${error.message}`);

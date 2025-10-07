@@ -1,10 +1,13 @@
 # ¿Por qué elegir Nutroos?
 
-## Gestión de Clientes
-Organiza y gestiona todos tus clientes de manera eficiente con herramientas profesionales de seguimiento.
+## Planes Personalizados
+Recibe dietas y rutinas de entrenamiento diseñadas específicamente para ti por profesionales certificados.
 
-## Herramientas generación dietas y planes
-Agiliza la creación de tus dietas y planes de entrenamiento mediante nuestras herramientas y plantillas
+## Comunicación Directa
+Chatea en tiempo real con tus nutricionistas y entrenadores, agenda videollamadas y comparte tu progreso instantáneamente.
 
-## Seguimiento de Progreso
-Monitorea el progreso de tus clientes con informes detallados y estadísticas en tiempo real.
+## Seguimiento Inteligente
+Visualiza tu evolución con gráficos detallados, estadísticas y reportes automáticos que te mantienen motivado.
+
+## Flexibilidad Total
+Elige entre diferentes planes de suscripción adaptados a tus necesidades y presupuesto, desde opciones gratuitas hasta asesoramiento premium.
