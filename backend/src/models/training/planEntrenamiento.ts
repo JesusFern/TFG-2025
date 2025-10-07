@@ -13,7 +13,11 @@ const PlanEntrenamientoSchema = new mongoose.Schema({
   sesionesPorSemana: { type: Number, required: true, min: 1, max: 7 },
   fechaInicio: { type: Date, required: true },
   diasSemana: [{ type: Number, min: 0, max: 6 }], // 0 = Domingo, 1 = Lunes, etc.
-  entrenador: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  entrenador: { 
+    type: mongoose.Schema.Types.ObjectId, 
+    ref: 'User', 
+    required: function(this: { publico: boolean }) { return !this.publico; } 
+  },
   clientes: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true }],
   publico: { type: Boolean, default: false },
   activo: { type: Boolean, default: true },
@@ -23,12 +27,15 @@ const PlanEntrenamientoSchema = new mongoose.Schema({
   timestamps: true
 });
 
-// Middleware para validar que el entrenador es un usuario con rol 'worker'
+// Middleware para validar que el entrenador es un usuario con rol 'worker' (solo si no es público)
 PlanEntrenamientoSchema.pre('save', async function (next) {
   try {
-    const entrenadorUser = await User.findById(this.entrenador);
-    if (!entrenadorUser || entrenadorUser.role !== 'worker') {
-      return next(new Error('El entrenador debe ser un usuario con rol worker'));
+    // Solo validar entrenador si el plan no es público
+    if (!this.publico && this.entrenador) {
+      const entrenadorUser = await User.findById(this.entrenador);
+      if (!entrenadorUser || entrenadorUser.role !== 'worker') {
+        return next(new Error('El entrenador debe ser un usuario con rol worker'));
+      }
     }
 
     // Validar que todos los clientes tienen rol 'user'

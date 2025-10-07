@@ -42,7 +42,6 @@ export interface DatosActividadFisica {
   objetivosPrincipales: string[];
   preferenciasEjercicios: string[];
   limitacionesFisicas: string[];
-  numeroContactoEmergencia: string;
 }
 
 export interface ProfileFormData {

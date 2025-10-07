@@ -27,13 +27,14 @@ import {
   IconClock,
   IconTarget,
   IconAlertTriangle,
-  IconPhone,
   IconStar,
   IconUsers
 } from '@tabler/icons-react';
 import { ProfileHeader } from '../molecules/ProfileHeader';
 import { ProfileStats } from '../molecules/ProfileStats';
 import { ProfileForm } from '../molecules/ProfileForm';
+import ModalEditHealthData from '../molecules/ModalEditHealthData';
+import ModalEditActivityData from '../molecules/ModalEditActivityData';
 import WorkerRatingsTab from '../molecules/WorkerRatingsTab';
 import WorkerClientsTab from '../molecules/WorkerClientsTab';
 import { UserProfile, DatosSaludYNutricion, DatosActividadFisica, ProfileFormData } from '../../types/profile';
@@ -60,6 +61,8 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
   const theme = useMantineTheme();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isPhotoModalOpen, setIsPhotoModalOpen] = useState(false);
+  const [isHealthModalOpen, setIsHealthModalOpen] = useState(false);
+  const [isActivityModalOpen, setIsActivityModalOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [isPhotoUploading, setIsPhotoUploading] = useState(false);
 
@@ -112,6 +115,72 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
 
   const handleEditPhoto = () => {
     setIsPhotoModalOpen(true);
+  };
+
+  const handleEditHealthData = () => {
+    setIsHealthModalOpen(true);
+  };
+
+  const handleEditActivityData = () => {
+    setIsActivityModalOpen(true);
+  };
+
+  const handleSaveHealthData = async (data: {
+    altura: number;
+    pesoActual: number;
+    objetivoPeso: number;
+    condicionesMedicas: string[];
+    restriccionesDieteticas: string[];
+    alergiasIntolerancias: string[];
+    medicacionActual: string[];
+    preferenciasAlimentarias: string[];
+    horariosComidas: Array<{ comida: string; hora: string; }>;
+  }) => {
+    try {
+      setIsLoading(true);
+      
+      // Importar el servicio dinámicamente para evitar problemas de importación circular
+      const { profileService } = await import('../../services/profileService');
+      
+      const response = await profileService.updateHealthData(data);
+      
+      setAlert({
+        type: 'success',
+        title: '¡Datos de salud actualizados!',
+        message: response.message || 'Tu información de salud se ha actualizado correctamente'
+      });
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : 'Error al guardar los datos de salud');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSaveActivityData = async (data: {
+    frecuenciaEjercicio: string;
+    tipoEjercicioPractica: string[];
+    objetivosPrincipales: string[];
+    preferenciasEjercicios: string[];
+    limitacionesFisicas: string[];
+  }) => {
+    try {
+      setIsLoading(true);
+      
+      // Importar el servicio dinámicamente para evitar problemas de importación circular
+      const { profileService } = await import('../../services/profileService');
+      
+      const response = await profileService.updateActivityData(data);
+      
+      setAlert({
+        type: 'success',
+        title: '¡Datos de actividad actualizados!',
+        message: response.message || 'Tu información de actividad física se ha actualizado correctamente'
+      });
+    } catch (error) {
+      throw new Error(error instanceof Error ? error.message : 'Error al guardar los datos de actividad');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleProfileSubmit = async (formData: ProfileFormData) => {
@@ -580,29 +649,6 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                           </Paper>
                         </Grid.Col>
                       )}
-
-                      {/* Contacto de Emergencia */}
-                      <Grid.Col span={{ base: 12, md: 6 }}>
-                        <Paper p="lg" radius="md" withBorder style={{ height: '100%' }}>
-                          <Stack gap="md">
-                            <Group gap="xs">
-                              <IconPhone size={20} color={theme.colors.red[6]} />
-                              <Text size="lg" fw={600} c={theme.colors.gray[8]}>
-                                Contacto de Emergencia
-                              </Text>
-                            </Group>
-                            
-                            <Stack gap="xs">
-                              <Text size="sm" c={theme.colors.gray[6]}>
-                                <strong>Número de contacto:</strong>
-                              </Text>
-                              <Text size="sm" fw={500} c={theme.colors.gray[8]}>
-                                {datosActividad.numeroContactoEmergencia}
-                              </Text>
-                            </Stack>
-                          </Stack>
-                        </Paper>
-                      </Grid.Col>
                     </Grid>
                   </Stack>
                 ) : (
@@ -650,6 +696,29 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
                     >
                       Cambiar Foto
                     </Button>
+                    
+                    {/* Botones solo para usuarios */}
+                    {profile.role === 'user' && (
+                      <>
+                        <Button
+                          variant="light"
+                          color="red"
+                          leftSection={<IconHeart size={16} />}
+                          onClick={handleEditHealthData}
+                        >
+                          Editar Datos de Salud
+                        </Button>
+                        
+                        <Button
+                          variant="light"
+                          color="orange"
+                          leftSection={<IconActivity size={16} />}
+                          onClick={handleEditActivityData}
+                        >
+                          Editar Datos de Actividad
+                        </Button>
+                      </>
+                    )}
                   </Group>
                   
                   <Text size="sm" c="dimmed">
@@ -719,6 +788,22 @@ export const ProfilePage: React.FC<ProfilePageProps> = ({
           </Group>
         </Stack>
       </Modal>
+
+      {/* Modal de edición de datos de salud */}
+      <ModalEditHealthData
+        opened={isHealthModalOpen}
+        onClose={() => setIsHealthModalOpen(false)}
+        initialData={datosSalud}
+        onSave={handleSaveHealthData}
+      />
+
+      {/* Modal de edición de datos de actividad */}
+      <ModalEditActivityData
+        opened={isActivityModalOpen}
+        onClose={() => setIsActivityModalOpen(false)}
+        initialData={datosActividad}
+        onSave={handleSaveActivityData}
+      />
     </Container>
   );
 };

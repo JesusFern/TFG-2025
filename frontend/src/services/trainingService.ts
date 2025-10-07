@@ -319,6 +319,45 @@ export const trainingService = {
     return await res.json();
   },
 
+  // Generar plantilla automática para usuarios
+  async generarPlantillaAutomatica(data: {
+    nombre: string;
+    descripcion?: string;
+    objetivo: string;
+    duracionDias: number;
+    sesionesPorSemana: number;
+    fechaInicio: string;
+    diasSemana: number[];
+    nivelDificultad: string;
+  }): Promise<{ plan: PlanEntrenamiento; sesionesCreadas: number; plantillaUsada: { objetivo: string } }> {
+    const res = await apiRequest(`${base}/planes/plantillas/generar-automatica`, {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || 'Error al generar plantilla automática');
+    }
+    return await res.json();
+  },
+
+  async obtenerInfoSuscripcion(): Promise<{
+    tipoPlan: string;
+    limitePlanes: number;
+    planesCreados: number;
+    suscripcionActiva: boolean;
+    puedeCrearMas: boolean;
+  }> {
+    const res = await apiRequest(`${base}/planes/suscripcion/info`, {
+      method: 'GET'
+    });
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.message || 'Error al obtener información de suscripción');
+    }
+    return await res.json();
+  }
+
 };
 
 export default trainingService;

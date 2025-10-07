@@ -1,5 +1,6 @@
 import { Response } from 'express';
 import { matchedData } from 'express-validator';
+import mongoose from 'mongoose';
 import { AuthenticatedRequest } from '../../types';
 import PlanEntrenamiento from '../../models/training/planEntrenamiento';
 import { 
@@ -193,7 +194,7 @@ export const actualizarPlanEntrenamiento = async (req: AuthenticatedRequest, res
     }
 
     // Verificar que el entrenador tiene acceso al plan
-    if (planExistente.entrenador.toString() !== entrenadorId) {
+    if (planExistente.entrenador && planExistente.entrenador.toString() !== entrenadorId) {
       res.status(403).json({ message: 'No tienes permisos para editar este plan' });
       return;
     }
@@ -520,6 +521,201 @@ export const generarPlanDesdePlantilla = async (req: AuthenticatedRequest, res: 
     });
     res.status(400).json({
       message: 'Error al generar plan desde plantilla',
+      error: error instanceof Error ? error.message : error
+    });
+  }
+};
+
+// Generar plantilla automática para usuarios (sin entrenador)
+// Obtener información de suscripción del usuario
+export const obtenerInfoSuscripcion = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: 'No autenticado' });
+      return;
+    }
+
+    const User = mongoose.model('User');
+    const user = await User.findById(userId).populate({
+      path: 'suscripcion',
+      populate: {
+        path: 'planId',
+        model: 'SuscriptionPlan'
+      }
+    });
+    
+    if (!user) {
+      res.status(404).json({ message: 'Usuario no encontrado' });
+      return;
+    }
+
+    // Contar planes públicos creados por el usuario
+    const planesPublicosCreados = await PlanEntrenamiento.countDocuments({
+      clientes: userId,
+      publico: true,
+      activo: true
+    });
+
+    // Determinar límite según suscripción
+    let limitePlanes = 3; // Plan gratuito por defecto
+    let tipoPlan = 'Gratuito';
+    let suscripcionActiva = false;
+    
+    if (user.suscripcion && user.suscripcion.planId) {
+      const userSuscription = user.suscripcion as { planId: { tipoPlan: string }; isActive?: () => boolean; fechaFin: Date; estadoPago: string };
+      const isActive = userSuscription.isActive ? userSuscription.isActive() : 
+        (userSuscription.fechaFin > new Date() && userSuscription.estadoPago === 'pagado');
+      
+      if (isActive) {
+        suscripcionActiva = true;
+        const plan = userSuscription.planId;
+        if (plan) {
+          switch (plan.tipoPlan) {
+            case 'Entrenamiento personal':
+            case 'Nutrición y entrenamiento personal':
+              limitePlanes = 6; // Plan premium
+              tipoPlan = 'Premium';
+              break;
+            default:
+              limitePlanes = 3; // Plan gratuito
+              tipoPlan = 'Gratuito';
+              break;
+          }
+        }
+      }
+    }
+
+    res.json({
+      tipoPlan,
+      limitePlanes,
+      planesCreados: planesPublicosCreados,
+      suscripcionActiva,
+      puedeCrearMas: planesPublicosCreados < limitePlanes
+    });
+  } catch (error) {
+    logger.error('Error al obtener información de suscripción', {
+      error: error instanceof Error ? error.message : String(error),
+      userId: req.user?.id
+    });
+    res.status(500).json({
+      message: 'Error al obtener información de suscripción',
+      error: error instanceof Error ? error.message : error
+    });
+  }
+};
+
+export const generarPlantillaAutomatica = async (req: AuthenticatedRequest, res: Response) => {
+  try {
+    const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: 'No autenticado' });
+      return;
+    }
+
+    const { objetivo, duracionDias, sesionesPorSemana, nombre, descripcion, fechaInicio, diasSemana, nivelDificultad } = req.body;
+
+    if (!objetivo || !duracionDias || !sesionesPorSemana || !nombre || !fechaInicio || !diasSemana) {
+      res.status(400).json({
+        message: 'Faltan campos requeridos: objetivo, duracionDias, sesionesPorSemana, nombre, fechaInicio, diasSemana'
+      });
+      return;
+    }
+
+    // Verificar límites de planes según suscripción
+    const User = mongoose.model('User');
+    const user = await User.findById(userId).populate({
+      path: 'suscripcion',
+      populate: {
+        path: 'planId',
+        model: 'SuscriptionPlan'
+      }
+    });
+    
+    if (!user) {
+      res.status(404).json({ message: 'Usuario no encontrado' });
+      return;
+    }
+
+    // Contar planes públicos creados por el usuario
+    const planesPublicosCreados = await PlanEntrenamiento.countDocuments({
+      clientes: userId,
+      publico: true,
+      activo: true
+    });
+
+    // Determinar límite según suscripción
+    let limitePlanes = 3; // Plan gratuito por defecto
+    
+    if (user.suscripcion && user.suscripcion.planId) {
+      // Verificar que la suscripción esté activa
+      const userSuscription = user.suscripcion as { planId: { tipoPlan: string }; isActive?: () => boolean; fechaFin: Date; estadoPago: string };
+      const isActive = userSuscription.isActive ? userSuscription.isActive() : 
+        (userSuscription.fechaFin > new Date() && userSuscription.estadoPago === 'pagado');
+      
+      if (isActive) {
+        const plan = userSuscription.planId;
+        if (plan) {
+          switch (plan.tipoPlan) {
+            case 'Entrenamiento personal':
+            case 'Nutrición y entrenamiento personal':
+              limitePlanes = 6; // Plan premium
+              break;
+            default:
+              limitePlanes = 3; // Plan gratuito
+              break;
+          }
+        }
+      }
+    }
+
+    // Verificar si ha alcanzado el límite
+    if (planesPublicosCreados >= limitePlanes) {
+      res.status(403).json({
+        message: `Has alcanzado el límite de ${limitePlanes} planes de entrenamiento para tu tipo de suscripción. Actualiza tu plan para crear más.`,
+        limiteAlcanzado: true,
+        planesCreados: planesPublicosCreados,
+        limitePermitido: limitePlanes
+      });
+      return;
+    }
+
+    const resultado = await generarPlanDesdePlantillaService({
+      entrenadorId: null, // Sin entrenador para planes públicos
+      objetivo,
+      duracionSemanas: Math.ceil(duracionDias / 7),
+      sesionesPorSemana,
+      nombre,
+      descripcion,
+      fechaInicio,
+      diasSemana,
+      clientes: [userId], // El usuario es su propio cliente
+      publico: true, // Plan público
+      nivelDificultad: nivelDificultad || 'Intermedio'
+    });
+
+    // Publicar automáticamente el plan (sin entrenador para planes públicos)
+    await publicarPlanEntrenamientoService(resultado.plan._id.toString(), userId);
+
+    logger.info('Plantilla automática generada y publicada correctamente', {
+      planId: resultado.plan._id,
+      usuarioId: userId,
+      objetivoUsado: resultado.plantillaUsada.objetivo
+    });
+
+    res.status(201).json({
+      message: 'Plan de entrenamiento generado y publicado correctamente',
+      plan: resultado.plan,
+      sesionesCreadas: resultado.sesionesCreadas.length,
+      plantillaUsada: resultado.plantillaUsada
+    });
+  } catch (error) {
+    logger.error('Error al generar plantilla automática', {
+      error: error instanceof Error ? error.message : String(error),
+      userId: req.user?.id
+    });
+    res.status(400).json({
+      message: 'Error al generar el plan de entrenamiento',
       error: error instanceof Error ? error.message : error
     });
   }

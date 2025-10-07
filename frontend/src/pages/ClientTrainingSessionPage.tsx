@@ -48,6 +48,13 @@ const ClientTrainingSessionPage: React.FC = () => {
   const [sesionCompleta, setSesionCompleta] = useState<SesionCompleta | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<{
+    tipoPlan: string;
+    limitePlanes: number;
+    planesCreados: number;
+    suscripcionActiva: boolean;
+    puedeCrearMas: boolean;
+  } | null>(null);
   const [selectedEjercicio, setSelectedEjercicio] = useState<Ejercicio | null>(null);
   const [modalOpened, setModalOpened] = useState(false);
   
@@ -115,6 +122,22 @@ const ClientTrainingSessionPage: React.FC = () => {
         } catch (err) {
           console.warn('Error al cargar registros:', err);
           setRegistros([]);
+        }
+
+        // Cargar información de suscripción
+        try {
+          const suscripcionData = await trainingService.obtenerInfoSuscripcion();
+          setSubscriptionInfo(suscripcionData);
+        } catch (err) {
+          console.warn('Error al cargar información de suscripción:', err);
+          // Usar valores por defecto para plan gratuito
+          setSubscriptionInfo({
+            tipoPlan: 'Gratuito',
+            limitePlanes: 3,
+            planesCreados: 0,
+            suscripcionActiva: false,
+            puedeCrearMas: true
+          });
         }
 
         // Verificar estado de la sesión
@@ -465,7 +488,7 @@ const ClientTrainingSessionPage: React.FC = () => {
                 {sesionCompleta.ejerciciosCompletados} de {sesionCompleta.totalEjercicios} ejercicios completados • {sesionCompleta.porcentajeCompletado?.toFixed?.(0) ?? 0}%
               </Text>
             </div>
-            {!sesion?.completada && sesion?.fecha && !esSesionFutura(sesion.fecha) && (
+            {!sesion?.completada && sesion?.fecha && !esSesionFutura(sesion.fecha) && subscriptionInfo?.tipoPlan !== 'Gratuito' && (
               <Button
                 color="nutroos-green"
                 leftSection={<IconTrophy size={16} />}
@@ -488,6 +511,16 @@ const ClientTrainingSessionPage: React.FC = () => {
           icon={<IconClock size={16} />}
         >
           Esta sesión está programada para el futuro. No puedes registrar ejercicios hasta el día acordado para realizar la sesión.
+        </Alert>
+      ) : subscriptionInfo?.tipoPlan === 'Gratuito' ? (
+        <Alert
+          color="blue"
+          variant="light"
+          title="Plan Gratuito"
+          mb="lg"
+          icon={<IconAlertCircle size={16} />}
+        >
+          Con el plan gratuito puedes seguir tu rutina de ejercicios, pero el registro de progreso y marcado de sesiones completadas está disponible solo para usuarios con suscripción premium.
         </Alert>
       ) : (
         <Alert
@@ -548,6 +581,7 @@ const ClientTrainingSessionPage: React.FC = () => {
                   sesionCompletada={sesionCompleta?.sesionCompleta || false}
                   sesionMarcadaCompleta={sesion?.completada || false}
                   sesionFutura={sesion ? esSesionFutura(sesion.fecha) : false}
+                  planGratuito={subscriptionInfo?.tipoPlan === 'Gratuito'}
                 />
               );
             })}

@@ -181,6 +181,9 @@ const MyWorkersPage: React.FC = () => {
           }
         });
         
+        // Esperar un momento para que se complete la creación en el backend
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
         // Navegar a la nueva conversación
         navigate(`/chat?conversacion=${nuevaConversacion._id}`);
         notifications.show({
@@ -232,6 +235,9 @@ const MyWorkersPage: React.FC = () => {
             tags: ['trabajador', 'asignado']
           }
         });
+        
+        // Esperar un momento para que se complete la creación en el backend
+        await new Promise(resolve => setTimeout(resolve, 200));
         
         // Navegar a la nueva conversación
         navigate(`/chat?conversacion=${nuevaConversacion._id}`);

@@ -72,7 +72,7 @@ export async function crearSesionService({
   duracion,
   ejercicios
 }: {
-  entrenadorId: string;
+  entrenadorId: string | null;
   clienteId: string;
   planId?: string;
   fecha: string;
@@ -95,10 +95,12 @@ export async function crearSesionService({
     };
   }>;
 }) {
-  // Validar que el entrenador es un worker
-  const entrenadorUser = await User.findById(entrenadorId);
-  if (!entrenadorUser || entrenadorUser.role !== 'worker') {
-    throw new Error('El entrenador debe ser un usuario con rol worker');
+  // Validar que el entrenador es un worker (solo si se proporciona entrenadorId)
+  if (entrenadorId) {
+    const entrenadorUser = await User.findById(entrenadorId);
+    if (!entrenadorUser || entrenadorUser.role !== 'worker') {
+      throw new Error('El entrenador debe ser un usuario con rol worker');
+    }
   }
 
   // Validar que el cliente existe y tiene rol 'user'
@@ -113,7 +115,7 @@ export async function crearSesionService({
     if (!plan || !plan.activo) {
       throw new Error('Plan de entrenamiento no encontrado');
     }
-    if (plan.entrenador.toString() !== entrenadorId) {
+    if (plan.entrenador && plan.entrenador.toString() !== entrenadorId) {
       throw new Error('No tienes permisos para crear sesiones para este plan');
     }
     if (!plan.clientes.some(id => id.toString() === clienteId)) {
@@ -153,15 +155,29 @@ export async function crearSesionService({
     throw new Error('La fecha de la sesión no puede ser anterior al día actual');
   }
 
-  const sesion = new Sesion({
+  const sesionData: {
+    fecha: Date;
+    hora?: string;
+    tipoEntrenamiento: string;
+    duracion: number;
+    ejercicios: typeof ejercicios;
+    cliente: string;
+    entrenador?: string;
+  } = {
     fecha: fechaSesion,
     hora,
     tipoEntrenamiento,
     duracion,
     ejercicios,
-    entrenador: entrenadorId,
     cliente: clienteId
-  });
+  };
+
+  // Solo agregar entrenador si no es null
+  if (entrenadorId) {
+    sesionData.entrenador = entrenadorId;
+  }
+
+  const sesion = new Sesion(sesionData);
 
   await sesion.save();
 
@@ -263,8 +279,8 @@ export async function actualizarSesionService(
     throw new Error('Sesión no encontrada');
   }
 
-  // Verificar que el usuario es el entrenador de la sesión
-  if (sesion.entrenador.toString() !== entrenadorId) {
+  // Verificar que el usuario es el entrenador de la sesión (solo si la sesión tiene entrenador)
+  if (sesion.entrenador && sesion.entrenador.toString() !== entrenadorId) {
     throw new Error('No tienes permisos para editar esta sesión');
   }
 
@@ -318,8 +334,8 @@ export async function eliminarSesionService(sesionId: string, entrenadorId: stri
     throw new Error('Sesión no encontrada');
   }
 
-  // Verificar que el usuario es el entrenador de la sesión
-  if (sesion.entrenador.toString() !== entrenadorId) {
+  // Verificar que el usuario es el entrenador de la sesión (solo si la sesión tiene entrenador)
+  if (sesion.entrenador && sesion.entrenador.toString() !== entrenadorId) {
     throw new Error('No tienes permisos para eliminar esta sesión');
   }
 

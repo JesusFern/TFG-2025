@@ -13,7 +13,9 @@ import {
   obtenerPlantillaPorObjetivo,
   obtenerPlantillasPorFiltros,
   buscarPlantillas,
-  generarPlanDesdePlantilla
+  generarPlanDesdePlantilla,
+  generarPlantillaAutomatica,
+  obtenerInfoSuscripcion
 } from '../../controllers/training/planEntrenamientoController';
 import { authenticateToken, authorizeWorker } from '../../middlewares/authMiddleware';
 import { 
@@ -59,5 +61,11 @@ router.get('/plantillas/buscar', authenticateToken, buscarPlantillas);
 
 // Generar plan desde plantilla
 router.post('/plantillas/generar', authenticateToken, authorizeWorker, generarPlanDesdePlantilla);
+
+// Generar plantilla automática para usuarios (sin entrenador)
+router.post('/plantillas/generar-automatica', authenticateToken, generarPlantillaAutomatica);
+
+// Ruta para obtener información de suscripción del usuario
+router.get('/suscripcion/info', authenticateToken, obtenerInfoSuscripcion);
 
 export default router;

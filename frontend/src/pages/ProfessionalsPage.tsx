@@ -130,13 +130,6 @@ const ProfessionalsPage: React.FC = () => {
     setSelectedProfessional(null);
   };
 
-  const handleContactProfessional = (professional: ProfessionalResponse) => {
-    // Aquí puedes implementar la lógica para contactar al profesional
-    // Por ejemplo, abrir un modal de contacto, enviar un email, etc.
-    console.log('Contactando a:', professional.fullName);
-    // Por ahora, solo cerramos el modal
-    handleCloseModal();
-  };
 
   const handleRequestAssignment = (professional: ProfessionalResponse) => {
     console.log('Solicitud de asignación creada para:', professional.fullName);
@@ -269,7 +262,6 @@ const ProfessionalsPage: React.FC = () => {
             opened={modalOpened}
             onClose={handleCloseModal}
             professional={selectedProfessional}
-            onContact={handleContactProfessional}
             onRequestAssignment={handleRequestAssignment}
           />
         </Stack>

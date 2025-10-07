@@ -14,7 +14,9 @@ import {
   getClientsAssignedToWorker,
   getMyClientsAssigned,
   checkUserSubscriptionStatus,
-  getUserById
+  getUserById,
+  updateHealthData,
+  updateActivityData
 } from '../../controllers/users/userController';
 import { WorkerController } from '../../controllers/workers/workerController';
 import { authenticateToken, authorizeUserOrAdmin, authorizeUserWithValidSubscription } from '../../middlewares/authMiddleware';
@@ -56,6 +58,10 @@ router.get('/me', authenticateToken, getMyProfile);
 router.put('/me', authenticateToken, updateMyProfile);
 router.patch('/me/password', authenticateToken, changeMyPassword);
 router.patch('/me/photo', authenticateToken, uploadProfilePhoto);
+
+// Rutas para actualizar datos específicos
+router.put('/me/health-data', authenticateToken, updateHealthData);
+router.put('/me/activity-data', authenticateToken, updateActivityData);
 
 // Rutas para gestión de trabajadores (disponibles en desarrollo y producción, no en tests)
 if (process.env.NODE_ENV !== 'test') {

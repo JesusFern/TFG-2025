@@ -37,7 +37,7 @@ const ConversacionSchema = new Schema<ConversacionDocument>({
   },
   ultimoMensajeContenido: {
     type: String,
-    maxlength: 100
+    maxlength: 5000
   },
   ultimoMensajeFecha: {
     type: Date
