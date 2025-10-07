@@ -56,7 +56,7 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
   const { planId } = useParams<{ planId: string }>();
   const location = useLocation();
   const isDark = useThemeDetection();
-  const { navigateToPlansList, navigateToPlanView } = useNavigation();
+  const { navigateToPlansList, navigateToPlanView, navigateToClientPlans } = useNavigation();
   
   // Usar el hook refactorizado para cargar datos
   const {
@@ -103,6 +103,10 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
   const [sesionAEliminar, setSesionAEliminar] = useState<string | null>(null);
   const [showCrearSesionModal, setShowCrearSesionModal] = useState(false);
   const [fechaSesionACrear, setFechaSesionACrear] = useState<string>('');
+  
+  // Estados para eliminar el plan completo
+  const [showDeletePlanModal, setShowDeletePlanModal] = useState(false);
+  const [deletingPlan, setDeletingPlan] = useState(false);
 
   // Hook para manejo de ejercicios en sesiones - se inicializa después de currentSesionInfo
 
@@ -549,6 +553,33 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     }
   };
 
+  // Función para abrir el modal de confirmación de eliminación
+  const handleDeletePlanClick = () => {
+    setShowDeletePlanModal(true);
+  };
+
+  // Función para confirmar y eliminar el plan completo
+  const handleConfirmDeletePlan = async () => {
+    if (!planId || !plan) return;
+    
+    try {
+      setDeletingPlan(true);
+      await trainingService.eliminarPlan(planId);
+      
+      setSuccessMessage('Plan de entrenamiento eliminado correctamente');
+      
+      // Redirigir a la lista de planes del cliente después de un breve delay
+      setTimeout(() => {
+        navigateToClientPlans(plan);
+      }, 1500);
+    } catch (error) {
+      setError(error instanceof Error ? error.message : 'Error al eliminar el plan de entrenamiento');
+    } finally {
+      setDeletingPlan(false);
+      setShowDeletePlanModal(false);
+    }
+  };
+
 
   if (loading) {
     return (
@@ -600,6 +631,8 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
           plan={plan} 
           publishLoading={publishLoading}
           onPublish={handlePublicarPlan}
+          onDelete={handleDeletePlanClick}
+          deleting={deletingPlan}
         />
         
         <PlanInfo 
@@ -974,6 +1007,45 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
         onCrear={handleCrearSesion}
         loading={loading}
       />
+
+      {/* Modal de confirmación de eliminación del plan */}
+      <Modal
+        opened={showDeletePlanModal}
+        onClose={() => setShowDeletePlanModal(false)}
+        title="Confirmar eliminación del plan"
+        centered
+      >
+        <Stack gap="md">
+          <Alert
+            icon={<IconAlertCircle size={18} />}
+            title="¡Atención!"
+            color="red"
+          >
+            Esta acción no se puede deshacer
+          </Alert>
+          <Text size="sm">
+            ¿Estás seguro de que quieres eliminar este plan de entrenamiento? 
+            Se eliminarán todas las sesiones asociadas y no podrás recuperar la información.
+          </Text>
+          <Group justify="flex-end" mt="md">
+            <Button
+              variant="outline"
+              onClick={() => setShowDeletePlanModal(false)}
+              disabled={deletingPlan}
+            >
+              Cancelar
+            </Button>
+            <Button
+              color="red"
+              leftSection={<IconTrash size={18} />}
+              onClick={handleConfirmDeletePlan}
+              loading={deletingPlan}
+            >
+              Eliminar plan
+            </Button>
+          </Group>
+        </Stack>
+      </Modal>
     </Container>
   );
 };

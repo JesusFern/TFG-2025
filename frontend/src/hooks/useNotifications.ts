@@ -7,6 +7,56 @@ import { Notificacion } from '../types/notifications';
 // Alias para mantener compatibilidad con el código existente
 export type Notification = Notificacion;
 
+// Helper para normalizar notificaciones del WebSocket
+const normalizeNotification = (notif: unknown): Notification => {
+  const notifData = notif as Record<string, unknown>;
+  
+  // Helper para crear Date solo si el valor es válido
+  const toValidDate = (value: unknown): Date | undefined => {
+    if (!value) return undefined;
+    const date = new Date(value as string);
+    return isNaN(date.getTime()) ? undefined : date;
+  };
+  
+  // Normalizar el _id - intentar obtener el valor string de todas las formas posibles
+  let normalizedId: string;
+  const originalId = notifData._id;
+  
+  if (!originalId) {
+    normalizedId = '';
+  } else if (typeof originalId === 'string') {
+    normalizedId = originalId;
+  } else if (typeof originalId === 'object') {
+    // Intentar extraer el ID de un objeto MongoDB ObjectId serializado
+    const idObj = originalId as Record<string, unknown>;
+    if ('$oid' in idObj && typeof idObj.$oid === 'string') {
+      // Formato MongoDB extended JSON: { $oid: "..." }
+      normalizedId = idObj.$oid;
+    } else if ('id' in idObj && typeof idObj.id === 'string') {
+      // Formato con propiedad 'id'
+      normalizedId = idObj.id;
+    } else if (typeof (idObj as { toString?: () => string }).toString === 'function') {
+      // Usar toString() si existe
+      normalizedId = (idObj as { toString: () => string }).toString();
+    } else {
+      // Último recurso: convertir a string
+      normalizedId = String(originalId);
+    }
+  } else {
+    normalizedId = String(originalId);
+  }
+  
+  return {
+    ...notifData,
+    // Asegurar que _id es un string
+    _id: normalizedId as string,
+    programadaPara: toValidDate(notifData.programadaPara),
+    expiraEn: toValidDate(notifData.expiraEn),
+    createdAt: toValidDate(notifData.createdAt) || new Date(),
+    updatedAt: toValidDate(notifData.updatedAt) || new Date()
+  } as Notification;
+};
+
 // Tipos para los eventos de notificaciones
 interface NotificationEvents {
   onNewNotification?: (notification: Notification) => void;
@@ -31,11 +81,10 @@ export const useNotifications = (events: NotificationEvents = {}) => {
     eventsRef.current = events;
   }, [events]);
 
-
   // Usar el hook de socket con eventos de notificaciones
   const { socket, isConnected, isConnecting, connectionError } = useSocket({
     onNewNotification: (data: { notificacion: unknown; timestamp: Date }) => {
-      const notificacion = data.notificacion as Notification;
+      const notificacion = normalizeNotification(data.notificacion);
       setNotifications(prev => [notificacion, ...prev]);
       if (!notificacion.leida) {
         setUnreadCount(prev => prev + 1);
@@ -43,7 +92,7 @@ export const useNotifications = (events: NotificationEvents = {}) => {
       eventsRef.current.onNewNotification?.(notificacion);
     },
     onScheduledNotification: (data: { notificacion: unknown; timestamp: Date }) => {
-      const notificacion = data.notificacion as Notification;
+      const notificacion = normalizeNotification(data.notificacion);
       setNotifications(prev => [notificacion, ...prev]);
       if (!notificacion.leida) {
         setUnreadCount(prev => prev + 1);
@@ -51,7 +100,7 @@ export const useNotifications = (events: NotificationEvents = {}) => {
       eventsRef.current.onScheduledNotification?.(notificacion);
     },
     onInactiveTrackingNotification: (data: { notificacion: unknown; timestamp: Date }) => {
-      const notificacion = data.notificacion as Notification;
+      const notificacion = normalizeNotification(data.notificacion);
       setNotifications(prev => [notificacion, ...prev]);
       if (!notificacion.leida) {
         setUnreadCount(prev => prev + 1);
@@ -109,12 +158,20 @@ export const useNotifications = (events: NotificationEvents = {}) => {
       // Convertir las notificaciones del backend al formato del frontend
       const convertedNotifications = response.notificaciones.map((notif: unknown) => {
         const notifData = notif as Record<string, unknown>;
+        
+        // Helper para crear Date solo si el valor es válido
+        const toValidDate = (value: unknown): Date | undefined => {
+          if (!value) return undefined;
+          const date = new Date(value as string);
+          return isNaN(date.getTime()) ? undefined : date;
+        };
+        
         return {
           ...notifData,
-          programadaPara: notifData.programadaPara ? new Date(notifData.programadaPara as string) : undefined,
-          expiraEn: notifData.expiraEn ? new Date(notifData.expiraEn as string) : undefined,
-          createdAt: new Date(notifData.createdAt as string),
-          updatedAt: new Date(notifData.updatedAt as string)
+          programadaPara: toValidDate(notifData.programadaPara),
+          expiraEn: toValidDate(notifData.expiraEn),
+          createdAt: toValidDate(notifData.createdAt) || new Date(),
+          updatedAt: toValidDate(notifData.updatedAt) || new Date()
         } as Notification;
       });
       
@@ -153,7 +210,6 @@ export const useNotifications = (events: NotificationEvents = {}) => {
     setUnreadCount(prev => Math.max(0, prev - 1));
     
     if (socket?.connected) {
-      console.log('useNotifications: Marcando notificación como leída:', notificacionId);
       socket.emit(SOCKET_EVENTS.MARK_NOTIFICATION_READ, notificacionId);
     } else {
       console.warn('useNotifications: No se puede marcar como leída - socket no conectado');
@@ -169,7 +225,6 @@ export const useNotifications = (events: NotificationEvents = {}) => {
     setUnreadCount(0);
     
     if (socket?.connected) {
-      console.log('useNotifications: Marcando todas las notificaciones como leídas');
       socket.emit(SOCKET_EVENTS.MARK_ALL_NOTIFICATIONS_READ);
     } else {
       console.warn('useNotifications: No se puede marcar todas como leídas - socket no conectado');
@@ -179,7 +234,6 @@ export const useNotifications = (events: NotificationEvents = {}) => {
   // Eliminar notificación
   const deleteNotification = useCallback((notificacionId: string) => {
     if (socket?.connected) {
-      console.log('useNotifications: Eliminando notificación:', notificacionId);
       socket.emit(SOCKET_EVENTS.DELETE_NOTIFICATION, notificacionId);
     } else {
       console.warn('useNotifications: No se puede eliminar - socket no conectado');

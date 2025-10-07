@@ -411,15 +411,21 @@ export class SocketServer {
   // Enviar notificación en tiempo real a un usuario específico
   public async sendNotificationToUser(userId: string, notificacion: Record<string, unknown>) {
     try {
+      // Normalizar el _id a string si es un ObjectId
+      const normalizedNotificacion = {
+        ...notificacion,
+        _id: notificacion._id ? String(notificacion._id) : notificacion._id
+      };
+
       // Enviar la notificación a través de WebSocket
       this.sendToUser(userId, 'new_notification', {
-        notificacion,
+        notificacion: normalizedNotificacion,
         timestamp: new Date()
       });
 
       // Solo marcar como enviada si tiene _id (notificación guardada en BD)
       if (notificacion._id) {
-        await marcarNotificacionComoEnviadaService(notificacion._id as string);
+        await marcarNotificacionComoEnviadaService(String(notificacion._id));
       }
     } catch (error) {
       console.error('Error al enviar notificación en tiempo real:', error);
@@ -441,14 +447,20 @@ export class SocketServer {
                        ? (notificacion.usuario as Record<string, unknown>)._id 
                        : notificacion.usuario)) as string;
 
+      // Normalizar el _id a string si es un ObjectId
+      const normalizedNotificacion = {
+        ...notificacion,
+        _id: notificacion._id ? String(notificacion._id) : notificacion._id
+      };
+
       // Enviar la notificación a través de WebSocket usando el mismo evento que las notificaciones normales
       this.sendToUser(userId, 'new_notification', {
-        notificacion,
+        notificacion: normalizedNotificacion,
         timestamp: new Date()
       });
 
       // Marcar como enviada en la base de datos
-      await marcarNotificacionComoEnviadaService(notificacion._id as string);
+      await marcarNotificacionComoEnviadaService(String(notificacion._id));
     } catch (error) {
       console.error('Error al enviar recordatorio en tiempo real:', error);
     }
@@ -457,6 +469,12 @@ export class SocketServer {
   // Enviar notificación de seguimiento inactivo
   public async sendInactiveTrackingNotification(notificacion: Record<string, unknown>) {
     try {
+      // Normalizar el _id a string si es un ObjectId
+      const normalizedNotificacion = {
+        ...notificacion,
+        _id: notificacion._id ? String(notificacion._id) : notificacion._id
+      };
+      notificacion = normalizedNotificacion;
       // Usar usuarioId (que es un string) en lugar de usuario (que puede ser un objeto)
       const userId = (notificacion.usuarioId || 
                      (typeof notificacion.usuario === 'object' && notificacion.usuario !== null 
@@ -465,12 +483,12 @@ export class SocketServer {
 
       // Enviar la notificación a través de WebSocket
       this.sendToUser(userId, 'inactive_tracking_notification', {
-        notificacion,
+        notificacion: normalizedNotificacion,
         timestamp: new Date()
       });
 
       // Marcar como enviada en la base de datos
-      await marcarNotificacionComoEnviadaService(notificacion._id as string);
+      await marcarNotificacionComoEnviadaService(String(notificacion._id));
     } catch (error) {
       console.error('Error al enviar notificación de seguimiento inactivo:', error);
     }

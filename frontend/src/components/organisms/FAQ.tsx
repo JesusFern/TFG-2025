@@ -58,8 +58,8 @@ export const FAQ: React.FC = () => {
       answer: "Ofrecemos soporte completo a través de videollamadas con tus entrenadores, mensajería directa, informes automáticos de progreso y un sistema de tickets para resolver cualquier incidencia que puedas tener."
     },
     {
-      question: "¿Cómo funciona el sistema de gamificación?",
-      answer: "Nuestro sistema de gamificación te recompensa por cumplir tus objetivos y mantener la consistencia. Ganarás puntos, insignias y podrás competir en clasificaciones amistosas con otros usuarios para mantenerte motivado en tu camino hacia una vida más saludable."
+      question: "¿Cómo me comunico con mis profesionales?",
+      answer: "Nutroos ofrece múltiples canales de comunicación: chat en tiempo real para consultas rápidas, sistema de citas para videollamadas programadas, y la posibilidad de compartir fotos de tus comidas o progreso para recibir feedback personalizado de tus nutricionistas y entrenadores."
     }
   ];
 

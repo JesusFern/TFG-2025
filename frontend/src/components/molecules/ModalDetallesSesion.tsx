@@ -22,7 +22,7 @@ export const ModalDetallesSesion: React.FC<ModalDetallesSesionProps> = ({
     <Modal
       opened={opened}
       onClose={onClose}
-      title={`Detalles de la Sesión: ${sesion.nombre}`}
+      title={`Detalles de la Sesión: ${sesion.tipoEntrenamiento}`}
       size="lg"
       zIndex={1000}
     >
