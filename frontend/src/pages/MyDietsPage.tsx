@@ -16,7 +16,8 @@ import {
   Card,
   CardSection,
   Divider,
-  useMantineColorScheme
+  useMantineColorScheme,
+  Modal
 } from '@mantine/core';
 import {
   IconSoup,
@@ -26,7 +27,8 @@ import {
   IconAlertCircle,
   IconLeaf,
   IconTarget,
-  IconChevronRight
+  IconChevronRight,
+  IconSparkles
 } from '@tabler/icons-react';
 import { IconArrowLeft } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
@@ -35,11 +37,15 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getMyDiets } from '../services/dietService';
 import { DietaResponse } from '../types/diets';
+import GenerateDietForm from '../components/molecules/GenerateDietForm';
+import { dietTemplateService, InfoSuscripcionDietas } from '../services/dietTemplateService';
 
 const MyDietsPage: React.FC = () => {
   const [dietas, setDietas] = useState<DietaResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [showGenerateModal, setShowGenerateModal] = useState(false);
+  const [subscriptionInfo, setSubscriptionInfo] = useState<InfoSuscripcionDietas | null>(null);
   const navigate = useNavigate();
   const { colorScheme } = useMantineColorScheme();
   const isDark = colorScheme === 'dark';
@@ -63,7 +69,42 @@ const MyDietsPage: React.FC = () => {
     };
 
     cargarDietas();
+    cargarInfoSuscripcion();
   }, []);
+
+  const cargarInfoSuscripcion = async () => {
+    try {
+      const response = await dietTemplateService.obtenerInfoSuscripcionDietas();
+      setSubscriptionInfo(response);
+    } catch (err) {
+      console.error('Error al cargar información de suscripción:', err);
+      // Si hay error, usar valores por defecto
+      setSubscriptionInfo({
+        tipoPlan: 'Gratuito',
+        limiteDietas: 3,
+        dietasCreadas: 0,
+        suscripcionActiva: false,
+        puedeCrearMas: true
+      });
+    }
+  };
+
+  const handleGenerateSuccess = (dietaId: string) => {
+    setShowGenerateModal(false);
+    // Recargar las dietas para mostrar la nueva
+    window.location.reload();
+    // Redirigir a los detalles de la dieta
+    navigate(`/ver-dieta/${dietaId}`);
+  };
+
+  const handleGenerateError = (errorMessage: string) => {
+    console.error('Error al generar dieta:', errorMessage);
+    setError(errorMessage);
+  };
+
+  const canGenerateDiet = () => {
+    return subscriptionInfo && subscriptionInfo.puedeCrearMas;
+  };
 
   const handleVerDieta = (dietaId: string) => {
     // Validar que el ID no esté vacío y tenga el formato correcto
@@ -128,6 +169,7 @@ const MyDietsPage: React.FC = () => {
   }
 
   return (
+    <>
       <Container size="lg" py="xl">
         <Stack gap="xl">
           {/* Header */}
@@ -166,6 +208,64 @@ const MyDietsPage: React.FC = () => {
               </Group>
             </Stack>
           </Paper>
+
+          {/* Panel de generación de dietas */}
+          {subscriptionInfo && (
+            <Paper p="lg" radius="lg" withBorder bg="nutroos-green.0">
+              <Stack gap="md">
+                <Group justify="space-between" align="flex-start">
+                  <div>
+                    <Title order={3} c="nutroos-green.7">
+                      <Group gap="xs">
+                        <IconSparkles size={24} />
+                        Genera tu propia dieta personalizada
+                      </Group>
+                    </Title>
+                    <Text size="sm" c="dimmed" mt="xs">
+                      Crea una dieta adaptada a tus necesidades usando nuestras plantillas inteligentes
+                    </Text>
+                  </div>
+                  <Badge
+                    color={subscriptionInfo.dietasCreadas < subscriptionInfo.limiteDietas ? 'green' : 'red'}
+                    variant="light"
+                    size="lg"
+                  >
+                    {subscriptionInfo.dietasCreadas}/{subscriptionInfo.limiteDietas} dietas
+                  </Badge>
+                </Group>
+
+                {canGenerateDiet() ? (
+                  <Group>
+                    <Button
+                      leftSection={<IconSparkles size={16} />}
+                      color="nutroos-green"
+                      onClick={() => setShowGenerateModal(true)}
+                    >
+                      Generar Dieta Personalizada
+                    </Button>
+                    <Text size="sm" c="dimmed">
+                      Plan {subscriptionInfo.tipoPlan} • {subscriptionInfo.limiteDietas - subscriptionInfo.dietasCreadas} dietas restantes
+                    </Text>
+                  </Group>
+                ) : (
+                  <Alert
+                    icon={<IconAlertCircle size={16} />}
+                    color="red.5"
+                    variant="filled"
+                    radius="md"
+                  >
+                    <Text size="sm">
+                      Has alcanzado el límite de dietas para tu suscripción {subscriptionInfo.tipoPlan}. 
+                      Actualiza tu plan para crear más dietas personalizadas.
+                    </Text>
+                  </Alert>
+                )}
+              </Stack>
+            </Paper>
+          )}
+
+          {/* Divider */}
+          {dietas.length > 0 && <Divider />}
 
           {/* Lista de dietas */}
           {dietas.length === 0 ? (
@@ -316,6 +416,22 @@ const MyDietsPage: React.FC = () => {
           )}
         </Stack>
       </Container>
+
+      {/* Modal para generar dieta */}
+      <Modal
+        opened={showGenerateModal}
+        onClose={() => setShowGenerateModal(false)}
+        title="Generar Dieta Personalizada"
+        size="lg"
+        centered
+      >
+        <GenerateDietForm
+          onSuccess={handleGenerateSuccess}
+          onError={handleGenerateError}
+          userSubscription={subscriptionInfo || undefined}
+        />
+      </Modal>
+    </>
   );
 };
 

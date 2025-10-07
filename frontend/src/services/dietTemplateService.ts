@@ -33,6 +33,24 @@ export interface CrearDietaDesdeExistenteDTO {
   nombreComidas: string[];
 }
 
+export interface GenerarDietaClienteDTO {
+  nombre: string;
+  descripcion?: string;
+  tipo: string[];
+  duracion: number;
+  comidasDiarias: number;
+  fechaInicio: string;
+  tipoArquetipo: string;
+}
+
+export interface InfoSuscripcionDietas {
+  tipoPlan: string;
+  limiteDietas: number;
+  dietasCreadas: number;
+  suscripcionActiva: boolean;
+  puedeCrearMas: boolean;
+}
+
 export const dietTemplateService = {
   // Obtener tipos de arquetipo disponibles
   async obtenerTiposArquetipo(): Promise<{ success: boolean; data: TipoArquetipo[] }> {
@@ -61,7 +79,7 @@ export const dietTemplateService = {
     return await response.json();
   },
 
-  // Crear dieta desde plantilla
+  // Crear dieta desde plantilla (nutricionistas)
   async crearDietaDesdeTemplate(datos: CrearDietaDesdeTemplateDTO): Promise<{ success: boolean; data: unknown; message: string }> {
     const response = await apiRequest('/api/diets/templates/create', {
       method: 'POST',
@@ -86,6 +104,34 @@ export const dietTemplateService = {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(errorData.message || 'Error al crear dieta desde existente');
+    }
+    
+    return await response.json();
+  },
+
+  // Generar dieta desde plantilla para clientes (sin rol nutricionista)
+  async generarDietaDesdePlantillaCliente(datos: GenerarDietaClienteDTO): Promise<{ success: boolean; data: unknown; message: string }> {
+    const response = await apiRequest('/api/diets/templates/generar-cliente', {
+      method: 'POST',
+      body: JSON.stringify(datos)
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Error al generar dieta desde plantilla');
+    }
+    
+    return await response.json();
+  },
+
+  // Obtener información de suscripción del usuario para dietas
+  async obtenerInfoSuscripcionDietas(): Promise<InfoSuscripcionDietas> {
+    const response = await apiRequest('/api/diets/templates/suscripcion/info', {
+      method: 'GET'
+    });
+    
+    if (!response.ok) {
+      throw new Error('Error al obtener información de suscripción');
     }
     
     return await response.json();
