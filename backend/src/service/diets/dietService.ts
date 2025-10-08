@@ -240,7 +240,7 @@ export async function publicarDietaService(dietaId: string, userId: string): Pro
     let totalHidratosCarbono = 0;
     let totalGrasas = 0;
 
-    dieta.dias.forEach((dia: any) => {
+    dieta.dias.forEach((dia: { proteinas?: number | null; hidratosCarbono?: number | null; grasas?: number | null }) => {
       totalProteinas += dia.proteinas || 0;
       totalHidratosCarbono += dia.hidratosCarbono || 0;
       totalGrasas += dia.grasas || 0;

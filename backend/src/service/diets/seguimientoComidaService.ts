@@ -1144,7 +1144,6 @@ export async function calcularDiasSinRegistroCliente(userId: string): Promise<{
 
     // Buscar el último día con registro completo
     let ultimoDiaRegistrado: Date | null = null;
-    let diasRegistrados = 0;
 
     // Iterar sobre los días de la dieta desde el inicio
     for (let diaIndex = 0; diaIndex < dietaActiva.dias.length && diaIndex <= diasDesdeInicio; diaIndex++) {
@@ -1155,7 +1154,7 @@ export async function calcularDiasSinRegistroCliente(userId: string): Promise<{
         const fechaDia = new Date(fechaInicio);
         fechaDia.setDate(fechaDia.getDate() + diaIndex);
         ultimoDiaRegistrado = fechaDia;
-        diasRegistrados = diaIndex + 1;
+        // diasRegistrados = diaIndex + 1; // Variable no utilizada actualmente
       }
     }
 
