@@ -67,7 +67,12 @@ const RegisterWorkerForm: React.FC = () => {
       profilePicture: null,
     },
     validate: {
-      fullName: (value) => (!value ? 'El nombre completo es obligatorio' : null),
+      fullName: (value) => {
+        if (!value) return 'El nombre completo es obligatorio';
+        if (value.length < 2) return 'El nombre completo debe tener al menos 2 caracteres';
+        if (value.length > 100) return 'El nombre completo no puede exceder los 100 caracteres';
+        return null;
+      },
       email: (value) => (!value ? 'El email es obligatorio' : /^\S+@\S+$/.test(value) ? null : 'Email no válido'),
       password: (value) => (!value ? 'La contraseña es obligatoria' : null),
       confirmPassword: (value, values) => 
@@ -119,10 +124,12 @@ const RegisterWorkerForm: React.FC = () => {
       workerType: (value) => (!value ? 'El tipo de trabajador es obligatorio' : null),
       biography: (value) => {
         if (!value) return 'La biografía es obligatoria';
+        if (value.length > 1000) return 'La biografía no puede exceder los 1000 caracteres';
         return null;
       },
       availability: (value) => {
         if (!value) return 'La disponibilidad es obligatoria';
+        if (value.length > 500) return 'La disponibilidad no puede exceder los 500 caracteres';
         return null;
       },
     },
@@ -235,13 +242,23 @@ const RegisterWorkerForm: React.FC = () => {
             
             <Grid>
               <Grid.Col span={{ base: 12, md: 6 }}>
-                <TextInput
-                  label="Nombre Completo"
-                  placeholder="Ej: María García López"
-                  required
-                  leftSection={<IconUser size={16} />}
-                  {...form.getInputProps('fullName')}
-                />
+                <Stack gap="xs">
+                  <TextInput
+                    label="Nombre Completo"
+                    placeholder="Ej: María García López"
+                    required
+                    leftSection={<IconUser size={16} />}
+                    {...form.getInputProps('fullName')}
+                  />
+                  <Group justify="flex-end">
+                    <Text 
+                      size="xs" 
+                      c={(form.values.fullName?.length || 0) > 100 ? 'red' : (form.values.fullName?.length || 0) > 90 ? 'orange' : 'dimmed'}
+                    >
+                      {form.values.fullName?.length || 0} / 100 caracteres
+                    </Text>
+                  </Group>
+                </Stack>
               </Grid.Col>
               
               <Grid.Col span={{ base: 12, md: 6 }}>
@@ -329,27 +346,47 @@ const RegisterWorkerForm: React.FC = () => {
               </Grid.Col>
               
               <Grid.Col span={12}>
-                <Textarea
-                  label="Biografía"
-                  placeholder="Describe tu experiencia profesional, especialidades, certificaciones, etc."
-                  required
-                  minRows={3}
-                  maxRows={6}
-                  leftSection={<IconFileText size={16} />}
-                  {...form.getInputProps('biography')}
-                />
+                <Stack gap="xs">
+                  <Textarea
+                    label="Biografía"
+                    placeholder="Describe tu experiencia profesional, especialidades, certificaciones, etc."
+                    required
+                    minRows={3}
+                    maxRows={6}
+                    leftSection={<IconFileText size={16} />}
+                    {...form.getInputProps('biography')}
+                  />
+                  <Group justify="flex-end">
+                    <Text 
+                      size="xs" 
+                      c={(form.values.biography?.length || 0) > 1000 ? 'red' : (form.values.biography?.length || 0) > 900 ? 'orange' : 'dimmed'}
+                    >
+                      {form.values.biography?.length || 0} / 1000 caracteres
+                    </Text>
+                  </Group>
+                </Stack>
               </Grid.Col>
               
               <Grid.Col span={12}>
-                <Textarea
-                  label="Disponibilidad"
-                  placeholder="Describe tu horario de trabajo, días disponibles, modalidad (presencial/online), etc."
-                  required
-                  minRows={2}
-                  maxRows={4}
-                  leftSection={<IconClock size={16} />}
-                  {...form.getInputProps('availability')}
-                />
+                <Stack gap="xs">
+                  <Textarea
+                    label="Disponibilidad"
+                    placeholder="Describe tu horario de trabajo, días disponibles, modalidad (presencial/online), etc."
+                    required
+                    minRows={2}
+                    maxRows={4}
+                    leftSection={<IconClock size={16} />}
+                    {...form.getInputProps('availability')}
+                  />
+                  <Group justify="flex-end">
+                    <Text 
+                      size="xs" 
+                      c={(form.values.availability?.length || 0) > 500 ? 'red' : (form.values.availability?.length || 0) > 450 ? 'orange' : 'dimmed'}
+                    >
+                      {form.values.availability?.length || 0} / 500 caracteres
+                    </Text>
+                  </Group>
+                </Stack>
               </Grid.Col>
             </Grid>
           </Paper>

@@ -403,7 +403,6 @@ export async function confirmarCitaService(citaId: string, usuarioId: string): P
       );
     } catch (error) {
       logger.error('Error al enviar notificación de cita confirmada:', error);
-      // No lanzar error para no interrumpir el proceso de confirmación
     }
 
     return cita.toObject() as unknown as ICita;
@@ -558,8 +557,8 @@ function generarHorariosDisponibles(citasExistentes: unknown[]): string[] {
   const horariosOcupados = citasExistentes.map((cita: unknown) => (cita as { hora: string }).hora);
   const horariosDisponibles: string[] = [];
   
-  // Generar horarios de 9:00 a 18:00 cada 30 minutos
-  for (let hora = 9; hora < 18; hora++) {
+  // Generar horarios de 8:00 a 21:00 cada 30 minutos
+  for (let hora = 8; hora < 21; hora++) {
     for (let minuto = 0; minuto < 60; minuto += 30) {
       const horario = `${hora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}`;
       if (!horariosOcupados.includes(horario)) {

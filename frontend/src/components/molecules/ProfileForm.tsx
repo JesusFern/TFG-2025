@@ -50,6 +50,10 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
 
     if (!formData.fullName.trim()) {
       newErrors.fullName = 'El nombre completo es obligatorio';
+    } else if (formData.fullName.length < 2) {
+      newErrors.fullName = 'El nombre completo debe tener al menos 2 caracteres';
+    } else if (formData.fullName.length > 100) {
+      newErrors.fullName = 'El nombre completo no puede exceder los 100 caracteres';
     }
 
     if (!formData.email.trim()) {
@@ -83,9 +87,14 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
     if (formData.workerType) {
       if (!formData.biography?.trim()) {
         newErrors.biography = 'La biografía es obligatoria para trabajadores';
+      } else if (formData.biography.length > 1000) {
+        newErrors.biography = 'La biografía no puede exceder los 1000 caracteres';
       }
+      
       if (!formData.availability?.trim()) {
         newErrors.availability = 'La disponibilidad es obligatoria para trabajadores';
+      } else if (formData.availability.length > 500) {
+        newErrors.availability = 'La disponibilidad no puede exceder los 500 caracteres';
       }
     }
 
@@ -131,15 +140,25 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
             Información Personal
           </Text>
           
-          <Group grow>
-            <TextInput
-              label="Nombre completo"
-              placeholder="Tu nombre completo"
-              value={formData.fullName}
-              onChange={(e) => handleInputChange('fullName', e.target.value)}
-              error={errors.fullName}
-              required
-            />
+          <Group grow align="flex-start">
+            <Stack gap="xs">
+              <TextInput
+                label="Nombre completo"
+                placeholder="Tu nombre completo"
+                value={formData.fullName}
+                onChange={(e) => handleInputChange('fullName', e.target.value)}
+                error={errors.fullName}
+                required
+              />
+              <Group justify="flex-end">
+                <Text 
+                  size="xs" 
+                  c={formData.fullName.length > 100 ? 'red' : formData.fullName.length > 90 ? 'orange' : 'dimmed'}
+                >
+                  {formData.fullName.length} / 100 caracteres
+                </Text>
+              </Group>
+            </Stack>
             
             <TextInput
               label="Email"
@@ -201,25 +220,45 @@ export const ProfileForm: React.FC<ProfileFormProps> = ({
               required
             />
             
-            <Textarea
-              label="Biografía"
-              placeholder="Cuéntanos sobre tu experiencia y formación..."
-              value={formData.biography || ''}
-              onChange={(e) => handleInputChange('biography', e.target.value)}
-              error={errors.biography}
-              required
-              minRows={3}
-              maxRows={6}
-            />
+            <Stack gap="xs">
+              <Textarea
+                label="Biografía"
+                placeholder="Cuéntanos sobre tu experiencia y formación..."
+                value={formData.biography || ''}
+                onChange={(e) => handleInputChange('biography', e.target.value)}
+                error={errors.biography}
+                required
+                minRows={3}
+                maxRows={6}
+              />
+              <Group justify="flex-end">
+                <Text 
+                  size="xs" 
+                  c={(formData.biography?.length || 0) > 1000 ? 'red' : (formData.biography?.length || 0) > 900 ? 'orange' : 'dimmed'}
+                >
+                  {formData.biography?.length || 0} / 1000 caracteres
+                </Text>
+              </Group>
+            </Stack>
             
-            <TextInput
-              label="Disponibilidad"
-              placeholder="Ej: Lunes a Viernes 9:00-18:00"
-              value={formData.availability || ''}
-              onChange={(e) => handleInputChange('availability', e.target.value)}
-              error={errors.availability}
-              required
-            />
+            <Stack gap="xs">
+              <TextInput
+                label="Disponibilidad"
+                placeholder="Ej: Lunes a Viernes 9:00-18:00"
+                value={formData.availability || ''}
+                onChange={(e) => handleInputChange('availability', e.target.value)}
+                error={errors.availability}
+                required
+              />
+              <Group justify="flex-end">
+                <Text 
+                  size="xs" 
+                  c={(formData.availability?.length || 0) > 500 ? 'red' : (formData.availability?.length || 0) > 450 ? 'orange' : 'dimmed'}
+                >
+                  {formData.availability?.length || 0} / 500 caracteres
+                </Text>
+              </Group>
+            </Stack>
           </Stack>
         )}
 

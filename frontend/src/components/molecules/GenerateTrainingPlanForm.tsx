@@ -58,13 +58,16 @@ const GenerateTrainingPlanForm: React.FC<GenerateTrainingPlanFormProps> = ({
   onError,
   userSubscription
 }) => {
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
   const [form, setForm] = useState<FormData>({
     nombre: '',
     descripcion: '',
     objetivo: '',
     duracionDias: 30,
     sesionesPorSemana: 3,
-    fechaInicio: new Date(),
+    fechaInicio: tomorrow,
     diasSemana: [],
     nivelDificultad: 'Intermedio'
   });
@@ -94,8 +97,8 @@ const GenerateTrainingPlanForm: React.FC<GenerateTrainingPlanFormProps> = ({
   };
 
   const canProceedToStep3 = () => {
-    return form.duracionDias > 0 && 
-           form.sesionesPorSemana > 0 && 
+    return form.duracionDias >= 7 && 
+           form.sesionesPorSemana >= 2 && 
            form.fechaInicio !== null &&
            form.nivelDificultad !== '';
   };
@@ -206,6 +209,7 @@ const GenerateTrainingPlanForm: React.FC<GenerateTrainingPlanFormProps> = ({
             <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
               <NumberInput
                 label="Duración (días)"
+                description="Mínimo 1 semana (7 días)"
                 value={form.duracionDias}
                 onChange={(value) => handleInputChange('duracionDias', value || 30)}
                 min={7}
@@ -216,9 +220,10 @@ const GenerateTrainingPlanForm: React.FC<GenerateTrainingPlanFormProps> = ({
 
               <NumberInput
                 label="Sesiones por semana"
+                description="Mínimo 2 sesiones"
                 value={form.sesionesPorSemana}
                 onChange={(value) => handleInputChange('sesionesPorSemana', value || 3)}
-                min={1}
+                min={2}
                 max={7}
                 required
                 size="md"

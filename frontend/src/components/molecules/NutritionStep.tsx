@@ -73,14 +73,24 @@ const NutritionStep: React.FC<Props> = ({ values, errors, onChange }) => {
     ? `Debes especificar exactamente ${values.comidasDia} horario(s) de comida` 
     : null;
 
+  const MAX_LENGTH = 200;
+  const preferenciasArray = String(values.preferencias).split(',').filter(p => p.trim());
+  const restriccionesArray = String(values.restricciones).split(',').filter(r => r.trim());
+  const alergiasArray = String(values.alergias).split(',').filter(a => a.trim());
+  
+  const hasLongPreferencia = preferenciasArray.some(p => p.trim().length > MAX_LENGTH);
+  const hasLongRestriccion = restriccionesArray.some(r => r.trim().length > MAX_LENGTH);
+  const hasLongAlergia = alergiasArray.some(a => a.trim().length > MAX_LENGTH);
+  
   return (
     <>
       <Textarea 
         label="Preferencias alimentarias" 
         value={values.preferencias} 
         onChange={(e) => onChange('preferencias', e.target.value)} 
-        placeholder="¿Cuáles son tus preferencias alimentarias?" 
-        error={errors.preferencias} 
+        placeholder="Separa cada preferencia con comas (ej: Comida casera, Platos mediterráneos)" 
+        description={hasLongPreferencia ? "Cada preferencia no puede exceder los 200 caracteres" : "Ingresa tus preferencias alimentarias separadas por comas"}
+        error={errors.preferencias || (hasLongPreferencia ? "Una o más preferencias exceden los 200 caracteres" : undefined)} 
       />
       
       <NumberInput 
@@ -169,8 +179,9 @@ const NutritionStep: React.FC<Props> = ({ values, errors, onChange }) => {
         label="Restricciones alimentarias" 
         value={values.restricciones} 
         onChange={(e) => onChange('restricciones', e.target.value)} 
-        placeholder="¿Tienes alguna restricción alimentaria?" 
-        error={errors.restricciones} 
+        placeholder="Separa cada restricción con comas (ej: Sin gluten, Sin lactosa)" 
+        description={hasLongRestriccion ? "Cada restricción no puede exceder los 200 caracteres" : "Ingresa tus restricciones alimentarias separadas por comas"}
+        error={errors.restricciones || (hasLongRestriccion ? "Una o más restricciones exceden los 200 caracteres" : undefined)} 
         mt="md" 
       />
       
@@ -178,8 +189,9 @@ const NutritionStep: React.FC<Props> = ({ values, errors, onChange }) => {
         label="Intolerancias o alergias alimentarias" 
         value={values.alergias} 
         onChange={(e) => onChange('alergias', e.target.value)} 
-        placeholder="¿Tienes alguna intolerancia o alergia alimentaria?" 
-        error={errors.alergias} 
+        placeholder="Separa cada alergia con comas (ej: Frutos secos, Mariscos)" 
+        description={hasLongAlergia ? "Cada alergia no puede exceder los 200 caracteres" : "Ingresa tus alergias o intolerancias separadas por comas"}
+        error={errors.alergias || (hasLongAlergia ? "Una o más alergias exceden los 200 caracteres" : undefined)} 
         mt="md" 
       />
     </>

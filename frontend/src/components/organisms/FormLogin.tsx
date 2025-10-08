@@ -52,10 +52,10 @@ export default function AuthenticationImage() {
         // Guardar en el contexto de autenticación
         login(data.token, data.user);
         
-        // Redirigir al dashboard después de un breve delay
+        // Redirigir al dashboard con recarga completa para reiniciar la aplicación con el nuevo contexto
         setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000);
+          window.location.href = '/dashboard';
+        }, 100);
       } else {
         setError(data.message || 'Error al iniciar sesión');
       }

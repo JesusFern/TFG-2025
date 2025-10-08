@@ -352,11 +352,22 @@ const storage = multer.diskStorage({
 });
 
 const fileFilter = (req: AuthenticatedRequest, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-  // Permitir solo videos
-  if (file.mimetype.startsWith('video/')) {
+  // Lista de tipos MIME permitidos para videos
+  const allowedMimeTypes = [
+    'video/mp4',
+    'video/avi',
+    'video/x-msvideo',
+    'video/quicktime',
+    'video/x-quicktime',
+    'video/mov',
+    'video/webm'
+  ];
+  
+  // Verificar si el tipo MIME está en la lista de permitidos
+  if (allowedMimeTypes.includes(file.mimetype) || file.mimetype.startsWith('video/')) {
     cb(null, true);
   } else {
-    cb(new Error('Solo se permiten archivos de video'));
+    cb(new Error(`Solo se permiten archivos de video (MP4, AVI, MOV, WebM). Tipo recibido: ${file.mimetype}`));
   }
 };
 

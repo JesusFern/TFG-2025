@@ -32,11 +32,15 @@ export const validateWorkerRegistration = [
 
   body('biography')
     .notEmpty()
-    .withMessage('La biografía es obligatoria'),
+    .withMessage('La biografía es obligatoria')
+    .isLength({ max: 1000 })
+    .withMessage('La biografía no puede exceder los 1000 caracteres'),
 
   body('availability')
     .notEmpty()
-    .withMessage('La disponibilidad es obligatoria'),
+    .withMessage('La disponibilidad es obligatoria')
+    .isLength({ max: 500 })
+    .withMessage('La disponibilidad no puede exceder los 500 caracteres'),
 
   // Campos opcionales
   body('gender')

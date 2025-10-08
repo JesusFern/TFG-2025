@@ -8,9 +8,9 @@ import {
   NumberInput,
   Select,
   Textarea,
+  Text,
 } from '@mantine/core';
 import { motion } from 'framer-motion';
-import DatePickerInput from '../atoms/DatePickerInput';
 
 interface SesionData {
   fecha: string;
@@ -94,19 +94,18 @@ const ModalCrearSesion: React.FC<ModalCrearSesionProps> = ({
         transition={{ duration: 0.3 }}
       >
         <Stack gap="md">
-          <DatePickerInput
-            label="Fecha de la sesión"
-            value={new Date(nuevaSesion.fecha)}
-            onChange={(date) => {
-              if (date) {
-                setNuevaSesion(prev => ({ 
-                  ...prev, 
-                  fecha: date.toISOString() 
-                }));
-              }
-            }}
-            required
-          />
+          {/* Mostrar fecha como información no editable */}
+          <div>
+            <Text size="sm" fw={500} mb={5}>Fecha de la sesión</Text>
+            <Text size="sm" c="dimmed">
+              {new Date(nuevaSesion.fecha).toLocaleDateString('es-ES', { 
+                weekday: 'long', 
+                year: 'numeric', 
+                month: 'long', 
+                day: 'numeric' 
+              })}
+            </Text>
+          </div>
           
           <TextInput
             label="Hora de la sesión"
@@ -119,6 +118,7 @@ const ModalCrearSesion: React.FC<ModalCrearSesionProps> = ({
               }))
             }
             placeholder="HH:MM"
+            description="Especifica la hora de la sesión"
           />
           
           <Select

@@ -46,7 +46,9 @@ const ConfigurarPlantillaPage: React.FC = () => {
   // Estados del formulario
   const [duracionSemanas, setDuracionSemanas] = useState<number>(4);
   const [sesionesPorSemana, setSesionesPorSemana] = useState<number>(3);
-  const [fechaInicio, setFechaInicio] = useState<Date | null>(new Date());
+  const tomorrow = new Date();
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const [fechaInicio, setFechaInicio] = useState<Date | null>(tomorrow);
   const [diasSemana, setDiasSemana] = useState<number[]>([]);
   const [nivelDificultad, setNivelDificultad] = useState<string>('Intermedio');
   const [activeStep, setActiveStep] = useState(0);
@@ -253,7 +255,7 @@ const ConfigurarPlantillaPage: React.FC = () => {
               <SimpleGrid cols={{ base: 1, md: 2 }} spacing="lg">
                 <NumberInput
                   label="Duración del plan (semanas)"
-                  description="Número de semanas que durará el plan"
+                  description="Mínimo 1 semana"
                   value={duracionSemanas}
                   onChange={(value) => setDuracionSemanas(Number(value) || 4)}
                   min={1}
@@ -263,10 +265,10 @@ const ConfigurarPlantillaPage: React.FC = () => {
 
                 <NumberInput
                   label="Sesiones por semana"
-                  description="Número de días de entrenamiento por semana"
+                  description="Mínimo 2 sesiones"
                   value={sesionesPorSemana}
                   onChange={(value) => setSesionesPorSemana(Number(value) || 3)}
-                  min={1}
+                  min={2}
                   max={7}
                   leftSection={<IconClock size={16} />}
                 />

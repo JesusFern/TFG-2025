@@ -2,7 +2,6 @@ import React, { useState } from 'react';
 import {
   Select,
   MultiSelect,
-  TextInput,
   Button,
   Stack,
   Group,
@@ -82,18 +81,33 @@ const ActivityDataForm: React.FC<ActivityDataFormProps> = ({
     { value: 'Rehabilitación', label: 'Rehabilitación' }
   ];
 
+  const [preferenciasErrors, setPreferenciasErrors] = useState<{ [key: number]: string }>({});
+  const [limitacionesErrors, setLimitacionesErrors] = useState<{ [key: number]: string }>({});
+
   const addPreferencia = () => {
     setPreferenciasEjercicios([...preferenciasEjercicios, '']);
   };
 
   const removePreferencia = (index: number) => {
     setPreferenciasEjercicios(preferenciasEjercicios.filter((_, i) => i !== index));
+    const newErrors = { ...preferenciasErrors };
+    delete newErrors[index];
+    setPreferenciasErrors(newErrors);
   };
 
   const updatePreferencia = (index: number, value: string) => {
     const updated = [...preferenciasEjercicios];
     updated[index] = value;
     setPreferenciasEjercicios(updated);
+    
+    // Validar longitud
+    if (value.length > 200) {
+      setPreferenciasErrors({ ...preferenciasErrors, [index]: 'Cada preferencia no puede exceder los 200 caracteres' });
+    } else {
+      const newErrors = { ...preferenciasErrors };
+      delete newErrors[index];
+      setPreferenciasErrors(newErrors);
+    }
   };
 
   const addLimitacion = () => {
@@ -102,15 +116,35 @@ const ActivityDataForm: React.FC<ActivityDataFormProps> = ({
 
   const removeLimitacion = (index: number) => {
     setLimitacionesFisicas(limitacionesFisicas.filter((_, i) => i !== index));
+    const newErrors = { ...limitacionesErrors };
+    delete newErrors[index];
+    setLimitacionesErrors(newErrors);
   };
 
   const updateLimitacion = (index: number, value: string) => {
     const updated = [...limitacionesFisicas];
     updated[index] = value;
     setLimitacionesFisicas(updated);
+    
+    // Validar longitud
+    if (value.length > 500) {
+      setLimitacionesErrors({ ...limitacionesErrors, [index]: 'Cada limitación no puede exceder los 500 caracteres' });
+    } else {
+      const newErrors = { ...limitacionesErrors };
+      delete newErrors[index];
+      setLimitacionesErrors(newErrors);
+    }
   };
 
   const handleSubmit = async (values: typeof form.values) => {
+    // Validar que no haya errores de longitud
+    const hasPreferenciasErrors = Object.keys(preferenciasErrors).length > 0;
+    const hasLimitacionesErrors = Object.keys(limitacionesErrors).length > 0;
+    
+    if (hasPreferenciasErrors || hasLimitacionesErrors) {
+      return; // No enviar si hay errores
+    }
+    
     try {
       await onSubmit({
         ...values,
@@ -184,24 +218,35 @@ const ActivityDataForm: React.FC<ActivityDataFormProps> = ({
 
           <Stack gap="sm">
             {preferenciasEjercicios.map((preferencia, index) => (
-              <Group key={index} gap="sm">
-                <Textarea
-                  placeholder="Describe tu preferencia de ejercicio..."
-                  value={preferencia}
-                  onChange={(e) => updatePreferencia(index, e.target.value)}
-                  style={{ flex: 1 }}
-                  minRows={2}
-                  maxRows={3}
-                />
-                <Button
-                  size="sm"
-                  variant="light"
-                  color="red"
-                  onClick={() => removePreferencia(index)}
-                >
-                  <IconX size={14} />
-                </Button>
-              </Group>
+              <Stack key={index} gap="xs">
+                <Group gap="sm">
+                  <Textarea
+                    placeholder="Describe tu preferencia de ejercicio..."
+                    value={preferencia}
+                    onChange={(e) => updatePreferencia(index, e.target.value)}
+                    style={{ flex: 1 }}
+                    minRows={2}
+                    maxRows={3}
+                    error={preferenciasErrors[index]}
+                  />
+                  <Button
+                    size="sm"
+                    variant="light"
+                    color="red"
+                    onClick={() => removePreferencia(index)}
+                  >
+                    <IconX size={14} />
+                  </Button>
+                </Group>
+                <Group justify="flex-end">
+                  <Text 
+                    size="xs" 
+                    c={preferencia.length > 200 ? 'red' : preferencia.length > 180 ? 'orange' : 'dimmed'}
+                  >
+                    {preferencia.length} / 200 caracteres
+                  </Text>
+                </Group>
+              </Stack>
             ))}
           </Stack>
         </Box>
@@ -221,22 +266,35 @@ const ActivityDataForm: React.FC<ActivityDataFormProps> = ({
 
           <Stack gap="sm">
             {limitacionesFisicas.map((limitacion, index) => (
-              <Group key={index} gap="sm">
-                <TextInput
-                  placeholder="Describe una limitación física"
-                  value={limitacion}
-                  onChange={(e) => updateLimitacion(index, e.target.value)}
-                  style={{ flex: 1 }}
-                />
-                <Button
-                  size="sm"
-                  variant="light"
-                  color="red"
-                  onClick={() => removeLimitacion(index)}
-                >
-                  <IconX size={14} />
-                </Button>
-              </Group>
+              <Stack key={index} gap="xs">
+                <Group gap="sm">
+                  <Textarea
+                    placeholder="Describe una limitación física (ej: lesión en rodilla derecha, problema de espalda...)"
+                    value={limitacion}
+                    onChange={(e) => updateLimitacion(index, e.target.value)}
+                    style={{ flex: 1 }}
+                    minRows={2}
+                    maxRows={3}
+                    error={limitacionesErrors[index]}
+                  />
+                  <Button
+                    size="sm"
+                    variant="light"
+                    color="red"
+                    onClick={() => removeLimitacion(index)}
+                  >
+                    <IconX size={14} />
+                  </Button>
+                </Group>
+                <Group justify="flex-end">
+                  <Text 
+                    size="xs" 
+                    c={limitacion.length > 500 ? 'red' : limitacion.length > 450 ? 'orange' : 'dimmed'}
+                  >
+                    {limitacion.length} / 500 caracteres
+                  </Text>
+                </Group>
+              </Stack>
             ))}
           </Stack>
         </Box>

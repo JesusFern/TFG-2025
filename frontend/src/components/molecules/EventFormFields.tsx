@@ -35,6 +35,7 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({ form }) => {
           required
           zIndex={1000}
           value={form.values.startDate}
+          minDate={new Date()}
           {...form.getInputProps('startDate')}
         />
         <TimeInput
@@ -50,6 +51,7 @@ const EventFormFields: React.FC<EventFormFieldsProps> = ({ form }) => {
           required
           zIndex={1000}
           value={form.values.endDate}
+          minDate={form.values.startDate || new Date()}
           {...form.getInputProps('endDate')}
         />
         <TimeInput

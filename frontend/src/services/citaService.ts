@@ -320,7 +320,7 @@ export class CitaService {
   // Generar horarios disponibles (9:00 a 18:00 cada 30 minutos)
   static generarHorariosDisponibles(): string[] {
     const horarios: string[] = [];
-    for (let hora = 9; hora < 18; hora++) {
+    for (let hora = 8; hora < 21; hora++) {
       for (let minuto = 0; minuto < 60; minuto += 30) {
         const horario = `${hora.toString().padStart(2, '0')}:${minuto.toString().padStart(2, '0')}`;
         horarios.push(horario);

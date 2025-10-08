@@ -35,6 +35,7 @@ interface ChatMainProps {
   onPin?: () => void;
   onCall?: () => void;
   onVideoCall?: () => void;
+  onClearError?: () => void;
 }
 
 export const ChatMain: React.FC<ChatMainProps> = ({
@@ -53,7 +54,8 @@ export const ChatMain: React.FC<ChatMainProps> = ({
   onMute,
   onPin,
   onCall,
-  onVideoCall
+  onVideoCall,
+  onClearError
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   console.log('[ChatMain] render', {
@@ -89,17 +91,6 @@ export const ChatMain: React.FC<ChatMainProps> = ({
     );
   }
 
-  // Estado de error
-  if (error) {
-    return (
-      <Center style={{ height: '100%' }}>
-        <Alert icon={<IconAlertCircle size={16} />} title="Error" color="red">
-          {error}
-        </Alert>
-      </Center>
-    );
-  }
-
   // Estado sin conversación seleccionada
   if (!conversacion) {
     return (
@@ -129,6 +120,21 @@ export const ChatMain: React.FC<ChatMainProps> = ({
         onCall={onCall}
         onVideoCall={onVideoCall}
       />
+
+      {/* Mostrar error si existe, sin bloquear la interfaz */}
+      {error && (
+        <Box p="md" style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}>
+          <Alert 
+            icon={<IconAlertCircle size={16} />} 
+            title="Error" 
+            color="red"
+            withCloseButton
+            onClose={onClearError}
+          >
+            {error}
+          </Alert>
+        </Box>
+      )}
 
       {/* Área de mensajes */}
       <ScrollArea 

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { googleCalendarService } from '../services/googleCalendarService';
 import { 
   GoogleCalendarEvent,
@@ -30,7 +30,10 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
   const [events, setEvents] = useState<GoogleCalendarEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [processedCode, setProcessedCode] = useState<string | null>(null);
+  
+  // Usar useRef para evitar re-renders y procesamiento múltiple
+  const processedCodeRef = useRef<string | null>(null);
+  const isProcessingRef = useRef(false);
 
   // Refrescar eventos
   const refreshEvents = useCallback(async () => {
@@ -71,6 +74,12 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
 
   // Detectar si estamos en el callback de Google OAuth
   const checkForGoogleCallback = useCallback(async () => {
+    // Si ya estamos procesando, salir inmediatamente
+    if (isProcessingRef.current) {
+      console.log('Ya se está procesando un código, ignorando llamada duplicada');
+      return;
+    }
+
     const urlParams = new URLSearchParams(window.location.search);
     const code = urlParams.get('code');
     const error = urlParams.get('error');
@@ -82,40 +91,45 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
       return;
     }
 
-    if (code && code !== processedCode) {
+    if (code && code !== processedCodeRef.current) {
+      // Marcar como procesando INMEDIATAMENTE
+      isProcessingRef.current = true;
+      processedCodeRef.current = code;
+      
+      // Limpiar la URL INMEDIATAMENTE para evitar procesamiento duplicado
+      window.history.replaceState({}, document.title, window.location.pathname);
+      
       try {
+        console.log('Procesando código de autorización de Google...');
         setLoading(true);
         setError(null);
-        setProcessedCode(code); // Marcar el código como procesado
         
         // Procesar el código de autorización
         await googleCalendarService.handleCallback(code);
         setIsConnected(true);
         
-        // Limpiar la URL para evitar que se procese de nuevo
-        window.history.replaceState({}, document.title, window.location.pathname);
-        
+        console.log('Código procesado exitosamente, cargando eventos...');
         // Cargar eventos después de conectar
         await refreshEvents();
         
       } catch (err) {
         console.error('Error procesando callback de Google:', err);
         
-        // Si el error es invalid_grant, significa que el código ya expiró
-        if (err instanceof Error && err.message.includes('invalid_grant')) {
-          setError('El código de autorización ha expirado. Por favor, intenta conectar nuevamente.');
+        // Si el error es invalid_grant, significa que el código ya expiró o ya fue usado
+        if (err instanceof Error && (err.message.includes('invalid_grant') || err.message.includes('ya ha sido usado'))) {
+          setError('El código de autorización ha expirado o ya ha sido usado. Por favor, intenta conectar nuevamente.');
         } else {
           setError(err instanceof Error ? err.message : 'Error procesando autenticación');
         }
         
-        // Limpiar la URL en caso de error
-        window.history.replaceState({}, document.title, window.location.pathname);
-        setProcessedCode(null); // Resetear para permitir reintento
+        // Resetear refs para permitir reintento
+        processedCodeRef.current = null;
       } finally {
         setLoading(false);
+        isProcessingRef.current = false;
       }
     }
-  }, [refreshEvents, processedCode]);
+  }, [refreshEvents]);
 
   // Conectar a Google Calendar
   const connectToGoogle = useCallback(async () => {
@@ -144,7 +158,8 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
       await googleCalendarService.disconnectCalendar();
       setIsConnected(false);
       setEvents([]);
-      setProcessedCode(null); // Limpiar código procesado
+      processedCodeRef.current = null; // Limpiar código procesado
+      isProcessingRef.current = false; // Resetear flag de procesamiento
     } catch (err) {
       console.error('Error desconectando de Google Calendar:', err);
       setError(err instanceof Error ? err.message : 'Error desconectando de Google Calendar');
@@ -240,8 +255,10 @@ export const useGoogleCalendar = (): UseGoogleCalendarReturn => {
   // Efectos
   useEffect(() => {
     // Primero verificar si hay un callback de Google OAuth
+    // Solo ejecutar una vez al montar el componente
     checkForGoogleCallback();
-  }, [checkForGoogleCallback]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Array vacío para ejecutar solo una vez
 
   useEffect(() => {
     // Si no hay callback, verificar estado de conexión

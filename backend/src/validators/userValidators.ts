@@ -19,7 +19,10 @@ export const loginValidator = [
 ];
 
 export const createUserValidator = [
-  body('fullName').notEmpty().withMessage('El nombre completo es obligatorio'),
+  body('fullName')
+    .notEmpty().withMessage('El nombre completo es obligatorio')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('El nombre completo debe tener entre 2 y 100 caracteres'),
   body('email').isEmail().withMessage('Email inválido'),
   body('password')
     .matches(passwordPolicy)
@@ -54,7 +57,10 @@ const validateEmailNotExists = async (email: string): Promise<boolean> => {
 
 // Función auxiliar para validar campos básicos del usuario
 const createBasicUserValidators = () => [
-  body('fullName').notEmpty().withMessage('El nombre completo es obligatorio'),
+  body('fullName')
+    .notEmpty().withMessage('El nombre completo es obligatorio')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('El nombre completo debe tener entre 2 y 100 caracteres'),
   body('email')
     .isEmail().withMessage('Email inválido')
     .custom(validateEmailNotExists)
@@ -89,18 +95,42 @@ export const registerValidator = [
     .optional()
     .isArray()
     .withMessage('Las condiciones médicas deben ser un array'),
+  body('health.condicionesMedicas.*')
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage('Cada condición médica no puede exceder los 200 caracteres'),
   body('health.restriccionesDieteticas')
     .optional()
     .isArray()
     .withMessage('Las restricciones dietéticas deben ser un array'),
+  body('health.restriccionesDieteticas.*')
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage('Cada restricción dietética no puede exceder los 200 caracteres'),
   body('health.alergiasIntolerancias')
     .optional()
     .isArray()
     .withMessage('Las alergias e intolerancias deben ser un array'),
+  body('health.alergiasIntolerancias.*')
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage('Cada alergia o intolerancia no puede exceder los 200 caracteres'),
+  body('health.medicacionActual')
+    .optional()
+    .isArray()
+    .withMessage('La medicación actual debe ser un array'),
+  body('health.medicacionActual.*')
+    .optional()
+    .isLength({ max: 300 })
+    .withMessage('Cada medicación no puede exceder los 300 caracteres'),
   body('health.preferenciasAlimentarias')
     .optional()
     .isArray()
     .withMessage('Las preferencias alimentarias deben ser un array'),
+  body('health.preferenciasAlimentarias.*')
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage('Cada preferencia alimentaria no puede exceder los 200 caracteres'),
   body('health.comidasDia')
     .notEmpty()
     .withMessage('El número de comidas al día es obligatorio'),
@@ -126,7 +156,19 @@ export const registerValidator = [
   body('activity.preferenciasEjercicios')
     .optional()
     .isArray()
-    .withMessage('Las preferencias de ejercicio deben ser un array')
+    .withMessage('Las preferencias de ejercicio deben ser un array'),
+  body('activity.preferenciasEjercicios.*')
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage('Cada preferencia de ejercicio no puede exceder los 200 caracteres'),
+  body('activity.limitacionesFisicas')
+    .optional()
+    .isArray()
+    .withMessage('Las limitaciones físicas deben ser un array'),
+  body('activity.limitacionesFisicas.*')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Cada limitación física no puede exceder los 500 caracteres')
 ];
 
 // Validadores por pasos
@@ -148,7 +190,11 @@ export const step1Validator = [
   body('health.condicionesMedicas')
     .optional()
     .isArray()
-    .withMessage('Las condiciones médicas deben ser un array')
+    .withMessage('Las condiciones médicas deben ser un array'),
+  body('health.condicionesMedicas.*')
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage('Cada condición médica no puede exceder los 200 caracteres')
 ];
 
 export const step2Validator = [
@@ -182,7 +228,23 @@ export const step3Validator = [
     .withMessage('La disponibilidad es obligatoria'),
   body('activity.objetivo')
     .isIn(VALID_OBJECTIVES)
-    .withMessage('Objetivo inválido')
+    .withMessage('Objetivo inválido'),
+  body('activity.preferenciasEjercicios')
+    .optional()
+    .isArray()
+    .withMessage('Las preferencias de ejercicio deben ser un array'),
+  body('activity.preferenciasEjercicios.*')
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage('Cada preferencia de ejercicio no puede exceder los 200 caracteres'),
+  body('activity.limitacionesFisicas')
+    .optional()
+    .isArray()
+    .withMessage('Las limitaciones físicas deben ser un array'),
+  body('activity.limitacionesFisicas.*')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('Cada limitación física no puede exceder los 500 caracteres')
 ];
 
 export const step4Validator = [
@@ -191,14 +253,34 @@ export const step4Validator = [
     .optional()
     .isArray()
     .withMessage('Las restricciones dietéticas deben ser un array'),
+  body('health.restriccionesDieteticas.*')
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage('Cada restricción dietética no puede exceder los 200 caracteres'),
   body('health.alergiasIntolerancias')
     .optional()
     .isArray()
     .withMessage('Las alergias e intolerancias deben ser un array'),
+  body('health.alergiasIntolerancias.*')
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage('Cada alergia o intolerancia no puede exceder los 200 caracteres'),
+  body('health.medicacionActual')
+    .optional()
+    .isArray()
+    .withMessage('La medicación actual debe ser un array'),
+  body('health.medicacionActual.*')
+    .optional()
+    .isLength({ max: 300 })
+    .withMessage('Cada medicación no puede exceder los 300 caracteres'),
   body('health.preferenciasAlimentarias')
     .optional()
     .isArray()
     .withMessage('Las preferencias alimentarias deben ser obligatorias'),
+  body('health.preferenciasAlimentarias.*')
+    .optional()
+    .isLength({ max: 200 })
+    .withMessage('Cada preferencia alimentaria no puede exceder los 200 caracteres'),
   body('health.comidasDia')
     .notEmpty()
     .withMessage('El número de comidas al día es obligatorio'),
@@ -240,7 +322,11 @@ export const step4Validator = [
 
 export const updateUserValidator = [
   param('id').isMongoId().withMessage('ID inválido'),
-  body('fullName').optional().notEmpty().withMessage('El nombre completo no puede estar vacío'),
+  body('fullName')
+    .optional()
+    .notEmpty().withMessage('El nombre completo no puede estar vacío')
+    .isLength({ min: 2, max: 100 })
+    .withMessage('El nombre completo debe tener entre 2 y 100 caracteres'),
   body('email').optional().isEmail().withMessage('Email inválido'),
   body('password')
     .optional()
@@ -252,7 +338,20 @@ export const updateUserValidator = [
     .optional()
     .custom((value) => isValidPhoneNumber.test(value))
     .withMessage('El número de teléfono no es válido'),
-  body('profilePicture').optional().isURL().withMessage('La URL de la imagen no es válida')
+  body('profilePicture').optional().isURL().withMessage('La URL de la imagen no es válida'),
+  // Validaciones para campos de trabajador
+  body('workerType')
+    .optional()
+    .isIn(['Entrenador personal', 'Nutricionista', 'Nutricionista y Entrenador personal'])
+    .withMessage('Tipo de trabajador inválido'),
+  body('biography')
+    .optional()
+    .isLength({ max: 1000 })
+    .withMessage('La biografía no puede exceder los 1000 caracteres'),
+  body('availability')
+    .optional()
+    .isLength({ max: 500 })
+    .withMessage('La disponibilidad no puede exceder los 500 caracteres')
 ];
 
 export const assignWorkerValidator = [
