@@ -11,14 +11,25 @@ import {
   Center,
   Stack, 
   Divider,
-  Paper
+  Paper,
+  Card,
+  Title,
+  Table
 } from '@mantine/core';
 import {
   IconRefresh,
-  IconUsers
+  IconUsers,
+  IconAlertCircle,
+  IconCalendarOff
 } from '@tabler/icons-react';
 import { useAuth } from '../../hooks/useAuth';
-import { getClientesAsignados, getEstadisticasNutricionalesCliente, ClienteAsignado } from '../../services/workerService';
+import { 
+  getClientesAsignados, 
+  getEstadisticasNutricionalesCliente, 
+  getClientesInactivos,
+  ClienteAsignado,
+  ClienteInactivo
+} from '../../services/workerService';
 import { 
   EstadisticasNutricionalesGenerales, 
   EstadisticasNutricionalesSemanal, 
@@ -60,6 +71,8 @@ const ProgresoNutricionWorkerTab: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [clientes, setClientes] = useState<ClienteNutricional[]>([]);
+  const [clientesInactivos, setClientesInactivos] = useState<ClienteInactivo[]>([]);
+  const [loadingInactivos, setLoadingInactivos] = useState(false);
   const [clienteSeleccionado, setClienteSeleccionado] = useState<string | null>(null);
   const [semanaSeleccionada, setSemanaSeleccionada] = useState<number>(getCurrentWeekNumber());
   const [añoSeleccionado, setAñoSeleccionado] = useState<number>(new Date().getFullYear());
@@ -108,6 +121,21 @@ const ProgresoNutricionWorkerTab: React.FC = () => {
     }
   }, [user]);
 
+  // Cargar clientes inactivos
+  const cargarClientesInactivos = useCallback(async () => {
+    if (!user || user.role !== 'worker') return;
+
+    try {
+      setLoadingInactivos(true);
+      const inactivos = await getClientesInactivos();
+      setClientesInactivos(inactivos);
+    } catch (err) {
+      console.error('Error cargando clientes inactivos:', err);
+    } finally {
+      setLoadingInactivos(false);
+    }
+  }, [user]);
+
   // Cargar estadísticas del cliente seleccionado
   const cargarEstadisticasCliente = useCallback(async (clienteId: string) => {
     try {
@@ -134,7 +162,8 @@ const ProgresoNutricionWorkerTab: React.FC = () => {
 
   useEffect(() => {
     cargarClientes();
-  }, [cargarClientes]);
+    cargarClientesInactivos();
+  }, [cargarClientes, cargarClientesInactivos]);
 
   useEffect(() => {
     if (clienteSeleccionado) {
@@ -176,8 +205,83 @@ const ProgresoNutricionWorkerTab: React.FC = () => {
     );
   }
 
+  // Función para formatear la fecha
+  const formatearFecha = (fecha: Date | null) => {
+    if (!fecha) return 'Nunca';
+    return new Date(fecha).toLocaleDateString('es-ES', { 
+      day: '2-digit', 
+      month: '2-digit', 
+      year: 'numeric' 
+    });
+  };
+
   return (
     <Stack gap="xl">
+      {/* Sección de Clientes Inactivos */}
+      {clientesInactivos.length > 0 && (
+        <Card shadow="sm" padding="lg" radius="md" withBorder>
+          <Group justify="space-between" mb="md">
+            <Group>
+              <IconAlertCircle size={24} color="orange" />
+              <Title order={4}>Clientes Inactivos</Title>
+              <Badge color="orange" variant="filled">
+                {clientesInactivos.length}
+              </Badge>
+            </Group>
+            <Button
+              variant="light"
+              size="xs"
+              leftSection={<IconRefresh size={16} />}
+              onClick={cargarClientesInactivos}
+              loading={loadingInactivos}
+            >
+              Actualizar
+            </Button>
+          </Group>
+          
+          <Text size="sm" c="dimmed" mb="md">
+            Estos clientes llevan 3 o más días sin registrar sus comidas
+          </Text>
+
+          <Table striped highlightOnHover>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>Cliente</Table.Th>
+                <Table.Th>Email</Table.Th>
+                <Table.Th>Días sin registro</Table.Th>
+                <Table.Th>Último registro</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
+              {clientesInactivos.map((cliente) => (
+                <Table.Tr key={cliente.clienteId}>
+                  <Table.Td>
+                    <Text fw={500}>{cliente.nombreCliente}</Text>
+                  </Table.Td>
+                  <Table.Td>
+                    <Text size="sm" c="dimmed">{cliente.emailCliente}</Text>
+                  </Table.Td>
+                  <Table.Td>
+                    <Badge 
+                      color={cliente.diasSinRegistro >= 7 ? 'red' : 'orange'} 
+                      variant="light"
+                      leftSection={<IconCalendarOff size={14} />}
+                    >
+                      {cliente.diasSinRegistro} días
+                    </Badge>
+                  </Table.Td>
+                  <Table.Td>
+                    <Text size="sm">
+                      {formatearFecha(cliente.ultimoDiaRegistrado)}
+                    </Text>
+                  </Table.Td>
+                </Table.Tr>
+              ))}
+            </Table.Tbody>
+          </Table>
+        </Card>
+      )}
+
       {/* Selector de cliente y semana */}
       <Paper p="md" radius="md" withBorder>
         <Grid>
@@ -232,9 +336,12 @@ const ProgresoNutricionWorkerTab: React.FC = () => {
                 <Text size="lg" fw={600}>{clienteActual.cliente.fullName}</Text>
                 <Text size="sm" c="dimmed">{clienteActual.cliente.email}</Text>
               </div>
-              <Badge color="nutroos-green" variant="light">
-                Cliente Activo
-              </Badge>
+              {/* Solo mostrar "Cliente Activo" si NO está en la lista de inactivos */}
+              {!clientesInactivos.some(inactivo => inactivo.clienteId === clienteActual.clienteId) && (
+                <Badge color="nutroos-green" variant="light">
+                  Cliente Activo
+                </Badge>
+              )}
             </Group>
           </Paper>
 

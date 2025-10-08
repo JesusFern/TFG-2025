@@ -10,6 +10,49 @@ import {
 
 export class WorkerController {
 
+  static async getClientesInactivos(req: AuthenticatedRequest, res: Response): Promise<void> {
+    try {
+      const userId = req.user?.id;
+      
+      if (!userId) {
+        res.status(401).json({ message: 'No autenticado' });
+        return;
+      }
+
+      // Verificar que el usuario es un trabajador
+      const User = (await import('../../models/users/user')).default;
+      const trabajador = await User.findById(userId);
+      
+      if (!trabajador || trabajador.role !== 'worker') {
+        res.status(403).json({ message: 'Solo los trabajadores pueden acceder a esta información' });
+        return;
+      }
+
+      // Obtener clientes inactivos
+      const { obtenerClientesInactivosService } = await import('../../service/diets/seguimientoComidaService');
+      const clientesInactivos = await obtenerClientesInactivosService(userId);
+
+      logger.info('Clientes inactivos obtenidos', {
+        workerId: userId,
+        totalInactivos: clientesInactivos.length
+      });
+
+      res.status(200).json({
+        success: true,
+        clientesInactivos
+      });
+    } catch (error) {
+      logger.error('Error al obtener clientes inactivos', {
+        error: error instanceof Error ? error.message : String(error),
+        userId: req.user?.id
+      });
+
+      res.status(500).json({ 
+        message: 'Error interno del servidor al obtener clientes inactivos' 
+      });
+    }
+  }
+
   static async getEstadisticasNutricionalesCliente(req: AuthenticatedRequest, res: Response): Promise<void> {
     try {
       const acceso = await verificarAccesoTrabajadorCliente(req, res, 'Nutricionista');

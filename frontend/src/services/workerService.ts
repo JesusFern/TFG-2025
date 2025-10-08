@@ -105,3 +105,38 @@ export const getEstadisticasEntrenamientoCliente = async (clienteId: string, sem
     throw error;
   }
 };
+
+/**
+ * Interfaz para cliente inactivo
+ */
+export interface ClienteInactivo {
+  clienteId: string;
+  nombreCliente: string;
+  emailCliente: string;
+  diasSinRegistro: number;
+  ultimoDiaRegistrado: Date | null;
+  dietaActiva: string | null;
+}
+
+/**
+ * Obtener clientes inactivos del trabajador actual
+ * Un cliente está inactivo si tiene 3 o más días consecutivos sin registrar sus comidas
+ */
+export const getClientesInactivos = async (): Promise<ClienteInactivo[]> => {
+  try {
+    const response = await apiRequest('/api/users/workers/clientes-inactivos', {
+      method: 'GET'
+    });
+    
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.message || 'Error al obtener clientes inactivos');
+    }
+    
+    const data = await response.json();
+    return data.clientesInactivos || [];
+  } catch (error) {
+    console.error('Error al obtener clientes inactivos:', error);
+    throw error;
+  }
+};

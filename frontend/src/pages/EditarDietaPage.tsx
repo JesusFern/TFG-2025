@@ -189,6 +189,7 @@ const EditarDietaPage: React.FC = () => {
     setDieta(dietaActualizada);
   };
 
+
   const daysRange = useMemo(() => {
     if (!dieta || !fechaInicio) return { days: [], totalWeeks: 0 };
     
@@ -304,6 +305,7 @@ const EditarDietaPage: React.FC = () => {
       setActiveTab(daysRange.days[0].dietDayIndex.toString());
     }
   }, [daysRange.days, activeTab]);
+
 
   const handleUpdateDay = async (dayIndex: number, updatedDay: DiaDieta) => {
     if (!dieta) return;
@@ -532,6 +534,7 @@ const EditarDietaPage: React.FC = () => {
         )}
         
       </Paper>
+
       
       <Paper 
         withBorder 

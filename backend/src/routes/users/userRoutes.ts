@@ -90,6 +90,7 @@ router.put('/:id', authenticateToken, authorizeUserOrAdmin, validateRequest, upd
 router.delete('/:id', authenticateToken, authorizeUserOrAdmin, validateRequest, deleteUser);
 
 // Rutas para trabajadores
+router.get('/workers/clientes-inactivos', authenticateToken, WorkerController.getClientesInactivos);
 router.get('/workers/estadisticas-nutricionales/:clienteId', authenticateToken, WorkerController.getEstadisticasNutricionalesCliente);
 router.get('/workers/estadisticas-entrenamiento/:clienteId', authenticateToken, WorkerController.getEstadisticasEntrenamientoCliente);
 
