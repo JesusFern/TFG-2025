@@ -332,7 +332,13 @@ async function crearPlatoConReceta(
   };
 }
 
-async function crearDiaTemplate(diaIndex: number, comidasDiarias: number, tipoArquetipo?: string): Promise<DiaTemplate> {
+async function crearDiaTemplate(
+  diaIndex: number, 
+  comidasDiarias: number, 
+  tipoArquetipo?: string,
+  horasComidas?: string[],
+  nombreComidas?: string[]
+): Promise<DiaTemplate> {
   // Seleccionar plantilla según el tipo de dieta
   let plantillasDisponibles;
   if (tipoArquetipo && PLANTILLAS_POR_TIPO[tipoArquetipo as keyof typeof PLANTILLAS_POR_TIPO]) {
@@ -344,8 +350,9 @@ async function crearDiaTemplate(diaIndex: number, comidasDiarias: number, tipoAr
   const plantillaDia = plantillasDisponibles[diaIndex % plantillasDisponibles.length];
   const comidas: ComidaTemplate[] = [];
   
-  const mealNames = ['Desayuno', 'Media mañana', 'Almuerzo', 'Merienda', 'Cena'];
-  const mealTimes = ['08:00', '11:00', '14:00', '17:00', '20:00'];
+  // Usar nombres y horas personalizados si están disponibles, sino usar valores por defecto
+  const mealNames = nombreComidas || ['Desayuno', 'Media mañana', 'Almuerzo', 'Merienda', 'Cena'];
+  const mealTimes = horasComidas || ['08:00', '11:00', '14:00', '17:00', '20:00'];
 
   // Crear solo las comidas que se necesitan según comidasDiarias
   for (let i = 0; i < comidasDiarias; i++) {
@@ -474,6 +481,8 @@ export interface CrearDietaDesdeTemplateDTO {
   tipoArquetipo: string;
   publica?: boolean; // true para dietas generadas por clientes
   draftMode?: boolean; // false para dietas listas para usar
+  horasComidas?: string[]; // Horas personalizadas de cada comida
+  nombreComidas?: string[]; // Nombres personalizados de cada comida
 }
 
 export async function crearDietaDesdeTemplate(dto: CrearDietaDesdeTemplateDTO): Promise<mongoose.Document> {
@@ -492,7 +501,7 @@ export async function crearDietaDesdeTemplate(dto: CrearDietaDesdeTemplateDTO): 
   const dias: DiaTemplate[] = [];
   
   for (let i = 0; i < dto.duracion; i++) {
-    const dia = await crearDiaTemplate(i, dto.comidasDiarias, dto.tipoArquetipo);
+    const dia = await crearDiaTemplate(i, dto.comidasDiarias, dto.tipoArquetipo, dto.horasComidas, dto.nombreComidas);
     dias.push(dia);
   }
 

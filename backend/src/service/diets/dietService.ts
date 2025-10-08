@@ -41,6 +41,28 @@ export async function crearDietaService({
   nombreComidas: string[];
   draftMode?: boolean;
 }) {
+  // Validaciones de longitud de caracteres
+  if (!nombre || nombre.trim().length === 0) {
+    throw new Error('El nombre de la dieta es obligatorio');
+  }
+  if (nombre.length > 100) {
+    throw new Error('El nombre de la dieta no puede exceder los 100 caracteres');
+  }
+
+  if (descripcion && descripcion.length > 500) {
+    throw new Error('La descripción no puede exceder los 500 caracteres');
+  }
+
+  // Validar nombres de comidas
+  for (let i = 0; i < nombreComidas.length; i++) {
+    if (!nombreComidas[i] || nombreComidas[i].trim().length === 0) {
+      throw new Error(`El nombre de la comida ${i + 1} no puede estar vacío`);
+    }
+    if (nombreComidas[i].length > 50) {
+      throw new Error(`El nombre de la comida ${i + 1} no puede exceder los 50 caracteres`);
+    }
+  }
+
   const usuarioAsignado = await User.findById(asignadaA);
   if (!usuarioAsignado || usuarioAsignado.role !== 'user') {
     throw new Error('El usuario asignado debe tener rol user');
@@ -146,6 +168,39 @@ export async function actualizarDietaService(
     draftMode?: boolean;
   }
 ) {
+  // Validaciones de longitud de caracteres
+  if (datosActualizacion.nombre !== undefined) {
+    if (!datosActualizacion.nombre || datosActualizacion.nombre.trim().length === 0) {
+      throw new Error('El nombre de la dieta es obligatorio');
+    }
+    if (datosActualizacion.nombre.length > 100) {
+      throw new Error('El nombre de la dieta no puede exceder los 100 caracteres');
+    }
+  }
+
+  if (datosActualizacion.descripcion !== undefined && datosActualizacion.descripcion && datosActualizacion.descripcion.length > 500) {
+    throw new Error('La descripción no puede exceder los 500 caracteres');
+  }
+
+  // Validar nombres de comidas en días actualizados
+  if (datosActualizacion.dias && Array.isArray(datosActualizacion.dias)) {
+    for (const dia of datosActualizacion.dias) {
+      if (dia.comidas && Array.isArray(dia.comidas)) {
+        for (let i = 0; i < dia.comidas.length; i++) {
+          const comida = dia.comidas[i];
+          if (comida.nombreComida !== undefined) {
+            if (!comida.nombreComida || comida.nombreComida.trim().length === 0) {
+              throw new Error(`El nombre de la comida ${i + 1} no puede estar vacío`);
+            }
+            if (comida.nombreComida.length > 50) {
+              throw new Error(`El nombre de la comida ${i + 1} no puede exceder los 50 caracteres`);
+            }
+          }
+        }
+      }
+    }
+  }
+
   const dieta = await buscarDietaYVerificarPermisos(dietaId, userId, true);
 
   if (datosActualizacion.dias && Array.isArray(datosActualizacion.dias)) {

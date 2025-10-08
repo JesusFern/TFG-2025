@@ -388,19 +388,16 @@ const DetalleDiaPage: React.FC = () => {
               {dayInfo.data.comidas.map((comida, index) => {
                 if (!comida.platos || comida.platos.length === 0) return null;
                 
-                const mealNames = ['Desayuno', 'Media mañana', 'Almuerzo', 'Merienda', 'Cena'];
-                const mealTimes = ['08:00', '11:00', '14:00', '17:00', '20:00'];
-                
                 return (
                   <Paper key={index} p="sm" withBorder>
                     <Stack gap="xs">
                       <Group justify="space-between" align="center">
                         <Text fw={600} size="sm" c={isDark ? "gray.1" : "gray.8"}>
-                          {comida.nombreComida || mealNames[index] || `Comida ${index + 1}`}
+                          {comida.nombreComida || `Comida ${index + 1}`}
                         </Text>
                         <Group gap="xs">
                           <Text size="xs" c="dimmed">
-                            {comida.horaEstimada || mealTimes[index]}
+                            {comida.horaEstimada || ''}
                           </Text>
                           <Badge size="xs" color="blue" variant="light">
                             {comida.platos.length} plato{comida.platos.length !== 1 ? 's' : ''}

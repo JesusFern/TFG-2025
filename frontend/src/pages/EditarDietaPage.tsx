@@ -107,7 +107,7 @@ const EditarDietaPage: React.FC = () => {
         title: 'Dieta eliminada',
         message: `La dieta "${dieta.nombre}" ha sido eliminada correctamente`,
         color: 'green',
-        position: 'top-right'
+        position: 'top-center'
       });
 
       // Redirigir a la lista de clientes después de eliminar
@@ -117,7 +117,7 @@ const EditarDietaPage: React.FC = () => {
         title: 'Error al eliminar',
         message: error instanceof Error ? error.message : 'No se pudo eliminar la dieta',
         color: 'red',
-        position: 'top-right'
+        position: 'top-center'
       });
     } finally {
       setDeleting(false);
@@ -489,7 +489,16 @@ const EditarDietaPage: React.FC = () => {
         <Group justify="space-between" mb="xs" wrap="wrap">
           <Box>
             <Group gap="md" align="center">
-              <Title order={2} c="nutroos-green.6">
+              <Title 
+                order={2} 
+                c="nutroos-green.6"
+                style={{ 
+                  wordWrap: 'break-word',
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word',
+                  maxWidth: '100%'
+                }}
+              >
                 {dieta.nombre}
               </Title>
               {!dieta.draftMode && (
@@ -498,7 +507,16 @@ const EditarDietaPage: React.FC = () => {
                 </Badge>
               )}
             </Group>
-            <Text size="sm" c="dimmed">
+            <Text 
+              size="sm" 
+              c="dimmed"
+              style={{ 
+                wordWrap: 'break-word',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+                maxWidth: '100%'
+              }}
+            >
               {dieta.descripcion || "Sin descripción"}
             </Text>
           </Box>

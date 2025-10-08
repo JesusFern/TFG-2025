@@ -219,6 +219,12 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
       if (!formData.nombre.trim()) {
         return { isValid: false, error: 'El nombre de la dieta es obligatorio' };
       }
+      if (formData.nombre.length > 100) {
+        return { isValid: false, error: 'El nombre de la dieta no puede exceder los 100 caracteres' };
+      }
+      if (formData.descripcion && formData.descripcion.length > 500) {
+        return { isValid: false, error: 'La descripción no puede exceder los 500 caracteres' };
+      }
     } else if (activeStep === 1) {
       if (formData.tipo.length === 0) {
         return { isValid: false, error: 'Debes seleccionar al menos un tipo de dieta' };
@@ -258,6 +264,9 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
       for (let i = 0; i < formData.nombreComidas.length; i++) {
         if (!formData.nombreComidas[i] || !formData.nombreComidas[i].trim()) {
           return { isValid: false, error: `El nombre de la comida ${i+1} no puede estar vacío` };
+        }
+        if (formData.nombreComidas[i].length > 50) {
+          return { isValid: false, error: `El nombre de la comida ${i+1} no puede exceder los 50 caracteres` };
         }
       }
     }
@@ -354,8 +363,6 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    console.log("Enviando formulario completo", { tipoCreacion, datosCreacion });
     
     const errorMessage = validateBeforeSubmit();
     if (errorMessage) {
@@ -478,6 +485,8 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
               mb="md"
               leftSection={<IconSalad size={16} />}
               size="md"
+              maxLength={100}
+              description={`${formData.nombre.length}/100 caracteres`}
             />
             
             <Textarea
@@ -488,6 +497,8 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
               onChange={(e) => handleInputChange('descripcion', e.target.value)}
               mb="md"
               size="md"
+              maxLength={500}
+              description={`${(formData.descripcion || '').length}/500 caracteres`}
             />
           </>
         );
@@ -620,6 +631,8 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
                     }}
                     placeholder="Ej: Desayuno"
                     required
+                    maxLength={50}
+                    description={`${(formData.nombreComidas?.[index] || '').length}/50 caracteres`}
                   />
                   <TextInput
                     label={`Hora estimada`}
@@ -652,7 +665,17 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
               <SimpleGrid cols={2} spacing="md">
                 <Box>
                   <Text fw={500} mb={5}>Nombre</Text>
-                  <Text c="dimmed">{formData.nombre}</Text>
+                  <Text 
+                    c="dimmed"
+                    style={{ 
+                      wordWrap: 'break-word',
+                      wordBreak: 'break-word',
+                      overflowWrap: 'break-word',
+                      maxWidth: '100%'
+                    }}
+                  >
+                    {formData.nombre}
+                  </Text>
                 </Box>
                 <Box>
                   <Text fw={500} mb={5}>Duración</Text>
@@ -668,11 +691,29 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
                 </Box>
                 <Box>
                   <Text fw={500} mb={5}>Tipos de dieta</Text>
-                  <Text c="dimmed">{formData.tipo.join(', ')}</Text>
+                  <Text 
+                    c="dimmed"
+                    style={{ 
+                      wordWrap: 'break-word',
+                      wordBreak: 'break-word',
+                      overflowWrap: 'break-word',
+                      maxWidth: '100%'
+                    }}
+                  >
+                    {formData.tipo.join(', ')}
+                  </Text>
                 </Box>
                 <Box>
                   <Text fw={500} mb={5}>Método de creación</Text>
-                  <Text c="dimmed">
+                  <Text 
+                    c="dimmed"
+                    style={{ 
+                      wordWrap: 'break-word',
+                      wordBreak: 'break-word',
+                      overflowWrap: 'break-word',
+                      maxWidth: '100%'
+                    }}
+                  >
                     {tipoCreacion === 'desde-cero' && 'Desde cero'}
                     {tipoCreacion === 'desde-plantilla' && `Plantilla: ${datosCreacion?.plantillaInfo?.nombre || ''}`}
                     {tipoCreacion === 'desde-existente' && `Copia de: ${datosCreacion?.dietaInfo?.nombre || ''}`}
@@ -683,7 +724,17 @@ const FormularioCrearDieta: React.FC<FormularioCrearDietaProps> = ({
               {formData.descripcion && (
                 <Box mt="md">
                   <Text fw={500} mb={5}>Descripción</Text>
-                  <Text c="dimmed">{formData.descripcion}</Text>
+                  <Text 
+                    c="dimmed"
+                    style={{ 
+                      wordWrap: 'break-word',
+                      wordBreak: 'break-word',
+                      overflowWrap: 'break-word',
+                      maxWidth: '100%'
+                    }}
+                  >
+                    {formData.descripcion}
+                  </Text>
                 </Box>
               )}
             </Paper>

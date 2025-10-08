@@ -49,7 +49,17 @@ const DietaHeader: React.FC<DietaHeaderProps> = ({
         <Group justify="space-between" mb="lg" wrap="wrap">
           <Box>
             <Group gap="md" align="center" mb="sm">
-              <Title order={2} c={isDark ? "gray.1" : "gray.8"} fw={700}>
+              <Title 
+                order={2} 
+                c={isDark ? "gray.1" : "gray.8"} 
+                fw={700}
+                style={{ 
+                  wordWrap: 'break-word',
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word',
+                  maxWidth: '100%'
+                }}
+              >
                 {dieta.nombre}
               </Title>
               <Badge 
@@ -62,7 +72,17 @@ const DietaHeader: React.FC<DietaHeaderProps> = ({
                 Publicada
               </Badge>
             </Group>
-            <Text size="md" c="dimmed" mb="md" style={{ maxWidth: '600px' }}>
+            <Text 
+              size="md" 
+              c="dimmed" 
+              mb="md" 
+              style={{ 
+                maxWidth: '600px',
+                wordWrap: 'break-word',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word'
+              }}
+            >
               {dieta.descripcion || "Esta dieta no tiene descripción disponible."}
             </Text>
             
