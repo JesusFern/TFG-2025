@@ -4,7 +4,8 @@ import mongoose from 'mongoose';
 import { 
   buscarDietaYVerificarPermisos,
   actualizarCamposBasicosDieta,
-  actualizarDatosDiaDieta
+  actualizarDatosDiaDieta,
+  validarDietaCompleta
 } from '../../helpers/dietHelper';
 import { notificacionIntegracionService } from '../notificaciones/notificacionIntegracionService';
 import { recordatorioService } from '../notificaciones/recordatorioService';
@@ -231,6 +232,32 @@ export async function limpiarPlatosVaciosService(dieta: any): Promise<number> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function publicarDietaService(dietaId: string, userId: string): Promise<{ dieta: any; platosEliminados: number }> {
   const dieta = await buscarDietaYVerificarPermisos(dietaId, userId, true);
+  
+  // Validar tipos de dieta antes de publicar
+  if (dieta.tipo && dieta.tipo.length > 0) {
+    // Calcular totales de macronutrientes de toda la dieta
+    let totalProteinas = 0;
+    let totalHidratosCarbono = 0;
+    let totalGrasas = 0;
+
+    dieta.dias.forEach((dia: any) => {
+      totalProteinas += dia.proteinas || 0;
+      totalHidratosCarbono += dia.hidratosCarbono || 0;
+      totalGrasas += dia.grasas || 0;
+    });
+
+    // Validar según los tipos de dieta
+    const validacion = validarDietaCompleta(
+      dieta.tipo,
+      totalProteinas,
+      totalHidratosCarbono,
+      totalGrasas
+    );
+
+    if (!validacion.esValida) {
+      throw new Error(`No se puede publicar la dieta porque no cumple con los requisitos de los tipos de dieta seleccionados: ${validacion.errores.join('; ')}`);
+    }
+  }
   
   const platosEliminados = await limpiarPlatosVaciosService(dieta);
   

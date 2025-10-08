@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import { 
   Container, 
   Title, 
@@ -19,11 +19,12 @@ import {
   Stack
 } from '@mantine/core';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
-import { 
+import {
   IconAlertCircle, 
   IconCalendarEvent,
   IconCheck,
-  IconTrash
+  IconTrash,
+  IconExclamationMark
 } from '@tabler/icons-react';
 import { motion } from 'framer-motion';
 import { format, getDay } from 'date-fns';
@@ -39,7 +40,7 @@ import {
   formatearFecha, 
   crearDatoDia 
 } from '../helpers/diets/DietaHelper';
-import { actualizarNutricionDia } from '../helpers/calculoNutricionalHelper';
+import { actualizarNutricionDia, validarDietaCompleta } from '../helpers/calculoNutricionalHelper';
 
 // Las utilidades se han movido a DietaHelper.ts
 
@@ -65,9 +66,18 @@ const EditarDietaPage: React.FC = () => {
   const [publishLoading, setPublishLoading] = useState<boolean>(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  
+  // Estado para validación de dieta
+  const [erroresValidacion, setErroresValidacion] = useState<string[]>([]);
 
   const handlePublicarDieta = async () => {
     if (!dieta || !dietaId) return;
+    
+    // Verificar si hay errores de validación
+    if (erroresValidacion.length > 0) {
+      setError('No se puede publicar la dieta porque no cumple con los requisitos de los tipos de dieta seleccionados. Por favor, ajusta los macronutrientes antes de publicar.');
+      return;
+    }
     
     try {
       setPublishLoading(true);
@@ -189,6 +199,34 @@ const EditarDietaPage: React.FC = () => {
     setDieta(dietaActualizada);
   };
 
+  // Función para calcular la validación de la dieta
+  const calcularValidacionDieta = useCallback(() => {
+    if (!dieta || !dieta.tipo || dieta.tipo.length === 0) {
+      setErroresValidacion([]);
+      return;
+    }
+
+    // Calcular totales de macronutrientes de toda la dieta
+    let totalProteinas = 0;
+    let totalHidratosCarbono = 0;
+    let totalGrasas = 0;
+
+    dieta.dias.forEach(dia => {
+      totalProteinas += dia.proteinas || 0;
+      totalHidratosCarbono += dia.hidratosCarbono || 0;
+      totalGrasas += dia.grasas || 0;
+    });
+
+    // Validar según los tipos de dieta
+    const validacion = validarDietaCompleta(
+      dieta.tipo,
+      totalProteinas,
+      totalHidratosCarbono,
+      totalGrasas
+    );
+
+    setErroresValidacion(validacion.errores);
+  }, [dieta]);
 
   const daysRange = useMemo(() => {
     if (!dieta || !fechaInicio) return { days: [], totalWeeks: 0 };
@@ -305,6 +343,13 @@ const EditarDietaPage: React.FC = () => {
       setActiveTab(daysRange.days[0].dietDayIndex.toString());
     }
   }, [daysRange.days, activeTab]);
+
+  // Calcular validación cuando cambie la dieta
+  useEffect(() => {
+    if (dieta) {
+      calcularValidacionDieta();
+    }
+  }, [dieta, calcularValidacionDieta]);
 
 
   const handleUpdateDay = async (dayIndex: number, updatedDay: DiaDieta) => {
@@ -465,6 +510,7 @@ const EditarDietaPage: React.FC = () => {
                   leftSection={<IconCheck size={18} />}
                   onClick={handlePublicarDieta}
                   loading={publishLoading}
+                  disabled={erroresValidacion.length > 0}
                 >
                   Publicar dieta
                 </Button>
@@ -534,6 +580,26 @@ const EditarDietaPage: React.FC = () => {
         )}
         
       </Paper>
+
+      {/* Notificación de validación de tipos de dieta */}
+      {erroresValidacion.length > 0 && (
+        <Alert
+          icon={<IconExclamationMark size={16} />}
+          title="Aviso"
+          color="yellow"
+          variant="light"
+          mb="md"
+        >
+          <div style={{ marginBottom: '8px', fontWeight: 'bold' }}>
+            No se puede publicar la dieta hasta que se corrijan los siguientes problemas:
+          </div>
+          {erroresValidacion.map((error, index) => (
+            <div key={index}>
+              • {error}
+            </div>
+          ))}
+        </Alert>
+      )}
 
       
       <Paper 
