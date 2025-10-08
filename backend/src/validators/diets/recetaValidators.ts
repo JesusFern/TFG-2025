@@ -70,12 +70,23 @@ export const validarDatosReceta = (
       fuente?: string;
     }> | unknown;
     pasosPreparacion?: string[] | unknown;
+    tiempoPreparacion?: string;
     publica?: boolean | string | unknown;
   },
   res: Response
 ): boolean => {
   if (!datosReceta.nombreReceta || datosReceta.nombreReceta.trim() === '') {
     res.status(400).json({ message: 'El nombre de la receta es obligatorio' });
+    return false;
+  }
+
+  if (datosReceta.nombreReceta.length > 100) {
+    res.status(400).json({ message: 'El nombre de la receta no puede exceder los 100 caracteres' });
+    return false;
+  }
+
+  if (datosReceta.tiempoPreparacion && datosReceta.tiempoPreparacion.length > 50) {
+    res.status(400).json({ message: 'El tiempo de preparación no puede exceder los 50 caracteres' });
     return false;
   }
 
@@ -129,6 +140,15 @@ export const validarDatosReceta = (
     if (!pasosValidos) {
       res.status(400).json({ message: 'Todos los pasos de preparación deben ser texto válido' });
       return false;
+    }
+
+    // Validar longitud máxima de cada paso
+    for (let i = 0; i < datosReceta.pasosPreparacion.length; i++) {
+      const paso = datosReceta.pasosPreparacion[i];
+      if (paso.length > 150) {
+        res.status(400).json({ message: `El paso ${i + 1} no puede exceder los 150 caracteres` });
+        return false;
+      }
     }
   }
 

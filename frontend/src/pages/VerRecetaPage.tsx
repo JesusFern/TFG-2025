@@ -351,7 +351,16 @@ const VerRecetaPage: React.FC = () => {
                         </ThemeIcon>
                       }
                     >
-                      <Text>{paso}</Text>
+                      <Text 
+                        style={{ 
+                          wordWrap: 'break-word',
+                          wordBreak: 'break-word',
+                          overflowWrap: 'break-word',
+                          maxWidth: '100%'
+                        }}
+                      >
+                        {paso}
+                      </Text>
                     </List.Item>
                   ))}
                 </List>
@@ -444,7 +453,16 @@ const VerRecetaPage: React.FC = () => {
         title={
           <Group gap="xs">
             <IconPhoto size={20} />
-            <Text>{receta.nombreReceta}</Text>
+            <Text 
+              style={{ 
+                wordWrap: 'break-word',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+                maxWidth: '100%'
+              }}
+            >
+              {receta.nombreReceta}
+            </Text>
           </Group>
         }
       >
@@ -538,7 +556,14 @@ const VerRecetaPage: React.FC = () => {
         centered
       >
         <Stack gap="md">
-          <Text>
+          <Text 
+            style={{ 
+              wordWrap: 'break-word',
+              wordBreak: 'break-word',
+              overflowWrap: 'break-word',
+              maxWidth: '100%'
+            }}
+          >
             ¿Estás seguro de que quieres eliminar la receta "{receta?.nombreReceta}"?
           </Text>
           <Text size="sm" c="dimmed">
