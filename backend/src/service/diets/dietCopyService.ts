@@ -97,13 +97,13 @@ export async function crearDietaDesdeExistente(dto: CrearDietaDesdeExistenteDTO)
   return dieta;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+ 
 function adaptarComidas(
-  comidasOrigen: any[], 
+  comidasOrigen: any[], // eslint-disable-line @typescript-eslint/no-explicit-any
   comidasDiarias: number,
   horasComidas?: string[],
   nombreComidas?: string[]
-): any[] {
+): any[] { // eslint-disable-line @typescript-eslint/no-explicit-any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let comidasAdaptadas: any[] = [];
   
