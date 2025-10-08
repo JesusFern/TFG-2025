@@ -45,7 +45,7 @@ export const ContenidoRegistroEjercicio: React.FC<ContenidoRegistroEjercicioProp
 
       {/* Información de la sesión */}
       {showSesionInfo && (
-        <InformacionSesion fecha={registro.fecha} completada={registro.completado} />
+        <InformacionSesion fecha={registro.sesion.fecha} completada={registro.sesion.completada} />
       )}
 
       {/* Métricas del ejercicio */}

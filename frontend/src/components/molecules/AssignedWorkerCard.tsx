@@ -16,7 +16,8 @@ import {
   IconCalendar,
   IconChefHat,
   IconBarbell,
-  IconUser
+  IconUser,
+  IconUserCircle
 } from '@tabler/icons-react';
 import { AssignedWorker } from '../../services/userService';
 import { notifications } from '@mantine/notifications';
@@ -96,7 +97,11 @@ const AssignedWorkerCard: React.FC<AssignedWorkerCardProps> = ({
       <Card p="lg" radius="lg" withBorder>
         <Stack gap="md">
           <Group justify="space-between" align="flex-start">
-            <Group gap="md">
+            <Group 
+              gap="md"
+              style={{ cursor: 'pointer' }}
+              onClick={() => window.location.href = `/profile/${worker._id}`}
+            >
               <Avatar
                 src={worker.profilePicture}
                 size="lg"
@@ -105,9 +110,12 @@ const AssignedWorkerCard: React.FC<AssignedWorkerCardProps> = ({
                 {worker.fullName.charAt(0).toUpperCase()}
               </Avatar>
               <Box>
-                <Text fw={600} size="lg" mb="xs">
-                  {worker.fullName}
-                </Text>
+                <Group gap="xs" mb="xs">
+                  <Text fw={600} size="lg" style={{ color: 'var(--mantine-color-cyan-6)' }}>
+                    {worker.fullName}
+                  </Text>
+                  <IconUserCircle size={18} style={{ color: 'var(--mantine-color-cyan-6)', opacity: 0.7 }} />
+                </Group>
                 <Text size="sm" c="dimmed" mb="xs">
                   {worker.email}
                 </Text>
@@ -163,8 +171,8 @@ const AssignedWorkerCard: React.FC<AssignedWorkerCardProps> = ({
             ))}
           </Group>
 
-          <Group justify="space-between" align="center">
-            <Group gap="sm">
+          <Stack gap="xs">
+            <Group gap="sm" grow>
               <Button
                 color="nutroos-green"
                 variant="light"
@@ -176,6 +184,18 @@ const AssignedWorkerCard: React.FC<AssignedWorkerCardProps> = ({
                 Contactar
               </Button>
               
+              <Button
+                color="cyan"
+                variant="light"
+                leftSection={<IconUserCircle size={16} />}
+                onClick={() => window.location.href = `/profile/${worker._id}`}
+                size="sm"
+              >
+                Ver Perfil
+              </Button>
+            </Group>
+            
+            <Group gap="sm" grow>
               <Button
                 color="blue"
                 variant="light"
@@ -201,7 +221,7 @@ const AssignedWorkerCard: React.FC<AssignedWorkerCardProps> = ({
                 Pedir Cita
               </Button>
             </Group>
-          </Group>
+          </Stack>
         </Stack>
       </Card>
 

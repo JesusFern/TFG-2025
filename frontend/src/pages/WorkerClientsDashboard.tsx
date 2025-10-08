@@ -246,7 +246,10 @@ const WorkerClientsDashboard: React.FC = () => {
 								}}
 							>
 								<Group justify="space-between" mb="xs">
-									<Group>
+									<Group
+										style={{ cursor: 'pointer' }}
+										onClick={() => window.location.href = `/profile/${cliente.clienteId}`}
+									>
 										<Avatar 
 											color="nutroos-green" 
 											radius="xl"
@@ -254,7 +257,7 @@ const WorkerClientsDashboard: React.FC = () => {
 											{cliente.cliente?.fullName?.charAt(0).toUpperCase() || '?'}
 										</Avatar>
 										<div>
-											<Text fw={700}>{cliente.cliente?.fullName || 'Sin nombre'}</Text>
+											<Text fw={700} style={{ color: 'var(--mantine-color-cyan-6)' }}>{cliente.cliente?.fullName || 'Sin nombre'}</Text>
 											<Text size="sm" c="dimmed">{cliente.cliente?.email || 'Sin email'}</Text>
 										</div>
 									</Group>
@@ -374,6 +377,18 @@ const WorkerClientsDashboard: React.FC = () => {
 															</Button>
 														</Group>
 													)}
+													
+													{/* Botón para ver perfil del cliente */}
+													<Button
+														color="cyan"
+														variant="light"
+														fullWidth
+														size="sm"
+														leftSection={<IconUser size={16} />}
+														onClick={() => window.location.href = `/profile/${cliente.clienteId}`}
+													>
+														Ver Perfil del Cliente
+													</Button>
 												</Stack>
 							</Card>
 						</Grid.Col>

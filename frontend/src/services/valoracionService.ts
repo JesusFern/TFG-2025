@@ -11,7 +11,6 @@ import {
   TiposTrabajadorDisponiblesResponse,
   VerificacionValoracion,
   VerificacionValoracionResponse,
-  EstadisticasValoracionesPorTipoResponse,
   EstadisticasValoracionesResponse,
   ValoracionResponse,
   CrearValoracionResponse,
@@ -153,7 +152,23 @@ export class ValoracionService {
       }
 
       const data: EstadisticasValoracionesResponse = await response.json();
-      return data.data;
+      
+      // Transformar distribucionCalificaciones de objeto a array
+      const distribucionCalificaciones = data.data.distribucionCalificaciones;
+      const distribucionArray = typeof distribucionCalificaciones === 'object' && !Array.isArray(distribucionCalificaciones)
+        ? Object.entries(distribucionCalificaciones as Record<string, number>).map(([calificacion, cantidad]) => ({
+            calificacion: parseInt(calificacion),
+            cantidad,
+            porcentaje: data.data.totalValoraciones > 0 
+              ? (cantidad / data.data.totalValoraciones) * 100 
+              : 0
+          }))
+        : distribucionCalificaciones;
+      
+      return {
+        ...data.data,
+        distribucionCalificaciones: distribucionArray
+      };
     } catch (error) {
       console.error('Error al obtener estadísticas:', error);
       throw error;
@@ -270,8 +285,68 @@ export class ValoracionService {
         throw new Error(errorData.message || 'Error al obtener estadísticas por tipo');
       }
 
-      const data: EstadisticasValoracionesPorTipoResponse = await response.json();
-      return data.data;
+      const data = await response.json();
+      
+      // Tipo para la respuesta del backend
+      interface StatsBackend {
+        totalValoraciones: number;
+        calificacionPromedio: number;
+        distribucionCalificaciones: Record<string, number>;
+        valoracionesPorTipo?: Record<string, number>;
+        valoracionesRecientes?: number;
+      }
+      
+      const estadisticasObj = data.data as {
+        nutricionista?: StatsBackend;
+        entrenador?: StatsBackend;
+        general?: StatsBackend;
+      };
+      
+      const estadisticasArray: EstadisticasValoracionesPorTipo[] = [];
+      
+      // Procesar Nutricionista
+      if (estadisticasObj.nutricionista && estadisticasObj.nutricionista.totalValoraciones > 0) {
+        const statsNutricionista = estadisticasObj.nutricionista;
+        const dist = statsNutricionista.distribucionCalificaciones;
+        const distribucionArray = typeof dist === 'object' && !Array.isArray(dist)
+          ? Object.entries(dist as Record<string, number>).map(([calificacion, cantidad]) => ({
+              calificacion: parseInt(calificacion),
+              cantidad,
+              porcentaje: (cantidad / statsNutricionista.totalValoraciones) * 100
+            }))
+          : dist;
+        
+        estadisticasArray.push({
+          tipo: 'Nutricionista',
+          totalValoraciones: statsNutricionista.totalValoraciones,
+          calificacionPromedio: statsNutricionista.calificacionPromedio,
+          distribucionCalificaciones: distribucionArray,
+          valoracionesRecientes: []
+        });
+      }
+      
+      // Procesar Entrenador personal
+      if (estadisticasObj.entrenador && estadisticasObj.entrenador.totalValoraciones > 0) {
+        const statsEntrenador = estadisticasObj.entrenador;
+        const dist = statsEntrenador.distribucionCalificaciones;
+        const distribucionArray = typeof dist === 'object' && !Array.isArray(dist)
+          ? Object.entries(dist as Record<string, number>).map(([calificacion, cantidad]) => ({
+              calificacion: parseInt(calificacion),
+              cantidad,
+              porcentaje: (cantidad / statsEntrenador.totalValoraciones) * 100
+            }))
+          : dist;
+        
+        estadisticasArray.push({
+          tipo: 'Entrenador personal',
+          totalValoraciones: statsEntrenador.totalValoraciones,
+          calificacionPromedio: statsEntrenador.calificacionPromedio,
+          distribucionCalificaciones: distribucionArray,
+          valoracionesRecientes: []
+        });
+      }
+      
+      return estadisticasArray;
     } catch (error) {
       console.error('Error al obtener estadísticas por tipo:', error);
       throw error;

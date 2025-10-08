@@ -12,15 +12,14 @@ import {
   Alert,
   Loader,
   Center,
-  ActionIcon,
-  Tooltip,
   Box
 } from '@mantine/core';
 import {
   IconUser,
   IconMessage,
   IconSettings,
-  IconAlertCircle
+  IconAlertCircle,
+  IconUserCircle
 } from '@tabler/icons-react';
 import { useNavigate } from 'react-router-dom';
 import { getClientsAssignedToWorker, AssignedClient } from '../../services/userService';
@@ -115,6 +114,11 @@ const WorkerClientsTab: React.FC<WorkerClientsTabProps> = ({ workerId }) => {
     navigate(`/worker/dashboard-clients?cliente=${encodeURIComponent(client.fullName)}`);
   };
 
+  const handleViewProfile = (clientId: string) => {
+    // Usar window.location para recargar y sincronizar el contexto del perfil
+    window.location.href = `/profile/${clientId}`;
+  };
+
   const getTipoAsignacionIcon = () => {
     return <IconUser size={16} />;
   };
@@ -170,7 +174,25 @@ const WorkerClientsTab: React.FC<WorkerClientsTabProps> = ({ workerId }) => {
                 <Grid.Col key={client._id} span={{ base: 12, md: 6, lg: 4 }}>
                   <Card p="lg" radius="lg" withBorder>
                     <Stack gap="md">
-                      <Group gap="md">
+                      <Group 
+                        gap="md" 
+                        style={{ 
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          padding: '8px',
+                          borderRadius: '8px',
+                          margin: '-8px'
+                        }}
+                        onClick={() => handleViewProfile(client._id)}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = 'var(--mantine-color-cyan-0)';
+                          e.currentTarget.style.transform = 'translateX(2px)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = 'transparent';
+                          e.currentTarget.style.transform = 'translateX(0)';
+                        }}
+                      >
                         <Avatar
                           src={client.profilePicture}
                           size="lg"
@@ -179,9 +201,12 @@ const WorkerClientsTab: React.FC<WorkerClientsTabProps> = ({ workerId }) => {
                           {client.fullName.charAt(0).toUpperCase()}
                         </Avatar>
                         <Box style={{ flex: 1 }}>
-                          <Text fw={600} size="lg" mb="xs">
-                            {client.fullName}
-                          </Text>
+                          <Group gap="xs">
+                            <Text fw={600} size="lg" mb="xs" style={{ color: 'var(--mantine-color-cyan-6)' }}>
+                              {client.fullName}
+                            </Text>
+                            <IconUserCircle size={18} style={{ color: 'var(--mantine-color-cyan-6)', opacity: 0.7 }} />
+                          </Group>
                           <Text size="sm" c="dimmed" mb="xs">
                             {client.email}
                           </Text>
@@ -207,30 +232,43 @@ const WorkerClientsTab: React.FC<WorkerClientsTabProps> = ({ workerId }) => {
                       </Group>
 
                       {/* Botones de acción */}
-                      <Group gap="sm">
-                        <Button
-                          color="nutroos-green"
-                          variant="light"
-                          leftSection={<IconMessage size={16} />}
-                          onClick={() => handleContact(client)}
-                          loading={contactLoading === client._id}
-                          size="sm"
-                          style={{ flex: 1 }}
-                        >
-                          Contactar
-                        </Button>
-                        
-                        <Tooltip label="Gestionar cliente">
-                          <ActionIcon
-                            color="blue"
+                      <Stack gap="xs">
+                        <Group gap="sm">
+                          <Button
+                            color="nutroos-green"
                             variant="light"
-                            onClick={() => handleManageClient(client)}
-                            size="lg"
+                            leftSection={<IconMessage size={16} />}
+                            onClick={() => handleContact(client)}
+                            loading={contactLoading === client._id}
+                            size="sm"
+                            style={{ flex: 1 }}
                           >
-                            <IconSettings size={16} />
-                          </ActionIcon>
-                        </Tooltip>
-                      </Group>
+                            Contactar
+                          </Button>
+                          
+                          <Button
+                            color="cyan"
+                            variant="light"
+                            leftSection={<IconUserCircle size={16} />}
+                            onClick={() => handleViewProfile(client._id)}
+                            size="sm"
+                            style={{ flex: 1 }}
+                          >
+                            Ver Perfil
+                          </Button>
+                        </Group>
+                        
+                        <Button
+                          color="blue"
+                          variant="outline"
+                          leftSection={<IconSettings size={16} />}
+                          onClick={() => handleManageClient(client)}
+                          size="sm"
+                          fullWidth
+                        >
+                          Gestionar Cliente
+                        </Button>
+                      </Stack>
                     </Stack>
                   </Card>
                 </Grid.Col>

@@ -134,14 +134,25 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
     
     const sesionesInfo: SesionInfo[] = [];
     
-    // Solo generar los días que están configurados en el plan
-    for (let i = 0; i < plan.diasSemana.length; i++) {
-      const diaSemana = plan.diasSemana[i];
+    // Crear array de días con sus fechas calculadas para ordenar cronológicamente
+    const diasConFechas = plan.diasSemana.map((diaSemana, index) => {
       const fechaDelDia = new Date(weekStartDate);
-      
-      // Calcular cuántos días hay que sumar para llegar al día de la semana deseado
       const diasHastaDiaSemana = (diaSemana - weekStartDate.getDay() + 7) % 7;
       fechaDelDia.setDate(fechaDelDia.getDate() + diasHastaDiaSemana);
+      
+      return {
+        diaSemana,
+        fecha: fechaDelDia,
+        originalIndex: index
+      };
+    });
+    
+    // Ordenar los días por fecha (cronológicamente)
+    diasConFechas.sort((a, b) => a.fecha.getTime() - b.fecha.getTime());
+    
+    // Generar sesionesInfo en orden cronológico
+    for (let i = 0; i < diasConFechas.length; i++) {
+      const { diaSemana, fecha: fechaDelDia, originalIndex } = diasConFechas[i];
       
       // Buscar sesión para este día
       const sesionDelDia = sesionesDeLaSemana.find(sesion => {
@@ -150,8 +161,8 @@ const EditarPlanEntrenamientoPage: React.FC = () => {
       });
       
       sesionesInfo.push({
-        weekDayIndex: i,
-        sesionIndex: i,
+        weekDayIndex: originalIndex, // Mantener el índice original para compatibilidad
+        sesionIndex: i, // Índice en el orden cronológico
         weekDayName: DIAS_SEMANA[diaSemana],
         fecha: fechaDelDia,
         fechaFormateada: formatDateWithLocale(fechaDelDia),

@@ -49,7 +49,7 @@ export const validarCrearMensaje = [
   
   body('adjuntos.*.url')
     .optional()
-    .isURL()
+    .isURL({ require_tld: false }) // Permitir localhost y URLs sin TLD
     .withMessage('URL de adjunto inválida'),
   
   body('adjuntos.*.tipo')

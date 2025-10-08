@@ -11,7 +11,8 @@ import {
   Divider,
   SimpleGrid,
   Box,
-  Paper
+  Paper,
+  Alert
 } from '@mantine/core';
 import { 
   IconCalendar,
@@ -25,7 +26,8 @@ import {
   IconBarbell as IconDumbbell,
   IconRun,
   IconActivity,
-  IconTrophy
+  IconTrophy,
+  IconAlertCircle
 } from '@tabler/icons-react';
 import { 
   PieChart
@@ -49,6 +51,7 @@ interface EstadisticasSemanalBackend extends EstadisticasSemanal {
 
 const ProgresoEntrenamientoTab: React.FC = () => {
   const [rachas, setRachas] = useState<RachasEntrenamiento | null>(null);
+  const [alertas, setAlertas] = useState<string[]>([]);
 
   const {
     getCurrentWeekNumber,
@@ -77,6 +80,12 @@ const ProgresoEntrenamientoTab: React.FC = () => {
     },
     loadWeeklyStats: async (semana: number, año: number) => {
       const response = await estadisticasService.getMiProgresoSemanal(semana, año);
+      // Capturar alertas del backend
+      if (response.alertas) {
+        setAlertas(response.alertas);
+      } else {
+        setAlertas([]);
+      }
       return response.success && response.estadisticas ? response.estadisticas as EstadisticasSemanalBackend : null;
     },
     loadProgressStats: async () => {
@@ -358,6 +367,22 @@ const ProgresoEntrenamientoTab: React.FC = () => {
         />
       )}
 
+      {/* Alertas para el cliente */}
+      {alertas && alertas.length > 0 && (
+        <Stack gap="sm" mb="md">
+          {alertas.map((alerta, index) => (
+            <Alert
+              key={index}
+              icon={<IconAlertCircle size={16} />}
+              title="Aviso"
+              color="orange"
+              variant="light"
+            >
+              {alerta}
+            </Alert>
+          ))}
+        </Stack>
+      )}
 
       {/* Estadísticas Generales */}
       {estadisticas && (

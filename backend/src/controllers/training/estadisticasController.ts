@@ -141,7 +141,37 @@ export const obtenerMiProgresoSemanal = async (req: AuthenticatedRequest, res: R
     const { numeroSemanaNum, anioNum } = parseWeekAndYear(numeroSemana, anio);
     const estadisticas = await obtenerEstadisticasSemanalService(clienteId, numeroSemanaNum, anioNum);
     
-    sendSuccessResponse(res, 'Progreso semanal personal obtenido correctamente', estadisticas);
+    // Obtener rachas para generar alertas al cliente
+    const rachas = await obtenerRachasEntrenamientoService(clienteId);
+    
+    // Generar alertas para el cliente
+    const alertas: string[] = [];
+    
+    // Verificar si el cliente nunca ha registrado ejercicios
+    if (!rachas.ultimaSesion && rachas.diasSinEntrenar > 0) {
+      alertas.push(`⚠️ No has registrado ningún ejercicio desde que se te asignó el plan (${rachas.diasSinEntrenar} días). ¡Comienza a registrar tu progreso para mejorar tus resultados!`);
+    } else if (rachas.diasSinEntrenar > 7) {
+      alertas.push(`⚠️ Llevas ${rachas.diasSinEntrenar} días sin registrar ejercicios. ¡Retoma tu rutina de entrenamiento!`);
+    } else if (rachas.diasSinEntrenar >= 3) {
+      alertas.push(`⚠️ Llevas ${rachas.diasSinEntrenar} días sin registrar ejercicios. ¡Mantén la constancia!`);
+    }
+    
+    // Alerta por baja completitud de ejercicios
+    if (estadisticas.progreso && estadisticas.progreso.porcentajeCompletitud < 50 && estadisticas.progreso.ejerciciosRegistrados > 0) {
+      alertas.push('📉 Tu tasa de completitud de ejercicios está por debajo del 50%. ¡Intenta completar más ejercicios de tu plan!');
+    }
+    
+    // Alerta por baja asistencia semanal
+    if (estadisticas.asistencia && estadisticas.asistencia.porcentajeAsistencia < 50 && estadisticas.asistencia.sesionesProgramadas > 0) {
+      alertas.push('📅 Tu asistencia esta semana está por debajo del 50%. ¡Intenta asistir a más sesiones programadas!');
+    }
+    
+    res.status(200).json({
+      success: true,
+      message: 'Progreso semanal personal obtenido correctamente',
+      estadisticas,
+      alertas
+    });
 
   } catch (error) {
     sendErrorResponse(res, 'Error al obtener progreso semanal personal', error);

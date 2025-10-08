@@ -159,7 +159,7 @@ export async function obtenerRegistrosEjercicioService(filtros: {
 
   const registros = await RegistroEjercicio.find(query)
     .populate('ejercicio', 'nombre grupoMuscular equipamiento nivelDificultad')
-    .populate('sesion', 'fecha tipoEntrenamiento duracion')
+    .populate('sesion', 'fecha tipoEntrenamiento duracion completada')
     .populate('cliente', 'nombre email')
     .sort({ fecha: -1, ordenEnSesion: 1 });
 
@@ -174,7 +174,7 @@ export async function obtenerRegistroEjercicioPorIdService(registroId: string) {
 
   const registro = await RegistroEjercicio.findById(registroId)
     .populate('ejercicio', 'nombre grupoMuscular equipamiento nivelDificultad instrucciones videoDemostrativo')
-    .populate('sesion', 'fecha tipoEntrenamiento duracion ejercicios')
+    .populate('sesion', 'fecha tipoEntrenamiento duracion ejercicios completada')
     .populate('cliente', 'nombre email');
 
   if (!registro) {
@@ -339,7 +339,7 @@ export async function obtenerProgresoEjercicioService(ejercicioId: string, clien
   }
 
   const registros = await RegistroEjercicio.find(query)
-    .populate('sesion', 'fecha tipoEntrenamiento')
+    .populate('sesion', 'fecha tipoEntrenamiento completada')
     .sort({ fecha: 1 });
 
   return registros;

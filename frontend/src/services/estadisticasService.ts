@@ -99,7 +99,13 @@ export const estadisticasService = {
       }
       
       const data = await response.json();
-      return data;
+      // El backend ahora devuelve alertas para el cliente
+      return {
+        success: data.success,
+        message: data.message,
+        estadisticas: data.estadisticas,
+        alertas: data.alertas || []
+      };
     } catch (error) {
       console.error('Error en getMiProgresoSemanal:', error);
       throw error;

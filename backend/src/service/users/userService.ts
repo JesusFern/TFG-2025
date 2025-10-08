@@ -283,7 +283,10 @@ export class UserService {
   }
 
   static async getUserById(userId: string) {
-    const user = await User.findById(userId).select('-password');
+    const user = await User.findById(userId)
+      .select('-password')
+      .populate('datosSaludYNutricion')
+      .populate('datosActividadFisica');
     
     if (!user) {
       throw new Error('Usuario no encontrado');
@@ -308,6 +311,8 @@ export class UserService {
       availability?: string;
       isWorkerAvailable?: boolean;
       satisfactionRating?: number;
+      datosSaludYNutricion?: unknown;
+      datosActividadFisica?: unknown;
     } = {
       _id: (user._id as Types.ObjectId).toString(),
       fullName: user.fullName,
@@ -328,6 +333,12 @@ export class UserService {
       userData.availability = user.availability;
       userData.isWorkerAvailable = user.isWorkerAvailable;
       userData.satisfactionRating = user.satisfactionRating;
+    }
+
+    // Añadir datos de salud y actividad física para usuarios (clientes)
+    if (user.role === 'user') {
+      userData.datosSaludYNutricion = user.datosSaludYNutricion;
+      userData.datosActividadFisica = user.datosActividadFisica;
     }
 
     return userData;
