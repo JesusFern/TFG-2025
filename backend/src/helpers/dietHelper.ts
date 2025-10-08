@@ -153,3 +153,98 @@ export function actualizarDatosDiaDieta(
     }
   }
 }
+
+// ===== VALIDACIÓN DE TIPOS DE DIETA =====
+
+/**
+ * Calcula los porcentajes de macronutrientes basándose en las calorías
+ * Proteína: 4 kcal/g, Carbohidratos: 4 kcal/g, Grasas: 9 kcal/g
+ */
+export function calcularPorcentajesMacronutrientes(
+  proteinas: number,
+  hidratosCarbono: number,
+  grasas: number
+): { proteinas: number; hidratosCarbono: number; grasas: number } {
+  // Calcular calorías de cada macronutriente
+  const caloriasProteinas = proteinas * 4;
+  const caloriasCarbohidratos = hidratosCarbono * 4;
+  const caloriasGrasas = grasas * 9;
+  
+  const totalCalorias = caloriasProteinas + caloriasCarbohidratos + caloriasGrasas;
+  
+  if (totalCalorias === 0) {
+    return { proteinas: 0, hidratosCarbono: 0, grasas: 0 };
+  }
+  
+  return {
+    proteinas: (caloriasProteinas / totalCalorias) * 100,
+    hidratosCarbono: (caloriasCarbohidratos / totalCalorias) * 100,
+    grasas: (caloriasGrasas / totalCalorias) * 100
+  };
+}
+
+/**
+ * Valida si una dieta cumple con los requisitos de su tipo
+ */
+export function validarTipoDieta(
+  tipoDieta: string,
+  proteinas: number,
+  hidratosCarbono: number,
+  grasas: number
+): { esValida: boolean; errores: string[] } {
+  const porcentajes = calcularPorcentajesMacronutrientes(proteinas, hidratosCarbono, grasas);
+  const errores: string[] = [];
+  
+  switch (tipoDieta) {
+    case 'Baja en carbohidratos':
+      if (porcentajes.hidratosCarbono >= 40) {
+        errores.push(
+          `Los carbohidratos representan el ${porcentajes.hidratosCarbono.toFixed(1)}% de las calorías. Para una dieta baja en carbohidratos debe ser menor al 40%.`
+        );
+      }
+      break;
+      
+    case 'Keto':
+      if (porcentajes.grasas < 70) {
+        errores.push(
+          `Las grasas representan el ${porcentajes.grasas.toFixed(1)}% de las calorías. Para una dieta keto debe ser al menos 70%.`
+        );
+      }
+      break;
+      
+    case 'Alta en proteínas':
+      if (porcentajes.proteinas <= 20) {
+        errores.push(
+          `Las proteínas representan el ${porcentajes.proteinas.toFixed(1)}% de las calorías. Para una dieta alta en proteínas debe ser mayor al 20%.`
+        );
+      }
+      break;
+  }
+  
+  return {
+    esValida: errores.length === 0,
+    errores
+  };
+}
+
+/**
+ * Valida todos los tipos de dieta de una dieta
+ */
+export function validarDietaCompleta(
+  tiposDieta: string[],
+  proteinas: number,
+  hidratosCarbono: number,
+  grasas: number
+): { esValida: boolean; errores: string[] } {
+  const errores: string[] = [];
+  
+  for (const tipo of tiposDieta) {
+    const validacion = validarTipoDieta(tipo, proteinas, hidratosCarbono, grasas);
+    errores.push(...validacion.errores);
+  }
+  
+  return {
+    esValida: errores.length === 0,
+    errores: [...new Set(errores)] // Eliminar duplicados
+  };
+}

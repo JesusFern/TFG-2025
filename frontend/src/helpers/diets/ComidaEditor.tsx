@@ -423,7 +423,7 @@ const ComidaEditor: React.FC<ComidaEditorProps> = ({ comida, comidaIndex, diaInd
     openModal();
   };
 
-  const nombreComida = tiposComida[comidaIndex]?.nombre || `Comida ${comidaIndex + 1}`;
+  const nombreComida = comida.nombreComida || `Comida ${comidaIndex + 1}`;
 
   return (
     <Box style={{ position: 'relative' }}>

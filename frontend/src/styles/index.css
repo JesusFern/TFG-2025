@@ -44,3 +44,12 @@ body {
 }
 
 /* Otros estilos globales */
+
+/* Configuración de notificaciones de Mantine */
+.mantine-Notifications-root {
+  z-index: 9999 !important;
+}
+
+.mantine-Notifications-notification {
+  z-index: 9999 !important;
+}

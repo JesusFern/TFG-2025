@@ -129,6 +129,8 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
       case 0:
         if (!nombreReceta.trim()) {
           newErrors.nombreReceta = 'El nombre de la receta es obligatorio';
+        } else if (nombreReceta.length > 100) {
+          newErrors.nombreReceta = 'El nombre de la receta no puede exceder los 100 caracteres';
         }
         break;
       case 1: {
@@ -138,7 +140,17 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
         break;
       }
       case 2:
-        // Los pasos de preparación son opcionales, no validamos
+        // Validar tiempo de preparación (opcional pero con límite)
+        if (tiempoPreparacion.length > 50) {
+          newErrors.tiempoPreparacion = 'El tiempo de preparación no puede exceder los 50 caracteres';
+        }
+        
+        // Validar que cada paso no exceda 150 caracteres
+        pasosPreparacion.forEach((paso, index) => {
+          if (paso.length > 150) {
+            newErrors[`paso_${index}`] = `El paso ${index + 1} no puede exceder los 150 caracteres`;
+          }
+        });
         break;
     }
 
@@ -310,6 +322,8 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
               error={errors.nombreReceta}
               required
               size="md"
+              maxLength={100}
+              description={`${nombreReceta.length}/100 caracteres`}
             />
             
             <Checkbox
@@ -522,12 +536,15 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
             </Title>
             
             <TextInput
-              label="Tiempo de preparación"
+              label="Tiempo de preparación (opcional)"
               placeholder="Ej: 30 minutos"
               value={tiempoPreparacion}
               onChange={(e) => setTiempoPreparacion(e.target.value)}
               leftSection={<IconClock size={16} />}
               size="md"
+              maxLength={50}
+              description={`${tiempoPreparacion.length}/50 caracteres`}
+              error={errors.tiempoPreparacion}
             />
             
             <Text size="sm" c="dimmed">
@@ -539,14 +556,18 @@ const FormularioCrearReceta: React.FC<FormularioCrearRecetaProps> = ({
                 <Badge color="nutroos-green" variant="light" size="lg">
                   {index + 1}
                 </Badge>
-                <Textarea
-                  placeholder={`Paso ${index + 1}`}
-                  value={paso}
-                  onChange={(e) => updatePaso(index, e.target.value)}
-                  style={{ flex: 1 }}
-                  minRows={2}
-                  size="md"
-                />
+                <Box style={{ flex: 1 }}>
+          <Textarea
+            placeholder={`Paso ${index + 1}`}
+            value={paso}
+            onChange={(e) => updatePaso(index, e.target.value)}
+            minRows={2}
+            size="md"
+            maxLength={150}
+            description={`${paso.length}/150 caracteres`}
+            error={errors[`paso_${index}`]}
+          />
+                </Box>
                 {pasosPreparacion.length > 1 && (
                   <ActionIcon
                     color="red"

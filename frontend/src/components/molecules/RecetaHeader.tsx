@@ -65,8 +65,20 @@ const RecetaHeader: React.FC<RecetaHeaderProps> = ({
             <IconChefHat size="1.5rem" />
           </Avatar>
           
-          <Box>
-            <Title order={2} mb={5} c="nutroos-green.6">{receta.nombreReceta}</Title>
+          <Box style={{ flex: 1, minWidth: 0 }}>
+            <Title 
+              order={2} 
+              mb={5} 
+              c="nutroos-green.6"
+              style={{ 
+                wordWrap: 'break-word',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word',
+                maxWidth: '100%'
+              }}
+            >
+              {receta.nombreReceta}
+            </Title>
             <Group gap="md">
               <Badge 
                 color={receta.publica ? "green" : "orange"} 

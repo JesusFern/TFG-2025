@@ -177,6 +177,27 @@ export const crearDietaValidator = [
   body('nombreComidas')
     .isArray()
     .withMessage('Los nombres de comidas deben ser un array')
+    .custom((value) => {
+      if (!Array.isArray(value)) {
+        throw new Error('Los nombres de comidas deben ser un array');
+      }
+      
+      // Validar que cada nombre de comida no exceda 50 caracteres
+      for (let i = 0; i < value.length; i++) {
+        if (typeof value[i] !== 'string') {
+          throw new Error(`El nombre de la comida ${i + 1} debe ser una cadena de texto`);
+        }
+        if (value[i].trim().length === 0) {
+          throw new Error(`El nombre de la comida ${i + 1} no puede estar vacío`);
+        }
+        if (value[i].length > 50) {
+          throw new Error(`El nombre de la comida ${i + 1} no puede exceder los 50 caracteres`);
+        }
+      }
+      
+      return true;
+    })
+    .withMessage('Los nombres de comidas deben ser válidos')
 ];
 
 export const actualizarDietaValidator = [
@@ -218,5 +239,31 @@ export const actualizarDietaValidator = [
   body('draftMode')
     .optional()
     .isBoolean()
-    .withMessage('El modo borrador debe ser un valor booleano')
+    .withMessage('El modo borrador debe ser un valor booleano'),
+  
+  body('nombreComidas')
+    .optional()
+    .isArray()
+    .withMessage('Los nombres de comidas deben ser un array')
+    .custom((value) => {
+      if (!Array.isArray(value)) {
+        throw new Error('Los nombres de comidas deben ser un array');
+      }
+      
+      // Validar que cada nombre de comida no exceda 50 caracteres
+      for (let i = 0; i < value.length; i++) {
+        if (typeof value[i] !== 'string') {
+          throw new Error(`El nombre de la comida ${i + 1} debe ser una cadena de texto`);
+        }
+        if (value[i].trim().length === 0) {
+          throw new Error(`El nombre de la comida ${i + 1} no puede estar vacío`);
+        }
+        if (value[i].length > 50) {
+          throw new Error(`El nombre de la comida ${i + 1} no puede exceder los 50 caracteres`);
+        }
+      }
+      
+      return true;
+    })
+    .withMessage('Los nombres de comidas deben ser válidos')
 ];

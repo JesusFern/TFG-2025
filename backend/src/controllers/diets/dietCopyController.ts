@@ -14,7 +14,7 @@ import mongoose from 'mongoose';
 // Crear dieta desde una dieta existente
 export const crearDietaDesdeExistenteController = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { dietaOrigenId } = req.body;
+    const { dietaOrigenId, horasComidas, nombreComidas } = req.body;
     const creador = req.user?.id;
 
     // Validar autenticación
@@ -32,7 +32,9 @@ export const crearDietaDesdeExistenteController = async (req: AuthenticatedReque
     // Crear DTO específico para copia
     const dto: CrearDietaDesdeExistenteDTO = {
       ...commonDTO,
-      dietaOrigenId: new mongoose.Types.ObjectId(dietaOrigenId)
+      dietaOrigenId: new mongoose.Types.ObjectId(dietaOrigenId),
+      horasComidas,
+      nombreComidas
     };
 
     // Crear la dieta

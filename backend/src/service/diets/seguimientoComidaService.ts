@@ -1068,3 +1068,196 @@ export async function obtenerRachasNutricionalesService(/* params: ObtenerRachas
     diasSinRegistrar: 2
   };
 }
+
+/**
+ * Verificar si un día de dieta está completamente registrado
+ * Un día está completo cuando todos los platos tienen satisfacción o cumplimiento
+ */
+function verificarDiaCompleto(dia: DiaDietaType): boolean {
+  if (!dia.comidas || dia.comidas.length === 0) {
+    return false;
+  }
+
+  for (const comida of dia.comidas) {
+    if (!comida.platos || comida.platos.length === 0) {
+      return false;
+    }
+
+    for (const plato of comida.platos) {
+      // Un plato está registrado si tiene satisfacción O cumplimiento
+      const tieneRegistro = (
+        (plato.satisfaccion !== null && plato.satisfaccion !== undefined) ||
+        (plato.cumplimiento !== null && plato.cumplimiento !== undefined)
+      );
+
+      if (!tieneRegistro) {
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Calcular días sin registrar para un cliente
+ */
+export async function calcularDiasSinRegistroCliente(userId: string): Promise<{
+  diasSinRegistro: number;
+  ultimoDiaRegistrado: Date | null;
+  dietaActiva: string | null;
+}> {
+  try {
+    // Buscar dietas activas asignadas al cliente (no en draft mode)
+    const dietasActivas = await Dieta.find({
+      asignadaA: userId,
+      draftMode: false
+    }).sort({ fechaInicio: -1 });
+
+    if (dietasActivas.length === 0) {
+      return {
+        diasSinRegistro: 0,
+        ultimoDiaRegistrado: null,
+        dietaActiva: null
+      };
+    }
+
+    // Tomar la dieta más reciente
+    const dietaActiva = dietasActivas[0];
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+
+    const fechaInicio = new Date(dietaActiva.fechaInicio);
+    fechaInicio.setHours(0, 0, 0, 0);
+
+    // Calcular cuántos días han pasado desde el inicio de la dieta
+    const diasDesdeInicio = Math.floor((hoy.getTime() - fechaInicio.getTime()) / (1000 * 60 * 60 * 24));
+
+    // Si la dieta aún no ha comenzado, el cliente no está inactivo
+    if (diasDesdeInicio < 0) {
+      return {
+        diasSinRegistro: 0,
+        ultimoDiaRegistrado: null,
+        dietaActiva: dietaActiva._id.toString()
+      };
+    }
+
+    // Buscar el último día con registro completo
+    let ultimoDiaRegistrado: Date | null = null;
+
+    // Iterar sobre los días de la dieta desde el inicio
+    for (let diaIndex = 0; diaIndex < dietaActiva.dias.length && diaIndex <= diasDesdeInicio; diaIndex++) {
+      const dia = dietaActiva.dias[diaIndex] as unknown as DiaDietaType;
+      
+      if (verificarDiaCompleto(dia)) {
+        // Calcular la fecha de este día
+        const fechaDia = new Date(fechaInicio);
+        fechaDia.setDate(fechaDia.getDate() + diaIndex);
+        ultimoDiaRegistrado = fechaDia;
+        // diasRegistrados = diaIndex + 1; // Variable no utilizada actualmente
+      }
+    }
+
+    // Calcular días sin registro
+    let diasSinRegistro = 0;
+    if (ultimoDiaRegistrado) {
+      const diferencia = Math.floor((hoy.getTime() - ultimoDiaRegistrado.getTime()) / (1000 * 60 * 60 * 24));
+      diasSinRegistro = diferencia;
+    } else {
+      // Si no hay ningún día registrado, contar desde el inicio de la dieta
+      diasSinRegistro = diasDesdeInicio + 1;
+    }
+
+    return {
+      diasSinRegistro,
+      ultimoDiaRegistrado,
+      dietaActiva: dietaActiva._id.toString()
+    };
+  } catch (error) {
+    logger.error('Error al calcular días sin registro', {
+      error: error instanceof Error ? error.message : String(error),
+      userId
+    });
+    throw error;
+  }
+}
+
+/**
+ * Obtener clientes inactivos de un trabajador
+ * Un cliente está inactivo si tiene 3 o más días consecutivos sin registrar
+ */
+export async function obtenerClientesInactivosService(workerId: string): Promise<Array<{
+  clienteId: string;
+  nombreCliente: string;
+  emailCliente: string;
+  diasSinRegistro: number;
+  ultimoDiaRegistrado: Date | null;
+  dietaActiva: string | null;
+}>> {
+  try {
+    // Importar el modelo de User aquí para evitar dependencias circulares
+    const User = (await import('../../models/users/user')).default;
+
+    // Buscar el trabajador y obtener sus clientes asignados como nutricionista
+    const trabajador = await User.findById(workerId)
+      .populate({
+        path: 'clientesAsignados.clienteId',
+        select: 'fullName email'
+      });
+
+    if (!trabajador || trabajador.role !== 'worker') {
+      throw new Error('Trabajador no encontrado o no tiene rol de worker');
+    }
+
+    // Filtrar solo clientes asignados como nutricionista
+    const clientesNutricion = trabajador.clientesAsignados?.filter(
+      asignacion => asignacion.tipoAsignacion === 'Nutricionista'
+    ) || [];
+
+    if (clientesNutricion.length === 0) {
+      return [];
+    }
+
+    // Calcular días sin registro para cada cliente
+    const clientesInactivos = [];
+
+    for (const asignacion of clientesNutricion) {
+      // Type assertion para el objeto populado
+      const cliente = asignacion.clienteId as unknown as {
+        _id: mongoose.Types.ObjectId;
+        fullName: string;
+        email: string;
+      };
+      
+      const clienteId = cliente._id.toString();
+
+      const resultado = await calcularDiasSinRegistroCliente(clienteId);
+
+      // Un cliente está inactivo si tiene 3 o más días sin registro
+      if (resultado.diasSinRegistro >= 3) {
+        clientesInactivos.push({
+          clienteId,
+          nombreCliente: cliente.fullName,
+          emailCliente: cliente.email,
+          diasSinRegistro: resultado.diasSinRegistro,
+          ultimoDiaRegistrado: resultado.ultimoDiaRegistrado,
+          dietaActiva: resultado.dietaActiva
+        });
+      }
+    }
+
+    logger.info('Clientes inactivos calculados', {
+      workerId,
+      totalClientes: clientesNutricion.length,
+      clientesInactivos: clientesInactivos.length
+    });
+
+    return clientesInactivos;
+  } catch (error) {
+    logger.error('Error al obtener clientes inactivos', {
+      error: error instanceof Error ? error.message : String(error),
+      workerId
+    });
+    throw error;
+  }
+}

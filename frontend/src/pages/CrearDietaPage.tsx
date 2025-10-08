@@ -139,8 +139,8 @@ const CrearDietaPage: React.FC = () => {
           borderColor: 'var(--app-border-color)' 
         }}
       >
-        <Group mb="md" align="flex-start" justify="space-between">
-          <Group align="flex-start">
+        <Group mb="md" align="flex-start" justify="space-between" wrap="wrap">
+          <Group align="flex-start" style={{ flex: 1, minWidth: 0 }}>
             <Avatar 
               size="lg" 
               color="nutroos-green" 
@@ -149,9 +149,30 @@ const CrearDietaPage: React.FC = () => {
               <IconUser size="1.5rem" />
             </Avatar>
             
-            <Box style={{ flex: 1 }}>
-              <Title order={2} mb={5} c="nutroos-green.6">{getTituloPaso()}</Title>
-              <Text size="sm" c="dimmed">
+            <Box style={{ flex: 1, minWidth: 0 }}>
+              <Title 
+                order={2} 
+                mb={5} 
+                c="nutroos-green.6"
+                style={{ 
+                  wordWrap: 'break-word',
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word',
+                  maxWidth: '100%'
+                }}
+              >
+                {getTituloPaso()}
+              </Title>
+              <Text 
+                size="sm" 
+                c="dimmed"
+                style={{ 
+                  wordWrap: 'break-word',
+                  wordBreak: 'break-word',
+                  overflowWrap: 'break-word',
+                  maxWidth: '100%'
+                }}
+              >
                 Para cliente: {loadingCliente ? 'Cargando...' : (clienteInfo.nombre || 'Cliente no encontrado')}
               </Text>
             </Box>

@@ -406,6 +406,456 @@ const RECETAS_TEMPLATES: RecetaTemplate[] = [
     tiposDieta: ["Vegetariana", "Vegana"],
     comidas: ["Cena"],
     categoriasNutricionales: ["Energética"]
+  },
+
+  // ===== RECETAS PARA DIETA KETO =====
+  {
+    nombreReceta: "Huevos con aguacate y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Huevo de gallina", peso: 100 },
+      { nombreIngrediente: "Aguacate", peso: 80 },
+      { nombreIngrediente: "Aceite de oliva", peso: 15 }
+    ],
+    pasosPreparacion: [
+      "Cocinar los huevos",
+      "Cortar el aguacate en rodajas",
+      "Servir con aceite de oliva"
+    ],
+    tiempoPreparacion: "10 minutos",
+    tiposDieta: ["Keto"],
+    comidas: ["Desayuno"],
+    categoriasNutricionales: ["Alta en grasas saludables"]
+  },
+  {
+    nombreReceta: "Huevos con bacon y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Huevo de gallina", peso: 100 },
+      { nombreIngrediente: "Bacon", peso: 50 },
+      { nombreIngrediente: "Aceite de oliva", peso: 10 }
+    ],
+    pasosPreparacion: [
+      "Cocinar el bacon",
+      "Cocinar los huevos",
+      "Servir con aceite de oliva"
+    ],
+    tiempoPreparacion: "15 minutos",
+    tiposDieta: ["Keto"],
+    comidas: ["Desayuno"],
+    categoriasNutricionales: ["Alta en grasas saludables"]
+  },
+  {
+    nombreReceta: "Huevos con queso y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Huevo de gallina", peso: 100 },
+      { nombreIngrediente: "Queso manchego curado", peso: 40 },
+      { nombreIngrediente: "Aceite de oliva", peso: 10 }
+    ],
+    pasosPreparacion: [
+      "Cocinar los huevos",
+      "Añadir queso rallado",
+      "Servir con aceite de oliva"
+    ],
+    tiempoPreparacion: "12 minutos",
+    tiposDieta: ["Keto"],
+    comidas: ["Desayuno"],
+    categoriasNutricionales: ["Alta en grasas saludables"]
+  },
+  {
+    nombreReceta: "Salmon con espinacas y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Salmon", peso: 120 },
+      { nombreIngrediente: "Espinaca", peso: 100 },
+      { nombreIngrediente: "Aceite de oliva", peso: 15 }
+    ],
+    pasosPreparacion: [
+      "Cocinar el salmón",
+      "Saltear las espinacas con aceite de oliva",
+      "Servir juntos"
+    ],
+    tiempoPreparacion: "20 minutos",
+    tiposDieta: ["Keto"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Alta en grasas saludables"]
+  },
+  {
+    nombreReceta: "Atún con lechuga y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Atún", peso: 120 },
+      { nombreIngrediente: "Lechuga", peso: 100 },
+      { nombreIngrediente: "Aceite de oliva", peso: 15 }
+    ],
+    pasosPreparacion: [
+      "Cocinar el atún",
+      "Preparar ensalada de lechuga",
+      "Aliñar con aceite de oliva"
+    ],
+    tiempoPreparacion: "15 minutos",
+    tiposDieta: ["Keto"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Alta en grasas saludables"]
+  },
+  {
+    nombreReceta: "Carne con coliflor y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Carne de vaca magra", peso: 120 },
+      { nombreIngrediente: "Coliflor", peso: 100 },
+      { nombreIngrediente: "Aceite de oliva", peso: 15 }
+    ],
+    pasosPreparacion: [
+      "Cocinar la carne",
+      "Saltear la coliflor con aceite de oliva",
+      "Servir juntos"
+    ],
+    tiempoPreparacion: "25 minutos",
+    tiposDieta: ["Keto"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Alta en grasas saludables"]
+  },
+  {
+    nombreReceta: "Sardinas con espinacas y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Sardina", peso: 100 },
+      { nombreIngrediente: "Espinaca", peso: 100 },
+      { nombreIngrediente: "Aceite de oliva", peso: 15 }
+    ],
+    pasosPreparacion: [
+      "Cocinar las sardinas",
+      "Saltear las espinacas con aceite de oliva",
+      "Servir juntos"
+    ],
+    tiempoPreparacion: "18 minutos",
+    tiposDieta: ["Keto"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Alta en grasas saludables"]
+  },
+  {
+    nombreReceta: "Merluza con verduras y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Merluza", peso: 120 },
+      { nombreIngrediente: "Brécol", peso: 80 },
+      { nombreIngrediente: "Zanahoria", peso: 60 },
+      { nombreIngrediente: "Aceite de oliva", peso: 15 }
+    ],
+    pasosPreparacion: [
+      "Cocinar la merluza",
+      "Saltear las verduras con aceite de oliva",
+      "Servir juntos"
+    ],
+    tiempoPreparacion: "22 minutos",
+    tiposDieta: ["Keto"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Alta en grasas saludables"]
+  },
+  {
+    nombreReceta: "Pollo con ensalada y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Pechuga de pollo", peso: 120 },
+      { nombreIngrediente: "Lechuga", peso: 80 },
+      { nombreIngrediente: "Tomate", peso: 60 },
+      { nombreIngrediente: "Aceite de oliva", peso: 15 }
+    ],
+    pasosPreparacion: [
+      "Cocinar el pollo",
+      "Preparar ensalada con lechuga y tomate",
+      "Aliñar con aceite de oliva"
+    ],
+    tiempoPreparacion: "20 minutos",
+    tiposDieta: ["Keto"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Alta en grasas saludables"]
+  },
+  {
+    nombreReceta: "Carne con brócoli y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Carne de vaca magra", peso: 120 },
+      { nombreIngrediente: "Brécol", peso: 100 },
+      { nombreIngrediente: "Aceite de oliva", peso: 15 }
+    ],
+    pasosPreparacion: [
+      "Cocinar la carne",
+      "Saltear el brócoli con aceite de oliva",
+      "Servir juntos"
+    ],
+    tiempoPreparacion: "25 minutos",
+    tiposDieta: ["Keto"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Alta en grasas saludables"]
+  },
+  {
+    nombreReceta: "Atún con verduras y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Atún", peso: 120 },
+      { nombreIngrediente: "Espinaca", peso: 80 },
+      { nombreIngrediente: "Brécol", peso: 60 },
+      { nombreIngrediente: "Aceite de oliva", peso: 15 }
+    ],
+    pasosPreparacion: [
+      "Cocinar el atún",
+      "Saltear las verduras con aceite de oliva",
+      "Servir juntos"
+    ],
+    tiempoPreparacion: "20 minutos",
+    tiposDieta: ["Keto"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Alta en grasas saludables"]
+  },
+
+  // ===== RECETAS PARA DIETA ALTA EN PROTEÍNAS =====
+  {
+    nombreReceta: "Huevos con avena y frutas",
+    ingredientes: [
+      { nombreIngrediente: "Huevo de gallina", peso: 150 },
+      { nombreIngrediente: "Avena", peso: 50 },
+      { nombreIngrediente: "Plátano", peso: 60 },
+      { nombreIngrediente: "Manzana", peso: 40 }
+    ],
+    pasosPreparacion: [
+      "Cocinar los huevos",
+      "Preparar avena con agua",
+      "Cortar las frutas",
+      "Servir todo junto"
+    ],
+    tiempoPreparacion: "15 minutos",
+    tiposDieta: ["Alta en proteínas"],
+    comidas: ["Desayuno"],
+    categoriasNutricionales: ["Alta en proteínas"]
+  },
+  {
+    nombreReceta: "Huevos con tostada y frutas",
+    ingredientes: [
+      { nombreIngrediente: "Huevo de gallina", peso: 150 },
+      { nombreIngrediente: "Pan integral", peso: 50 },
+      { nombreIngrediente: "Plátano", peso: 60 },
+      { nombreIngrediente: "Manzana", peso: 40 }
+    ],
+    pasosPreparacion: [
+      "Cocinar los huevos",
+      "Tostar el pan",
+      "Cortar las frutas",
+      "Servir todo junto"
+    ],
+    tiempoPreparacion: "12 minutos",
+    tiposDieta: ["Alta en proteínas"],
+    comidas: ["Desayuno"],
+    categoriasNutricionales: ["Alta en proteínas"]
+  },
+  {
+    nombreReceta: "Pollo con arroz y verduras",
+    ingredientes: [
+      { nombreIngrediente: "Pechuga de pollo", peso: 200 },
+      { nombreIngrediente: "Arroz", peso: 70 },
+      { nombreIngrediente: "Brécol", peso: 70 },
+      { nombreIngrediente: "Zanahoria", peso: 50 }
+    ],
+    pasosPreparacion: [
+      "Cocinar el pollo",
+      "Cocinar el arroz",
+      "Saltear las verduras",
+      "Servir todo junto"
+    ],
+    tiempoPreparacion: "30 minutos",
+    tiposDieta: ["Alta en proteínas"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Alta en proteínas"]
+  },
+  {
+    nombreReceta: "Carne con pasta y verduras",
+    ingredientes: [
+      { nombreIngrediente: "Carne de vaca magra", peso: 200 },
+      { nombreIngrediente: "Pasta", peso: 70 },
+      { nombreIngrediente: "Tomate", peso: 70 },
+      { nombreIngrediente: "Cebolla", peso: 30 }
+    ],
+    pasosPreparacion: [
+      "Cocinar la carne",
+      "Cocinar la pasta",
+      "Preparar salsa con tomate y cebolla",
+      "Servir todo junto"
+    ],
+    tiempoPreparacion: "35 minutos",
+    tiposDieta: ["Alta en proteínas"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Alta en proteínas"]
+  },
+  {
+    nombreReceta: "Merluza con quinoa y verduras",
+    ingredientes: [
+      { nombreIngrediente: "Merluza", peso: 200 },
+      { nombreIngrediente: "Quinoa", peso: 70 },
+      { nombreIngrediente: "Espinaca", peso: 70 },
+      { nombreIngrediente: "Tomate", peso: 50 }
+    ],
+    pasosPreparacion: [
+      "Cocinar la merluza",
+      "Cocinar la quinoa",
+      "Saltear las verduras",
+      "Servir todo junto"
+    ],
+    tiempoPreparacion: "28 minutos",
+    tiposDieta: ["Alta en proteínas"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Alta en proteínas"]
+  },
+
+  // ===== RECETAS PARA DIETA BAJA EN CARBOHIDRATOS =====
+  {
+    nombreReceta: "Huevos con verduras y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Huevo de gallina", peso: 100 },
+      { nombreIngrediente: "Espinaca", peso: 80 },
+      { nombreIngrediente: "Tomate", peso: 60 },
+      { nombreIngrediente: "Aceite de oliva", peso: 10 }
+    ],
+    pasosPreparacion: [
+      "Cocinar los huevos",
+      "Saltear las verduras con aceite de oliva",
+      "Servir todo junto"
+    ],
+    tiempoPreparacion: "12 minutos",
+    tiposDieta: ["Baja en carbohidratos"],
+    comidas: ["Desayuno"],
+    categoriasNutricionales: ["Baja en carbohidratos"]
+  },
+  {
+    nombreReceta: "Huevos con aguacate y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Huevo de gallina", peso: 100 },
+      { nombreIngrediente: "Aguacate", peso: 80 },
+      { nombreIngrediente: "Aceite de oliva", peso: 10 }
+    ],
+    pasosPreparacion: [
+      "Cocinar los huevos",
+      "Cortar el aguacate",
+      "Servir con aceite de oliva"
+    ],
+    tiempoPreparacion: "10 minutos",
+    tiposDieta: ["Baja en carbohidratos"],
+    comidas: ["Desayuno"],
+    categoriasNutricionales: ["Baja en carbohidratos"]
+  },
+  {
+    nombreReceta: "Pollo con ensalada y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Pechuga de pollo", peso: 120 },
+      { nombreIngrediente: "Lechuga", peso: 80 },
+      { nombreIngrediente: "Tomate", peso: 60 },
+      { nombreIngrediente: "Pepino", peso: 60 },
+      { nombreIngrediente: "Aceite de oliva", peso: 10 }
+    ],
+    pasosPreparacion: [
+      "Cocinar el pollo",
+      "Preparar ensalada con lechuga, tomate y pepino",
+      "Aliñar con aceite de oliva"
+    ],
+    tiempoPreparacion: "20 minutos",
+    tiposDieta: ["Baja en carbohidratos"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Baja en carbohidratos"]
+  },
+  {
+    nombreReceta: "Carne con espinacas y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Carne de vaca magra", peso: 120 },
+      { nombreIngrediente: "Espinaca", peso: 100 },
+      { nombreIngrediente: "Aceite de oliva", peso: 10 }
+    ],
+    pasosPreparacion: [
+      "Cocinar la carne",
+      "Saltear las espinacas con aceite de oliva",
+      "Servir juntos"
+    ],
+    tiempoPreparacion: "22 minutos",
+    tiposDieta: ["Baja en carbohidratos"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Baja en carbohidratos"]
+  },
+  {
+    nombreReceta: "Merluza con ensalada y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Merluza", peso: 120 },
+      { nombreIngrediente: "Lechuga", peso: 80 },
+      { nombreIngrediente: "Tomate", peso: 60 },
+      { nombreIngrediente: "Aceite de oliva", peso: 10 }
+    ],
+    pasosPreparacion: [
+      "Cocinar la merluza",
+      "Preparar ensalada con lechuga y tomate",
+      "Aliñar con aceite de oliva"
+    ],
+    tiempoPreparacion: "18 minutos",
+    tiposDieta: ["Baja en carbohidratos"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Baja en carbohidratos"]
+  },
+  {
+    nombreReceta: "Carne con verduras y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Carne de vaca magra", peso: 120 },
+      { nombreIngrediente: "Brécol", peso: 80 },
+      { nombreIngrediente: "Zanahoria", peso: 60 },
+      { nombreIngrediente: "Aceite de oliva", peso: 10 }
+    ],
+    pasosPreparacion: [
+      "Cocinar la carne",
+      "Saltear las verduras con aceite de oliva",
+      "Servir juntos"
+    ],
+    tiempoPreparacion: "25 minutos",
+    tiposDieta: ["Baja en carbohidratos"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Baja en carbohidratos"]
+  },
+  {
+    nombreReceta: "Pollo con espinacas y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Pechuga de pollo", peso: 120 },
+      { nombreIngrediente: "Espinaca", peso: 100 },
+      { nombreIngrediente: "Aceite de oliva", peso: 10 }
+    ],
+    pasosPreparacion: [
+      "Cocinar el pollo",
+      "Saltear las espinacas con aceite de oliva",
+      "Servir juntos"
+    ],
+    tiempoPreparacion: "20 minutos",
+    tiposDieta: ["Baja en carbohidratos"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Baja en carbohidratos"]
+  },
+  {
+    nombreReceta: "Merluza con brócoli y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Merluza", peso: 120 },
+      { nombreIngrediente: "Brécol", peso: 100 },
+      { nombreIngrediente: "Aceite de oliva", peso: 10 }
+    ],
+    pasosPreparacion: [
+      "Cocinar la merluza",
+      "Saltear el brócoli con aceite de oliva",
+      "Servir juntos"
+    ],
+    tiempoPreparacion: "20 minutos",
+    tiposDieta: ["Baja en carbohidratos"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Baja en carbohidratos"]
+  },
+  {
+    nombreReceta: "Pollo con verduras y aceite de oliva",
+    ingredientes: [
+      { nombreIngrediente: "Pechuga de pollo", peso: 120 },
+      { nombreIngrediente: "Brécol", peso: 80 },
+      { nombreIngrediente: "Zanahoria", peso: 60 },
+      { nombreIngrediente: "Aceite de oliva", peso: 10 }
+    ],
+    pasosPreparacion: [
+      "Cocinar el pollo",
+      "Saltear las verduras con aceite de oliva",
+      "Servir juntos"
+    ],
+    tiempoPreparacion: "22 minutos",
+    tiposDieta: ["Baja en carbohidratos"],
+    comidas: ["Almuerzo", "Cena"],
+    categoriasNutricionales: ["Baja en carbohidratos"]
   }
 ];
 

@@ -12,6 +12,8 @@ export interface CrearDietaDesdeExistenteDTO {
   creador: mongoose.Types.ObjectId;
   asignadaA?: mongoose.Types.ObjectId[];
   dietaOrigenId: mongoose.Types.ObjectId;
+  horasComidas?: string[]; // Horas personalizadas de cada comida
+  nombreComidas?: string[]; // Nombres personalizados de cada comida
 }
 
 export async function crearDietaDesdeExistente(dto: CrearDietaDesdeExistenteDTO): Promise<mongoose.Document> {
@@ -55,7 +57,12 @@ export async function crearDietaDesdeExistente(dto: CrearDietaDesdeExistenteDTO)
     const diaOrigen = diasOrigen[diaOrigenIndex];
     
     // Adaptar las comidas según el número de comidas diarias
-    const comidasAdaptadas = adaptarComidas(diaOrigen.comidas, dto.comidasDiarias);
+    const comidasAdaptadas = adaptarComidas(
+      diaOrigen.comidas, 
+      dto.comidasDiarias, 
+      dto.horasComidas, 
+      dto.nombreComidas
+    );
     
     // Calcular información nutricional del día
     const infoNutricional = calcularInfoNutricionalDia(comidasAdaptadas);
@@ -90,10 +97,19 @@ export async function crearDietaDesdeExistente(dto: CrearDietaDesdeExistenteDTO)
   return dieta;
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function adaptarComidas(comidasOrigen: any[], comidasDiarias: number): any[] {
+ 
+function adaptarComidas(
+  comidasOrigen: any[], // eslint-disable-line @typescript-eslint/no-explicit-any
+  comidasDiarias: number,
+  horasComidas?: string[],
+  nombreComidas?: string[]
+): any[] { // eslint-disable-line @typescript-eslint/no-explicit-any
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let comidasAdaptadas: any[] = [];
+  
+  // Valores por defecto si no se proporcionan nombres/horas personalizados
+  const nombresDefault = ['Desayuno', 'Media mañana', 'Almuerzo', 'Merienda', 'Cena'];
+  const horasDefault = ['08:00', '11:00', '14:00', '17:00', '20:00'];
   
   if (comidasOrigen.length === comidasDiarias) {
     comidasAdaptadas = [...comidasOrigen];
@@ -105,19 +121,20 @@ function adaptarComidas(comidasOrigen: any[], comidasDiarias: number): any[] {
     comidasAdaptadas = [...comidasOrigen];
     while (comidasAdaptadas.length < comidasDiarias) {
       const ultimaComida = comidasOrigen[comidasOrigen.length - 1];
+      const index = comidasAdaptadas.length;
       comidasAdaptadas.push({
         ...ultimaComida,
-        nombreComida: `Comida ${comidasAdaptadas.length + 1}`,
-        horaEstimada: calcularHoraComida(comidasAdaptadas.length)
+        nombreComida: nombreComidas?.[index] || nombresDefault[index] || `Comida ${index + 1}`,
+        horaEstimada: horasComidas?.[index] || horasDefault[index] || calcularHoraComida(index)
       });
     }
   }
   
-  // Procesar cada comida para copiar ingredientes de recetas a ingredientes personalizados
-  return comidasAdaptadas.map(comida => ({
-    ...comida,
+  // Actualizar nombres y horas de todas las comidas Y procesar platos en una sola operación
+  return comidasAdaptadas.map((comida, index) => {
+    // Primero procesar los platos
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    platos: comida.platos.map((plato: any) => {
+    const platosAdaptados = (comida.platos || []).map((plato: any) => {
       // Si el plato tiene una receta, copiar sus ingredientes a ingredientes personalizados
       if (plato.receta && plato.receta.ingredientes) {
         // Solo copiar ingredientes de la receta si no hay ingredientes personalizados existentes
@@ -136,8 +153,16 @@ function adaptarComidas(comidasOrigen: any[], comidasDiarias: number): any[] {
         }
       }
       return plato;
-    })
-  }));
+    });
+    
+    // Luego crear la comida con todos los datos
+    return {
+      ...comida,
+      nombreComida: nombreComidas?.[index] || comida.nombreComida || nombresDefault[index] || `Comida ${index + 1}`,
+      horaEstimada: horasComidas?.[index] || comida.horaEstimada || horasDefault[index] || calcularHoraComida(index),
+      platos: platosAdaptados
+    };
+  });
 }
 
 function calcularHoraComida(indiceComida: number): string {

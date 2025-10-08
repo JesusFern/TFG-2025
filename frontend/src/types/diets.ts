@@ -202,4 +202,5 @@ export interface Dieta {
   createdAt?: string;
   updatedAt?: string;
   draftMode: boolean;
+  publica?: boolean;
 }

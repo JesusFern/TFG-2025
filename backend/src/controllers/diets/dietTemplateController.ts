@@ -17,7 +17,7 @@ import logger from '../../utils/logger';
 // Crear dieta desde plantilla arquetipo
 export const crearDietaDesdePlantilla = async (req: AuthenticatedRequest, res: Response) => {
   try {
-    const { tipoArquetipo } = req.body;
+    const { tipoArquetipo, horasComidas, nombreComidas } = req.body;
     const creador = req.user?.id;
 
     // Validar autenticación
@@ -32,7 +32,9 @@ export const crearDietaDesdePlantilla = async (req: AuthenticatedRequest, res: R
     // Crear DTO específico para plantilla
     const dto: CrearDietaDesdeTemplateDTO = {
       ...commonDTO,
-      tipoArquetipo
+      tipoArquetipo,
+      horasComidas,
+      nombreComidas
     };
 
     // Crear la dieta

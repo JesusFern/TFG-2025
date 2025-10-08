@@ -4,7 +4,8 @@ import mongoose from 'mongoose';
 import { 
   buscarDietaYVerificarPermisos,
   actualizarCamposBasicosDieta,
-  actualizarDatosDiaDieta
+  actualizarDatosDiaDieta,
+  validarDietaCompleta
 } from '../../helpers/dietHelper';
 import { notificacionIntegracionService } from '../notificaciones/notificacionIntegracionService';
 import { recordatorioService } from '../notificaciones/recordatorioService';
@@ -40,6 +41,28 @@ export async function crearDietaService({
   nombreComidas: string[];
   draftMode?: boolean;
 }) {
+  // Validaciones de longitud de caracteres
+  if (!nombre || nombre.trim().length === 0) {
+    throw new Error('El nombre de la dieta es obligatorio');
+  }
+  if (nombre.length > 100) {
+    throw new Error('El nombre de la dieta no puede exceder los 100 caracteres');
+  }
+
+  if (descripcion && descripcion.length > 500) {
+    throw new Error('La descripción no puede exceder los 500 caracteres');
+  }
+
+  // Validar nombres de comidas
+  for (let i = 0; i < nombreComidas.length; i++) {
+    if (!nombreComidas[i] || nombreComidas[i].trim().length === 0) {
+      throw new Error(`El nombre de la comida ${i + 1} no puede estar vacío`);
+    }
+    if (nombreComidas[i].length > 50) {
+      throw new Error(`El nombre de la comida ${i + 1} no puede exceder los 50 caracteres`);
+    }
+  }
+
   const usuarioAsignado = await User.findById(asignadaA);
   if (!usuarioAsignado || usuarioAsignado.role !== 'user') {
     throw new Error('El usuario asignado debe tener rol user');
@@ -145,6 +168,39 @@ export async function actualizarDietaService(
     draftMode?: boolean;
   }
 ) {
+  // Validaciones de longitud de caracteres
+  if (datosActualizacion.nombre !== undefined) {
+    if (!datosActualizacion.nombre || datosActualizacion.nombre.trim().length === 0) {
+      throw new Error('El nombre de la dieta es obligatorio');
+    }
+    if (datosActualizacion.nombre.length > 100) {
+      throw new Error('El nombre de la dieta no puede exceder los 100 caracteres');
+    }
+  }
+
+  if (datosActualizacion.descripcion !== undefined && datosActualizacion.descripcion && datosActualizacion.descripcion.length > 500) {
+    throw new Error('La descripción no puede exceder los 500 caracteres');
+  }
+
+  // Validar nombres de comidas en días actualizados
+  if (datosActualizacion.dias && Array.isArray(datosActualizacion.dias)) {
+    for (const dia of datosActualizacion.dias) {
+      if (dia.comidas && Array.isArray(dia.comidas)) {
+        for (let i = 0; i < dia.comidas.length; i++) {
+          const comida = dia.comidas[i];
+          if (comida.nombreComida !== undefined) {
+            if (!comida.nombreComida || comida.nombreComida.trim().length === 0) {
+              throw new Error(`El nombre de la comida ${i + 1} no puede estar vacío`);
+            }
+            if (comida.nombreComida.length > 50) {
+              throw new Error(`El nombre de la comida ${i + 1} no puede exceder los 50 caracteres`);
+            }
+          }
+        }
+      }
+    }
+  }
+
   const dieta = await buscarDietaYVerificarPermisos(dietaId, userId, true);
 
   if (datosActualizacion.dias && Array.isArray(datosActualizacion.dias)) {
@@ -231,6 +287,32 @@ export async function limpiarPlatosVaciosService(dieta: any): Promise<number> {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export async function publicarDietaService(dietaId: string, userId: string): Promise<{ dieta: any; platosEliminados: number }> {
   const dieta = await buscarDietaYVerificarPermisos(dietaId, userId, true);
+  
+  // Validar tipos de dieta antes de publicar
+  if (dieta.tipo && dieta.tipo.length > 0) {
+    // Calcular totales de macronutrientes de toda la dieta
+    let totalProteinas = 0;
+    let totalHidratosCarbono = 0;
+    let totalGrasas = 0;
+
+    dieta.dias.forEach((dia: { proteinas?: number | null; hidratosCarbono?: number | null; grasas?: number | null }) => {
+      totalProteinas += dia.proteinas || 0;
+      totalHidratosCarbono += dia.hidratosCarbono || 0;
+      totalGrasas += dia.grasas || 0;
+    });
+
+    // Validar según los tipos de dieta
+    const validacion = validarDietaCompleta(
+      dieta.tipo,
+      totalProteinas,
+      totalHidratosCarbono,
+      totalGrasas
+    );
+
+    if (!validacion.esValida) {
+      throw new Error(`No se puede publicar la dieta porque no cumple con los requisitos de los tipos de dieta seleccionados: ${validacion.errores.join('; ')}`);
+    }
+  }
   
   const platosEliminados = await limpiarPlatosVaciosService(dieta);
   

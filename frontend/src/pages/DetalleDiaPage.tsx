@@ -278,6 +278,19 @@ const DetalleDiaPage: React.FC = () => {
         </motion.div>
       )}
 
+      {/* Alerta para dietas públicas (plan gratuito) */}
+      {dieta.publica && (
+        <Alert
+          icon={<IconAlertCircle size={16} />}
+          title="Dieta creada automáticamente con el plan gratuito"
+          color="blue"
+          variant="light"
+          mb="md"
+        >
+          Esta dieta no permite seguimiento. Para acceder a funciones de seguimiento personalizado, actualiza tu plan de suscripción.
+        </Alert>
+      )}
+
       {/* Header del día */}
       <Paper p="lg" mb="md" withBorder>
         <Stack gap="md">
@@ -353,8 +366,8 @@ const DetalleDiaPage: React.FC = () => {
         </Paper>
       )}
 
-      {/* Resumen de seguimiento del día */}
-      {puedeGestionarSeguimiento() && Object.keys(seguimientos).length > 0 && (
+      {/* Resumen de seguimiento del día - Solo si no es dieta pública */}
+      {puedeGestionarSeguimiento() && !dieta.publica && Object.keys(seguimientos).length > 0 && (
         <ResumenSeguimientoDia
           seguimientos={seguimientos}
           totalPlatos={dayInfo.data.comidas.reduce((total, comida) => total + comida.platos.length, 0)}
@@ -375,19 +388,16 @@ const DetalleDiaPage: React.FC = () => {
               {dayInfo.data.comidas.map((comida, index) => {
                 if (!comida.platos || comida.platos.length === 0) return null;
                 
-                const mealNames = ['Desayuno', 'Media mañana', 'Almuerzo', 'Merienda', 'Cena'];
-                const mealTimes = ['08:00', '11:00', '14:00', '17:00', '20:00'];
-                
                 return (
                   <Paper key={index} p="sm" withBorder>
                     <Stack gap="xs">
                       <Group justify="space-between" align="center">
                         <Text fw={600} size="sm" c={isDark ? "gray.1" : "gray.8"}>
-                          {comida.nombreComida || mealNames[index] || `Comida ${index + 1}`}
+                          {comida.nombreComida || `Comida ${index + 1}`}
                         </Text>
                         <Group gap="xs">
                           <Text size="xs" c="dimmed">
-                            {comida.horaEstimada || mealTimes[index]}
+                            {comida.horaEstimada || ''}
                           </Text>
                           <Badge size="xs" color="blue" variant="light">
                             {comida.platos.length} plato{comida.platos.length !== 1 ? 's' : ''}
@@ -440,8 +450,8 @@ const DetalleDiaPage: React.FC = () => {
                                       </Button>
                                     )}
                                     
-                                    {/* Botón de seguimiento para el plato */}
-                                    {puedeGestionarSeguimiento() && puedeEditarSeguimiento() && (
+                                    {/* Botón de seguimiento para el plato - Solo si no es dieta pública */}
+                                    {puedeGestionarSeguimiento() && puedeEditarSeguimiento() && !dieta.publica && (
                                       <Button
                                         size="xs"
                                         variant="light"
@@ -456,8 +466,8 @@ const DetalleDiaPage: React.FC = () => {
                                   </Group>
                                 </Group>
                                 
-                                {/* Mostrar seguimiento existente para nutricionistas creadores */}
-                                {puedeGestionarSeguimiento() && !puedeEditarSeguimiento() && (
+                                {/* Mostrar seguimiento existente para nutricionistas creadores - Solo si no es dieta pública */}
+                                {puedeGestionarSeguimiento() && !puedeEditarSeguimiento() && !dieta.publica && (
                                   <>
                                     {seguimientoPlato ? (
                                       <SeguimientoPlatoDisplay
@@ -475,8 +485,8 @@ const DetalleDiaPage: React.FC = () => {
                                   </>
                                 )}
                                 
-                                {/* Mostrar seguimiento existente para usuarios asignados */}
-                                {puedeGestionarSeguimiento() && puedeEditarSeguimiento() && seguimientoPlato && (
+                                {/* Mostrar seguimiento existente para usuarios asignados - Solo si no es dieta pública */}
+                                {puedeGestionarSeguimiento() && puedeEditarSeguimiento() && !dieta.publica && seguimientoPlato && (
                                   <SeguimientoPlatoDisplay
                                     seguimiento={seguimientoPlato}
                                     nombrePlato={plato.nombre || `Plato ${platoIndex + 1}`}
@@ -573,8 +583,8 @@ const DetalleDiaPage: React.FC = () => {
         </Stack>
       </Paper>
 
-      {/* Modales de seguimiento por plato */}
-      {puedeGestionarSeguimiento() && dayInfo && dayInfo.data.comidas.map((comida, comidaIndex) => 
+      {/* Modales de seguimiento por plato - Solo si no es dieta pública */}
+      {puedeGestionarSeguimiento() && !dieta.publica && dayInfo && dayInfo.data.comidas.map((comida, comidaIndex) => 
         comida.platos.map((plato, platoIndex) => {
           const key = `${comidaIndex}-${platoIndex}`;
           return (

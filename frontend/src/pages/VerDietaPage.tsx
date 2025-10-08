@@ -319,18 +319,16 @@ const VerDietaPage: React.FC = () => {
         <Stack gap="md">
           {Array.from({ length: dieta.comidasDiarias }).map((_, comidaIndex) => {
             const comida = currentDay.comidas[comidaIndex];
-            const mealNames = ['Desayuno', 'Media mañana', 'Almuerzo', 'Merienda', 'Cena'];
-            const mealTimes = ['08:00', '11:00', '14:00', '17:00', '20:00'];
             
             return (
               <Paper key={comidaIndex} p="md" withBorder>
                 <Stack gap="sm">
                   <Group justify="space-between" align="center">
                     <Text fw={600} size="md" c={isDark ? "gray.1" : "gray.8"}>
-                      {mealNames[comidaIndex] || `Comida ${comidaIndex + 1}`}
+                      {comida?.nombreComida || `Comida ${comidaIndex + 1}`}
                     </Text>
                     <Text size="sm" c="dimmed">
-                      {mealTimes[comidaIndex]}
+                      {comida?.horaEstimada || ''}
                     </Text>
                   </Group>
                   
@@ -622,6 +620,8 @@ const VerDietaPage: React.FC = () => {
                             label={`${comida.nombreComida || `Comida ${comidaIndex + 1}`}${comida.horaEstimada ? ` - ${comida.horaEstimada}` : ''}`}
                             position="top"
                             withArrow
+                            multiline
+                            w={200}
                           >
                             <Text 
                               fw={600} 
@@ -629,7 +629,13 @@ const VerDietaPage: React.FC = () => {
                               c={isDark ? "gray.2" : "gray.7"} 
                               mb="4px"
                               p={isMobileState ? "4px 6px" : "6px 8px"}
-                              style={styles.mealTitle(isDark)}
+                              style={{
+                                ...styles.mealTitle(isDark),
+                                wordWrap: 'break-word',
+                                wordBreak: 'break-word',
+                                overflowWrap: 'break-word',
+                                maxWidth: '100%'
+                              }}
                             >
                               {comida.nombreComida || `Comida ${comidaIndex + 1}`} 
                               {comida.horaEstimada && (
