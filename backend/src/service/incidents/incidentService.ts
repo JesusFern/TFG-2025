@@ -273,7 +273,7 @@ export class IncidentService {
       id: incidencia._id.toString(),
       descripcion: incidencia.descripcion,
       estado: incidencia.estado,
-      creadorId: incidencia.creadorId.toString(),
+      creadorId: incidencia.creadorId ? incidencia.creadorId.toString() : '',
       administradorAsignado: incidencia.administradorAsignado?.toString(),
       imagenes: incidencia.imagenes || [],
       fechaResolucion: incidencia.fechaResolucion,

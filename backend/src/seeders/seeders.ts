@@ -9,7 +9,6 @@ import { seedIngredientes } from './diets/seedIngredientes';
 import { seedRecetas } from './diets/seedRecetas';
 import { seedEjercicios } from './training/seedEjercicios';
 import mongoose from 'mongoose';
-import User from '../models/users/user';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -23,8 +22,24 @@ async function runSeed() {
     await mongoose.connect(mongoUri);
     console.log('Conectado a MongoDB');
 
-    await User.deleteMany({});
-    console.log('Colección de usuarios borrada.');
+    // ===== ELIMINAR TODAS LAS COLECCIONES =====
+    console.log('🧹 Limpiando todas las colecciones...');
+    
+    if (!mongoose.connection.db) {
+      throw new Error('Base de datos no disponible');
+    }
+    
+    const collections = await mongoose.connection.db.collections();
+    let totalEliminados = 0;
+    
+    for (const collection of collections) {
+      const result = await collection.deleteMany({});
+      totalEliminados += result.deletedCount || 0;
+      console.log(`   ✓ ${collection.collectionName}: ${result.deletedCount || 0} documentos eliminados`);
+    }
+    
+    console.log(`🗑️ Total de documentos eliminados: ${totalEliminados}`);
+    console.log('✅ Todas las colecciones han sido limpiadas\n');
 
     // Crear usuarios en orden: admin, usuarios regulares, trabajadores
     await seedAdminUser();
