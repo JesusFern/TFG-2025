@@ -496,11 +496,34 @@ export async function obtenerRachasEntrenamientoService(clienteId: string): Prom
     }).sort({ fecha: 1 });
 
     if (registros.length === 0) {
+      // Si no hay registros, calcular días desde que tiene un plan asignado
+      let diasSinEntrenar = 0;
+      
+      try {
+        // Buscar el plan de entrenamiento más antiguo del cliente
+        const planMasAntiguo = await PlanEntrenamiento.findOne({
+          clientes: sanitizedClienteId,
+          draftMode: false
+        }).sort({ fechaInicio: 1 });
+        
+        if (planMasAntiguo) {
+          const hoy = new Date();
+          hoy.setHours(0, 0, 0, 0);
+          const fechaInicioPlan = new Date(planMasAntiguo.fechaInicio);
+          fechaInicioPlan.setHours(0, 0, 0, 0);
+          
+          // Calcular días desde el inicio del plan
+          diasSinEntrenar = Math.max(0, Math.floor((hoy.getTime() - fechaInicioPlan.getTime()) / (1000 * 60 * 60 * 24)));
+        }
+      } catch (error) {
+        logger.warn('Error al calcular días sin entrenar para cliente sin registros', { clienteId, error });
+      }
+      
       return {
         rachaActual: { dias: 0, semanas: 0 },
         rachaMaxima: { dias: 0, semanas: 0, fechaInicio: null, fechaFin: null },
         ultimaSesion: null,
-        diasSinEntrenar: 0
+        diasSinEntrenar
       };
     }
 
@@ -1064,9 +1087,14 @@ export const obtenerClientesTrabajadorService = async (trabajadorId: string, sem
           
           // Calcular alertas
           const alertas = [];
-          if (rachas.diasSinEntrenar > 3) {
+          
+          // Verificar si el cliente nunca ha registrado ejercicios
+          if (!rachas.ultimaSesion && rachas.diasSinEntrenar > 0) {
+            alertas.push(`Cliente nunca ha registrado ejercicios - ${rachas.diasSinEntrenar} días desde asignación del plan`);
+          } else if (rachas.diasSinEntrenar > 3) {
             alertas.push(`Cliente inactivo - no entrena desde hace ${rachas.diasSinEntrenar} días`);
           }
+          
           if (estadisticasGenerales.rendimiento.porcentajeCompletitud < 60) {
             alertas.push('Bajo cumplimiento del plan semanal');
           }
@@ -1217,9 +1245,14 @@ export const obtenerDetallesClienteService = async (trabajadorId: string, client
 
     // Calcular alertas
     const alertas = [];
-    if (rachas.diasSinEntrenar > 3) {
+    
+    // Verificar si el cliente nunca ha registrado ejercicios
+    if (!rachas.ultimaSesion && rachas.diasSinEntrenar > 0) {
+      alertas.push(`Cliente nunca ha registrado ejercicios - ${rachas.diasSinEntrenar} días desde asignación del plan`);
+    } else if (rachas.diasSinEntrenar > 3) {
       alertas.push(`Cliente inactivo - no entrena desde hace ${rachas.diasSinEntrenar} días`);
     }
+    
     if (estadisticasGenerales.rendimiento.porcentajeCompletitud < 60) {
       alertas.push('Bajo cumplimiento del plan semanal');
     }
@@ -1281,7 +1314,8 @@ export const obtenerDetallesClienteService = async (trabajadorId: string, client
             id: registro.sesion?._id || 'sin-id',
             nombre: registro.sesion?.nombre || 'Sesión',
             tipoEntrenamiento: registro.sesion?.tipoEntrenamiento || 'Fuerza',
-            fecha: registro.sesion?.fecha || new Date()
+            fecha: registro.sesion?.fecha || new Date(),
+            completada: registro.sesion?.completada || false
           },
           cargaUtilizada: registro.cargaUtilizada,
           repeticionesRealizadas: registro.repeticionesRealizadas,

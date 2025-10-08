@@ -645,7 +645,8 @@ const ClientTrainingSessionPage: React.FC = () => {
               id: selectedRegistro.sesion,
               nombre: 'Sesión',
               tipoEntrenamiento: sesion?.tipoEntrenamiento || 'Fuerza',
-              fecha: sesion?.fecha || new Date().toISOString()
+              fecha: sesion?.fecha || new Date().toISOString(),
+              completada: sesion?.completada ?? false
             },
             cargaUtilizada: selectedRegistro.cargaUtilizada || 0,
             repeticionesRealizadas: selectedRegistro.repeticionesRealizadas,

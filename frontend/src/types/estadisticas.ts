@@ -130,6 +130,7 @@ export interface EstadisticasResponse {
   success: boolean;
   message: string;
   estadisticas: EstadisticasCliente | EstadisticasSemanal;
+  alertas?: string[]; // Alertas para el cliente sobre su progreso
 }
 
 export interface ProgresoEjerciciosResponse {
@@ -194,6 +195,7 @@ export interface RegistroEjercicioDetalle {
     nombre: string;
     tipoEntrenamiento: string;
     fecha: string;
+    completada: boolean;
   };
   cargaUtilizada: number;
   repeticionesRealizadas: number;

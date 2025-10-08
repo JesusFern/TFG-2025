@@ -92,8 +92,14 @@ const GenerateTrainingPlanForm: React.FC<GenerateTrainingPlanFormProps> = ({
     setError(null);
   };
 
+  const MAX_NOMBRE_LENGTH = 100;
+  const MAX_DESCRIPCION_LENGTH = 1000;
+
   const canProceedToStep2 = () => {
-    return form.nombre.trim() !== '' && form.objetivo !== '';
+    return form.nombre.trim() !== '' && 
+           form.nombre.length <= MAX_NOMBRE_LENGTH &&
+           form.descripcion.length <= MAX_DESCRIPCION_LENGTH &&
+           form.objetivo !== '';
   };
 
   const canProceedToStep3 = () => {
@@ -122,6 +128,16 @@ const GenerateTrainingPlanForm: React.FC<GenerateTrainingPlanFormProps> = ({
   const handleSubmit = async () => {
     if (!canSubmit()) {
       setError('Por favor completa todos los campos requeridos');
+      return;
+    }
+
+    // Validar longitudes antes de enviar
+    if (form.nombre.length > MAX_NOMBRE_LENGTH) {
+      setError(`El nombre del plan no puede exceder los ${MAX_NOMBRE_LENGTH} caracteres`);
+      return;
+    }
+    if (form.descripcion.length > MAX_DESCRIPCION_LENGTH) {
+      setError(`La descripción no puede exceder los ${MAX_DESCRIPCION_LENGTH} caracteres`);
       return;
     }
 
@@ -165,25 +181,57 @@ const GenerateTrainingPlanForm: React.FC<GenerateTrainingPlanFormProps> = ({
               </Group>
             </Title>
             
-            <TextInput
-              label="Nombre del plan"
-              placeholder="Ej: Mi plan de fuerza personalizado"
-              value={form.nombre}
-              onChange={(e) => handleInputChange('nombre', e.currentTarget.value)}
-              required
-              size="md"
-            />
+            <Stack gap="xs">
+              <TextInput
+                label="Nombre del plan"
+                placeholder="Ej: Mi plan de fuerza personalizado"
+                description="El nombre debe tener entre 1 y 100 caracteres"
+                value={form.nombre}
+                onChange={(e) => handleInputChange('nombre', e.currentTarget.value)}
+                required
+                size="md"
+                error={
+                  form.nombre.length === 0 ? undefined :
+                  form.nombre.trim().length === 0 ? 'El nombre no puede estar vacío' :
+                  form.nombre.length > MAX_NOMBRE_LENGTH ? `El nombre no puede exceder los ${MAX_NOMBRE_LENGTH} caracteres` : 
+                  undefined
+                }
+              />
+              <Group justify="flex-end">
+                <Text 
+                  size="xs" 
+                  c={form.nombre.length > MAX_NOMBRE_LENGTH ? 'red' : form.nombre.length > MAX_NOMBRE_LENGTH * 0.9 ? 'orange' : 'dimmed'}
+                >
+                  {form.nombre.length} / {MAX_NOMBRE_LENGTH} caracteres
+                </Text>
+              </Group>
+            </Stack>
 
-            <Textarea
-              label="Descripción (opcional)"
-              placeholder="Describe tus objetivos específicos..."
-              value={form.descripcion}
-              onChange={(e) => handleInputChange('descripcion', e.currentTarget.value)}
-              minRows={2}
-              size="md"
-            />
+            <Stack gap="xs">
+              <Textarea
+                label="Descripción (opcional)"
+                placeholder="Describe tus objetivos específicos..."
+                value={form.descripcion}
+                onChange={(e) => handleInputChange('descripcion', e.currentTarget.value)}
+                minRows={3}
+                maxRows={6}
+                size="md"
+                error={form.descripcion.length > MAX_DESCRIPCION_LENGTH ? `La descripción no puede exceder los ${MAX_DESCRIPCION_LENGTH} caracteres` : undefined}
+              />
+              <Group justify="flex-end">
+                <Text 
+                  size="xs" 
+                  c={form.descripcion.length > MAX_DESCRIPCION_LENGTH ? 'red' : form.descripcion.length > MAX_DESCRIPCION_LENGTH * 0.9 ? 'orange' : 'dimmed'}
+                >
+                  {form.descripcion.length} / {MAX_DESCRIPCION_LENGTH} caracteres
+                </Text>
+              </Group>
+            </Stack>
 
             <Select
+              comboboxProps={{
+                zIndex: 1000
+              }}
               label="Objetivo principal"
               placeholder="Selecciona tu objetivo"
               data={objetivosOptions}
@@ -239,6 +287,9 @@ const GenerateTrainingPlanForm: React.FC<GenerateTrainingPlanFormProps> = ({
             />
 
             <Select
+              comboboxProps={{
+                zIndex: 1000
+              }}
               label="Nivel de dificultad"
               placeholder="Selecciona tu nivel"
               data={nivelDificultadOptions}

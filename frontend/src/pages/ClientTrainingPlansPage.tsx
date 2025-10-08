@@ -213,6 +213,7 @@ const ClientTrainingPlansPage: React.FC = () => {
 
       {/* Modal para generar plantilla */}
       <Modal
+        zIndex={1000}
         opened={showGenerateModal}
         onClose={() => setShowGenerateModal(false)}
         title="Generar Plan Personalizado"

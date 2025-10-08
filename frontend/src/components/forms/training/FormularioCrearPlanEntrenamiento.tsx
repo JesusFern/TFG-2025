@@ -108,6 +108,10 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
   const [activeStep, setActiveStep] = useState(0);
   const [stepError, setStepError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Constantes de validación
+  const MAX_NOMBRE_LENGTH = 100;
+  const MAX_DESCRIPCION_LENGTH = 1000;
 
   // Usar constantes importadas
 
@@ -165,7 +169,9 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
   const canGoNext = useMemo(() => {
     switch (activeStep) {
       case 0:
-        return form.nombre.trim() !== '';
+        return form.nombre.trim() !== '' && 
+               form.nombre.length <= MAX_NOMBRE_LENGTH &&
+               (form.descripcion || '').length <= MAX_DESCRIPCION_LENGTH;
       case 1:
         return form.objetivo !== '';
       case 2:
@@ -175,7 +181,7 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
       default:
         return false;
     }
-  }, [activeStep, form]);
+  }, [activeStep, form, MAX_NOMBRE_LENGTH, MAX_DESCRIPCION_LENGTH]);
 
   const handleNext = () => {
     if (canGoNext) {
@@ -196,6 +202,16 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
   const handleSubmit = async () => {
     if (!canGoNext) {
       setStepError('Por favor completa todos los campos requeridos');
+      return;
+    }
+
+    // Validar longitudes antes de enviar
+    if (form.nombre.length > MAX_NOMBRE_LENGTH) {
+      setStepError(`El nombre del plan no puede exceder los ${MAX_NOMBRE_LENGTH} caracteres`);
+      return;
+    }
+    if ((form.descripcion || '').length > MAX_DESCRIPCION_LENGTH) {
+      setStepError(`La descripción no puede exceder los ${MAX_DESCRIPCION_LENGTH} caracteres`);
       return;
     }
 
@@ -328,23 +344,52 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
             
             <Paper p="md" radius="md" withBorder style={{ backgroundColor: 'var(--app-paper-bg)' }}>
               <Stack gap="md">
-                <TextInput
-                  label="Nombre del plan"
-                  placeholder="Ej: Plan de fuerza para principiantes"
-                  value={form.nombre}
-                  onChange={(e) => handleChange('nombre', e.currentTarget.value)}
-                  required
-                  size="md"
-                />
+                <Stack gap="xs">
+                  <TextInput
+                    label="Nombre del plan"
+                    placeholder="Ej: Plan de fuerza para principiantes"
+                    description="El nombre debe tener entre 1 y 100 caracteres"
+                    value={form.nombre}
+                    onChange={(e) => handleChange('nombre', e.currentTarget.value)}
+                    required
+                    size="md"
+                    error={
+                      form.nombre.length === 0 ? undefined :
+                      form.nombre.trim().length === 0 ? 'El nombre no puede estar vacío' :
+                      form.nombre.length > MAX_NOMBRE_LENGTH ? `El nombre no puede exceder los ${MAX_NOMBRE_LENGTH} caracteres` : 
+                      undefined
+                    }
+                  />
+                  <Group justify="flex-end">
+                    <Text 
+                      size="xs" 
+                      c={form.nombre.length > MAX_NOMBRE_LENGTH ? 'red' : form.nombre.length > MAX_NOMBRE_LENGTH * 0.9 ? 'orange' : 'dimmed'}
+                    >
+                      {form.nombre.length} / {MAX_NOMBRE_LENGTH} caracteres
+                    </Text>
+                  </Group>
+                </Stack>
                 
-                <Textarea
-                  label="Descripción"
-                  placeholder="Describe los objetivos y características del plan..."
-                  value={form.descripcion}
-                  onChange={(e) => handleChange('descripcion', e.currentTarget.value)}
-                  minRows={3}
-                  size="md"
-                />
+                <Stack gap="xs">
+                  <Textarea
+                    label="Descripción"
+                    placeholder="Describe los objetivos y características del plan..."
+                    value={form.descripcion || ''}
+                    onChange={(e) => handleChange('descripcion', e.currentTarget.value)}
+                    minRows={3}
+                    maxRows={6}
+                    size="md"
+                    error={(form.descripcion || '').length > MAX_DESCRIPCION_LENGTH ? `La descripción no puede exceder los ${MAX_DESCRIPCION_LENGTH} caracteres` : undefined}
+                  />
+                  <Group justify="flex-end">
+                    <Text 
+                      size="xs" 
+                      c={(form.descripcion || '').length > MAX_DESCRIPCION_LENGTH ? 'red' : (form.descripcion || '').length > MAX_DESCRIPCION_LENGTH * 0.9 ? 'orange' : 'dimmed'}
+                    >
+                      {(form.descripcion || '').length} / {MAX_DESCRIPCION_LENGTH} caracteres
+                    </Text>
+                  </Group>
+                </Stack>
               </Stack>
             </Paper>
           </>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Stack,
   Title,
@@ -11,7 +11,8 @@ import {
   Loader,
   Center,
   ThemeIcon,
-  Button
+  Button,
+  Modal
 } from '@mantine/core';
 import {
   IconStar,
@@ -21,16 +22,25 @@ import {
   IconAlertCircle,
   IconRefresh
 } from '@tabler/icons-react';
+import { useAuth } from '../../hooks/useAuth';
 import { useValoracionesRealtime } from '../../hooks/useValoracionesRealtime';
 import { Valoracion, EstadisticasValoracionesPorTipo } from '../../types/valoraciones';
 import ValoracionCard from './ValoracionCard';
 import ValoracionStats from './ValoracionStats';
+import ValoracionForm from './ValoracionForm';
+import { ValoracionService } from '../../services/valoracionService';
+import { notifications } from '@mantine/notifications';
+import { modals } from '@mantine/modals';
 
 interface WorkerRatingsTabProps {
   workerId: string;
 }
 
 const WorkerRatingsTab: React.FC<WorkerRatingsTabProps> = ({ workerId }) => {
+  const { user } = useAuth();
+  const [editModalOpened, setEditModalOpened] = useState(false);
+  const [valoracionAEditar, setValoracionAEditar] = useState<Valoracion | null>(null);
+  
   const {
     valoraciones,
     estadisticas,
@@ -64,6 +74,53 @@ const WorkerRatingsTab: React.FC<WorkerRatingsTabProps> = ({ workerId }) => {
       default:
         return 'gray';
     }
+  };
+
+  const handleEditValoracion = (valoracion: Valoracion) => {
+    setValoracionAEditar(valoracion);
+    setEditModalOpened(true);
+  };
+
+  const handleDeleteValoracion = (valoracion: Valoracion) => {
+    modals.openConfirmModal({
+      title: 'Eliminar valoración',
+      children: (
+        <Text size="sm">
+          ¿Estás seguro de que deseas eliminar esta valoración? Esta acción no se puede deshacer.
+        </Text>
+      ),
+      labels: { confirm: 'Eliminar', cancel: 'Cancelar' },
+      confirmProps: { color: 'red' },
+      zIndex: 1000,
+      onConfirm: async () => {
+        try {
+          await ValoracionService.eliminarValoracion(valoracion._id);
+          notifications.show({
+            title: 'Valoración eliminada',
+            message: 'Tu valoración ha sido eliminada correctamente',
+            color: 'green',
+          });
+          await refreshData();
+        } catch (error) {
+          notifications.show({
+            title: 'Error',
+            message: error instanceof Error ? error.message : 'No se pudo eliminar la valoración',
+            color: 'red',
+          });
+        }
+      },
+    });
+  };
+
+  const handleValoracionActualizada = async () => {
+    setEditModalOpened(false);
+    setValoracionAEditar(null);
+    notifications.show({
+      title: 'Valoración actualizada',
+      message: 'Tu valoración ha sido actualizada correctamente',
+      color: 'green',
+    });
+    await refreshData();
   };
 
   if (loading) {
@@ -176,17 +233,56 @@ const WorkerRatingsTab: React.FC<WorkerRatingsTabProps> = ({ workerId }) => {
             </Alert>
           ) : (
             <Stack gap="md">
-              {valoraciones.map((valoracion: Valoracion) => (
-                <ValoracionCard
-                  key={valoracion._id}
-                  valoracion={valoracion}
-                  showActions={false}
-                />
-              ))}
+              {valoraciones.map((valoracion: Valoracion) => {
+                // Verificar si la valoración es del usuario actual (cliente viendo perfil de trabajador)
+                const esValoracionPropia = !!(user && valoracion.cliente._id === user._id);
+                
+                return (
+                  <ValoracionCard
+                    key={valoracion._id}
+                    valoracion={valoracion}
+                    showActions={esValoracionPropia}
+                    onEdit={esValoracionPropia ? handleEditValoracion : undefined}
+                    onDelete={esValoracionPropia ? handleDeleteValoracion : undefined}
+                  />
+                );
+              })}
             </Stack>
           )}
         </Stack>
       </Card>
+
+      {/* Modal de Edición */}
+      {valoracionAEditar && (
+        <Modal
+          opened={editModalOpened}
+          onClose={() => {
+            setEditModalOpened(false);
+            setValoracionAEditar(null);
+          }}
+          title="Editar Valoración"
+          size="md"
+          centered
+        >
+          <ValoracionForm
+            opened={editModalOpened}
+            onClose={() => {
+              setEditModalOpened(false);
+              setValoracionAEditar(null);
+            }}
+            onSuccess={handleValoracionActualizada}
+            trabajadorId={workerId}
+            trabajadorName={valoracionAEditar.trabajador.fullName}
+            tiposDisponibles={[{
+              tipo: valoracionAEditar.tipoTrabajador,
+              puedeValorar: true,
+              yaValorado: true,
+              valoracionId: valoracionAEditar._id
+            }]}
+            valoracion={valoracionAEditar}
+          />
+        </Modal>
+      )}
     </Stack>
   );
 };

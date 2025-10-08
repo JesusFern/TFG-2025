@@ -3,7 +3,7 @@ import { IconCalendar } from '@tabler/icons-react';
 
 interface InformacionSesionProps {
   fecha: string | Date;
-  completada?: boolean;
+  completada: boolean;
 }
 
 export const InformacionSesion = ({ 
@@ -27,11 +27,9 @@ export const InformacionSesion = ({
           day: 'numeric' 
         })}
       </Text>
-      {completada !== undefined && (
-        <Text size="sm" c={completada ? 'green' : 'red'}>
-          Estado: {completada ? 'Completada' : 'No completada'}
-        </Text>
-      )}
+      <Text size="sm" c={completada ? 'green' : 'red'} fw={500}>
+        Estado de la sesión: {completada ? 'Completada' : 'No completada'}
+      </Text>
     </Paper>
   );
 };

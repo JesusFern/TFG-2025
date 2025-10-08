@@ -248,7 +248,7 @@ export class ValoracionService {
   }
 
   /**
-   * Eliminar una valoración (soft delete)
+   * Eliminar una valoración (hard delete)
    */
   static async deleteValoracion(id: string) {
     try {
@@ -256,17 +256,14 @@ export class ValoracionService {
         throw new Error('ID de valoración inválido');
       }
 
-      const valoracion = await Valoracion.findByIdAndUpdate(
-        id,
-        { activa: false },
-        { new: true }
-      );
+      // Hard delete - eliminar completamente la valoración
+      const valoracion = await Valoracion.findByIdAndDelete(id);
 
       if (!valoracion) {
         throw new Error('Valoración no encontrada');
       }
 
-      logger.info('Valoración eliminada exitosamente', { valoracionId: id });
+      logger.info('Valoración eliminada exitosamente (hard delete)', { valoracionId: id });
       return valoracion;
     } catch (error) {
       logger.error('Error al eliminar valoración', { error, id });

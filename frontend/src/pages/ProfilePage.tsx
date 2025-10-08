@@ -38,6 +38,15 @@ const ProfilePage: React.FC = () => {
           const userData = await response.json();
           console.log('Datos del usuario cargados:', userData);
           setOtherUserProfile(userData);
+          
+          // Cargar también datos de salud y actividad del otro usuario
+          if (userData.datosSaludYNutricion) {
+            setDatosSalud(userData.datosSaludYNutricion);
+          }
+          if (userData.datosActividadFisica) {
+            setDatosActividad(userData.datosActividadFisica);
+          }
+          
           setHasLoadedData(true);
         } else {
           const errorData = await response.json().catch(() => ({}));
