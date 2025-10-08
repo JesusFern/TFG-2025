@@ -213,9 +213,9 @@ export function validarTipoDieta(
       break;
       
     case 'Alta en proteínas':
-      if (porcentajes.proteinas <= 25) {
+      if (porcentajes.proteinas <= 20) {
         errores.push(
-          `Las proteínas representan el ${porcentajes.proteinas.toFixed(1)}% de las calorías. Para una dieta alta en proteínas debe ser mayor al 25%.`
+          `Las proteínas representan el ${porcentajes.proteinas.toFixed(1)}% de las calorías. Para una dieta alta en proteínas debe ser mayor al 20%.`
         );
       }
       break;

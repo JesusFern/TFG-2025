@@ -74,11 +74,11 @@ const CONFIGURACIONES_DIETA = {
 // Variaciones de snacks con diferentes pesos
 const VARIACIONES_SNACKS = {
   frutosSecos: [
-    { nombre: "Almendras", peso: 10 }, { nombre: "Nueces", peso: 8 }, { nombre: "Avellanas", peso: 7 },
-    { nombre: "Almendras", peso: 12 }, { nombre: "Nueces", peso: 6 }, { nombre: "Avellanas", peso: 7 },
-    { nombre: "Almendras", peso: 11 }, { nombre: "Nueces", peso: 7 }, { nombre: "Avellanas", peso: 7 },
-    { nombre: "Almendras", peso: 10 }, { nombre: "Nueces", peso: 8 }, { nombre: "Avellanas", peso: 7 },
-    { nombre: "Almendras", peso: 11 }, { nombre: "Nueces", peso: 7 }, { nombre: "Avellanas", peso: 7 }
+    { nombre: "Almendra sin cascara", peso: 10 }, { nombre: "Nuez sin cascara", peso: 8 }, { nombre: "Avellana sin cascara", peso: 7 },
+    { nombre: "Almendra sin cascara", peso: 12 }, { nombre: "Nuez sin cascara", peso: 6 }, { nombre: "Avellana sin cascara", peso: 7 },
+    { nombre: "Almendra sin cascara", peso: 11 }, { nombre: "Nuez sin cascara", peso: 7 }, { nombre: "Avellana sin cascara", peso: 7 },
+    { nombre: "Almendra sin cascara", peso: 10 }, { nombre: "Nuez sin cascara", peso: 8 }, { nombre: "Avellana sin cascara", peso: 7 },
+    { nombre: "Almendra sin cascara", peso: 11 }, { nombre: "Nuez sin cascara", peso: 7 }, { nombre: "Avellana sin cascara", peso: 7 }
   ],
   ensaladaFrutas: [
     { nombre: "Manzana", peso: 80 }, { nombre: "Plátano", peso: 60 }, { nombre: "Naranja", peso: 100 },
@@ -98,49 +98,164 @@ const crearSnack = (tipo: 'frutosSecos' | 'ensaladaFrutas', diaIndex: number) =>
     : VARIACIONES_SNACKS.ensaladaFrutas.slice(diaIndex * 3, (diaIndex * 3) + 3)
 });
 
-// Plantillas de comidas por día (refactorizadas)
-const PLANTILLAS_COMIDAS = [
-  // Lunes - Legumbres + Verduras
-  {
-    desayuno: ["Tostada con tomate y aceite de oliva", "Avena con frutas"],
-    mediaManana: crearSnack('frutosSecos', 0),
-    almuerzo: ["Lentejas con verduras"],
-    merienda: crearSnack('ensaladaFrutas', 0),
-    cena: ["Arroz con verduras"]
-  },
-  // Martes - Arroz/Pasta + Verduras
-  {
-    desayuno: ["Tostada con tomate y aceite de oliva", "Smoothie verde"],
-    mediaManana: crearSnack('frutosSecos', 1),
-    almuerzo: ["Pasta con tomate"],
-    merienda: crearSnack('ensaladaFrutas', 1),
-    cena: ["Quinoa con verduras"]
-  },
-  // Miércoles - Legumbres + Verduras
-  {
-    desayuno: ["Tostada con tomate y aceite de oliva", "Avena con frutas"],
-    mediaManana: crearSnack('frutosSecos', 2),
-    almuerzo: ["Garbanzos con espinacas"],
-    merienda: crearSnack('ensaladaFrutas', 2),
-    cena: ["Sopa de verduras"]
-  },
-  // Jueves - Arroz/Pasta + Verduras
-  {
-    desayuno: ["Tostada con tomate y aceite de oliva", "Smoothie verde"],
-    mediaManana: crearSnack('frutosSecos', 3),
-    almuerzo: ["Ensalada de quinoa con verduras"],
-    merienda: crearSnack('ensaladaFrutas', 3),
-    cena: ["Mijo con calabaza"]
-  },
-  // Viernes - Legumbres + Verduras
-  {
-    desayuno: ["Tostada con tomate y aceite de oliva", "Avena con frutas"],
-    mediaManana: crearSnack('frutosSecos', 4),
-    almuerzo: ["Judías blancas con verduras"],
-    merienda: crearSnack('ensaladaFrutas', 4),
-    cena: ["Sopa de verduras"]
-  }
-];
+// Plantillas específicas por tipo de dieta
+const PLANTILLAS_POR_TIPO = {
+  // DIETA KETO - Alta en grasas (≥70%), baja en carbohidratos (<40%), moderada en proteínas
+  'Keto': [
+    {
+      desayuno: ["Huevos con aguacate y aceite de oliva"],
+      mediaManana: crearSnack('frutosSecos', 0),
+      almuerzo: ["Salmon con espinacas y aceite de oliva"],
+      merienda: crearSnack('frutosSecos', 0),
+      cena: ["Carne con brócoli y aceite de oliva"]
+    },
+    {
+      desayuno: ["Huevos con bacon y aceite de oliva"],
+      mediaManana: crearSnack('frutosSecos', 1),
+      almuerzo: ["Atún con lechuga y aceite de oliva"],
+      merienda: crearSnack('frutosSecos', 1),
+      cena: ["Carne con coliflor y aceite de oliva"]
+    },
+    {
+      desayuno: ["Huevos con queso y aceite de oliva"],
+      mediaManana: crearSnack('frutosSecos', 2),
+      almuerzo: ["Sardinas con espinacas y aceite de oliva"],
+      merienda: crearSnack('frutosSecos', 2),
+      cena: ["Merluza con verduras y aceite de oliva"]
+    },
+    {
+      desayuno: ["Huevos con aguacate y aceite de oliva"],
+      mediaManana: crearSnack('frutosSecos', 3),
+      almuerzo: ["Pollo con ensalada y aceite de oliva"],
+      merienda: crearSnack('frutosSecos', 3),
+      cena: ["Carne con brócoli y aceite de oliva"]
+    },
+    {
+      desayuno: ["Huevos con bacon y aceite de oliva"],
+      mediaManana: crearSnack('frutosSecos', 4),
+      almuerzo: ["Salmon con espinacas y aceite de oliva"],
+      merienda: crearSnack('frutosSecos', 4),
+      cena: ["Atún con verduras y aceite de oliva"]
+    }
+  ],
+
+  // DIETA ALTA EN PROTEÍNAS - >25% proteínas, moderada en carbohidratos y grasas
+  'Alta en proteínas': [
+    {
+      desayuno: ["Huevos con avena y frutas"],
+      mediaManana: crearSnack('frutosSecos', 0),
+      almuerzo: ["Pollo con arroz y verduras"],
+      merienda: crearSnack('ensaladaFrutas', 0),
+      cena: ["Merluza con quinoa y verduras"]
+    },
+    {
+      desayuno: ["Huevos con tostada y frutas"],
+      mediaManana: crearSnack('frutosSecos', 1),
+      almuerzo: ["Carne con pasta y verduras"],
+      merienda: crearSnack('ensaladaFrutas', 1),
+      cena: ["Pollo con arroz y verduras"]
+    },
+    {
+      desayuno: ["Huevos con avena y frutas"],
+      mediaManana: crearSnack('frutosSecos', 2),
+      almuerzo: ["Merluza con quinoa y verduras"],
+      merienda: crearSnack('ensaladaFrutas', 2),
+      cena: ["Carne con pasta y verduras"]
+    },
+    {
+      desayuno: ["Huevos con tostada y frutas"],
+      mediaManana: crearSnack('frutosSecos', 3),
+      almuerzo: ["Pollo con arroz y verduras"],
+      merienda: crearSnack('ensaladaFrutas', 3),
+      cena: ["Merluza con quinoa y verduras"]
+    },
+    {
+      desayuno: ["Huevos con avena y frutas"],
+      mediaManana: crearSnack('frutosSecos', 4),
+      almuerzo: ["Carne con pasta y verduras"],
+      merienda: crearSnack('ensaladaFrutas', 4),
+      cena: ["Pollo con arroz y verduras"]
+    }
+  ],
+
+  // DIETA BAJA EN CARBOHIDRATOS - <40% carbohidratos, moderada en proteínas y grasas
+  'Baja en carbohidratos': [
+    {
+      desayuno: ["Huevos con verduras y aceite de oliva"],
+      mediaManana: crearSnack('frutosSecos', 0),
+      almuerzo: ["Pollo con ensalada y aceite de oliva"],
+      merienda: crearSnack('frutosSecos', 0),
+      cena: ["Merluza con brócoli y aceite de oliva"]
+    },
+    {
+      desayuno: ["Huevos con aguacate y aceite de oliva"],
+      mediaManana: crearSnack('frutosSecos', 1),
+      almuerzo: ["Carne con espinacas y aceite de oliva"],
+      merienda: crearSnack('frutosSecos', 1),
+      cena: ["Pollo con verduras y aceite de oliva"]
+    },
+    {
+      desayuno: ["Huevos con verduras y aceite de oliva"],
+      mediaManana: crearSnack('frutosSecos', 2),
+      almuerzo: ["Merluza con ensalada y aceite de oliva"],
+      merienda: crearSnack('frutosSecos', 2),
+      cena: ["Carne con verduras y aceite de oliva"]
+    },
+    {
+      desayuno: ["Huevos con aguacate y aceite de oliva"],
+      mediaManana: crearSnack('frutosSecos', 3),
+      almuerzo: ["Pollo con espinacas y aceite de oliva"],
+      merienda: crearSnack('frutosSecos', 3),
+      cena: ["Merluza con brócoli y aceite de oliva"]
+    },
+    {
+      desayuno: ["Huevos con verduras y aceite de oliva"],
+      mediaManana: crearSnack('frutosSecos', 4),
+      almuerzo: ["Carne con espinacas y aceite de oliva"],
+      merienda: crearSnack('frutosSecos', 4),
+      cena: ["Pollo con verduras y aceite de oliva"]
+    }
+  ],
+
+  // PLANTILLA GENERAL (para otros tipos de dieta)
+  'General': [
+    {
+      desayuno: ["Tostada con tomate y aceite de oliva", "Avena con frutas"],
+      mediaManana: crearSnack('frutosSecos', 0),
+      almuerzo: ["Lentejas con verduras"],
+      merienda: crearSnack('ensaladaFrutas', 0),
+      cena: ["Arroz con verduras"]
+    },
+    {
+      desayuno: ["Tostada con tomate y aceite de oliva", "Smoothie verde"],
+      mediaManana: crearSnack('frutosSecos', 1),
+      almuerzo: ["Pasta con tomate"],
+      merienda: crearSnack('ensaladaFrutas', 1),
+      cena: ["Quinoa con verduras"]
+    },
+    {
+      desayuno: ["Tostada con tomate y aceite de oliva", "Avena con frutas"],
+      mediaManana: crearSnack('frutosSecos', 2),
+      almuerzo: ["Garbanzos con espinacas"],
+      merienda: crearSnack('ensaladaFrutas', 2),
+      cena: ["Sopa de verduras"]
+    },
+    {
+      desayuno: ["Tostada con tomate y aceite de oliva", "Smoothie verde"],
+      mediaManana: crearSnack('frutosSecos', 3),
+      almuerzo: ["Ensalada de quinoa con verduras"],
+      merienda: crearSnack('ensaladaFrutas', 3),
+      cena: ["Mijo con calabaza"]
+    },
+    {
+      desayuno: ["Tostada con tomate y aceite de oliva", "Avena con frutas"],
+      mediaManana: crearSnack('frutosSecos', 4),
+      almuerzo: ["Judías blancas con verduras"],
+      merienda: crearSnack('ensaladaFrutas', 4),
+      cena: ["Sopa de verduras"]
+    }
+  ]
+};
 
 async function buscarIngredientePorNombre(nombre: string): Promise<mongoose.Types.ObjectId | null> {
   const ingrediente = await Ingrediente.findOne({ 
@@ -217,8 +332,16 @@ async function crearPlatoConReceta(
   };
 }
 
-async function crearDiaTemplate(diaIndex: number, comidasDiarias: number): Promise<DiaTemplate> {
-  const plantillaDia = PLANTILLAS_COMIDAS[diaIndex % PLANTILLAS_COMIDAS.length];
+async function crearDiaTemplate(diaIndex: number, comidasDiarias: number, tipoArquetipo?: string): Promise<DiaTemplate> {
+  // Seleccionar plantilla según el tipo de dieta
+  let plantillasDisponibles;
+  if (tipoArquetipo && PLANTILLAS_POR_TIPO[tipoArquetipo as keyof typeof PLANTILLAS_POR_TIPO]) {
+    plantillasDisponibles = PLANTILLAS_POR_TIPO[tipoArquetipo as keyof typeof PLANTILLAS_POR_TIPO];
+  } else {
+    plantillasDisponibles = PLANTILLAS_POR_TIPO.General;
+  }
+  
+  const plantillaDia = plantillasDisponibles[diaIndex % plantillasDisponibles.length];
   const comidas: ComidaTemplate[] = [];
   
   const mealNames = ['Desayuno', 'Media mañana', 'Almuerzo', 'Merienda', 'Cena'];
@@ -369,7 +492,7 @@ export async function crearDietaDesdeTemplate(dto: CrearDietaDesdeTemplateDTO): 
   const dias: DiaTemplate[] = [];
   
   for (let i = 0; i < dto.duracion; i++) {
-    const dia = await crearDiaTemplate(i, dto.comidasDiarias);
+    const dia = await crearDiaTemplate(i, dto.comidasDiarias, dto.tipoArquetipo);
     dias.push(dia);
   }
 
