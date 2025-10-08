@@ -130,7 +130,9 @@ const VerRecetaPage: React.FC = () => {
 
 
   const getImageUrl = (imagePath: string) => {
-    return `${import.meta.env.VITE_BACKEND_HOST || 'http://localhost:5000'}${imagePath}`;
+    // Si la imagen ya es una URL completa, usarla tal cual
+    // Si es una ruta relativa, usarla directamente (será servida por el mismo servidor)
+    return imagePath;
   };
 
   if (loading) {

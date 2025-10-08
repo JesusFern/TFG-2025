@@ -1,12 +1,11 @@
 import axios, { AxiosInstance, AxiosResponse } from 'axios';
 
 // Configuración de la API
-const API_BASE_URL = import.meta.env.VITE_BACKEND_HOST || 'http://localhost:5000';
-
-// Crear instancia de axios
+// En Docker, usamos URLs relativas que serán proxificadas por Vite en desarrollo
+// y servidas por nginx en producción
 const apiClient: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: 10000,
+  baseURL: '/api',
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },

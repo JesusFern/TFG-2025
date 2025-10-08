@@ -21,6 +21,7 @@ import {
   obtenerProgresoEjercicioValidator
 } from '../../validators/trainingValidators';
 import { validateRequest } from '../../middlewares/validationMiddleware';
+import { createUploadErrorHandler } from '../../middlewares/uploadMiddleware';
 
 const router = Router();
 
@@ -93,6 +94,7 @@ router.get(
 // Ruta para subir video de ejercicio
 router.post(
   '/upload-video',
+  createUploadErrorHandler('video'),
   authenticateToken,
   ...uploadVideoEjercicio
 );

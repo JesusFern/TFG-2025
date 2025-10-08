@@ -10,4 +10,5 @@ COPY . .
 
 EXPOSE 5000
 
-CMD ["npm", "run", "dev"]
+# Usar directamente CMD con un comando de shell en lugar de un script
+CMD sh -c "echo 'Esperando a que MongoDB esté disponible...' && sleep 15 && echo 'Ejecutando seed...' && npm run seed && echo 'Iniciando servidor...' && npm run dev"

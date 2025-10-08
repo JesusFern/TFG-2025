@@ -39,9 +39,17 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [subiendoArchivos, setSubiendoArchivos] = useState(false);
 
+  const MAX_CONTENIDO_LENGTH = 5000;
+
   const handleSend = async () => {
     if (!contenido.trim() && archivos.length === 0) return;
     if (!user) return;
+
+    // Validar longitud del contenido
+    if (contenido.length > MAX_CONTENIDO_LENGTH) {
+      setError(`El mensaje es demasiado largo. Máximo ${MAX_CONTENIDO_LENGTH} caracteres (actualmente ${contenido.length}).`);
+      return;
+    }
 
     try {
       setSubiendoArchivos(true);
@@ -183,45 +191,56 @@ export const ChatInput: React.FC<ChatInputProps> = ({
         <Divider />
 
         {/* Input principal */}
-        <Group gap="sm" align="flex-end">
-          <Textarea
-            placeholder="Escribe tu mensaje..."
-            value={contenido}
-            onChange={(event) => setContenido(event.currentTarget.value)}
-            onKeyPress={handleKeyPress}
-            minRows={1}
-            maxRows={6}
-            style={{ 
-              flex: 1,
-              resize: 'none',
-              wordBreak: 'break-word',
-              overflowWrap: 'break-word'
-            }}
-            disabled={disabled}
-            autosize
-          />
+        <Stack gap="xs">
+          <Group gap="sm" align="flex-end">
+            <Textarea
+              placeholder="Escribe tu mensaje..."
+              value={contenido}
+              onChange={(event) => setContenido(event.currentTarget.value)}
+              onKeyPress={handleKeyPress}
+              minRows={1}
+              maxRows={6}
+              style={{ 
+                flex: 1,
+                resize: 'none',
+                wordBreak: 'break-word',
+                overflowWrap: 'break-word'
+              }}
+              disabled={disabled}
+              autosize
+            />
+            
+            <FileInput
+              placeholder="Adjuntar archivo"
+              accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip,.rar,.7z"
+              multiple
+              onChange={handleFileUpload}
+              disabled={disabled}
+              size="sm"
+              style={{ minWidth: 150 }}
+            />
+            
+            <ActionIcon
+              size="lg"
+              variant="filled"
+              color="blue"
+              onClick={handleSend}
+              disabled={disabled || subiendoArchivos || contenido.length > MAX_CONTENIDO_LENGTH}
+              loading={subiendoArchivos}
+            >
+              {!subiendoArchivos && <IconSend size={20} />}
+            </ActionIcon>
+          </Group>
           
-          <FileInput
-            placeholder="Adjuntar archivo"
-            accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip,.rar,.7z"
-            multiple
-            onChange={handleFileUpload}
-            disabled={disabled}
-            size="sm"
-            style={{ minWidth: 150 }}
-          />
-          
-          <ActionIcon
-            size="lg"
-            variant="filled"
-            color="blue"
-            onClick={handleSend}
-            disabled={disabled || subiendoArchivos}
-            loading={subiendoArchivos}
-          >
-            {!subiendoArchivos && <IconSend size={20} />}
-          </ActionIcon>
-        </Group>
+          <Group justify="space-between">
+            <Text 
+              size="xs" 
+              c={contenido.length > MAX_CONTENIDO_LENGTH ? 'red' : contenido.length > MAX_CONTENIDO_LENGTH * 0.9 ? 'orange' : 'dimmed'}
+            >
+              {contenido.length} / {MAX_CONTENIDO_LENGTH} caracteres
+            </Text>
+          </Group>
+        </Stack>
 
         {/* Indicador de escritura */}
         {isTyping && (

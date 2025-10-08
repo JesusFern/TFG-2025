@@ -329,8 +329,10 @@ export const useChat = (): UseChatReturn => {
       }
 
     } catch (err) {
-      setError('Error al enviar el mensaje');
+      const errorMessage = err instanceof Error ? err.message : 'Error al enviar el mensaje';
+      setError(errorMessage);
       console.error('Error sending message:', err);
+      throw err; // Re-lanzar el error para que pueda ser manejado en el componente padre
     }
   }, [conversacionActiva, user, socket, isConnected]);
 
@@ -421,6 +423,17 @@ export const useChat = (): UseChatReturn => {
   const clearError = useCallback(() => {
     setError(null);
   }, []);
+
+  // Auto-limpiar error después de 10 segundos
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError(null);
+      }, 10000); // 10 segundos
+
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   return {
     conversaciones,

@@ -55,54 +55,70 @@ export async function seedWorkers() {
       console.log(`Trabajador ${workerData.fullName} creado`);
     }
 
-    // Asignar user1 al nutricionista1
-    await asignarClienteANutricionista();
+    // Asignar clientes a trabajadores
+    await asignarClientesATrabajadores();
   } catch (error) {
     console.error('Error al crear trabajadores:', error);
     throw error;  // Propagamos el error para manejo centralizado
   }
 }
 
-async function asignarClienteANutricionista() {
+async function asignarClientesATrabajadores() {
   try {
-    // Buscar nutricionista1
-    const nutricionista = await User.findOne({ email: 'nutricionista1@example.com' });
-    if (!nutricionista) {
-      console.log('⚠️ Nutricionista1 no encontrado.');
+    // Buscar el trabajador dual (Nutricionista y Entrenador)
+    const nutriEntrenador = await User.findOne({ email: 'nutrientrenador@example.com' });
+    if (!nutriEntrenador) {
+      console.log('⚠️ Nutricionista y Entrenador no encontrado.');
       return;
     }
 
-    // Buscar user1
-    const cliente = await User.findOne({ email: 'user1@example.com' });
-    if (!cliente) {
-      console.log('⚠️ User1 no encontrado.');
+    // Buscar los usuarios clientes
+    const user1 = await User.findOne({ email: 'user1@example.com' });
+    const user2 = await User.findOne({ email: 'user2@example.com' });
+
+    if (!user1 || !user2) {
+      console.log('⚠️ No se encontraron los usuarios clientes.');
       return;
     }
 
-    console.log('🔧 Asignando cliente al nutricionista...');
-    console.log('   Nutricionista ID:', nutricionista._id);
-    console.log('   Cliente ID:', cliente._id);
+    console.log('🔧 Asignando clientes al Nutricionista y Entrenador...');
+    console.log('   Trabajador ID:', nutriEntrenador._id);
+    console.log('   User1 ID:', user1._id);
+    console.log('   User2 ID:', user2._id);
 
-    // Asignar cliente al nutricionista usando updateOne para evitar validaciones
+    // Asignar clientes al trabajador dual
+    // User1 aparece DOS veces: una como Nutricionista y otra como Entrenador
+    // User2 aparece UNA vez: solo como Nutricionista
     await User.updateOne(
-      { _id: nutricionista._id },
+      { _id: nutriEntrenador._id },
       { 
         $set: { 
-          clientesAsignados: [{
-            clienteId: cliente._id,
-            tipoAsignacion: 'Nutricionista'
-          }]
+          clientesAsignados: [
+            // User1 - asignación como Nutricionista
+            {
+              clienteId: user1._id,
+              tipoAsignacion: 'Nutricionista'
+            },
+            // User1 - asignación como Entrenador personal
+            {
+              clienteId: user1._id,
+              tipoAsignacion: 'Entrenador personal'
+            }
+          ]
         }
       }
     );
 
     // Verificar la asignación
-    const nutricionistaActualizado = await User.findById(nutricionista._id);
-    console.log(`✅ Cliente ${cliente.fullName} asignado a ${nutricionista.fullName} como Nutricionista`);
-    console.log('   Clientes asignados:', nutricionistaActualizado?.clientesAsignados);
+    const trabajadorActualizado = await User.findById(nutriEntrenador._id);
+    console.log(`✅ Clientes asignados a ${nutriEntrenador.fullName}:`);
+    console.log(`   - ${user1.fullName} (como Nutricionista)`);
+    console.log(`   - ${user1.fullName} (como Entrenador personal)`);
+    console.log(`   - ${user2.fullName} (como Nutricionista)`);
+    console.log('   Total asignaciones:', trabajadorActualizado?.clientesAsignados?.length || 0);
     
   } catch (error) {
-    console.error('Error al asignar cliente al nutricionista:', error);
+    console.error('Error al asignar clientes a trabajadores:', error);
     throw error;
   }
 }

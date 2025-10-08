@@ -37,7 +37,8 @@ export const ChatPage: React.FC = () => {
     archivarConversacion,
     eliminarConversacion,
     eliminarMensaje,
-    refreshConversaciones
+    refreshConversaciones,
+    clearError
   } = useChat();
   console.log('[ChatPage] render', {
     userId: user?._id,
@@ -155,7 +156,13 @@ export const ChatPage: React.FC = () => {
 
   // Manejar envío de mensaje
   const handleSendMessage = async (data: CrearMensajeDTO) => {
-    await enviarMensaje(data);
+    try {
+      await enviarMensaje(data);
+    } catch (err) {
+      // El error ya se maneja en useChat y se establece en el estado 'error'
+      // No necesitamos hacer nada más aquí, el error se mostrará en la UI
+      console.error('Error en handleSendMessage:', err);
+    }
   };
 
   // Manejar nueva conversación
@@ -270,6 +277,7 @@ export const ChatPage: React.FC = () => {
             onPin={() => console.log('Pin')}
             onCall={() => console.log('Call')}
             onVideoCall={handleVideoCall}
+            onClearError={clearError}
           />
         ) : (
           <Box style={{ 

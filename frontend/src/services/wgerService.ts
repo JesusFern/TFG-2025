@@ -1,6 +1,5 @@
 import { WgerExercise, WgerSearchResponse, WgerExerciseDetailsResponse } from '../types/wger';
-
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000';
+import { apiClient } from './apiClient';
 
 export const wgerService = {
   /**
@@ -8,22 +7,11 @@ export const wgerService = {
    */
   async buscarEjercicios(query: string, limit = 20): Promise<WgerExercise[]> {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/wger/ejercicios?q=${encodeURIComponent(query)}&limit=${limit}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
+      const response = await apiClient.get<WgerSearchResponse>(
+        `/wger/ejercicios?q=${encodeURIComponent(query)}&limit=${limit}`
       );
 
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-
-      const data: WgerSearchResponse = await response.json();
-      return data.ejercicios;
+      return response.data.ejercicios;
     } catch (error) {
       console.error('Error al buscar ejercicios en wger:', error);
       throw new Error('Error al buscar ejercicios en wger');
@@ -35,22 +23,11 @@ export const wgerService = {
    */
   async obtenerDetallesEjercicio(exerciseId: number): Promise<WgerExercise> {
     try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/wger/ejercicios/${exerciseId}`,
-        {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
+      const response = await apiClient.get<WgerExerciseDetailsResponse>(
+        `/wger/ejercicios/${exerciseId}`
       );
 
-      if (!response.ok) {
-        throw new Error(`Error ${response.status}: ${response.statusText}`);
-      }
-
-      const data: WgerExerciseDetailsResponse = await response.json();
-      return data.ejercicio;
+      return response.data.ejercicio;
     } catch (error) {
       console.error('Error al obtener detalles del ejercicio wger:', error);
       throw new Error('Error al obtener detalles del ejercicio');

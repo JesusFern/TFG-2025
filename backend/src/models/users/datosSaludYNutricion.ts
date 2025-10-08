@@ -46,27 +46,32 @@ const DatosSaludYNutricionSchema = new mongoose.Schema({
   
   condicionesMedicas: [{
     type: String,
-    required: false
+    required: false,
+    maxlength: [200, 'Cada condición médica no puede exceder los 200 caracteres']
   }],
   
   restriccionesDieteticas: [{
     type: String,
-    required: false
+    required: false,
+    maxlength: [200, 'Cada restricción dietética no puede exceder los 200 caracteres']
   }],
   
   alergiasIntolerancias: [{
     type: String,
-    required: false
+    required: false,
+    maxlength: [200, 'Cada alergia o intolerancia no puede exceder los 200 caracteres']
   }],
   
   medicacionActual: [{
     type: String,
-    required: false
+    required: false,
+    maxlength: [300, 'Cada medicación no puede exceder los 300 caracteres']
   }],
   
   preferenciasAlimentarias: [{
     type: String,
-    required: false
+    required: false,
+    maxlength: [200, 'Cada preferencia alimentaria no puede exceder los 200 caracteres']
   }],
   
   horariosComidas: [{

@@ -70,13 +70,16 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
   
   // Inicializar formulario
   const getInitialForm = () => {
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1); // Por defecto, empezar mañana
+    
     const baseForm = {
       nombre: '',
       descripcion: '',
       objetivo: '',
       duracionDias: 30,
       sesionesPorSemana: 3,
-      fechaInicio: new Date(),
+      fechaInicio: tomorrow,
       diasSemana: [],
       clientes: clientId ? [clientId] : [],
       publico: false,
@@ -166,7 +169,7 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
       case 1:
         return form.objetivo !== '';
       case 2:
-        return form.duracionDias > 0 && form.sesionesPorSemana > 0 && form.fechaInicio !== null && form.clientes.length > 0;
+        return form.duracionDias >= 7 && form.sesionesPorSemana >= 2 && form.fechaInicio !== null && form.clientes.length > 0;
       case 3:
         return form.diasSemana.length === form.sesionesPorSemana;
       default:
@@ -386,18 +389,20 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
                 <Group grow>
                   <NumberInput
                     label="Duración (días)"
+                    description="Mínimo 1 semana (7 días)"
                     value={form.duracionDias}
-                    onChange={(value) => handleChange('duracionDias', value || 0)}
-                    min={1}
+                    onChange={(value) => handleChange('duracionDias', value || 7)}
+                    min={7}
                     max={365}
                     required
                     size="md"
                   />
                   <NumberInput
                     label="Sesiones por semana"
+                    description="Mínimo 2 sesiones"
                     value={form.sesionesPorSemana}
-                    onChange={(value) => handleChange('sesionesPorSemana', value || 0)}
-                    min={1}
+                    onChange={(value) => handleChange('sesionesPorSemana', value || 2)}
+                    min={2}
                     max={7}
                     required
                     size="md"
@@ -409,6 +414,8 @@ const FormularioCrearPlanEntrenamiento: React.FC<FormularioCrearPlanEntrenamient
                   value={form.fechaInicio}
                   onChange={(date) => handleChange('fechaInicio', date)}
                   required
+                  minDate={new Date()}
+                  placeholder="Selecciona la fecha de inicio"
                 />
 
                 {clientId ? (

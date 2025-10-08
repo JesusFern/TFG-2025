@@ -106,10 +106,19 @@ export const crearPlanEntrenamientoValidator = [
   body('nombre').isString().trim().isLength({ min: 1, max: 100 }).withMessage('El nombre es obligatorio y debe tener entre 1 y 100 caracteres'),
   body('descripcion').optional().isString().trim().isLength({ max: 1000 }).withMessage('La descripción debe tener máximo 1000 caracteres'),
   body('objetivo').isIn(['Pérdida de peso', 'Ganancia muscular', 'Mantenimiento', 'Resistencia', 'Flexibilidad', 'Potencia', 'Estabilidad', 'Salud general']).withMessage('Objetivo no válido'),
-  body('duracionDias').isInt({ min: 1, max: 365 }).toInt().withMessage('La duración debe ser un número entero entre 1 y 365 días'),
-  body('sesionesPorSemana').isInt({ min: 1, max: 7 }).toInt().withMessage('Las sesiones por semana deben ser un número entero entre 1 y 7'),
-  body('fechaInicio').isISO8601().withMessage('La fecha de inicio debe ser una fecha válida'),
-  body('diasSemana').isArray({ min: 1, max: 7 }).withMessage('Debe seleccionar entre 1 y 7 días de la semana'),
+  body('duracionDias').isInt({ min: 7, max: 365 }).toInt().withMessage('La duración debe ser un número entero entre 7 y 365 días (mínimo 1 semana)'),
+  body('sesionesPorSemana').isInt({ min: 2, max: 7 }).toInt().withMessage('Las sesiones por semana deben ser un número entero entre 2 y 7'),
+  body('fechaInicio').isISO8601().withMessage('La fecha de inicio debe ser una fecha válida').custom((value) => {
+    const fechaInicio = new Date(value);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    fechaInicio.setHours(0, 0, 0, 0);
+    if (fechaInicio < hoy) {
+      throw new Error('La fecha de inicio no puede ser anterior a la fecha actual');
+    }
+    return true;
+  }),
+  body('diasSemana').isArray({ min: 2, max: 7 }).withMessage('Debe seleccionar entre 2 y 7 días de la semana'),
   body('diasSemana.*').isInt({ min: 0, max: 6 }).toInt().withMessage('Cada día debe ser un número entre 0 (Domingo) y 6 (Sábado)'),
   body('clientes').isArray({ min: 0 }).withMessage('Los clientes deben ser un array'),
   body('clientes.*').isMongoId().withMessage('Cada cliente debe tener un ID válido'),
@@ -122,10 +131,19 @@ export const actualizarPlanEntrenamientoValidator = [
   body('nombre').optional().isString().trim().isLength({ min: 1, max: 100 }).withMessage('El nombre debe tener entre 1 y 100 caracteres'),
   body('descripcion').optional().isString().trim().isLength({ max: 1000 }).withMessage('La descripción debe tener máximo 1000 caracteres'),
   body('objetivo').optional().isIn(['Pérdida de peso', 'Ganancia muscular', 'Mantenimiento', 'Resistencia', 'Flexibilidad', 'Potencia', 'Estabilidad', 'Salud general']).withMessage('Objetivo no válido'),
-  body('duracionDias').optional().isInt({ min: 1, max: 365 }).toInt().withMessage('La duración debe ser un número entero entre 1 y 365 días'),
-  body('sesionesPorSemana').optional().isInt({ min: 1, max: 7 }).toInt().withMessage('Las sesiones por semana deben ser un número entero entre 1 y 7'),
-  body('fechaInicio').optional().isISO8601().withMessage('La fecha de inicio debe ser una fecha válida'),
-  body('diasSemana').optional().isArray({ min: 1, max: 7 }).withMessage('Debe seleccionar entre 1 y 7 días de la semana'),
+  body('duracionDias').optional().isInt({ min: 7, max: 365 }).toInt().withMessage('La duración debe ser un número entero entre 7 y 365 días (mínimo 1 semana)'),
+  body('sesionesPorSemana').optional().isInt({ min: 2, max: 7 }).toInt().withMessage('Las sesiones por semana deben ser un número entero entre 2 y 7'),
+  body('fechaInicio').optional().isISO8601().withMessage('La fecha de inicio debe ser una fecha válida').custom((value) => {
+    const fechaInicio = new Date(value);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    fechaInicio.setHours(0, 0, 0, 0);
+    if (fechaInicio < hoy) {
+      throw new Error('La fecha de inicio no puede ser anterior a la fecha actual');
+    }
+    return true;
+  }),
+  body('diasSemana').optional().isArray({ min: 2, max: 7 }).withMessage('Debe seleccionar entre 2 y 7 días de la semana'),
   body('diasSemana.*').optional().isInt({ min: 0, max: 6 }).toInt().withMessage('Cada día debe ser un número entre 0 (Domingo) y 6 (Sábado)'),
   body('clientes').optional().isArray({ min: 0 }).withMessage('Los clientes deben ser un array'),
   body('clientes.*').optional().isMongoId().withMessage('Cada cliente debe tener un ID válido'),

@@ -32,7 +32,7 @@ class ListaCompraService {
    */
   async generarListaCompraSemana(dietaId: string, semana: number): Promise<ListaCompraSemanaResponse> {
     try {
-      const response = await apiClient.get(`/api/lista-compra/${dietaId}/semana/${semana}`);
+      const response = await apiClient.get(`/lista-compra/${dietaId}/semana/${semana}`);
       
       if (response.data.success) {
         return response.data.data;

@@ -61,6 +61,11 @@ const FormularioRegistroEjercicio: React.FC<FormularioRegistroEjercicioProps> = 
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [tiempoInicio] = useState<Date | null>(null);
   const [tiempoFin] = useState<Date | null>(null);
+  const [videoError, setVideoError] = useState<string | null>(null);
+  
+  // Constantes para validación de video
+  const MAX_VIDEO_SIZE = 100 * 1024 * 1024; // 100MB para videos de clientes
+  const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/avi', 'video/mov', 'video/quicktime', 'video/x-msvideo', 'video/webm'];
 
   const form = useForm<CrearRegistroEjercicioDTO>({
     initialValues: {
@@ -85,8 +90,33 @@ const FormularioRegistroEjercicio: React.FC<FormularioRegistroEjercicioProps> = 
     }
   });
 
+  // Función para validar el archivo de video
+  const validarArchivoVideo = (file: File): string | null => {
+    // Validar tipo de archivo
+    if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+      return `El archivo debe ser un video válido (MP4, AVI, MOV, WebM). Archivo seleccionado: ${file.type || 'tipo desconocido'}`;
+    }
+    
+    // Validar tamaño
+    if (file.size > MAX_VIDEO_SIZE) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      return `El video es demasiado grande (${sizeMB}MB). El tamaño máximo permitido es 100MB.`;
+    }
+    
+    return null;
+  };
+
   const handleSubmit = async (values: CrearRegistroEjercicioDTO) => {
     try {
+      // Validar el video antes de intentar subirlo
+      if (videoFile) {
+        const errorValidacion = validarArchivoVideo(videoFile);
+        if (errorValidacion) {
+          setVideoError(errorValidacion);
+          throw new Error(errorValidacion);
+        }
+      }
+      
       // Calcular duración del ejercicio si se proporcionaron tiempos
       if (tiempoInicio && tiempoFin) {
         const duracionMs = tiempoFin.getTime() - tiempoInicio.getTime();
@@ -100,7 +130,18 @@ const FormularioRegistroEjercicio: React.FC<FormularioRegistroEjercicioProps> = 
           values.videoCliente = videoResponse.videoUrl;
         } catch (videoError) {
           console.error('Error al subir video:', videoError);
-          throw new Error('Error al subir el video. Intenta de nuevo.');
+          const errorMessage = (videoError as Error).message;
+          
+          // Mejorar mensajes de error
+          if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+            throw new Error('Error de conexión al servidor. Verifica que el archivo sea un video válido y que tu conexión a internet funcione correctamente.');
+          } else if (errorMessage.includes('413') || errorMessage.includes('Payload Too Large')) {
+            throw new Error('El archivo es demasiado grande. El tamaño máximo permitido es 100MB.');
+          } else if (errorMessage.includes('415') || errorMessage.includes('Unsupported Media Type')) {
+            throw new Error('Tipo de archivo no soportado. Solo se permiten videos (MP4, AVI, MOV, WebM).');
+          } else {
+            throw new Error('Error al subir el video. Intenta de nuevo.');
+          }
         }
       }
 
@@ -269,10 +310,21 @@ const FormularioRegistroEjercicio: React.FC<FormularioRegistroEjercicioProps> = 
             label="Video del Ejercicio (Opcional)"
             placeholder="Selecciona un video"
             leftSection={<IconVideo size={16} />}
-            accept="video/*"
+            accept="video/mp4,video/avi,video/mov,video/quicktime,video/x-msvideo,video/webm"
             value={videoFile}
-            onChange={setVideoFile}
-            description="Sube un video de tu ejecución del ejercicio"
+            onChange={(file) => {
+              if (file) {
+                const errorValidacion = validarArchivoVideo(file);
+                if (errorValidacion) {
+                  setVideoError(errorValidacion);
+                  return;
+                }
+              }
+              setVideoError(null);
+              setVideoFile(file);
+            }}
+            description="Sube un video de tu ejecución del ejercicio (MP4, AVI, MOV, WebM - máximo 100MB)"
+            error={videoError}
           />
 
           <Textarea

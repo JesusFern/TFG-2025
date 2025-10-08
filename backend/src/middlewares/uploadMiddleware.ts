@@ -43,9 +43,25 @@ export const createUploadErrorHandler = (type: 'image' | 'video') => {
       }
     }
     
+    // Capturar errores de fileFilter
+    if (error.message.includes('Solo se permiten archivos de video')) {
+      res.status(400).json({ 
+        message: error.message
+      });
+      return;
+    }
+    
     if (error.message === `Solo se permiten archivos de ${config.fileType}`) {
       res.status(400).json({ 
         message: `Solo se permiten archivos de ${config.fileType} (${config.allowedTypes})` 
+      });
+      return;
+    }
+
+    // Para otros errores de Multer o errores personalizados, enviar el mensaje tal cual
+    if (error.message) {
+      res.status(400).json({ 
+        message: error.message
       });
       return;
     }

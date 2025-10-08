@@ -1,5 +1,9 @@
 import { seedAdminUser, seedUsers } from './users/seedUsers';
 import { seedWorkers } from './users/seedWorkers';
+import { seedDatosSaludYNutricion } from './users/seedDatosSaludYNutricion';
+import { seedDatosActividadFisica } from './users/seedDatosActividadFisica';
+import { seedUserSuscriptions } from './users/seedUserSuscriptions';
+import { seedUserTracking } from './users/seedUserTracking';
 import { seedSuscriptionPlans } from './suscriptionPlans/seedSuscriptionPlans';
 import { seedIngredientes } from './diets/seedIngredientes';
 import { seedRecetas } from './diets/seedRecetas';
@@ -30,12 +34,23 @@ async function runSeed() {
     // Crear planes de suscripción
     await seedSuscriptionPlans();
 
+    // Crear datos de salud y nutrición para usuarios
+    await seedDatosSaludYNutricion();
+
+    // Crear datos de actividad física para usuarios
+    await seedDatosActividadFisica();
+
+    // Asignar suscripciones a usuarios
+    await seedUserSuscriptions();
+
+    // Crear registros de seguimiento para usuarios
+    await seedUserTracking();
+
     // Cargar ingredientes (requiere JSON generado previamente)
     await seedIngredientes();
 
     // Crear recetas reusables
     await seedRecetas();
-
 
     // Crear ejercicios de entrenamiento
     await seedEjercicios();

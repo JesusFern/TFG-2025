@@ -206,7 +206,6 @@ const ListadoIncidenciasPage: React.FC = () => {
 
   const handleImageClick = (imageUrl: string) => {
     console.log('Click en imagen, URL:', imageUrl);
-    console.log('VITE_BACKEND_HOST:', import.meta.env.VITE_BACKEND_HOST);
     setSelectedImage(imageUrl);
     setImageModalOpened(true);
   };
@@ -538,17 +537,17 @@ const ListadoIncidenciasPage: React.FC = () => {
                             e.currentTarget.style.borderColor = 'transparent';
                             e.currentTarget.style.transform = 'scale(1)';
                           }}
-                          onClick={() => handleImageClick(`${import.meta.env.VITE_BACKEND_HOST}/uploads/incidencias/${selectedIncidencia.id}/${imagen}`)}
+                          onClick={() => handleImageClick(`/uploads/incidencias/${selectedIncidencia.id}/${imagen}`)}
                         >
                           <Image
-                            src={`${import.meta.env.VITE_BACKEND_HOST}/uploads/incidencias/${selectedIncidencia.id}/${imagen}`}
+                            src={`/uploads/incidencias/${selectedIncidencia.id}/${imagen}`}
                             alt={`Imagen ${index + 1}`}
                             height={220}
                             fit="cover"
                             fallbackSrc="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjUwIiBoZWlnaHQ9IjI1MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIiBmaWxsPSIjZGRkIi8+PHRleHQgeD0iNTAlIiB5PSI1MCUiIGZvbnQtZmFtaWx5PSJBcmlhbCIgZm9udC1zaXplPSIxNCIgZmlsbD0iIzk5OSIgdGV4dC1hbmNob3I9Im1pZGRsZSIgZHk9Ii4zZW0iPkltYWdlbiBubyBkaXNwb25pYmxlPC90ZXh0Pjwvc3ZnPg=="
                             onError={() => {
                               console.error('Error cargando imagen:', imagen);
-                              console.error('URL intentada:', `${import.meta.env.VITE_BACKEND_HOST}/uploads/incidencias/${selectedIncidencia.id}/${imagen}`);
+                              console.error('URL intentada:', `/uploads/incidencias/${selectedIncidencia.id}/${imagen}`);
                             }}
                           />
                           <Box

@@ -698,8 +698,7 @@ const MiProgresoTab: React.FC = () => {
                           const esVideo = extension === 'mp4' || extension === 'mov' || extension === 'avi' || extension === 'webm' || extension === 'mkv';
                           const esImagen = extension === 'jpg' || extension === 'jpeg' || extension === 'png' || extension === 'gif' || extension === 'webp';
                           
-                          const baseUrl = import.meta.env.VITE_BACKEND_HOST || 'http://localhost:5000';
-                          const fileUrl = `${baseUrl}/uploads/${archivoNormalizado}`;
+                          const fileUrl = `/uploads/${archivoNormalizado}`;
                           
                           return (
                             <Grid.Col span={{ base: 12, sm: 6, md: 4 }} key={archivoIndex}>

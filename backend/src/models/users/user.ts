@@ -47,7 +47,12 @@ interface UserDocument extends mongoose.Document {
 
 const UserSchema = new mongoose.Schema({
   // ===== CAMPOS BÁSICOS (TODOS LOS ROLES) =====
-  fullName: { type: String, required: true },
+  fullName: { 
+    type: String, 
+    required: true,
+    minlength: [2, 'El nombre completo debe tener al menos 2 caracteres'],
+    maxlength: [100, 'El nombre completo no puede exceder los 100 caracteres']
+  },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   phoneNumber: { type: String, required: true, validate: { validator: isValidPhoneNumber, message: 'Número de teléfono no válido' }},
@@ -91,10 +96,12 @@ const UserSchema = new mongoose.Schema({
     enum: ['Entrenador personal', 'Nutricionista', 'Nutricionista y Entrenador personal']
   },
   biography: {
-    type: String
+    type: String,
+    maxlength: [1000, 'La biografía no puede exceder los 1000 caracteres']
   },
   availability: {
-    type: String
+    type: String,
+    maxlength: [500, 'La disponibilidad no puede exceder los 500 caracteres']
   },
   isWorkerAvailable: {
     type: Boolean,

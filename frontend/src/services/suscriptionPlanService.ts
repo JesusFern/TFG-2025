@@ -1,6 +1,4 @@
-import axios from 'axios';
-
-const API_BASE_URL = `${import.meta.env.VITE_BACKEND_HOST}/api`;
+import { apiClient } from './apiClient';
 export interface SuscriptionPlan {
   _id: string;
   nombre: string;
@@ -24,9 +22,7 @@ export interface SuscriptionPlansResponse {
 
 export const getSuscriptionPlans = async (): Promise<SuscriptionPlan[]> => {
   try {
-    const url = `${API_BASE_URL}/suscription-plans`;
-    
-    const response = await axios.get<{success: boolean; data: SuscriptionPlan[]}>(url);
+    const response = await apiClient.get<{success: boolean; data: SuscriptionPlan[]}>('/suscription-plans');
     
     return response.data.data;
   } catch (error) {
@@ -38,9 +34,7 @@ export const getSuscriptionPlans = async (): Promise<SuscriptionPlan[]> => {
 
 export const getSuscriptionPlanById = async (planId: string): Promise<SuscriptionPlan | null> => {
   try {
-    const url = `${API_BASE_URL}/suscription-plans/${planId}`;
-    
-    const response = await axios.get<{success: boolean; data: SuscriptionPlan}>(url);
+    const response = await apiClient.get<{success: boolean; data: SuscriptionPlan}>(`/suscription-plans/${planId}`);
     
     return response.data.data;
   } catch (error) {
@@ -67,31 +61,27 @@ export const getPlansWithUserStatus = async (): Promise<SuscriptionPlansResponse
     }
     
     try {
-      const url = `${API_BASE_URL}/suscription-plans/with-user-status`;
-      
-      const response = await axios.get<SuscriptionPlansResponse>(url, {
-        headers: {
-          Authorization: `Bearer ${token}`
-        }
-      });
+      const response = await apiClient.get<SuscriptionPlansResponse>('/suscription-plans/with-user-status');
       
       return response.data;
-    } catch (authError) {
-      if (axios.isAxiosError(authError) && 
-          (authError.response?.status === 401 || 
-           authError.response?.status === 403 || 
-           authError.response?.status === 400)) {
-        
-        localStorage.removeItem('token');
-        const plans = await getSuscriptionPlans();
-        
-        return {
-          success: true,
-          data: {
-            plans,
-            userCurrentPlan: null
-          }
-        };
+    } catch (authError: unknown) {
+      if (authError && typeof authError === 'object' && 'response' in authError) {
+        const axiosError = authError as { response?: { status: number } };
+        if (axiosError.response?.status === 401 || 
+            axiosError.response?.status === 403 || 
+            axiosError.response?.status === 400) {
+          
+          localStorage.removeItem('token');
+          const plans = await getSuscriptionPlans();
+          
+          return {
+            success: true,
+            data: {
+              plans,
+              userCurrentPlan: null
+            }
+          };
+        }
       }
       
       throw authError;
@@ -121,15 +111,9 @@ export const subscribeToPlan = async (planId: string, frecuenciaPago: 'mensual' 
       throw new Error('Usuario no autenticado');
     }
     
-    const response = await axios.put(
-      `${API_BASE_URL}/suscription-plans/subscribe`,
-      { planId, frecuenciaPago },
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      }
+    const response = await apiClient.put(
+      '/suscription-plans/subscribe',
+      { planId, frecuenciaPago }
     );
     
     return response.data;

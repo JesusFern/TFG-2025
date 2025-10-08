@@ -1,8 +1,7 @@
 // Configuración de la API
-const API_BASE_URL = import.meta.env.VITE_BACKEND_HOST || 'http://localhost:5000';
-
+// En Docker, usamos URLs relativas que serán proxificadas por Vite en desarrollo
+// y servidas por nginx en producción
 export const apiConfig = {
-  baseURL: API_BASE_URL,
   endpoints: {
     users: {
       register: '/api/users/register',
@@ -13,7 +12,7 @@ export const apiConfig = {
 };
 
 export const apiRequest = async (endpoint: string, options: RequestInit = {}) => {
-  const url = `${apiConfig.baseURL}${endpoint}`;
+  const url = endpoint;
   
   // Obtener el token del localStorage (clave unificada)
   const token = localStorage.getItem('authToken');

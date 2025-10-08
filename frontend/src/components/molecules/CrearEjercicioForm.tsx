@@ -45,6 +45,10 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [error, setError] = useState<string | null>(null);
   
+  // Constantes para validación de video
+  const MAX_VIDEO_SIZE = 50 * 1024 * 1024; // 50MB
+  const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/avi', 'video/mov', 'video/quicktime', 'video/x-msvideo', 'video/webm'];
+  
   // Estados adicionales para la sesión
   const [series, setSeries] = useState<number>(3);
   const [repeticiones, setRepeticiones] = useState<number>(10);
@@ -69,6 +73,22 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
   
   // Validar si el formulario está completo
   const formularioCompleto = nuevoEjercicio.nombre.trim() && pesoValido;
+  
+  // Función para validar el archivo de video
+  const validarArchivoVideo = (file: File): string | null => {
+    // Validar tipo de archivo
+    if (!ALLOWED_VIDEO_TYPES.includes(file.type)) {
+      return `El archivo debe ser un video válido (MP4, AVI, MOV, WebM). Archivo seleccionado: ${file.type || 'tipo desconocido'}`;
+    }
+    
+    // Validar tamaño
+    if (file.size > MAX_VIDEO_SIZE) {
+      const sizeMB = (file.size / (1024 * 1024)).toFixed(2);
+      return `El video es demasiado grande (${sizeMB}MB). El tamaño máximo permitido es 50MB.`;
+    }
+    
+    return null;
+  };
 
   const handleCrearEjercicio = async () => {
     if (!nuevoEjercicio.nombre.trim()) {
@@ -80,6 +100,15 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
     if (pesoEsObligatorio && (peso === undefined || peso === null || peso <= 0)) {
       setError(`Este ejercicio requiere especificar un peso válido (${nuevoEjercicio.equipamiento}).`);
       return;
+    }
+    
+    // Validar el archivo de video si se seleccionó uno
+    if (videoFile) {
+      const errorValidacion = validarArchivoVideo(videoFile);
+      if (errorValidacion) {
+        setError(errorValidacion);
+        return;
+      }
     }
 
     setError(null);
@@ -140,7 +169,18 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
       setOpcionesProgresion(OPCIONES_PROGRESION_DEFAULT);
     } catch (error) {
       console.error('Error al crear ejercicio:', error);
-      setError('Error al crear el ejercicio: ' + (error as Error).message);
+      const errorMessage = (error as Error).message;
+      
+      // Mejorar mensajes de error comunes
+      if (errorMessage.includes('Failed to fetch') || errorMessage.includes('NetworkError')) {
+        setError('Error de conexión al servidor. Verifica que el archivo sea un video válido y que tu conexión a internet funcione correctamente.');
+      } else if (errorMessage.includes('413') || errorMessage.includes('Payload Too Large')) {
+        setError('El archivo es demasiado grande. El tamaño máximo permitido es 50MB.');
+      } else if (errorMessage.includes('415') || errorMessage.includes('Unsupported Media Type')) {
+        setError('Tipo de archivo no soportado. Solo se permiten videos (MP4, AVI, MOV, WebM).');
+      } else {
+        setError('Error al crear el ejercicio: ' + errorMessage);
+      }
     }
   };
 
@@ -249,10 +289,20 @@ const CrearEjercicioForm: React.FC<CrearEjercicioFormProps> = ({
       <FileInput
         label="Video Demostrativo"
         placeholder="Selecciona un archivo de video"
-        accept="video/*"
+        accept="video/mp4,video/avi,video/mov,video/quicktime,video/x-msvideo,video/webm"
         value={videoFile}
-        onChange={setVideoFile}
-        description="Opcional: Sube un video demostrativo del ejercicio (máximo 50MB)"
+        onChange={(file) => {
+          if (file) {
+            const errorValidacion = validarArchivoVideo(file);
+            if (errorValidacion) {
+              setError(errorValidacion);
+              return;
+            }
+          }
+          setError(null);
+          setVideoFile(file);
+        }}
+        description="Opcional: Sube un video demostrativo del ejercicio (MP4, AVI, MOV, WebM - máximo 50MB)"
         clearable
       />
 

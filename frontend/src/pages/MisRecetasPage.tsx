@@ -210,7 +210,7 @@ const MisRecetasPage: React.FC = () => {
                       <Box
                         style={{
                           height: 200,
-                          backgroundImage: `url(${import.meta.env.VITE_BACKEND_HOST || 'http://localhost:5000'}${receta.imagenes[0]})`,
+                          backgroundImage: `url(${receta.imagenes[0]})`,
                           backgroundSize: 'cover',
                           backgroundPosition: 'center',
                           borderRadius: 'var(--mantine-radius-md) var(--mantine-radius-md) 0 0'

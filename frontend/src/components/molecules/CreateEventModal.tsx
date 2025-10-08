@@ -37,10 +37,64 @@ const CreateEventModal: React.FC<CreateEventModalProps> = ({
     } as CalendarEventFormData,
     validate: {
       title: (value) => (value.length < 1 ? 'El título es requerido' : null),
-      startDate: (value) => (!value ? 'La fecha de inicio es requerida' : null),
+      startDate: (value) => {
+        if (!value) return 'La fecha de inicio es requerida';
+        
+        // Validar que la fecha de inicio no sea pasada
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        const fechaInicio = new Date(value);
+        fechaInicio.setHours(0, 0, 0, 0);
+        
+        if (fechaInicio < hoy) {
+          return 'La fecha de inicio no puede ser anterior a la fecha actual';
+        }
+        
+        return null;
+      },
       startTime: (value) => (value.length < 1 ? 'La hora de inicio es requerida' : null),
-      endDate: (value) => (!value ? 'La fecha de fin es requerida' : null),
-      endTime: (value) => (value.length < 1 ? 'La hora de fin es requerida' : null),
+      endDate: (value, values) => {
+        if (!value) return 'La fecha de fin es requerida';
+        
+        // Validar que la fecha de fin no sea anterior a la fecha de inicio
+        if (values.startDate) {
+          const fechaInicio = new Date(values.startDate);
+          const fechaFin = new Date(value);
+          fechaInicio.setHours(0, 0, 0, 0);
+          fechaFin.setHours(0, 0, 0, 0);
+          
+          if (fechaFin < fechaInicio) {
+            return 'La fecha de fin no puede ser anterior a la fecha de inicio';
+          }
+        }
+        
+        return null;
+      },
+      endTime: (value, values) => {
+        if (value.length < 1) return 'La hora de fin es requerida';
+        
+        // Si las fechas son iguales, validar que la hora de fin sea posterior a la hora de inicio
+        if (values.startDate && values.endDate && values.startTime) {
+          const fechaInicio = new Date(values.startDate);
+          const fechaFin = new Date(values.endDate);
+          fechaInicio.setHours(0, 0, 0, 0);
+          fechaFin.setHours(0, 0, 0, 0);
+          
+          if (fechaInicio.getTime() === fechaFin.getTime()) {
+            const [horaInicio, minInicio] = values.startTime.split(':').map(Number);
+            const [horaFin, minFin] = value.split(':').map(Number);
+            
+            const tiempoInicio = horaInicio * 60 + minInicio;
+            const tiempoFin = horaFin * 60 + minFin;
+            
+            if (tiempoFin <= tiempoInicio) {
+              return 'La hora de fin debe ser posterior a la hora de inicio';
+            }
+          }
+        }
+        
+        return null;
+      },
     }
   });
 

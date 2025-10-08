@@ -37,12 +37,14 @@ const DatosActividadFisicaSchema = new mongoose.Schema({
   
   preferenciasEjercicios: [{
     type: String,
-    required: false
+    required: false,
+    maxlength: [200, 'Cada preferencia de ejercicio no puede exceder los 200 caracteres']
   }],
   
   limitacionesFisicas: [{
     type: String,
-    required: false
+    required: false,
+    maxlength: [500, 'Cada limitación física no puede exceder los 500 caracteres']
   }]
 }, { timestamps: true });
 

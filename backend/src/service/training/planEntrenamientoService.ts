@@ -123,6 +123,25 @@ export async function crearPlanEntrenamientoService({
     }
   }
 
+  // Validar que la duración sea al menos 1 semana (7 días)
+  if (duracionDias < 7) {
+    throw new Error('La duración del plan debe ser al menos de 1 semana (7 días)');
+  }
+
+  // Validar que las sesiones por semana sean al menos 2
+  if (sesionesPorSemana < 2) {
+    throw new Error('El plan debe tener al menos 2 sesiones por semana');
+  }
+
+  // Validar que la fecha de inicio no sea en el pasado
+  const fechaInicioDate = new Date(fechaInicio);
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  fechaInicioDate.setHours(0, 0, 0, 0);
+  if (fechaInicioDate < hoy) {
+    throw new Error('La fecha de inicio no puede ser anterior a la fecha actual');
+  }
+
   // Validar que las sesiones por semana no excedan la duración
   if (sesionesPorSemana > duracionDias) {
     throw new Error('Las sesiones por semana no pueden exceder la duración en días');
@@ -509,6 +528,25 @@ export async function generarPlanDesdePlantillaService({
     }
   }
 
+  // Validar que la duración sea al menos 1 semana
+  if (duracionSemanas < 1) {
+    throw new Error('La duración del plan debe ser al menos de 1 semana');
+  }
+
+  // Validar que las sesiones por semana sean al menos 2
+  if (sesionesPorSemana < 2) {
+    throw new Error('El plan debe tener al menos 2 sesiones por semana');
+  }
+
+  // Validar que la fecha de inicio no sea en el pasado
+  const fechaInicioDate = new Date(fechaInicio);
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+  fechaInicioDate.setHours(0, 0, 0, 0);
+  if (fechaInicioDate < hoy) {
+    throw new Error('La fecha de inicio no puede ser anterior a la fecha actual');
+  }
+
   // Validar que todos los clientes existen
   // Validar que todos los IDs son ObjectIds válidos
   const clientesValidos = clientes.filter(id => {
@@ -583,13 +621,13 @@ export async function generarPlanDesdePlantillaService({
 
   // Generar sesiones para cada cliente
   const sesionesCreadas = [];
-  const fechaInicioDate = new Date(fechaInicio);
+  const fechaInicioPlan = new Date(fechaInicio);
 
   // Calcular todas las fechas de sesiones
   const fechasSesiones = [];
   for (let semana = 0; semana < duracionSemanas; semana++) {
     for (let dia = 0; dia < 7; dia++) {
-      const fechaActual = new Date(fechaInicioDate);
+      const fechaActual = new Date(fechaInicioPlan);
       fechaActual.setDate(fechaActual.getDate() + (semana * 7) + dia);
       
       const diaSemana = fechaActual.getDay();

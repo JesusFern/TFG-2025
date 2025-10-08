@@ -155,11 +155,8 @@ export const getClientById = async (clientId: string): Promise<UserData> => {
     }
     
     console.log(`Intentando obtener información del cliente con ID: ${clientId}`);
-    const API_BASE_URL = import.meta.env.VITE_BACKEND_HOST || '';
-    const endpoint = `${API_BASE_URL}/api/users/${clientId}`;
-    console.log(`URL del endpoint: ${endpoint}`);
     
-    const response = await axios.get(endpoint, {
+    const response = await axios.get(`/api/users/${clientId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json'

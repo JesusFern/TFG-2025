@@ -1,6 +1,6 @@
 // Configuración del socket
 export const SOCKET_CONFIG = {
-  // URL del servidor backend
+  // URL del backend - En local y Docker (expuesto en localhost:5000)
   url: 'http://localhost:5000',
   
   // Opciones de conexión
@@ -13,7 +13,7 @@ export const SOCKET_CONFIG = {
     reconnectionDelayMax: 5000,
     timeout: 20000,
     forceNew: true,
-    withCredentials: true
+    withCredentials: true,
   }
 };
 
