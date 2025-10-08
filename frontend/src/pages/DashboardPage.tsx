@@ -375,15 +375,19 @@ const DashboardPage: React.FC = () => {
         }
       );
     } else if (user?.role === 'worker') {
-      // Solo para trabajadores: recetas
+      // Solo para trabajadores: recetas (solo nutricionistas pueden crear recetas)
+      const esNutricionista = user.workerType === 'Nutricionista' || user.workerType === 'Nutricionista y Entrenador personal';
       baseItems.splice(1, 0, 
         {
           title: 'Recetas',
-          description: 'Crea y gestiona recetas nutritivas para tus clientes',
+          description: esNutricionista 
+            ? 'Crea y gestiona recetas nutritivas para tus clientes'
+            : 'Solo nutricionistas pueden crear recetas',
           icon: <IconChefHat size={32} />,
           color: 'nutroos-green',
           onClick: () => navigate('/mis-recetas'),
-          badge: 'Gestionar'
+          badge: esNutricionista ? 'Gestionar' : undefined,
+          disabled: !esNutricionista
         }
       );
     }
